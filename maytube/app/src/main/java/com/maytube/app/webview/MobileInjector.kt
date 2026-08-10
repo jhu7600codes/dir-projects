@@ -42,7 +42,59 @@ object MobileInjector {
         return flags.joinToString(":")
     }
 
-    /** CSS injected on every page to reflow the fixed 960px desktop layout. */
+    /**
+     * CSS injected on every page to reflow the fixed 960px desktop layout.
+     *
+     * Every selector below was taken from actually reading yt2009's own
+     * CSS/templates (assets/site-assets/www-core-*.css, back/yt2009templates.js,
+     * and the page .htm/.html files themselves), not guessed. The first cut
+     * of this used plausible-sounding class names that don't exist in
+     * yt2009's markup at all, which is why it visibly did nothing -- this
+     * version instead targets the real containers responsible for the
+     * overflow:
+     *
+     * - `#baseDiv` is the ONE wrapper every single page template uses
+     *   (index.htm, watch.html, channelpage.htm, search-generic-page.htm,
+     *   playlists.htm, my_videos.htm, videos.htm, channels.htm all open
+     *   with `<div id="baseDiv">`) and it's hard-locked to `width: 960px`
+     *   in www-core-*.css. Every other override here was fighting a losing
+     *   battle against this one parent still being 960px wide.
+     * - Homepage: `#homepage-main-content` (640px, float:left) /
+     *   `#homepage-side-content` (300px, float:right), and inside those,
+     *   the "Videos Being Watched Now" / featured modules use
+     *   `.super-large-video` (fixed 229px, float:left) and
+     *   `.normal-size-video` (60.5%, float:right) per feeditem.
+     * - Watch page: `#watch-this-vid`/`#watch-this-vid-info` (640px,
+     *   float:left) and `#watch-other-vids` (300px, float:right) are the
+     *   *parents* of `#watch-player-div` -- fixing the player box alone
+     *   wasn't enough while its float:left 640px-wide parent was still
+     *   sitting inside the 960px #baseDiv.
+     * - Channel pages: `.left-column`/`.right-column` (300px/640px floats,
+     *   assets/site-assets/www-channel_new-*.css).
+     * - Grid/list video listings (search results, /videos, channel videos,
+     *   recommended feeds): cells are `.video-cell`/`.channel-cell`/etc,
+     *   sized via `display:inline-block` + a CSS percentage (e.g. 24.9%)
+     *   that's sometimes further overridden per-instance with an inline
+     *   `style="width:19.5%"`/`"24.5%"` (back/yt2009templates.js) -- forced
+     *   to `width: 100% !important` here, which also wins over those
+     *   inline non-important styles per the CSS cascade. In list-view mode
+     *   the text column next to the thumbnail (`.video-main-content` and
+     *   siblings) is separately fixed at `width: 456px; float: left`,
+     *   which needed its own override.
+     * - `#search-options-container` (the sort/upload-date/type filter bar
+     *   on search results) is a real `<table>` with side-by-side `<td>`s;
+     *   collapsed to block display so it stacks instead of overflowing.
+     *
+     * Pages not read closely for this pass (playlists.htm, my_videos.htm,
+     * inbox.htm, quicklist.htm, subscriptions.htm, comment threads, the
+     * account/settings pages) get a non-destructive safety net at the very
+     * end: nothing inside #baseDiv is allowed to be wider than the
+     * viewport, full stop. It only clamps elements that would otherwise
+     * overflow -- anything already narrower keeps its natural size -- so
+     * it can't make a correctly-sized element worse, only stop an
+     * undiscovered fixed-width element from pushing the page wider than
+     * the screen the way #baseDiv itself was doing before this fix.
+     */
     private val mobileCss = """
         html { -webkit-text-size-adjust: 100%; }
         body {
@@ -50,33 +102,67 @@ object MobileInjector {
             min-width: 0 !important;
             overflow-x: hidden !important;
         }
-        #page, #content, #masthead-container, #masthead, #body-column,
-        #homepage-main-content, #homepage-side-content, #footer,
-        .watch-video-info, #browseMain, .yt-uix-line-wrap-container {
+
+        /* the one wrapper every page template shares, hard-locked to
+           960px in yt2009's CSS -- see the class kdoc above */
+        #baseDiv, #content, #alerts, #promos, #footer, #copyright,
+        #masthead-container, #masthead, #search-section-header {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
             box-sizing: border-box !important;
         }
-        /* two-column desktop layouts (homepage, channel, watch sidebar)
-           stack vertically instead of overflowing sideways */
+
+        /* every fixed-width/percentage float-based two-column or
+           multi-column layout found in yt2009's own CSS -- stack
+           vertically instead of overflowing sideways. see the class kdoc
+           above for exactly which file/selector each of these came from */
         #homepage-main-content, #homepage-side-content,
-        #main-channel-left, #main-channel-right,
-        #watch-sidebar, #watch7-sidebar, .watch-sidebar {
+        #watch-this-vid, #watch-this-vid-info, #watch-other-vids,
+        .watch-tabs,
+        .left-column, .right-column,
+        .super-large-video, .normal-size-video, .feeditem-compressed,
+        .feedmodule-thumbnail,
+        .feeditem-bigthumb .feedmodule-singleform-info,
+        .feeditem-compressed .feedmodule-singleform-info,
+        .video-main-content, .channel-main-content, .playlist-main-content,
+        .movie-main-content, .trailer-main-content, .show-main-content {
             float: none !important;
             display: block !important;
             width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            box-sizing: border-box !important;
         }
+
+        /* grid/list video listing cells: inline-block percentage widths
+           (sometimes set inline per-instance) -- forced full width so they
+           stack one per row instead of cramming down to illegible slivers */
+        .video-cell, .channel-cell, .playlist-cell, .movie-cell,
+        .show-cell, .trailer-cell {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* the search results sort/filter bar is a real <table> with
+           side-by-side <td>s */
+        #search-options-container, #search-options-container tbody,
+        #search-options-container tr, #search-options-container td {
+            display: block !important;
+            width: auto !important;
+        }
+
         img {
             max-width: 100% !important;
             height: auto !important;
         }
         table { max-width: 100% !important; }
-        /* horizontally scroll anything we didn't explicitly reflow instead
-           of letting it force the whole page wider than the screen */
-        #content > table, #content > div {
-            max-width: 100vw;
-        }
+
         /* the html5 <video> lives inside #watch-player-div; html5-player.js
            sets explicit pixel width/height on it via inline styles, these
            !important rules win over that per CSS cascade rules and keep it
@@ -100,6 +186,7 @@ object MobileInjector {
             width: 100% !important;
             height: 100% !important;
         }
+
         #masthead-search-term, .search-term, input[name="search_query"], input[name="q"] {
             width: 55vw !important;
             max-width: 340px !important;
@@ -111,10 +198,13 @@ object MobileInjector {
         a, button, .yt-uix-button, input[type="submit"], input[type="button"] {
             min-height: 30px;
         }
-        /* thumbnails/listings: let flex-ish rows wrap instead of clipping */
-        .video-list, .yt-lockup, .browse-list, #list-view, #list-pane {
-            width: 100% !important;
-            max-width: 100% !important;
+
+        /* non-destructive safety net for pages/elements not specifically
+           targeted above -- see the class kdoc for why this is here.
+           max-width only *clamps*, it never forces an element wider, so
+           this can't make anything worse than it already was */
+        #baseDiv * {
+            max-width: 100vw !important;
         }
     """.trimIndent()
 

@@ -50,10 +50,16 @@ mobile client wrapper.)
    (`data/ServerConfig.kt`). Shown automatically on first run.
 2. **Mobile CSS/JS injector** (`webview/MobileInjector.kt`) — injects a
    viewport meta tag and a stylesheet on every page load that collapses
-   yt2009's fixed-960px two-column desktop layout to a single responsive
-   column, and turns the HTML5 player container into a responsive 16:9 box
-   (via `!important` rules, which per the CSS cascade override the inline
-   pixel-width styles `html5-player.js` sets).
+   yt2009's fixed-960px desktop layout to a single responsive column, and
+   turns the HTML5 player container into a responsive 16:9 box (via
+   `!important` rules, which per the CSS cascade override the inline
+   pixel-width styles `html5-player.js` sets). The selectors were pulled
+   from actually reading yt2009's CSS/templates (`#baseDiv` is the one
+   wrapper every page shares and is hard-locked to `width: 960px`;
+   `.video-cell`/`.video-main-content`/etc are the real grid/list video
+   listing classes) rather than guessed generic class names — see the kdoc
+   at the top of `MobileInjector.kt` for exactly which file each selector
+   came from, and `MobileInjectorTest.kt` for structural coverage.
 3. **SABR playback** — see above; `MobileInjector.flagCookieValue()` builds
    the flag cookie, `MainActivity`/`MaytubeWebViewClient` apply it through
    `CookieManager` before load and re-assert it via JS after.
@@ -121,12 +127,18 @@ This was verified against a locally installed Android SDK
 
 ## Known limitations / follow-ups
 
-- The CSS injector is deliberately general (structural rules + a handful of
-  known container IDs gathered by reading yt2009's templates) rather than
-  hand-tuned per page. It hasn't been visually verified against a live
-  instance in this environment (no running yt2009 server + real device were
-  available here) — expect some pages to need small selector tweaks once
-  tried against a real instance.
+- The CSS injector's first version used plausible-sounding class names that
+  don't actually exist anywhere in yt2009's markup (it wasn't reading the
+  real templates closely enough) and visibly didn't reflow anything on a
+  real instance. The current version's selectors were pulled from the real
+  CSS/templates instead (see the kdoc in `MobileInjector.kt`) and covers
+  the homepage, watch page, channel pages, and search results/video grids
+  specifically, plus a non-destructive `max-width: 100vw` safety net for
+  pages not individually audited (playlists, my_videos, inbox, subscriptions,
+  comment threads, account/settings pages). Still hasn't been visually
+  verified against a live instance in this environment (no running yt2009
+  server + real device available here) — pages outside the ones explicitly
+  covered may still need selector tweaks once tried for real.
 - The fast SABR-fragment downloader is the highest-risk piece of new code
   here: it's built entirely from reading `back/yt2009sabr.js`,
   `back/backend.js`, and `assets/site-assets/html5-player.js`, not from
