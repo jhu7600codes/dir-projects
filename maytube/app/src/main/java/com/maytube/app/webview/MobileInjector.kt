@@ -128,7 +128,9 @@ object MobileInjector {
         .feeditem-bigthumb .feedmodule-singleform-info,
         .feeditem-compressed .feedmodule-singleform-info,
         .video-main-content, .channel-main-content, .playlist-main-content,
-        .movie-main-content, .trailer-main-content, .show-main-content {
+        .movie-main-content, .trailer-main-content, .show-main-content,
+        #logo, #masthead-search, #masthead-qr, #masthead-utility,
+        #masthead-nav-main, #masthead-nav-user {
             float: none !important;
             display: block !important;
             width: 100% !important;
@@ -136,6 +138,18 @@ object MobileInjector {
             margin-left: 0 !important;
             margin-right: 0 !important;
             box-sizing: border-box !important;
+        }
+        /* #masthead itself got squeezed from 960px down to mobile width,
+           but #logo/#masthead-search (float:left) and #masthead-nav-user
+           (float:right) -- all sized/positioned for the original 960px bar
+           -- were untouched by that alone, so they collided/overlapped
+           instead of reflowing. unfloating the whole masthead's direct
+           children (above) fixes that, but #masthead-nav-main/-user pack
+           several links onto one line via inline margins meant for a wide
+           bar -- let those links wrap onto their own lines too */
+        #masthead-nav-main a, #masthead-nav-user a {
+            display: inline-block !important;
+            margin: 2px 8px 2px 0 !important;
         }
 
         /* grid/list video listing cells: inline-block percentage widths
