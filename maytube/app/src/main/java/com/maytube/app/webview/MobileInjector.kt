@@ -166,7 +166,23 @@ object MobileInjector {
         /* the html5 <video> lives inside #watch-player-div; html5-player.js
            sets explicit pixel width/height on it via inline styles, these
            !important rules win over that per CSS cascade rules and keep it
-           locked to a responsive 16:9 box regardless */
+           locked to a responsive 16:9 box regardless.
+
+           IMPORTANT: only the actual video/object/embed element gets this
+           treatment, never every direct div child of the container as a
+           group. html5-player.js appends its own JS-managed overlay divs directly
+           into #watch-player-div too (.annotations_container is literally
+           `mainElement.appendChild(ac)` where mainElement IS
+           #watch-player-div, positioned via precise pixel math + a
+           transform:scale() the JS computes itself; there's very likely an
+           end-screen/related-videos overlay doing the same). An earlier
+           version of this rule forced *every* direct div child -- video
+           element included or not -- to fill the frame at 100%/100%,
+           which stomped those JS-computed positions and shoved whatever
+           overlay div came last (looked like an unloaded thumbnail grid)
+           full-size on top of the actual video. Their own JS reads the
+           container's real (now-responsive) computed size dynamically, so
+           leaving them alone here is enough for them to behave. */
         #watch-player-div {
             position: relative !important;
             width: 100% !important;
@@ -178,8 +194,7 @@ object MobileInjector {
         }
         #watch-player-div video,
         #watch-player-div object,
-        #watch-player-div embed,
-        #watch-player-div > div {
+        #watch-player-div embed {
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
