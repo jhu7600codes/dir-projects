@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">maytube</string>
+
+    <!-- Setup / Settings -->
+    <string name="settings_title">Instance settings</string>
+    <string name="setup_heading">Connect to your yt2009 instance</string>
+    <string name="setup_subheading">Enter the IP address (or hostname) and port of the yt2009 server you want this app to load. You can change this later from the menu.</string>
+    <string name="label_host">Server IP or hostname</string>
+    <string name="hint_host">e.g. 192.168.1.20</string>
+    <string name="label_port">Port</string>
+    <string name="hint_port">e.g. 3000</string>
+    <string name="label_https">Use HTTPS</string>
+    <string name="label_use_sabr">Enable SABR playback</string>
+    <string name="label_use_sabr_desc">Sets the exp_sabr flag so yt2009 streams video through its SABR/MSE player. Turn off only to debug.</string>
+    <string name="label_prefer_1080p">Prefer 1080p when available</string>
+    <string name="label_prefer_1080p_desc">Sets the hd_1080 flag yt2009 checks for the HD quality button.</string>
+    <string name="action_save">Save &amp; connect</string>
+    <string name="error_host_required">Enter a server IP or hostname</string>
+    <string name="error_port_invalid">Enter a valid port (1–65535)</string>
+
+    <!-- Main menu -->
+    <string name="action_settings">Instance settings</string>
+    <string name="action_downloads">Downloads</string>
+    <string name="action_reload">Reload page</string>
+    <string name="action_home">Go to home</string>
+    <string name="action_download_this_video">Download this video</string>
+
+    <!-- Downloads -->
+    <string name="downloads_title">Downloads</string>
+    <string name="downloads_empty">No downloads yet. Open a video and use \"Download this video\" from the menu.</string>
+    <string name="download_started">Download started: %1$s</string>
+    <string name="download_failed">Could not download this video (no direct file available from this instance).</string>
+    <string name="download_no_video">Open a video first, then use this action from its watch page.</string>
+    <string name="download_delete">Delete</string>
+    <string name="download_resolving">Finding this video\'s SABR session…</string>
+    <string name="download_progress_known">%1$s / %2$s fetched</string>
+    <string name="download_progress_unknown">%1$s fetched</string>
+    <string name="download_complete">Saved to Downloads: %1$s</string>
+    <string name="download_cancel">Cancel</string>
+    <string name="download_cancelled">Download cancelled</string>
+    <string name="download_fallback_started">Fast download wasn\'t available, using the slower built-in download instead: %1$s</string>
+    <string name="download_already_running">A download is already in progress</string>
+
+    <!-- Misc -->
+    <string name="not_configured">Not connected to an instance yet.</string>
+</resources>

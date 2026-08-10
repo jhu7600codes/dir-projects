@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    maytube connects to a self-hosted yt2009 instance, almost always over
+    plain HTTP on a local IP address the user types in. There is no way to
+    know that host ahead of time, so cleartext traffic is allowed globally
+    instead of pinned to a single domain.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
