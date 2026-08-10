@@ -6,7 +6,23 @@
         <item name="colorAccent">@color/maytube_red</item>
         <item name="android:statusBarColor" tools:targetApi="21">@color/maytube_red_dark</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+        <item name="switchStyle">@style/Widget.Maytube.Switch</item>
+        <item name="materialSwitchStyle">@style/Widget.Maytube.Switch</item>
     </style>
 
     <style name="Theme.Maytube.Toolbar" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+
+    <!--
+        Some ROM theme overlays (observed on LineageOS 22.2 / Android 15)
+        flip SwitchCompat's "showText" default to true instead of stock
+        AppCompat's false. When that happens it measures the switch's
+        on/off track labels via getTextOn()/getTextOff(), which are null
+        unless android:textOn/textOff are set, crashing with an NPE in
+        StaticLayout deep inside SwitchCompat.makeLayout(). Individual
+        switches in layouts already set app:showText="false" explicitly,
+        this is a theme-level backstop for any added later.
+    -->
+    <style name="Widget.Maytube.Switch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="showText">false</item>
+    </style>
 </resources>
