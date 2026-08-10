@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Maytube" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/maytube_red</item>
+        <item name="colorPrimaryDark">@color/maytube_red_dark</item>
+        <item name="colorAccent">@color/maytube_red</item>
+        <item name="android:statusBarColor" tools:targetApi="21">@color/maytube_red_dark</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+    </style>
+
+    <style name="Theme.Maytube.Toolbar" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+</resources>
