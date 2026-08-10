@@ -63,15 +63,46 @@ mobile client wrapper.)
 5. **Accounts/recommendations** — persistent WebView cookies
    (`CookieManager.setAcceptCookie` + `.flush()` on pause) so signing in via
    the site's own `/signin` page sticks across app restarts.
-6. **Downloads** (`download/VideoDownloader.kt`, `ui/DownloadsActivity.kt`) —
-   yt2009's `/exp_hd` and `/get_480` endpoints (`back/backend.js`) do a
-   server-side SABR/DASH-to-MP4 reconstruction (`yt2009_utils.saveMp4_android`)
-   and redirect to a plain static `/assets/<id>-<quality>.mp4` file once
-   it's ready — a normal progressive MP4, unlike the fragmented stream the
-   live player consumes. maytube points Android's `DownloadManager` at that
-   resolver endpoint (which follows the redirect itself) and lists the
-   result in a simple Downloads screen, opened via `FileProvider` +
-   `ACTION_VIEW` so any installed video player can play it back offline.
+6. **Downloads** (`download/SabrFragmentDownloader.kt`, `Mp4TrackMuxer.kt`,
+   `VideoDownloader.kt`, `ui/DownloadsActivity.kt`) — see "Why downloads
+   pull fragments directly" below; short version: maytube fetches the same
+   5-second SABR fragments the live player consumes, in parallel, straight
+   from `/sabr_playback`, and remuxes them on-device with Android's
+   `MediaMuxer` — instead of the much slower path of asking the *server* to
+   silently rebuild the whole file first. Falls back to yt2009's
+   `/exp_hd`/`/get_480` + `DownloadManager` if the fast path fails for any
+   reason. Results land in a Downloads screen, opened via `FileProvider` +
+   `ACTION_VIEW` so any installed video player can play them back offline.
+
+### Why downloads pull fragments directly instead of using /exp_hd
+
+The first version of this did the "obvious" thing: point Android's
+`DownloadManager` at yt2009's `/exp_hd`/`/get_480` resolver endpoints. Those
+are simple and reliable, but reading `back/yt2009sabr.js`'s `download()`
+(what those endpoints call into via `yt2009_utils.saveMp4_android`) shows
+why that's a bad idea for anything but a short clip: it walks the video
+**serially**, one 5-second window at a time, with a hardcoded 150ms pause
+between each request, and it only responds — the redirect `DownloadManager`
+is waiting on — once ffmpeg has finished stitching the *entire* file
+server-side. For a 30-minute video that's hundreds of sequential round
+trips to Google's video CDN, with zero bytes and zero progress reaching the
+device until all of them finish.
+
+Since `back/yt2009html.js` embeds the live player's SABR session directly
+in the watch page (`var sabrBase = "/sabr_playback?pid=...";`), maytube
+fetches that same page itself, extracts the session, and pulls fragments
+with its own concurrency (default 4 in flight) instead of the server's one
+at a time. Consecutive fragments for a given track are just continuation
+pieces of one fragmented MP4 (only the very first one carries the
+ftyp/moov init segment), so they can be byte-appended in order with no
+container knowledge needed — that mirrors the first of yt2009's own two
+ffmpeg passes. The second pass (muxing the resulting video-only and
+audio-only files into one, `-map 0:a -map 1:v -c copy` in yt2009's ffmpeg
+command) is done with `android.media.MediaExtractor`/`MediaMuxer` — no
+ffmpeg or native code needed, since combining two already-valid tracks into
+one file is a standard, well-supported Android SDK pattern. This also means
+real progress can be shown (fetched-so-far vs. total duration, parsed from
+the watch page) instead of DownloadManager's silent wait.
 
 ## Setup
 
@@ -96,12 +127,31 @@ This was verified against a locally installed Android SDK
   instance in this environment (no running yt2009 server + real device were
   available here) — expect some pages to need small selector tweaks once
   tried against a real instance.
-- Downloads depend on `/exp_hd` / `/get_480` being reachable un-signed,
-  which is the default. If an instance has `trusted_context` turned on in
-  its yt2009 config, those resolver requests will 403 and the download
-  action will just report failure.
+- The fast SABR-fragment downloader is the highest-risk piece of new code
+  here: it's built entirely from reading `back/yt2009sabr.js`,
+  `back/backend.js`, and `assets/site-assets/html5-player.js`, not from
+  running against a live instance (none was available in this environment).
+  `SabrFragmentParser` has real JVM unit tests (`./gradlew
+  testDebugUnitTest`) checked byte-for-byte against the documented wire
+  format, and `Mp4TrackMuxer` uses well-trodden `MediaExtractor`/
+  `MediaMuxer` APIs, but the end-to-end path (session parsing, concurrent
+  fetch, remux against a *real* video) hasn't been exercised against an
+  actual yt2009 server. It falls back automatically to the slower
+  `/exp_hd`/`/get_480` + `DownloadManager` path (the previous
+  implementation, which mirrors what the site's own resolver already does)
+  if anything about the fast path throws, so a download should still
+  succeed even if the fast path needs a fix once tried for real.
+- Both download paths depend on `/exp_hd`/`/get_480`/`/sabr_playback` being
+  reachable un-signed, which is the default. If an instance has
+  `trusted_context` turned on in its yt2009 config, those requests will
+  403/reject and the download action reports failure.
+- Downloading a live stream is explicitly rejected (SABR sessions for lives
+  don't carry a fixed duration the way VOD ones do).
 - File uploads (`my_videos_upload`) aren't wired up (`onShowFileChooser` is
   not overridden) — out of scope for a viewing/playback-focused client.
+- Cancelling an in-progress fast download stops new fragment fetches from
+  starting but won't interrupt ones already in flight (OkHttp calls block
+  the thread they're on); the dialog closes once those wind down.
 - No automated Android instrumentation/UI tests; verification here was a
-  real `assembleDebug` + `lintDebug` build against the Android SDK, not a
-  device run against a live yt2009 instance.
+  real `assembleDebug`, `testDebugUnitTest`, and `lintDebug` build against
+  the Android SDK, not a device run against a live yt2009 instance.

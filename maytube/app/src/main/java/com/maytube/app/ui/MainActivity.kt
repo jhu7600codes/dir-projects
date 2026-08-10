@@ -18,7 +18,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.maytube.app.MaytubeApp
 import com.maytube.app.R
@@ -28,6 +30,9 @@ import com.maytube.app.download.VideoDownloader
 import com.maytube.app.webview.MaytubeWebChromeClient
 import com.maytube.app.webview.MaytubeWebViewClient
 import com.maytube.app.webview.MobileInjector
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
  * Single-WebView shell around a yt2009 instance. Loads the configured
@@ -45,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webChromeClient: MaytubeWebChromeClient
 
     private var config: ServerConfig? = null
+    private var activeDownloadJob: Job? = null
 
     private val settingsLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -225,14 +231,76 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(webView, R.string.download_no_video, Snackbar.LENGTH_LONG).show()
             return
         }
-        val title = webView.title?.removePrefix("YouTube - ")
-        when (val result = VideoDownloader.startDownload(this, cfg, videoId, title)) {
-            is VideoDownloader.Result.Started ->
-                Snackbar.make(webView, getString(R.string.download_started, result.fileName), Snackbar.LENGTH_LONG)
-                    .show()
-            is VideoDownloader.Result.Error ->
-                Snackbar.make(webView, R.string.download_failed, Snackbar.LENGTH_LONG).show()
+        if (activeDownloadJob?.isActive == true) {
+            Snackbar.make(webView, R.string.download_already_running, Snackbar.LENGTH_SHORT).show()
+            return
         }
+
+        val title = webView.title?.removePrefix("YouTube - ")?.takeIf { it.isNotBlank() } ?: videoId
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_download_progress, null)
+        val titleView = dialogView.findViewById<TextView>(R.id.downloadTitle)
+        val statusView = dialogView.findViewById<TextView>(R.id.downloadStatus)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.downloadProgressBar)
+        titleView.text = title
+        statusView.text = getString(R.string.download_resolving)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .setNegativeButton(R.string.download_cancel) { _, _ -> activeDownloadJob?.cancel() }
+            .show()
+
+        val job = lifecycleScope.launch {
+            val result = VideoDownloader.download(this@MainActivity, cfg, videoId, title) { progress ->
+                runOnUiThread {
+                    val total = progress.totalMs
+                    if (total != null && total > 0) {
+                        progressBar.isIndeterminate = false
+                        progressBar.progress =
+                            ((progress.fetchedMs.toFloat() / total) * 1000).toInt().coerceIn(0, 1000)
+                        statusView.text = getString(
+                            R.string.download_progress_known, formatMs(progress.fetchedMs), formatMs(total)
+                        )
+                    } else {
+                        progressBar.isIndeterminate = true
+                        statusView.text = getString(R.string.download_progress_unknown, formatMs(progress.fetchedMs))
+                    }
+                }
+            }
+            when (result) {
+                is VideoDownloader.Result.Completed ->
+                    Snackbar.make(webView, getString(R.string.download_complete, result.file.name), Snackbar.LENGTH_LONG)
+                        .show()
+                is VideoDownloader.Result.FallbackStarted ->
+                    Snackbar.make(
+                        webView,
+                        getString(R.string.download_fallback_started, result.fileName),
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                is VideoDownloader.Result.Error ->
+                    Snackbar.make(webView, result.message, Snackbar.LENGTH_LONG).show()
+                is VideoDownloader.Result.Progress -> Unit // only ever surfaced via onProgress above
+            }
+        }
+        job.invokeOnCompletion { cause ->
+            runOnUiThread {
+                dialog.dismiss()
+                if (cause is CancellationException) {
+                    Snackbar.make(webView, R.string.download_cancelled, Snackbar.LENGTH_SHORT).show()
+                }
+            }
+        }
+        activeDownloadJob = job
+    }
+
+    private fun formatMs(ms: Long): String {
+        val totalSeconds = ms / 1000
+        val h = totalSeconds / 3600
+        val m = (totalSeconds % 3600) / 60
+        val s = totalSeconds % 60
+        val locale = java.util.Locale.US
+        return if (h > 0) String.format(locale, "%d:%02d:%02d", h, m, s) else String.format(locale, "%d:%02d", m, s)
     }
 
     /** Catches native browser-style download triggers (e.g. an <a download> link). */

@@ -25,7 +25,6 @@
     <string name="action_reload">Reload page</string>
     <string name="action_home">Go to home</string>
     <string name="action_download_this_video">Download this video</string>
-    <string name="action_desktop_site">Injected CSS: on</string>
 
     <!-- Downloads -->
     <string name="downloads_title">Downloads</string>
@@ -34,8 +33,15 @@
     <string name="download_failed">Could not download this video (no direct file available from this instance).</string>
     <string name="download_no_video">Open a video first, then use this action from its watch page.</string>
     <string name="download_delete">Delete</string>
+    <string name="download_resolving">Finding this video\'s SABR session…</string>
+    <string name="download_progress_known">%1$s / %2$s fetched</string>
+    <string name="download_progress_unknown">%1$s fetched</string>
+    <string name="download_complete">Saved to Downloads: %1$s</string>
+    <string name="download_cancel">Cancel</string>
+    <string name="download_cancelled">Download cancelled</string>
+    <string name="download_fallback_started">Fast download wasn\'t available, using the slower built-in download instead: %1$s</string>
+    <string name="download_already_running">A download is already in progress</string>
 
     <!-- Misc -->
-    <string name="content_desc_thumbnail">Video thumbnail</string>
     <string name="not_configured">Not connected to an instance yet.</string>
 </resources>
