@@ -55,6 +55,21 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `player css never blanket-resizes every div inside watch-player-div`() {
+        // regression test: html5-player.js appends its own JS-managed
+        // overlay divs (.annotations_container, an end-screen/related
+        // grid) directly into #watch-player-div, positioned via pixel math
+        // the JS computes itself. "#watch-player-div > div { width:100%;
+        // height:100% }" stomps that positioning and forces whatever
+        // overlay div is present to fill the whole frame -- reported as an
+        // unloaded-looking grid of tiles sitting where the video should be,
+        // with the actual <video> element hidden underneath. Only
+        // video/object/embed may get the full-size treatment.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertFalse(script.contains("#watch-player-div > div"))
+    }
+
+    @Test
     fun `flag cookie carries exp_sabr when sabr is enabled`() {
         val value = MobileInjector.flagCookieValue(config.copy(sabrEnabled = true))
         assertTrue(value.contains("exp_sabr"))
