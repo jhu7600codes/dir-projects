@@ -95,7 +95,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="@string/label_https"
-                android:textColor="@color/maytube_white" />
+                android:textColor="@color/maytube_white"
+                app:showText="false" />
 
             <View
                 android:layout_width="match_parent"
@@ -110,7 +111,8 @@
                 android:layout_marginTop="20dp"
                 android:checked="true"
                 android:text="@string/label_use_sabr"
-                android:textColor="@color/maytube_white" />
+                android:textColor="@color/maytube_white"
+                app:showText="false" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -126,7 +128,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/label_prefer_1080p"
-                android:textColor="@color/maytube_white" />
+                android:textColor="@color/maytube_white"
+                app:showText="false" />
 
             <TextView
                 android:layout_width="match_parent"
