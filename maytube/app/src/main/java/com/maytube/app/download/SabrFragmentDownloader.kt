@@ -1,14 +1,12 @@
 package com.maytube.app.download
 
 import android.content.Context
-import android.webkit.CookieManager
 import com.maytube.app.data.ServerConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -31,6 +29,11 @@ import java.util.concurrent.TimeUnit
  * ourselves lets us parallelize that fetch and show real progress, which
  * is the whole point of doing this instead of just pointing
  * DownloadManager at /exp_hd.
+ *
+ * Session resolution and per-fragment fetching are shared with
+ * com.maytube.app.player.StreamingPlayer (see SabrSession/SabrFragmentFetcher)
+ * -- this class's own job is purely buffer-the-whole-thing-then-mux, unlike
+ * the streaming player which feeds a player as fragments arrive.
  */
 class SabrFragmentDownloader(private val context: Context) {
 
@@ -50,7 +53,11 @@ class SabrFragmentDownloader(private val context: Context) {
         concurrency: Int = 4,
         onProgress: (Progress) -> Unit
     ): File = withContext(Dispatchers.IO) {
-        val session = resolveSession(config, videoId)
+        val session = try {
+            SabrSession.resolve(client, config, videoId)
+        } catch (e: SabrSession.ResolveException) {
+            throw DownloadException(e.message ?: "could not resolve SABR session", e)
+        }
 
         val cacheDir = File(context.cacheDir, "maytube_sabr_dl").apply { mkdirs() }
         val videoTrackFile = File(cacheDir, "$videoId-video.tmp.mp4")
@@ -77,67 +84,11 @@ class SabrFragmentDownloader(private val context: Context) {
         }
     }
 
-    // -- session resolution -------------------------------------------------
-
-    private data class Session(val sabrPath: String, val totalMs: Long?)
-
-    /**
-     * yt2009's watch page embeds the SABR session inline as plain JS
-     * (back/yt2009html.js: `var sabrBase = "/sabr_playback?pid=...";`) when
-     * SABR is enabled for the request. We force that on for this one
-     * request regardless of the user's live-playback SABR setting --
-     * downloading and live playback are independent choices.
-     */
-    private fun resolveSession(config: ServerConfig, videoId: String): Session {
-        val url = "${config.baseUrl}/watch?v=$videoId"
-        val request = Request.Builder()
-            .url(url)
-            .header("Cookie", cookieHeader(config))
-            .build()
-
-        val html = client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw DownloadException("could not open the watch page (HTTP ${response.code})")
-            }
-            response.body?.string().orEmpty()
-        }
-
-        val sabrPath = Regex("""var sabrBase = "(/sabr_playback\?pid=[^"]+)"""")
-            .find(html)?.groupValues?.get(1)
-            ?: throw DownloadException(
-                "this instance didn't return a SABR session for this video " +
-                    "(is exp_sabr available / is this actually a yt2009 watch page?)"
-            )
-
-        // back/yt2009html.js only takes the SABR branch's "initAsSabr()" path
-        // for non-live videos; live videos get "initLiveChat"/"initAsLive()"
-        // instead and never get a fixed duration, which this downloader
-        // (and the underlying SABR session) isn't meant to handle.
-        if (html.contains("initAsLive()")) {
-            throw DownloadException("this is a live stream, which can't be downloaded")
-        }
-
-        // yt2009utils.seconds_to_time formats duration as [H:]M:SS and the
-        // page renders it as "0:00 / <duration>" next to the player
-        val totalMs = Regex("""0:00\s*/\s*(\d+(?::\d{2}){1,2})""").find(html)?.groupValues?.get(1)
-            ?.let { parseClock(it) }
-
-        return Session(sabrPath, totalMs)
-    }
-
-    private fun parseClock(clock: String): Long? {
-        val parts = clock.split(":").mapNotNull { it.toIntOrNull() }
-        if (parts.isEmpty()) return null
-        var seconds = 0L
-        for (p in parts) seconds = seconds * 60 + p
-        return seconds * 1000
-    }
-
     // -- fragment fetching ---------------------------------------------------
 
     private suspend fun fetchAllFragments(
         config: ServerConfig,
-        session: Session,
+        session: SabrSession.Session,
         concurrency: Int,
         videoOut: BufferedOutputStream,
         audioOut: BufferedOutputStream,
@@ -183,39 +134,10 @@ class SabrFragmentDownloader(private val context: Context) {
     }
 
     private fun fetchFragment(config: ServerConfig, sabrPath: String, offsetMs: Long): List<SabrFragmentParser.Part> {
-        var lastError: Exception? = null
-        repeat(3) { attempt ->
-            try {
-                val forceReplayer = if (attempt > 0) "&force_replayer=1" else ""
-                val url = "${config.baseUrl}$sabrPath&offset=$offsetMs&hd=1$forceReplayer"
-                val request = Request.Builder()
-                    .url(url)
-                    .header("Cookie", cookieHeader(config))
-                    .build()
-
-                client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) {
-                        throw DownloadException("HTTP ${response.code} fetching offset ${offsetMs}ms")
-                    }
-                    val partCount = response.header("x-part-count")?.toIntOrNull() ?: 0
-                    val body = response.body?.bytes() ?: ByteArray(0)
-                    return SabrFragmentParser.parse(body, partCount)
-                }
-            } catch (e: Exception) {
-                lastError = e
-            }
-        }
-        throw DownloadException("giving up on offset ${offsetMs}ms after 3 attempts", lastError)
-    }
-
-    private fun cookieHeader(config: ServerConfig): String {
-        val existing = CookieManager.getInstance().getCookie(config.baseUrl)
-        // make sure exp_sabr is present regardless of the user's live
-        // playback preference -- see class kdoc
-        return if (existing.isNullOrBlank()) {
-            "maytube_dl_flags=exp_sabr"
-        } else {
-            "$existing; maytube_dl_flags=exp_sabr"
+        return try {
+            SabrFragmentFetcher.fetch(client, config, sabrPath, offsetMs)
+        } catch (e: SabrFragmentFetcher.FetchException) {
+            throw DownloadException(e.message ?: "fragment fetch failed", e)
         }
     }
 }

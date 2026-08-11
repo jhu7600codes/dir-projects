@@ -16,7 +16,7 @@
             android:id="@+id/mainToolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/maytube_red"
+            android:background="@color/holo_blue_dark"
             app:title="@string/app_name"
             app:titleTextColor="@color/maytube_white" />
 
@@ -70,7 +70,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:backgroundTint="@color/maytube_red"
+        android:backgroundTint="@color/holo_blue_dark"
         android:text="@string/action_play_natively"
         android:textColor="@color/maytube_white"
         android:visibility="gone"

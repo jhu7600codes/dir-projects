@@ -68,6 +68,11 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@registerForActivityResult
             }
+            if (newConfig.nativePlayer) {
+                startActivity(Intent(this, HomeActivity::class.java))
+                finish()
+                return@registerForActivityResult
+            }
             val previous = config
             val hostChanged = previous == null ||
                 newConfig.host != previous.host ||
@@ -91,8 +96,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
         repository = (application as MaytubeApp).serverConfigRepository
+
+        // Settings > native player: hand off to the fully-native
+        // browse/watch/comments shell (HomeActivity) instead of ever
+        // creating/loading this Activity's WebView at all -- checked
+        // before setContentView so a native-mode launch never even
+        // inflates the WebView layout.
+        val existingConfig = repository.get()
+        if (existingConfig?.nativePlayer == true) {
+            startActivity(Intent(this, HomeActivity::class.java))
+            finish()
+            return
+        }
+
+        setContentView(R.layout.activity_main)
 
         val toolbar = findViewById<Toolbar>(R.id.mainToolbar)
         setSupportActionBar(toolbar)
@@ -127,13 +145,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val existing = repository.get()
-        if (existing == null) {
+        if (existingConfig == null) {
             notConfiguredView.visibility = android.view.View.VISIBLE
             openSettings()
         } else {
-            config = existing
-            maytubeWebViewClient.updateConfig(existing)
+            config = existingConfig
+            maytubeWebViewClient.updateConfig(existingConfig)
             loadHome()
         }
     }

@@ -1,16 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.Maytube" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/maytube_red</item>
-        <item name="colorPrimaryDark">@color/maytube_red_dark</item>
-        <item name="colorAccent">@color/maytube_red</item>
-        <item name="android:statusBarColor" tools:targetApi="21">@color/maytube_red_dark</item>
+    <!--
+        Holo design: pure black, Holo Blue accent, no elevation (Holo
+        predates Material's shadow system entirely: flat surfaces plus
+        hairline dividers is the actual look, not a stylistic choice to
+        drop shadows).
+    -->
+    <style name="Theme.Maytube" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/holo_blue_dark</item>
+        <item name="colorPrimaryDark">@color/holo_background_dark</item>
+        <item name="colorAccent">@color/holo_blue_light</item>
+        <item name="colorSecondary">@color/holo_blue_light</item>
+        <item name="android:statusBarColor" tools:targetApi="21">@color/holo_background_dark</item>
+        <item name="android:navigationBarColor" tools:targetApi="21">@color/holo_background_dark</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+        <item name="android:windowBackground">@color/holo_background_dark</item>
         <item name="switchStyle">@style/Widget.Maytube.Switch</item>
         <item name="materialSwitchStyle">@style/Widget.Maytube.Switch</item>
+        <item name="materialButtonStyle">@style/Widget.Maytube.Button.Holo</item>
+        <item name="elevationOverlayEnabled">false</item>
     </style>
 
     <style name="Theme.Maytube.Toolbar" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+
+    <!-- flat, borderless-feeling, square-cornered, Holo-blue text:
+         Holo never had filled/elevated buttons; this is the closest
+         MaterialButton equivalent -->
+    <style name="Widget.Maytube.Button.Holo" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="cornerRadius">0dp</item>
+        <item name="backgroundTint">@color/holo_blue_dark</item>
+        <item name="rippleColor">@color/holo_blue_light</item>
+    </style>
+
+    <style name="Widget.Maytube.Button.Holo.Text" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="cornerRadius">0dp</item>
+        <item name="android:textColor">@color/holo_blue_light</item>
+        <item name="rippleColor">@color/holo_blue_light</item>
+    </style>
 
     <!--
         Some ROM theme overlays (observed on LineageOS 22.2 / Android 15)
