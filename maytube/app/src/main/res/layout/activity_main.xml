@@ -62,4 +62,19 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+    <!-- shown only on watch pages, only when Settings > native player is on
+         (see MainActivity.onPageFinished) -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/playNativelyFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/maytube_red"
+        android:text="@string/action_play_natively"
+        android:textColor="@color/maytube_white"
+        android:visibility="gone"
+        app:icon="@drawable/ic_play_circle"
+        app:iconTint="@color/maytube_white" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

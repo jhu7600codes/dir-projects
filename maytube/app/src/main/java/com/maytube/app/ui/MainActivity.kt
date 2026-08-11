@@ -24,6 +24,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.maytube.app.MaytubeApp
 import com.maytube.app.R
@@ -50,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pageProgress: ProgressBar
     private lateinit var notConfiguredView: TextView
     private lateinit var appBar: com.google.android.material.appbar.AppBarLayout
+    private lateinit var playNativelyFab: ExtendedFloatingActionButton
     private lateinit var maytubeWebViewClient: MaytubeWebViewClient
     private lateinit var webChromeClient: MaytubeWebChromeClient
 
@@ -107,6 +109,8 @@ class MainActivity : AppCompatActivity() {
         appBar = findViewById(R.id.appBar)
         swipeRefresh = findViewById(R.id.swipeRefresh)
         webView = findViewById(R.id.webView)
+        playNativelyFab = findViewById(R.id.playNativelyFab)
+        playNativelyFab.setOnClickListener { playCurrentVideoNatively() }
 
         setupWebView()
 
@@ -254,9 +258,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun onPageFinished(@Suppress("UNUSED_PARAMETER") url: String?) {
+    private fun onPageFinished(url: String?) {
         swipeRefresh.isRefreshing = false
         notConfiguredView.visibility = android.view.View.GONE
+        // Settings > native player: offer the native player specifically on
+        // watch pages, where there's actually something to play -- the
+        // WebView's own copy of the video is paused/blanked by
+        // MobileInjector whenever this is on (see its kdoc), this FAB is
+        // the way to actually start playback in that mode.
+        val showFab = config?.nativePlayer == true && MobileInjector.extractVideoId(url) != null
+        playNativelyFab.visibility = if (showFab) android.view.View.VISIBLE else android.view.View.GONE
     }
 
     private fun openSettings() {
@@ -358,6 +369,17 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun playCurrentVideoNatively() {
+        val cfg = config
+        val videoId = MobileInjector.extractVideoId(webView.url)
+        if (cfg == null || videoId == null) {
+            Snackbar.make(webView, R.string.download_no_video, Snackbar.LENGTH_LONG).show()
+            return
+        }
+        val title = webView.title?.removePrefix("YouTube - ")?.takeIf { it.isNotBlank() }
+        startActivity(PlayerActivity.intent(this, cfg, videoId, title))
     }
 
     private fun downloadCurrentVideo() {

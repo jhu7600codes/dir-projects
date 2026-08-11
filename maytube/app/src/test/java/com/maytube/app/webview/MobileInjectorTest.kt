@@ -162,6 +162,24 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `native player mode pauses and blanks the webview's own video`() {
+        // regression test: Settings > native player plays through
+        // PlayerActivity's own SABR fetch instead -- the WebView's copy of
+        // the video must not also be left running, or it silently
+        // double-fetches the same video for a player nobody can see.
+        val script = MobileInjector.buildInjectionScript(config.copy(nativePlayer = true))
+        assertTrue(script.contains("if (true) {"))
+        assertTrue(script.contains("pv.pause()"))
+        assertTrue(script.contains("maytube-native-hint"))
+    }
+
+    @Test
+    fun `native player mode off leaves the webview's own video alone`() {
+        val script = MobileInjector.buildInjectionScript(config.copy(nativePlayer = false))
+        assertTrue(script.contains("if (false) {"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }
