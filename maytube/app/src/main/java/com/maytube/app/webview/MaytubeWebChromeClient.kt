@@ -132,6 +132,44 @@ class MaytubeWebChromeClient(
         hideSystemChrome()
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        // Reported directly from a real device (Pixel 3a, 1080x2200): even
+        // with the black backdrop above, the video itself rendered
+        // squeezed into a narrow center column -- far too narrow to be
+        // ordinary object-fit:contain letterboxing (a 16:9 video on this
+        // phone's ~20:9 landscape screen should fill ~87% of the width,
+        // not a small fraction of it). requestedOrientation is only a
+        // request -- the actual rotation happens asynchronously, well
+        // after this function returns. Chromium's fullscreen video surface
+        // is laid out (and computes its own internal letterbox sizing)
+        // against whatever the window's dimensions are *at that moment*;
+        // if that first layout lands before the rotation has actually
+        // finished, it bakes in sizing computed against the old portrait
+        // window, and nothing here was forcing a second layout pass once
+        // the rotation genuinely completed. This is a known class of bug,
+        // not specific to this app -- WebView/Chromium fullscreen video
+        // failing to resize correctly across a rotation that the hosting
+        // Activity doesn't get recreated for is widely reported. Force an
+        // explicit re-layout shortly after, once the rotation animation
+        // has almost certainly settled; see also MainActivity's
+        // onConfigurationChanged, which does the same the moment the
+        // config change callback actually lands (covers rotating while
+        // already fullscreen too, not just the initial transition).
+        container.postDelayed({ relayoutFullscreenView() }, RELAYOUT_SETTLE_DELAY_MS)
+    }
+
+    /**
+     * Forces a fresh measure/layout pass on the active fullscreen view (and
+     * its container), for the pillarboxing-after-rotation bug described in
+     * [onShowCustomView]. Safe to call even when not fullscreen -- no-ops.
+     */
+    fun relayoutFullscreenView() {
+        val container = fullscreenContainer ?: return
+        val view = customView ?: return
+        container.requestLayout()
+        container.invalidate()
+        view.requestLayout()
+        view.invalidate()
     }
 
     override fun onHideCustomView() {
@@ -222,5 +260,6 @@ class MaytubeWebChromeClient(
 
     companion object {
         private const val CONSOLE_TAG = "MaytubeWebConsole"
+        private const val RELAYOUT_SETTLE_DELAY_MS = 400L
     }
 }

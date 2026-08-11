@@ -2,6 +2,7 @@ package com.maytube.app.ui
 
 import android.app.DownloadManager
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Message
 import android.view.Menu
@@ -147,6 +148,32 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         webView.destroy()
         super.onDestroy()
+    }
+
+    /**
+     * MainActivity declares configChanges="orientation|screenSize|..." so
+     * rotating for fullscreen video doesn't recreate the Activity (which
+     * would reload the page and kill playback every single time). The
+     * tradeoff: this callback is now the only signal we get when a
+     * rotation actually lands, and WebView/Chromium's fullscreen video
+     * surface is known to not always re-layout itself correctly across a
+     * config change the hosting Activity survives -- reported directly
+     * from a real device (Pixel 3a, 1080x2200) as the video rendering
+     * pillarboxed into a narrow center column after rotating into
+     * fullscreen, far narrower than ordinary object-fit:contain
+     * letterboxing on a 16:9 video would ever produce. See
+     * MaytubeWebChromeClient.onShowCustomView for the fuller writeup and
+     * the delayed relayout it already schedules for the initial
+     * transition; this covers the same class of bug for every later
+     * config change too (e.g. flipping the device while already
+     * fullscreen), the moment it's actually reported instead of guessing
+     * at a delay.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        webView.requestLayout()
+        webView.invalidate()
+        webChromeClient.relayoutFullscreenView()
     }
 
     @Suppress("SetJavaScriptEnabled")
