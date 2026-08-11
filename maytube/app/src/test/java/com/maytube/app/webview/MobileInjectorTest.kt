@@ -112,6 +112,17 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `player letterboxes instead of cropping non-16by9 video`() {
+        // regression test: forcing width/height:100% with no object-fit
+        // stretches/crops video whose real aspect ratio isn't exactly the
+        // box's 16:9 (object-fit's initial value is "fill"). contain keeps
+        // the whole frame visible with black bars instead.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("object-fit: contain"))
+        assertTrue(script.contains("background: #000"))
+    }
+
+    @Test
     fun `dark mode class is toggled based on config`() {
         val darkOn = MobileInjector.buildInjectionScript(config.copy(darkMode = true))
         assertTrue(darkOn.contains("classList.toggle('maytube-dark', true)"))

@@ -224,7 +224,15 @@ object MobileInjector {
             height: 0 !important;
             padding-top: 56.25% !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
+            /* was overflow:hidden -- clipped things like the on-pause
+               related-videos overlay, which (per the original 640x390
+               fixed layout) can extend past the video's own bounds.
+               visible can't cause horizontal page overflow on its own
+               (that needs a wider box, not an unclipped one), and the
+               #baseDiv * safety net below still catches anything that
+               genuinely is too wide. */
+            overflow: visible !important;
+            background: #000 !important;
         }
         #watch-player-div video,
         #watch-player-div object,
@@ -234,6 +242,13 @@ object MobileInjector {
             left: 0 !important;
             width: 100% !important;
             height: 100% !important;
+            /* object-fit's initial value is "fill" -- without this, a
+               video whose real aspect ratio isn't exactly 16:9 (this box's
+               ratio) gets stretched/cropped to fill it exactly instead of
+               letterboxed. contain fits the whole frame inside the box,
+               adding black bars (the background above) instead of cutting
+               anything off. */
+            object-fit: contain !important;
         }
 
         /* .watch-vid-ab-title (watch.html/back/yt2009html.js) has no CSS
