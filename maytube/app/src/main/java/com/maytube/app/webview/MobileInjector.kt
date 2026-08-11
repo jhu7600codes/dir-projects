@@ -130,7 +130,8 @@ object MobileInjector {
         .video-main-content, .channel-main-content, .playlist-main-content,
         .movie-main-content, .trailer-main-content, .show-main-content,
         #masthead-search, #masthead-utility,
-        #masthead-nav-main, #masthead-nav-user {
+        #masthead-nav-main, #masthead-nav-user,
+        #watch-longform-buttons {
             float: none !important;
             display: block !important;
             width: 100% !important;
@@ -223,7 +224,15 @@ object MobileInjector {
             height: 0 !important;
             padding-top: 56.25% !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
+            /* was overflow:hidden -- clipped things like the on-pause
+               related-videos overlay, which (per the original 640x390
+               fixed layout) can extend past the video's own bounds.
+               visible can't cause horizontal page overflow on its own
+               (that needs a wider box, not an unclipped one), and the
+               #baseDiv * safety net below still catches anything that
+               genuinely is too wide. */
+            overflow: visible !important;
+            background: #000 !important;
         }
         #watch-player-div video,
         #watch-player-div object,
@@ -233,6 +242,28 @@ object MobileInjector {
             left: 0 !important;
             width: 100% !important;
             height: 100% !important;
+            /* object-fit's initial value is "fill" -- without this, a
+               video whose real aspect ratio isn't exactly 16:9 (this box's
+               ratio) gets stretched/cropped to fill it exactly instead of
+               letterboxed. contain fits the whole frame inside the box,
+               adding black bars (the background above) instead of cutting
+               anything off. */
+            object-fit: contain !important;
+        }
+
+        /* .watch-vid-ab-title (watch.html/back/yt2009html.js) has no CSS
+           rule anywhere in yt2009 itself -- it always rendered as a raw
+           browser-default h1 (huge, with large default margins). On the
+           original 960px layout there was enough surrounding space for
+           that to go unnoticed; stacked into a single mobile column it
+           collides with whatever's above it. Not a regression from any
+           rule here, just something that needed sizing for the first
+           time. */
+        .watch-vid-ab-title {
+            font-size: 17px !important;
+            line-height: 1.3 !important;
+            margin: 6px 0 !important;
+            font-weight: bold !important;
         }
 
         #masthead-search-term, .search-term, input[name="search_query"], input[name="q"] {
@@ -254,6 +285,26 @@ object MobileInjector {
         #baseDiv * {
             max-width: 100vw !important;
         }
+
+        /* dark mode: yt2009 itself has no dark theme, and hand-overriding
+           colors on a site this old (mostly inline styles, decades of
+           accumulated CSS) isn't remotely tractable. Instead: invert the
+           whole page, then invert actual media back a second time so
+           thumbnails/video don't render with wrong colors -- the same
+           trick browser reader-mode/dark-mode extensions use for sites
+           that don't support it natively. Toggled by adding/removing this
+           class on <html> in the injected JS below, not a media query, so
+           it's independent of the device's system theme. */
+        html.maytube-dark {
+            filter: invert(1) hue-rotate(180deg) !important;
+            background: #fff !important;
+        }
+        html.maytube-dark img,
+        html.maytube-dark video,
+        html.maytube-dark canvas,
+        html.maytube-dark iframe {
+            filter: invert(1) hue-rotate(180deg) !important;
+        }
     """.trimIndent()
 
     /**
@@ -265,6 +316,7 @@ object MobileInjector {
         val cssJson = JSONObject.quote(mobileCss)
         val flagCookie = flagCookieValue(config)
         val cookieJson = JSONObject.quote("maytube_flags=$flagCookie; Path=/; Max-Age=63072000")
+        val darkModeJs = if (config.darkMode) "true" else "false"
         return """
             (function() {
                 try {
@@ -293,6 +345,10 @@ object MobileInjector {
                     style.type = 'text/css';
                     style.appendChild(document.createTextNode($cssJson));
                     document.head.appendChild(style);
+                } catch (e) {}
+
+                try {
+                    document.documentElement.classList.toggle('maytube-dark', $darkModeJs);
                 } catch (e) {}
 
                 return true;

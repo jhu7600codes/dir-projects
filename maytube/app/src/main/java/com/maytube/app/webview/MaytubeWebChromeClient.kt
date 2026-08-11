@@ -27,7 +27,9 @@ import com.maytube.app.BuildConfig
 class MaytubeWebChromeClient(
     private val activity: Activity,
     private val onProgress: (Int) -> Unit,
-    private val onTitle: (String?) -> Unit
+    private val onTitle: (String?) -> Unit,
+    private val onFullscreenChanged: (Boolean) -> Unit = {},
+    private val onLongPress: () -> Unit = {}
 ) : WebChromeClient() {
 
     private var customView: View? = null
@@ -80,6 +82,19 @@ class MaytubeWebChromeClient(
         @Suppress("DEPRECATION")
         originalSystemUiVisibility = decorView.systemUiVisibility
 
+        // belt-and-suspenders: this view fully covers decorView (which
+        // includes our own Toolbar underneath it) on its own, but hiding
+        // the native app chrome explicitly too means there's no gap for it
+        // to peek through on any device/WebView-version quirk, and lets
+        // MainActivity stop reserving layout space for it while fullscreen
+        onFullscreenChanged(true)
+        // long-press works during fullscreen too -- this view (not our own
+        // WebView) is what's actually on screen and receiving touches now
+        view.setOnLongClickListener {
+            onLongPress()
+            true
+        }
+
         decorView.addView(
             view,
             FrameLayout.LayoutParams(
@@ -102,6 +117,7 @@ class MaytubeWebChromeClient(
         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         customViewCallback?.onCustomViewHidden()
         customViewCallback = null
+        onFullscreenChanged(false)
     }
 
     private fun hideSystemChrome() {

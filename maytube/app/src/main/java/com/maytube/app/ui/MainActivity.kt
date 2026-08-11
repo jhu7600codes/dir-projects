@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var pageProgress: ProgressBar
     private lateinit var notConfiguredView: TextView
+    private lateinit var appBar: com.google.android.material.appbar.AppBarLayout
     private lateinit var maytubeWebViewClient: MaytubeWebViewClient
     private lateinit var webChromeClient: MaytubeWebChromeClient
 
@@ -64,11 +65,24 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@registerForActivityResult
             }
-            val changed = newConfig != config
+            val previous = config
+            val hostChanged = previous == null ||
+                newConfig.host != previous.host ||
+                newConfig.port != previous.port ||
+                newConfig.useHttps != previous.useHttps
+            val changed = newConfig != previous
             config = newConfig
             maytubeWebViewClient.updateConfig(newConfig)
-            if (changed) {
-                loadHome()
+            when {
+                hostChanged -> loadHome()
+                // a flag-only change (SABR/1080p/dark mode): reload the
+                // current page in place instead of yanking the user back
+                // to the homepage for something that isn't a navigation
+                changed -> {
+                    applyFlagCookie(newConfig) {
+                        webView.reload()
+                    }
+                }
             }
         }
 
@@ -77,10 +91,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         repository = (application as MaytubeApp).serverConfigRepository
 
-        setSupportActionBar(findViewById<Toolbar>(R.id.mainToolbar))
+        val toolbar = findViewById<Toolbar>(R.id.mainToolbar)
+        setSupportActionBar(toolbar)
+        // "hide the toolbar" meant gone for good, not just during
+        // fullscreen -- long-press (showQuickAccessMenu) is the intended
+        // way to reach Settings/Downloads/Reload/Home/Download now. Only
+        // the toolbar itself goes away; appBar (its container, which also
+        // holds the load-progress bar) still hides during fullscreen so
+        // that doesn't overlay the video either.
+        toolbar.visibility = android.view.View.GONE
 
         pageProgress = findViewById(R.id.pageProgress)
         notConfiguredView = findViewById(R.id.notConfiguredView)
+        appBar = findViewById(R.id.appBar)
         swipeRefresh = findViewById(R.id.swipeRefresh)
         webView = findViewById(R.id.webView)
 
@@ -154,9 +177,18 @@ class MainActivity : AppCompatActivity() {
         webChromeClient = MaytubeWebChromeClient(
             activity = this,
             onProgress = ::onProgress,
-            onTitle = { title -> supportActionBar?.subtitle = title }
+            onTitle = { title -> supportActionBar?.subtitle = title },
+            onFullscreenChanged = { isFullscreen ->
+                appBar.visibility = if (isFullscreen) android.view.View.GONE else android.view.View.VISIBLE
+            },
+            onLongPress = { showQuickAccessMenu() }
         )
         webView.webChromeClient = webChromeClient
+
+        webView.setOnLongClickListener {
+            showQuickAccessMenu()
+            true
+        }
 
         webView.setDownloadListener { url, _, contentDisposition, mimeType, _ ->
             downloadArbitraryUrl(url, contentDisposition, mimeType)
@@ -194,17 +226,70 @@ class MainActivity : AppCompatActivity() {
         settingsLauncher.launch(Intent(this, SettingsActivity::class.java))
     }
 
-    private fun loadHome() {
-        val cfg = config ?: return
-        applyFlagCookie(cfg)
-        webView.loadUrl(cfg.baseUrl + "/")
+    /**
+     * The toolbar is gone for good now (not just during fullscreen), so
+     * this long-press menu -- reachable on the page itself, or on the
+     * fullscreen video surface (see MaytubeWebChromeClient.onShowCustomView)
+     * -- is the only way to reach Settings/Downloads/Reload/Home/Download,
+     * not just a fullscreen-specific convenience.
+     */
+    private fun showQuickAccessMenu() {
+        val items = arrayOf(
+            getString(R.string.action_settings),
+            getString(R.string.action_downloads),
+            getString(R.string.action_reload),
+            getString(R.string.action_home),
+            getString(R.string.action_download_this_video)
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.quick_access_title)
+            .setItems(items) { _, which ->
+                if (webChromeClient.isFullscreen) {
+                    webChromeClient.exitFullscreenIfNeeded(webView)
+                }
+                when (which) {
+                    0 -> openSettings()
+                    1 -> startActivity(Intent(this, DownloadsActivity::class.java))
+                    2 -> webView.reload()
+                    3 -> loadHome()
+                    4 -> downloadCurrentVideo()
+                }
+            }
+            .show()
     }
 
-    private fun applyFlagCookie(cfg: ServerConfig) {
-        CookieManager.getInstance().setCookie(
+    private fun loadHome() {
+        val cfg = config ?: return
+        applyFlagCookie(cfg) {
+            webView.loadUrl(cfg.baseUrl + "/")
+        }
+    }
+
+    /**
+     * Sets the exp_sabr/hd_1080 flag cookie and only calls [onDone] once
+     * it's actually committed.
+     *
+     * CookieManager.setCookie(url, value) (no callback) is fire-and-forget
+     * -- it does not guarantee the cookie is visible to the *very next*
+     * request. Reported directly from a real device: toggling SABR/1080p
+     * in Settings had no effect on playback until the flags were set by
+     * hand through yt2009's own /yt2009_flags.htm. Since yt2009 decides
+     * whether to use SABR by sniffing the raw Cookie header of that exact
+     * request (back/yt2009html.js), a cookie that loses this race is
+     * silently as if the setting were never touched -- calling
+     * loadUrl()/reload() immediately after firing setCookie(), like this
+     * used to, was exactly that race. The 3-arg overload's callback fires
+     * once the write is actually committed; only navigate after that.
+     */
+    private fun applyFlagCookie(cfg: ServerConfig, onDone: () -> Unit) {
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setCookie(
             cfg.baseUrl,
             "maytube_flags=${MobileInjector.flagCookieValue(cfg)}; Path=/; Max-Age=63072000"
-        )
+        ) {
+            cookieManager.flush()
+            onDone()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

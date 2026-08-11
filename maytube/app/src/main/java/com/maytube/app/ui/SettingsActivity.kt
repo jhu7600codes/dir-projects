@@ -29,6 +29,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var httpsSwitch: MaterialSwitch
     private lateinit var sabrSwitch: MaterialSwitch
     private lateinit var hd1080Switch: MaterialSwitch
+    private lateinit var darkModeSwitch: MaterialSwitch
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +46,7 @@ class SettingsActivity : AppCompatActivity() {
         httpsSwitch = findViewById(R.id.httpsSwitch)
         sabrSwitch = findViewById(R.id.sabrSwitch)
         hd1080Switch = findViewById(R.id.hd1080Switch)
+        darkModeSwitch = findViewById(R.id.darkModeSwitch)
 
         repository.get()?.let { config ->
             hostInput.setText(config.host)
@@ -52,6 +54,7 @@ class SettingsActivity : AppCompatActivity() {
             httpsSwitch.isChecked = config.useHttps
             sabrSwitch.isChecked = config.sabrEnabled
             hd1080Switch.isChecked = config.prefer1080p
+            darkModeSwitch.isChecked = config.darkMode
         } ?: run {
             portInput.setText(ServerConfigRepository.DEFAULT_PORT.toString())
         }
@@ -91,7 +94,8 @@ class SettingsActivity : AppCompatActivity() {
             port = port,
             useHttps = httpsSwitch.isChecked,
             sabrEnabled = sabrSwitch.isChecked,
-            prefer1080p = hd1080Switch.isChecked
+            prefer1080p = hd1080Switch.isChecked,
+            darkMode = darkModeSwitch.isChecked
         )
         repository.save(config)
 
