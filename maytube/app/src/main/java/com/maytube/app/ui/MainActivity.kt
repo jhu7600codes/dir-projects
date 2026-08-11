@@ -31,6 +31,7 @@ import com.maytube.app.R
 import com.maytube.app.data.ServerConfig
 import com.maytube.app.data.ServerConfigRepository
 import com.maytube.app.download.VideoDownloader
+import com.maytube.app.webview.MaytubeFullscreenBridge
 import com.maytube.app.webview.MaytubeWebChromeClient
 import com.maytube.app.webview.MaytubeWebViewClient
 import com.maytube.app.webview.MobileInjector
@@ -210,9 +211,13 @@ class MainActivity : AppCompatActivity() {
         // onDestroy -- a config change can still land on a finishing
         // activity
         if (!::webChromeClient.isInitialized || !::webView.isInitialized) return
-        if (webChromeClient.isFullscreen) {
+        if (webChromeClient.hasNativeFullscreenSurface) {
             webChromeClient.relayoutFullscreenView()
         } else {
+            // covers both plain (non-fullscreen) browsing and yt2009's own
+            // CSS-driven fullscreen fallback -- both render as ordinary
+            // WebView content, unlike the native surface above, so the
+            // WebView itself is what needs the nudge either way
             webView.requestLayout()
             webView.invalidate()
         }
@@ -253,6 +258,21 @@ class MainActivity : AppCompatActivity() {
             onLongPress = { showQuickAccessMenu() }
         )
         webView.webChromeClient = webChromeClient
+
+        // yt2009's own CSS-driven "fullscreen-unsupported" fallback (see
+        // MobileInjector.buildInjectionScript's requestFullscreen patch and
+        // MaytubeWebChromeClient.setPseudoFullscreen for the full story --
+        // real native WebView fullscreen drops yt2009's own custom controls,
+        // so it's deliberately disabled in favor of this) reports its own
+        // enter/exit back through here instead of onShowCustomView/
+        // onHideCustomView, which never fire for it since no native
+        // fullscreen ever actually engages.
+        webView.addJavascriptInterface(
+            MaytubeFullscreenBridge(this) { isFullscreen ->
+                webChromeClient.setPseudoFullscreen(isFullscreen)
+            },
+            "MaytubeFullscreen"
+        )
 
         webView.setOnLongClickListener {
             showQuickAccessMenu()

@@ -448,6 +448,81 @@ object MobileInjector {
                     }
                 } catch (e) {}
 
+                // Fullscreen: force yt2009's OWN CSS-driven "fullscreen-unsupported"
+                // fallback (nbedit_style.css, loaded by watch.html: .fullscreen-unsupported
+                // { position:absolute; width:100%; height:100%; z-index:99 }) instead of
+                // ever letting Android WebView's real native fullscreen engage.
+                //
+                // WebView's HTML5 video-fullscreen path is known to drop sibling DOM
+                // overlays: html5-player.js's own play/pause/seek/HD controls live in
+                // sibling divs next to <video> inside #watch-player-div, not inside the
+                // <video> element itself, so real native fullscreen here renders bare
+                // video with zero controls -- confirmed side-by-side against Fennec,
+                // which (notably) shows those same controls, meaning it likely already
+                // hits this exact fallback path itself rather than truly going native.
+                //
+                // assets/site-assets/html5-player.js's own fullscreen button handler
+                // already wraps player_element.requestFullscreen() (player_element ==
+                // #watch-player-div) in try/catch specifically for this: forcing that
+                // call to throw synchronously is what triggers its fallback. Its matching
+                // exit path expects document.exitFullscreen() to throw the same way when
+                // there's nothing real to exit -- real WebView doesn't do that on its own
+                // (rejects a Promise instead, invisibly to a plain sync try/catch), so
+                // that's patched too, or the page gets stuck showing the fake-fullscreen
+                // CSS with no way out via the page's own button.
+                try {
+                    var playerDiv = document.getElementById('watch-player-div');
+                    if (playerDiv && !playerDiv.__maytubeFsPatched) {
+                        playerDiv.__maytubeFsPatched = true;
+                        var forceUnsupported = function() {
+                            throw new DOMException('maytube: forcing the yt2009 CSS fullscreen fallback', 'NotSupportedError');
+                        };
+                        playerDiv.requestFullscreen = forceUnsupported;
+                        playerDiv.webkitRequestFullscreen = forceUnsupported;
+                        playerDiv.webkitRequestFullScreen = forceUnsupported;
+                    }
+                } catch (e) {}
+
+                try {
+                    if (!document.__maytubeExitFsPatched) {
+                        document.__maytubeExitFsPatched = true;
+                        var origExitFullscreen = document.exitFullscreen ? document.exitFullscreen.bind(document) : null;
+                        document.exitFullscreen = function() {
+                            if (!document.fullscreenElement) {
+                                throw new DOMException('maytube: nothing is really fullscreen', 'InvalidStateError');
+                            }
+                            return origExitFullscreen ? origExitFullscreen() : undefined;
+                        };
+                    }
+                } catch (e) {}
+
+                // Relay yt2009's own fullscreen-unsupported class toggle (see above)
+                // back to native code so the app can still apply the same system-bar-
+                // hiding/landscape-lock/keep-screen-on treatment real native fullscreen
+                // would have gotten from MaytubeWebChromeClient.onShowCustomView --
+                // otherwise "fullscreen" here would just be a same-size CSS overlay with
+                // the Android status bar and app toolbar still sitting on top of it.
+                // #baseDiv is present on every page template (see the CSS kdoc above),
+                // so this is safe to attach unconditionally, not just on watch pages.
+                try {
+                    var baseDiv = document.getElementById('baseDiv');
+                    if (baseDiv && !baseDiv.__maytubeFsObserved && window.MaytubeFullscreen) {
+                        baseDiv.__maytubeFsObserved = true;
+                        var wasFullscreen = baseDiv.classList.contains('fullscreen-unsupported');
+                        var observer = new MutationObserver(function() {
+                            var isFullscreenNow = baseDiv.classList.contains('fullscreen-unsupported');
+                            if (isFullscreenNow === wasFullscreen) return;
+                            wasFullscreen = isFullscreenNow;
+                            if (isFullscreenNow) {
+                                window.MaytubeFullscreen.onEnter();
+                            } else {
+                                window.MaytubeFullscreen.onExit();
+                            }
+                        });
+                        observer.observe(baseDiv, { attributes: true, attributeFilter: ['class'] });
+                    }
+                } catch (e) {}
+
                 return true;
             })();
         """.trimIndent()

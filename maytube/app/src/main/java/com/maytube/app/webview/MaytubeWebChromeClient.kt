@@ -36,6 +36,16 @@ class MaytubeWebChromeClient(
     private var customView: View? = null
     private var fullscreenContainer: FrameLayout? = null
     private var customViewCallback: CustomViewCallback? = null
+    // yt2009's own CSS-driven fake-fullscreen mode (see setPseudoFullscreen's kdoc) --
+    // distinct from customView above, which is real native WebView fullscreen. Kept
+    // separate rather than folded into one enum: nothing here should ever try to route
+    // real native fullscreen through the pseudo path or vice versa, and this makes the
+    // two impossible to conflate by construction.
+    private var pseudoFullscreen = false
+    // guards applyFullscreenChrome()/revertFullscreenChrome() against being applied
+    // twice in a row (would clobber the saved "original" values with already-fullscreen
+    // ones) regardless of which of the two paths above triggered it
+    private var chromeApplied = false
     private var originalOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var originalSystemUiVisibility = 0
 
@@ -80,16 +90,13 @@ class MaytubeWebChromeClient(
 
         customView = view
         customViewCallback = callback
-        originalOrientation = activity.requestedOrientation
-        @Suppress("DEPRECATION")
-        originalSystemUiVisibility = decorView.systemUiVisibility
 
         // belt-and-suspenders: this view fully covers decorView (which
         // includes our own Toolbar underneath it) on its own, but hiding
         // the native app chrome explicitly too means there's no gap for it
         // to peek through on any device/WebView-version quirk, and lets
         // MainActivity stop reserving layout space for it while fullscreen
-        onFullscreenChanged(true)
+        applyFullscreenChrome()
         // long-press works during fullscreen too -- this view (not our own
         // WebView) is what's actually on screen and receiving touches now
         view.setOnLongClickListener {
@@ -129,9 +136,6 @@ class MaytubeWebChromeClient(
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
-        hideSystemChrome()
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // Reported directly from a real device (Pixel 3a, 1080x2200): even
         // with the black backdrop above, the video itself rendered
@@ -180,12 +184,60 @@ class MaytubeWebChromeClient(
         }
         fullscreenContainer = null
         customView = null
+        customViewCallback?.onCustomViewHidden()
+        customViewCallback = null
+        revertFullscreenChrome()
+    }
+
+    /**
+     * Toggles the same system-chrome-hiding/landscape-lock/keep-screen-on
+     * treatment [onShowCustomView]/[onHideCustomView] give real native
+     * fullscreen, but for yt2009's own CSS-driven "fullscreen-unsupported"
+     * fallback instead (see MobileInjector.buildInjectionScript's
+     * requestFullscreen patch for why real native fullscreen is
+     * deliberately disabled for the player: it drops yt2009's own custom
+     * controls, which this fallback -- the exact one yt2009 already ships
+     * for browsers without a working Fullscreen API -- keeps intact).
+     *
+     * Driven by [MaytubeFullscreenBridge], which the injected script calls
+     * whenever a MutationObserver sees #baseDiv gain/lose that CSS class.
+     * No native View is added/removed here (unlike the real path) --
+     * yt2009's own CSS already handles making the player cover the
+     * viewport within the WebView itself; this only handles the
+     * surrounding native chrome.
+     *
+     * If real native fullscreen is somehow *also* active ([customView] !=
+     * null), that takes precedence and this is a no-op -- the two should
+     * never both be genuinely engaged at once given the player is what's
+     * being toggled, but this keeps [revertFullscreenChrome] from firing
+     * early out from under a real fullscreen session, or vice versa.
+     */
+    fun setPseudoFullscreen(active: Boolean) {
+        if (customView != null) return
+        if (active == pseudoFullscreen) return
+        pseudoFullscreen = active
+        if (active) applyFullscreenChrome() else revertFullscreenChrome()
+    }
+
+    private fun applyFullscreenChrome() {
+        if (chromeApplied) return
+        chromeApplied = true
+        originalOrientation = activity.requestedOrientation
+        @Suppress("DEPRECATION")
+        originalSystemUiVisibility = decorView.systemUiVisibility
+        onFullscreenChanged(true)
+        hideSystemChrome()
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun revertFullscreenChrome() {
+        if (!chromeApplied) return
+        chromeApplied = false
         @Suppress("DEPRECATION")
         decorView.systemUiVisibility = originalSystemUiVisibility
         activity.requestedOrientation = originalOrientation
         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        customViewCallback?.onCustomViewHidden()
-        customViewCallback = null
         onFullscreenChanged(false)
     }
 
@@ -246,7 +298,19 @@ class MaytubeWebChromeClient(
         }
     }
 
-    val isFullscreen: Boolean get() = customView != null
+    // covers both real native fullscreen (customView) and yt2009's own
+    // CSS-driven fallback (pseudoFullscreen, see setPseudoFullscreen) --
+    // callers that just need "is something fullscreen right now" (the
+    // quick-access menu, back-button handling) shouldn't have to care
+    // which kind
+    val isFullscreen: Boolean get() = customView != null || pseudoFullscreen
+
+    // MainActivity.onConfigurationChanged needs to tell these apart:
+    // relayoutFullscreenView()'s pillarboxing-after-rotation workaround is
+    // specific to the real native surface below, not yt2009's own CSS
+    // fallback, which is ordinary WebView content and just needs the
+    // WebView itself nudged the normal way instead
+    val hasNativeFullscreenSurface: Boolean get() = customView != null
 
     /**
      * Reported directly from a real device: after backing out of
@@ -278,15 +342,22 @@ class MaytubeWebChromeClient(
      * short delayed fallback covers the case where there's no real
      * fullscreenElement to exit (nothing for Chromium to call back for)
      * or the callback genuinely never arrives.
+     *
+     * Also covers yt2009's own CSS-driven fallback (pseudoFullscreen):
+     * there's no real fullscreenElement to ask Chromium to exit in that
+     * case (document.fullscreenElement is null the whole time real native
+     * fullscreen is disabled for the player -- see MobileInjector), so
+     * this clicks yt2009's own fullscreen button instead, taking its exit
+     * branch exactly as if the user had tapped it themselves. The delayed
+     * fallback below still applies if that click doesn't land for
+     * whatever reason (button not found, page navigated away, etc).
      */
     fun exitFullscreenIfNeeded(webView: WebView) {
         if (!isFullscreen) return
-        webView.evaluateJavascript(
-            "(function(){ if (document.fullscreenElement) { document.exitFullscreen(); } })();",
-            null
-        )
+        webView.evaluateJavascript(EXIT_FULLSCREEN_JS, null)
         webView.postDelayed({
-            if (isFullscreen) onHideCustomView()
+            if (customView != null) onHideCustomView()
+            if (pseudoFullscreen) setPseudoFullscreen(false)
         }, EXIT_FALLBACK_DELAY_MS)
     }
 
@@ -294,5 +365,17 @@ class MaytubeWebChromeClient(
         private const val CONSOLE_TAG = "MaytubeWebConsole"
         private const val RELAYOUT_SETTLE_DELAY_MS = 400L
         private const val EXIT_FALLBACK_DELAY_MS = 600L
+
+        // .video_controls .fullscreen / "opened" class: exactly how
+        // assets/site-assets/html5-player.js selects and marks its own
+        // fullscreen button (fullscreen_btn = $(".video_controls .fullscreen"),
+        // fullscreen_btn.className = "fullscreen opened" while active)
+        private const val EXIT_FULLSCREEN_JS = """
+            (function() {
+                if (document.fullscreenElement) { document.exitFullscreen(); return; }
+                var btn = document.querySelector('.video_controls .fullscreen');
+                if (btn && btn.classList.contains('opened')) { btn.click(); }
+            })();
+        """
     }
 }

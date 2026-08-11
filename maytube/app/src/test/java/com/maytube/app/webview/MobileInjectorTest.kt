@@ -180,6 +180,50 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `forces yt2009's own CSS fullscreen fallback instead of real native fullscreen`() {
+        // regression test: real WebView fullscreen (onShowCustomView) drops
+        // html5-player.js's own sibling control divs, rendering bare video
+        // with no play/seek/HD controls -- confirmed side-by-side against
+        // Fennec, which shows those controls. Forcing #watch-player-div's
+        // requestFullscreen() to throw synchronously is what triggers
+        // html5-player.js's own try/catch fallback into its existing
+        // CSS-driven "fullscreen-unsupported" mode (nbedit_style.css),
+        // which keeps everything intact.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("getElementById('watch-player-div')"))
+        assertTrue(script.contains("playerDiv.requestFullscreen ="))
+        assertTrue(script.contains("NotSupportedError"))
+    }
+
+    @Test
+    fun `patches document exitFullscreen to throw when nothing is really fullscreen`() {
+        // regression test: html5-player.js's own exit path only runs its
+        // cleanup (which un-does the fake-fullscreen CSS classes) inside a
+        // catch block, expecting document.exitFullscreen() to throw
+        // synchronously when there's nothing real to exit. Real WebView
+        // instead resolves/rejects a Promise, invisibly to a plain
+        // synchronous try/catch -- without this patch, the page gets stuck
+        // showing the fake-fullscreen CSS with no way out via its own button.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("document.exitFullscreen = function()"))
+        assertTrue(script.contains("InvalidStateError"))
+    }
+
+    @Test
+    fun `relays yt2009's fullscreen-unsupported class toggle to native code`() {
+        // regression test: without this, "fullscreen" would just be a
+        // same-size CSS overlay with the Android status bar/app toolbar
+        // still on top of it -- MaytubeFullscreenBridge is what lets
+        // MaytubeWebChromeClient still apply the same system-chrome-hiding/
+        // landscape-lock treatment real native fullscreen would have gotten.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("fullscreen-unsupported"))
+        assertTrue(script.contains("MutationObserver"))
+        assertTrue(script.contains("window.MaytubeFullscreen.onEnter()"))
+        assertTrue(script.contains("window.MaytubeFullscreen.onExit()"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }
