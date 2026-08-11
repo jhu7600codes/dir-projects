@@ -128,7 +128,9 @@ object MobileInjector {
         .feeditem-bigthumb .feedmodule-singleform-info,
         .feeditem-compressed .feedmodule-singleform-info,
         .video-main-content, .channel-main-content, .playlist-main-content,
-        .movie-main-content, .trailer-main-content, .show-main-content {
+        .movie-main-content, .trailer-main-content, .show-main-content,
+        #logo, #masthead-search, #masthead-qr, #masthead-utility,
+        #masthead-nav-main, #masthead-nav-user {
             float: none !important;
             display: block !important;
             width: 100% !important;
@@ -136,6 +138,18 @@ object MobileInjector {
             margin-left: 0 !important;
             margin-right: 0 !important;
             box-sizing: border-box !important;
+        }
+        /* #masthead itself got squeezed from 960px down to mobile width,
+           but #logo/#masthead-search (float:left) and #masthead-nav-user
+           (float:right) -- all sized/positioned for the original 960px bar
+           -- were untouched by that alone, so they collided/overlapped
+           instead of reflowing. unfloating the whole masthead's direct
+           children (above) fixes that, but #masthead-nav-main/-user pack
+           several links onto one line via inline margins meant for a wide
+           bar -- let those links wrap onto their own lines too */
+        #masthead-nav-main a, #masthead-nav-user a {
+            display: inline-block !important;
+            margin: 2px 8px 2px 0 !important;
         }
 
         /* grid/list video listing cells: inline-block percentage widths
@@ -263,6 +277,61 @@ object MobileInjector {
                 } catch (e) {}
 
                 return true;
+            })();
+        """.trimIndent()
+    }
+
+    /**
+     * Diagnostic-only hook for the SABR playback pipeline: patches
+     * XMLHttpRequest.prototype.open so every request to /sabr_playback
+     * (that's what html5-player.js's requestSabr() uses -- a raw
+     * XMLHttpRequest, not fetch) logs its outcome via console.log, which
+     * MaytubeWebChromeClient.onConsoleMessage then forwards to logcat
+     * (debug builds only) under the tag "MaytubeWebConsole", prefixed
+     * "[maytube-sabr]". This exists so SABR/MSE playback issues -- which
+     * show up on-screen as nothing more informative than a stuck 0:00/0:00
+     * -- can be diagnosed from the device alone:
+     *
+     *   su -c "logcat -s MaytubeWebConsole"
+     *
+     * No PC/chrome://inspect needed. Must run before html5-player.js's own
+     * script executes, so this is injected via onPageStarted rather than
+     * onPageFinished (see MaytubeWebViewClient) -- unlike the CSS/cookie
+     * injection in buildInjectionScript, this doesn't touch the DOM at all
+     * so it's safe to run before the document has a <head>/<body>.
+     */
+    fun buildSabrDiagnosticScript(): String {
+        return """
+            (function() {
+                if (window.__maytubeSabrHooked) return;
+                window.__maytubeSabrHooked = true;
+                try {
+                    var OrigOpen = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        if (typeof url === 'string' && url.indexOf('sabr_playback') !== -1) {
+                            var self = this;
+                            var startedAt = Date.now();
+                            this.addEventListener('loadend', function() {
+                                try {
+                                    console.log('[maytube-sabr] ' + method + ' ' + url
+                                        + ' status=' + self.status
+                                        + ' parts=' + self.getResponseHeader('x-part-count')
+                                        + ' itag=' + self.getResponseHeader('x-yt2009-used-itag')
+                                        + ' mime=' + self.getResponseHeader('x-yt2009-video-mime')
+                                        + ' redirect=' + self.getResponseHeader('x-yt2009-got-internal-redirect')
+                                        + ' bytes=' + (self.response && self.response.byteLength)
+                                        + ' ' + (Date.now() - startedAt) + 'ms');
+                                } catch (e) {
+                                    console.log('[maytube-sabr] log error: ' + e);
+                                }
+                            });
+                        }
+                        return OrigOpen.apply(this, arguments);
+                    };
+                    console.log('[maytube-sabr] request/response logging active');
+                } catch (e) {
+                    console.log('[maytube-sabr] failed to hook XMLHttpRequest: ' + e);
+                }
             })();
         """.trimIndent()
     }

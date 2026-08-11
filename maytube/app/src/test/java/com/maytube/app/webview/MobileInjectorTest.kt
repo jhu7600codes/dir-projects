@@ -55,6 +55,33 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `css unfloats the masthead's own children, not just the masthead itself`() {
+        // regression test: #masthead was squeezed to mobile width but its
+        // children (#logo/#masthead-search float:left,
+        // #masthead-nav-user float:right -- all sized for the original
+        // 960px bar) were left untouched, so they overlapped each other
+        // instead of reflowing.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#logo"))
+        assertTrue(script.contains("#masthead-search"))
+        assertTrue(script.contains("#masthead-nav-user"))
+        assertTrue(script.contains("#masthead-nav-main"))
+    }
+
+    @Test
+    fun `sabr diagnostic script has balanced braces and hooks sabr_playback only`() {
+        val script = MobileInjector.buildSabrDiagnosticScript()
+        assertEquals("unbalanced curly braces", script.count { it == '{' }, script.count { it == '}' })
+        assertEquals("unbalanced parens", script.count { it == '(' }, script.count { it == ')' })
+        assertTrue(script.contains("sabr_playback"))
+        assertTrue(script.contains("XMLHttpRequest.prototype.open"))
+        // must guard against re-wrapping XMLHttpRequest.prototype.open on
+        // every navigation, since addDocumentStartJavaScript re-runs this
+        // on every page load
+        assertTrue(script.contains("__maytubeSabrHooked"))
+    }
+
+    @Test
     fun `player css never blanket-resizes every div inside watch-player-div`() {
         // regression test: html5-player.js appends its own JS-managed
         // overlay divs (.annotations_container, an end-screen/related

@@ -20,6 +20,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.maytube.app.MaytubeApp
@@ -158,6 +160,18 @@ class MainActivity : AppCompatActivity() {
 
         webView.setDownloadListener { url, _, contentDisposition, mimeType, _ ->
             downloadArbitraryUrl(url, contentDisposition, mimeType)
+        }
+
+        // registers once, then runs on every navigation before the page's
+        // own scripts execute -- unlike evaluateJavascript() called from
+        // onPageStarted, which has no such guarantee. See
+        // MobileInjector.buildSabrDiagnosticScript() for what/why.
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(
+                webView,
+                MobileInjector.buildSabrDiagnosticScript(),
+                setOf("*")
+            )
         }
     }
 
