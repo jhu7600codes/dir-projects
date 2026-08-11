@@ -162,6 +162,29 @@
                 android:textColor="@color/maytube_text_secondary"
                 android:textSize="12sp" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="20dp"
+                android:background="#2A2A2A" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/nativePlayerSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/label_native_player"
+                android:textColor="@color/maytube_white"
+                app:showText="false" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/label_native_player_desc"
+                android:textColor="@color/maytube_text_secondary"
+                android:textSize="12sp" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/saveButton"
                 android:layout_width="match_parent"

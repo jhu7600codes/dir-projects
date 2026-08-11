@@ -317,6 +317,7 @@ object MobileInjector {
         val flagCookie = flagCookieValue(config)
         val cookieJson = JSONObject.quote("maytube_flags=$flagCookie; Path=/; Max-Age=63072000")
         val darkModeJs = if (config.darkMode) "true" else "false"
+        val nativePlayerJs = if (config.nativePlayer) "true" else "false"
         return """
             (function() {
                 try {
@@ -349,6 +350,39 @@ object MobileInjector {
 
                 try {
                     document.documentElement.classList.toggle('maytube-dark', $darkModeJs);
+                } catch (e) {}
+
+                // Settings > native player: playback happens in
+                // PlayerActivity instead, via its own separate SABR fetch
+                // (see VideoDownloader/SabrFragmentDownloader) -- letting
+                // the page's own player run at the same time would just
+                // waste battery/bandwidth double-fetching the same video
+                // for a player the user can't even see (MainActivity hides
+                // the WebView behind PlayerActivity while it's up). Stop it
+                // from loading media at all, and swap in a small on-page
+                // hint so the empty player box isn't just a dead black
+                // rectangle. Playback itself is triggered from
+                // MainActivity's "Play in native player" button, not from
+                // here -- this only ever pauses/quiets the WebView's own copy.
+                try {
+                    if ($nativePlayerJs) {
+                        var pv = document.querySelector('#watch-player-div video');
+                        if (pv) {
+                            pv.pause();
+                            pv.removeAttribute('autoplay');
+                            pv.src = '';
+                            pv.load();
+                        }
+                        var box = document.getElementById('watch-player-div');
+                        if (box && !document.getElementById('maytube-native-hint')) {
+                            var hint = document.createElement('div');
+                            hint.id = 'maytube-native-hint';
+                            hint.textContent = 'Native player is on (Settings) -- use "Play in native player" below to watch.';
+                            hint.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+                                'text-align:center;color:#fff;background:#000;padding:16px;box-sizing:border-box;font-size:13px;z-index:5;';
+                            box.appendChild(hint);
+                        }
+                    }
                 } catch (e) {}
 
                 return true;

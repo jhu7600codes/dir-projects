@@ -17,6 +17,8 @@
     <string name="label_prefer_1080p_desc">Sets the hd_1080 flag yt2009 checks for the HD quality button.</string>
     <string name="label_dark_mode">Dark mode</string>
     <string name="label_dark_mode_desc">yt2009 has no dark theme of its own, so this inverts the page (and un-inverts thumbnails/video so they still look normal). Not pixel-perfect, but usable in the dark.</string>
+    <string name="label_native_player">Native player (experimental)</string>
+    <string name="label_native_player_desc">Plays video in maytube\'s own player instead of the WebView\'s. Fixes fullscreen (video is centered/letterboxed, never cropped or wedged) at the cost of buffering the whole video before playback starts -- no live streaming yet. Still uses SABR to fetch it. The WebView is still used for browsing/search either way.</string>
     <string name="action_save">Save &amp; connect</string>
     <string name="error_host_required">Enter a server IP or hostname</string>
     <string name="error_port_invalid">Enter a valid port (1–65535)</string>
@@ -29,6 +31,17 @@
     <string name="action_reload">Reload page</string>
     <string name="action_home">Go to home</string>
     <string name="action_download_this_video">Download this video</string>
+    <string name="action_play_natively">Play in native player</string>
+
+    <!-- Native player -->
+    <string name="player_title">maytube player</string>
+    <string name="player_buffering">Buffering %1$s…</string>
+    <string name="player_buffering_progress">%1$s / %2$s fetched</string>
+    <string name="player_buffering_progress_unknown">%1$s fetched</string>
+    <string name="player_error">Couldn\'t play this video: %1$s</string>
+    <string name="player_close">Close</string>
+    <string name="player_retry">Retry</string>
+    <string name="player_fullscreen">Fullscreen</string>
 
     <!-- Downloads -->
     <string name="downloads_title">Downloads</string>
