@@ -6,14 +6,17 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Message
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import com.maytube.app.BuildConfig
 
 /**
  * Handles HTML5 fullscreen video requests (video.requestFullscreen() from
@@ -41,6 +44,28 @@ class MaytubeWebChromeClient(
 
     override fun onReceivedTitle(view: WebView, title: String?) {
         onTitle(title)
+    }
+
+    /**
+     * Overriding this replaces WebView's own default "print to logcat"
+     * behavior with this one -- so this IS how you get the page's console
+     * output into logcat, not something extra on top of it. Debug builds
+     * only. Filter for it on-device with (no PC/adb needed):
+     *   su -c "logcat -s MaytubeWebConsole"
+     * See also MobileInjector's SABR request/response diagnostic hook,
+     * which logs through here with a "[maytube-sabr]" prefix.
+     */
+    override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+        if (BuildConfig.DEBUG) {
+            val text = "${consoleMessage.message()} " +
+                "(${consoleMessage.sourceId()}:${consoleMessage.lineNumber()})"
+            when (consoleMessage.messageLevel()) {
+                ConsoleMessage.MessageLevel.ERROR -> Log.e(CONSOLE_TAG, text)
+                ConsoleMessage.MessageLevel.WARNING -> Log.w(CONSOLE_TAG, text)
+                else -> Log.d(CONSOLE_TAG, text)
+            }
+        }
+        return true
     }
 
     override fun onShowCustomView(view: View, callback: CustomViewCallback) {
@@ -146,5 +171,9 @@ class MaytubeWebChromeClient(
             )
             onHideCustomView()
         }
+    }
+
+    companion object {
+        private const val CONSOLE_TAG = "MaytubeWebConsole"
     }
 }

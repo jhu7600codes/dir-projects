@@ -69,6 +69,19 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `sabr diagnostic script has balanced braces and hooks sabr_playback only`() {
+        val script = MobileInjector.buildSabrDiagnosticScript()
+        assertEquals("unbalanced curly braces", script.count { it == '{' }, script.count { it == '}' })
+        assertEquals("unbalanced parens", script.count { it == '(' }, script.count { it == ')' })
+        assertTrue(script.contains("sabr_playback"))
+        assertTrue(script.contains("XMLHttpRequest.prototype.open"))
+        // must guard against re-wrapping XMLHttpRequest.prototype.open on
+        // every navigation, since addDocumentStartJavaScript re-runs this
+        // on every page load
+        assertTrue(script.contains("__maytubeSabrHooked"))
+    }
+
+    @Test
     fun `player css never blanket-resizes every div inside watch-player-div`() {
         // regression test: html5-player.js appends its own JS-managed
         // overlay divs (.annotations_container, an end-screen/related

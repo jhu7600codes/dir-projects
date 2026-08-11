@@ -282,6 +282,61 @@ object MobileInjector {
     }
 
     /**
+     * Diagnostic-only hook for the SABR playback pipeline: patches
+     * XMLHttpRequest.prototype.open so every request to /sabr_playback
+     * (that's what html5-player.js's requestSabr() uses -- a raw
+     * XMLHttpRequest, not fetch) logs its outcome via console.log, which
+     * MaytubeWebChromeClient.onConsoleMessage then forwards to logcat
+     * (debug builds only) under the tag "MaytubeWebConsole", prefixed
+     * "[maytube-sabr]". This exists so SABR/MSE playback issues -- which
+     * show up on-screen as nothing more informative than a stuck 0:00/0:00
+     * -- can be diagnosed from the device alone:
+     *
+     *   su -c "logcat -s MaytubeWebConsole"
+     *
+     * No PC/chrome://inspect needed. Must run before html5-player.js's own
+     * script executes, so this is injected via onPageStarted rather than
+     * onPageFinished (see MaytubeWebViewClient) -- unlike the CSS/cookie
+     * injection in buildInjectionScript, this doesn't touch the DOM at all
+     * so it's safe to run before the document has a <head>/<body>.
+     */
+    fun buildSabrDiagnosticScript(): String {
+        return """
+            (function() {
+                if (window.__maytubeSabrHooked) return;
+                window.__maytubeSabrHooked = true;
+                try {
+                    var OrigOpen = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        if (typeof url === 'string' && url.indexOf('sabr_playback') !== -1) {
+                            var self = this;
+                            var startedAt = Date.now();
+                            this.addEventListener('loadend', function() {
+                                try {
+                                    console.log('[maytube-sabr] ' + method + ' ' + url
+                                        + ' status=' + self.status
+                                        + ' parts=' + self.getResponseHeader('x-part-count')
+                                        + ' itag=' + self.getResponseHeader('x-yt2009-used-itag')
+                                        + ' mime=' + self.getResponseHeader('x-yt2009-video-mime')
+                                        + ' redirect=' + self.getResponseHeader('x-yt2009-got-internal-redirect')
+                                        + ' bytes=' + (self.response && self.response.byteLength)
+                                        + ' ' + (Date.now() - startedAt) + 'ms');
+                                } catch (e) {
+                                    console.log('[maytube-sabr] log error: ' + e);
+                                }
+                            });
+                        }
+                        return OrigOpen.apply(this, arguments);
+                    };
+                    console.log('[maytube-sabr] request/response logging active');
+                } catch (e) {
+                    console.log('[maytube-sabr] failed to hook XMLHttpRequest: ' + e);
+                }
+            })();
+        """.trimIndent()
+    }
+
+    /**
      * Extracts a yt2009/YouTube style 11-char video id from a watch page
      * URL (?v=... on /watch, /mobile/watch, /embed/, etc). Returns null if
      * the current page isn't a watch page.
