@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.graphics.Color
 import android.os.Build
 import android.os.Message
 import android.util.Log
@@ -33,6 +34,7 @@ class MaytubeWebChromeClient(
 ) : WebChromeClient() {
 
     private var customView: View? = null
+    private var fullscreenContainer: FrameLayout? = null
     private var customViewCallback: CustomViewCallback? = null
     private var originalOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     private var originalSystemUiVisibility = 0
@@ -95,8 +97,33 @@ class MaytubeWebChromeClient(
             true
         }
 
-        decorView.addView(
+        // Reported directly from a real device: fullscreen video filled
+        // the screen edge to edge with no black bars, even for content
+        // whose aspect ratio doesn't match the (often wider-than-16:9,
+        // e.g. 20:9) screen. Chromium's own fullscreen video surface does
+        // letterbox internally by default -- the actual bug was that
+        // `view` was being added straight onto decorView, whose
+        // background is whatever Theme.Maytube's default is (never set to
+        // black), so any letterboxed gap showed as the app's light theme
+        // background instead of black -- easy to miss entirely against
+        // dark video content, reads as "no bars" even though letterboxing
+        // was happening. Wrapping it in an explicitly black container
+        // guarantees a real black backdrop regardless of decorView's own
+        // background.
+        val container = FrameLayout(activity).apply {
+            setBackgroundColor(Color.BLACK)
+        }
+        container.addView(
             view,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+        fullscreenContainer = container
+
+        decorView.addView(
+            container,
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -108,8 +135,12 @@ class MaytubeWebChromeClient(
     }
 
     override fun onHideCustomView() {
-        val view = customView ?: return
-        decorView.removeView(view)
+        customView ?: return
+        val container = fullscreenContainer
+        if (container != null) {
+            decorView.removeView(container)
+        }
+        fullscreenContainer = null
         customView = null
         @Suppress("DEPRECATION")
         decorView.systemUiVisibility = originalSystemUiVisibility
