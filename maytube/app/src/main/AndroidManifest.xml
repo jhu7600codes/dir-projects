@@ -50,6 +50,30 @@
             android:label="@string/player_title"
             android:parentActivityName=".ui.MainActivity" />
 
+        <!-- Settings > native player: MainActivity redirects here instead
+             of loading its WebView at all, see MainActivity.onCreate -->
+        <activity
+            android:name=".ui.HomeActivity"
+            android:exported="false"
+            android:label="@string/native_mode_home_title" />
+
+        <activity
+            android:name=".ui.SearchActivity"
+            android:exported="false"
+            android:label="@string/action_search"
+            android:parentActivityName=".ui.HomeActivity" />
+
+        <activity
+            android:name=".ui.WatchActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
+            android:parentActivityName=".ui.HomeActivity" />
+
+        <activity
+            android:name=".ui.ChannelActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.HomeActivity" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

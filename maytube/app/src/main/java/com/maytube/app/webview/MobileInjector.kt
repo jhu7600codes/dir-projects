@@ -115,6 +115,28 @@ object MobileInjector {
             box-sizing: border-box !important;
         }
 
+        /* page-wide gutter: yt2009 has zero side padding anywhere, so
+           reflowed content sits flush against the screen edges -- cramped
+           and distinctly "raw HTML", not "app". #baseDiv specifically (not
+           #masthead-container, which stays full-bleed as its own header
+           bar) gets the inset, box-sizing:border-box above means it can't
+           cause overflow.
+           This is also *the* mechanism behind "shrink the player, don't
+           touch anything else about it": every element from here down to
+           #watch-player-div is set to width:100% of its own direct parent
+           (see the float-based layout bucket below), so narrowing the top
+           of that chain narrows every descendant in it by the same
+           percentage math, all the way down -- including
+           #watch-player-div's own 56.25% aspect-ratio box, since that
+           percentage is resolved against ITS parent's (now-narrower)
+           width. The player container and its video/object/embed rules
+           further down are completely untouched; they just end up
+           rendering into a narrower box, exactly like every other element
+           on the page now does. */
+        #baseDiv {
+            padding: 0 16px !important;
+        }
+
         /* every fixed-width/percentage float-based two-column or
            multi-column layout found in yt2009's own CSS -- stack
            vertically instead of overflowing sideways. see the class kdoc
@@ -153,6 +175,18 @@ object MobileInjector {
             margin: 2px 8px 2px 0 !important;
         }
 
+        /* keep search/nav reachable on long pages without needing to scroll
+           back up -- layout-only (no color changes here, deliberately: the
+           masthead's #logo is a cropped sprite image tuned for yt2009's own
+           original background, and dark mode is handled globally by the
+           invert filter below rather than per-element color overrides, so
+           hardcoding a background here would fight both of those). */
+        #masthead-container {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+        }
+
         /* #logo (and #masthead-qr, unused in current markup but harmless
            to cover) are NOT plain elements -- they're .master-sprite
            buttons, a fixed-size crop window onto one shared sprite sheet
@@ -174,13 +208,24 @@ object MobileInjector {
 
         /* grid/list video listing cells: inline-block percentage widths
            (sometimes set inline per-instance) -- forced full width so they
-           stack one per row instead of cramming down to illegible slivers */
+           stack one per row instead of cramming down to illegible slivers.
+           Also given actual card chrome (background/radius/shadow/spacing)
+           -- yt2009's own CSS gives these cells no visual separation of
+           their own, so a stacked column of them reads as one undifferentiated
+           wall of text+thumbnails rather than a list of distinct, tappable
+           items. Purely additive (background/radius/padding/margin/shadow),
+           doesn't touch the sizing rules above it. */
         .video-cell, .channel-cell, .playlist-cell, .movie-cell,
         .show-cell, .trailer-cell {
             display: block !important;
             width: 100% !important;
             max-width: 100% !important;
             box-sizing: border-box !important;
+            background: #fff !important;
+            border-radius: 8px !important;
+            padding: 8px !important;
+            margin: 0 0 10px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
         }
 
         /* the search results sort/filter bar is a real <table> with
@@ -276,6 +321,24 @@ object MobileInjector {
         }
         a, button, .yt-uix-button, input[type="submit"], input[type="button"] {
             min-height: 30px;
+        }
+        /* touch-target polish: rounder corners, real padding instead of
+           whatever inline sizing yt2009's own markup happens to have.
+           Shape/spacing only -- no background/color, same reasoning as the
+           masthead above (these often carry their own yt-button-primary/
+           yt-button-urgent sprite-based styling that colors shouldn't fight). */
+        a.yt-uix-button, button.yt-uix-button,
+        input[type="submit"], input[type="button"] {
+            border-radius: 4px !important;
+            padding: 6px 14px !important;
+        }
+
+        /* yt2009's own line-height is whatever the browser default is,
+           which reads tight/cramped for anything more than a line or two
+           (descriptions, comments). body is always present regardless of
+           which page template loaded, so this is safe everywhere. */
+        body {
+            line-height: 1.5 !important;
         }
 
         /* non-destructive safety net for pages/elements not specifically

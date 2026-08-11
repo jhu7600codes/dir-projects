@@ -68,6 +68,11 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@registerForActivityResult
             }
+            if (newConfig.nativePlayer) {
+                startActivity(Intent(this, HomeActivity::class.java))
+                finish()
+                return@registerForActivityResult
+            }
             val previous = config
             val hostChanged = previous == null ||
                 newConfig.host != previous.host ||
@@ -91,8 +96,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
         repository = (application as MaytubeApp).serverConfigRepository
+
+        // Settings > native player: hand off to the fully-native
+        // browse/watch/comments shell (HomeActivity) instead of ever
+        // creating/loading this Activity's WebView at all -- checked
+        // before setContentView so a native-mode launch never even
+        // inflates the WebView layout.
+        val existingConfig = repository.get()
+        if (existingConfig?.nativePlayer == true) {
+            startActivity(Intent(this, HomeActivity::class.java))
+            finish()
+            return
+        }
+
+        setContentView(R.layout.activity_main)
 
         val toolbar = findViewById<Toolbar>(R.id.mainToolbar)
         setSupportActionBar(toolbar)
@@ -127,30 +145,36 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val existing = repository.get()
-        if (existing == null) {
+        if (existingConfig == null) {
             notConfiguredView.visibility = android.view.View.VISIBLE
             openSettings()
         } else {
-            config = existing
-            maytubeWebViewClient.updateConfig(existing)
+            config = existingConfig
+            maytubeWebViewClient.updateConfig(existingConfig)
             loadHome()
         }
     }
 
     override fun onResume() {
         super.onResume()
-        webView.onResume()
+        // Settings > native player: onCreate redirects to HomeActivity and
+        // returns before webView (or anything else past that point) ever
+        // gets initialized -- but this Activity still goes through its
+        // normal lifecycle on the way out (crashed on a real device:
+        // UninitializedPropertyAccessException from onDestroy touching
+        // webView unconditionally). Every callback below that touches
+        // webView has to check it was actually set up first.
+        if (::webView.isInitialized) webView.onResume()
     }
 
     override fun onPause() {
-        webView.onPause()
+        if (::webView.isInitialized) webView.onPause()
         CookieManager.getInstance().flush()
         super.onPause()
     }
 
     override fun onDestroy() {
-        webView.destroy()
+        if (::webView.isInitialized) webView.destroy()
         super.onDestroy()
     }
 
@@ -182,6 +206,10 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        // same native-mode-never-set-up-webView guard as onResume/onPause/
+        // onDestroy -- a config change can still land on a finishing
+        // activity
+        if (!::webChromeClient.isInitialized || !::webView.isInitialized) return
         if (webChromeClient.isFullscreen) {
             webChromeClient.relayoutFullscreenView()
         } else {

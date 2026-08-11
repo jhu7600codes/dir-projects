@@ -43,6 +43,18 @@
     <string name="player_retry">Retry</string>
     <string name="player_fullscreen">Fullscreen</string>
 
+    <!-- Native browse/search/watch/channel (Settings > native player) -->
+    <string name="action_search">Search</string>
+    <string name="home_error">Couldn\'t load the home feed: %1$s</string>
+    <string name="watch_related_header">Related videos</string>
+    <string name="watch_comments_header">Comments</string>
+    <string name="watch_comments_empty">No comments yet.</string>
+    <string name="watch_description_more">More</string>
+    <string name="watch_description_less">Less</string>
+    <string name="channel_videos_header">Videos</string>
+    <string name="watch_quality_title">Quality</string>
+    <string name="native_mode_home_title">maytube</string>
+
     <!-- Downloads -->
     <string name="downloads_title">Downloads</string>
     <string name="downloads_empty">No downloads yet. Open a video and use \"Download this video\" from the menu.</string>

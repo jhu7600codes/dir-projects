@@ -1,8 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- kept for anything not yet migrated off the old red brand accent -->
     <color name="maytube_red">#CC1B1B</color>
     <color name="maytube_red_dark">#8F0F0F</color>
+
+    <!--
+        Holo (Android 3.0-4.4's design language): pure-black surfaces, no
+        elevation/shadows, hairline dividers instead, flat borderless
+        buttons, and the signature Holo Blue accent: these four exact
+        values are the real platform constants
+        (android:color/holo_blue_light, holo_blue_dark, holo_blue_bright,
+        and the classic ActionBar background gray), not an approximation.
+    -->
+    <color name="holo_blue_light">#33B5E5</color>
+    <color name="holo_blue_dark">#0099CC</color>
+    <color name="holo_blue_bright">#0099FF</color>
+    <color name="holo_red_light">#FF4444</color>
+    <color name="holo_background_dark">#000000</color>
+    <color name="holo_background_dark_surface">#1A1A1A</color>
+    <color name="holo_divider">#33FFFFFF</color>
+
     <color name="maytube_white">#FFFFFF</color>
-    <color name="maytube_bg">#121212</color>
+    <color name="maytube_bg">@color/holo_background_dark</color>
+    <color name="maytube_surface">@color/holo_background_dark_surface</color>
     <color name="maytube_text_secondary">#B3B3B3</color>
 </resources>
