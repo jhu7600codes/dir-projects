@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- All-caps, letter-spaced, condensed labels for headers/buttons are the
+     actual Holo signature (see themes.xml Widget.Maytube.SectionHeader):
+     plain black backgrounds alone just read as "AMOLED dark mode," not
+     Holo specifically. -->
 <TextView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Maytube.SectionHeader"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingStart="12dp"
     android:paddingTop="16dp"
     android:paddingEnd="12dp"
-    android:paddingBottom="8dp"
-    android:textColor="@color/holo_blue_light"
-    android:textSize="14sp"
-    android:textStyle="bold" />
+    android:paddingBottom="8dp" />

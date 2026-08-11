@@ -68,13 +68,12 @@
 
     <TextView
         android:id="@+id/watchHeaderDescriptionToggle"
+        style="@style/Widget.Maytube.SectionHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:background="?attr/selectableItemBackground"
         android:padding="4dp"
-        android:text="@string/watch_description_more"
-        android:textColor="@color/holo_blue_light"
-        android:textSize="13sp" />
+        android:text="@string/watch_description_more" />
 
 </LinearLayout>

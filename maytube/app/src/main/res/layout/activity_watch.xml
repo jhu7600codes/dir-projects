@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<!--
+    Root has to be a ConstraintLayout, not a LinearLayout: the ratio-boxed
+    player container below relies on app:layout_constraintDimensionRatio,
+    which is only honored when its *direct* parent is itself a
+    ConstraintLayout: nested inside a plain LinearLayout, that attribute
+    is silently ignored and android:layout_height="0dp" is taken literally
+    as zero height, which is exactly what happened here on a real device
+    (the player was invisible, not just misbehaving).
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/maytube_bg"
-    android:orientation="vertical">
+    android:background="@color/maytube_bg">
 
     <!--
         Player pinned outside the RecyclerView below, not as one of its
@@ -16,9 +24,13 @@
         actually gets fed.
     -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+        android:id="@+id/watchPlayerContainer"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintDimensionRatio="16:9">
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.media3.ui.PlayerView
             android:id="@+id/watchPlayerView"
@@ -56,6 +68,7 @@
 
         <TextView
             android:id="@+id/watchQualityButton"
+            style="@style/Widget.Maytube.SectionHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
@@ -66,8 +79,6 @@
             android:paddingStart="6dp"
             android:paddingEnd="6dp"
             android:textColor="@color/maytube_white"
-            android:textSize="12sp"
-            android:textStyle="bold"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/watchFullscreenButton" />
@@ -88,9 +99,12 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/watchList"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/watchPlayerContainer" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -18,10 +18,31 @@
         <item name="switchStyle">@style/Widget.Maytube.Switch</item>
         <item name="materialSwitchStyle">@style/Widget.Maytube.Switch</item>
         <item name="materialButtonStyle">@style/Widget.Maytube.Button.Holo</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Maytube.Dialog</item>
         <item name="elevationOverlayEnabled">false</item>
     </style>
 
     <style name="Theme.Maytube.Toolbar" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+
+    <!--
+        Plain black-with-blue-accent surfaces alone read as generic AMOLED
+        dark mode, not specifically Holo: reported directly from a real
+        device. What actually distinguishes Holo (beyond the color/shadow
+        choices already applied above) is typographic: labels/buttons/
+        section headers set in all-caps, letter-spaced, condensed type,
+        while body text (titles, descriptions, comments) stays regular
+        Roboto: exactly the split Google's own Holo-era apps used.
+        sans-serif-condensed is a real system font-family alias (API 16+),
+        not a bundled asset, so this needs nothing extra shipped.
+    -->
+    <style name="Widget.Maytube.SectionHeader" parent="">
+        <item name="android:textColor">@color/holo_blue_light</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
 
     <!-- flat, borderless-feeling, square-cornered, Holo-blue text:
          Holo never had filled/elevated buttons; this is the closest
@@ -30,12 +51,37 @@
         <item name="cornerRadius">0dp</item>
         <item name="backgroundTint">@color/holo_blue_dark</item>
         <item name="rippleColor">@color/holo_blue_light</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:letterSpacing">0.05</item>
     </style>
 
     <style name="Widget.Maytube.Button.Holo.Text" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="cornerRadius">0dp</item>
         <item name="android:textColor">@color/holo_blue_light</item>
         <item name="rippleColor">@color/holo_blue_light</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+    <!-- dialogs (Settings save prompt, quick-access menu, quality picker,
+         etc.) default to Material's own colors/typography otherwise:
+         this pulls them onto the same Holo blue + condensed-caps buttons
+         as the rest of the app -->
+    <style name="ThemeOverlay.Maytube.Dialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorPrimary">@color/holo_blue_light</item>
+        <item name="colorSurface">@color/holo_background_dark_surface</item>
+        <item name="android:windowBackground">@color/holo_background_dark_surface</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/Widget.Maytube.Dialog.Title</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Maytube.Button.Holo.Text</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Maytube.Button.Holo.Text</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Maytube.Button.Holo.Text</item>
+    </style>
+
+    <style name="Widget.Maytube.Dialog.Title" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textColor">@color/maytube_white</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.05</item>
     </style>
 
     <!--
