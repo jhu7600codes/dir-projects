@@ -69,6 +69,21 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `logo never gets forced to full width`() {
+        // regression test: #logo is a .master-sprite button -- a fixed
+        // 110px crop window onto a shared sprite sheet tiled with
+        // "background: ... repeat-x". An earlier fix for the masthead
+        // overlap forced every masthead child (#logo included) to
+        // width:100%, which widened that crop window and revealed the
+        // sprite tiling itself: multiple repeated copies of the YouTube
+        // wordmark side by side. #logo may be unfloated like everything
+        // else, but must never be forced to 100% width.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertFalse(script.contains("#logo, #masthead-search"))
+        assertTrue(script.contains("#logo, #masthead-qr"))
+    }
+
+    @Test
     fun `sabr diagnostic script has balanced braces and hooks sabr_playback only`() {
         val script = MobileInjector.buildSabrDiagnosticScript()
         assertEquals("unbalanced curly braces", script.count { it == '{' }, script.count { it == '}' })
