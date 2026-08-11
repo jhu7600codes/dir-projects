@@ -52,6 +52,7 @@
     <string name="watch_description_more">More</string>
     <string name="watch_description_less">Less</string>
     <string name="channel_videos_header">Videos</string>
+    <string name="watch_quality_title">Quality</string>
     <string name="native_mode_home_title">maytube</string>
 
     <!-- Downloads -->

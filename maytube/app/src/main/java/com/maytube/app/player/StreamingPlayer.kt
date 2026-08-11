@@ -72,13 +72,33 @@ class StreamingPlayer(context: Context) {
     var state: FetchState? = null
         private set
 
+    /** The itag [start] was last called with, if any -- null means "server default." */
+    var currentItag: Int? = null
+        private set
+
+    /**
+     * @param itag Pins a specific quality (see SabrSession.QualityOption /
+     *   [SabrFragmentFetcher]'s `user_video_itag` param) instead of
+     *   whatever yt2009 picks by default. Available options for the
+     *   current video arrive via [onQualities] once the session resolves
+     *   -- pass one of their itags back in on a later [start] call to
+     *   switch. Switching always restarts from the beginning: SABR
+     *   fragments only carry a full MP4 init segment (ftyp/moov) on the
+     *   very first one, and there's no way to verify without a real
+     *   device that requesting a later offset on its own still includes
+     *   it, so resuming mid-video on a quality switch is deliberately not
+     *   attempted here.
+     */
     fun start(
         config: ServerConfig,
         videoId: String,
+        itag: Int? = null,
         onProgress: (fetchedMs: Long, totalMs: Long?) -> Unit = { _, _ -> },
+        onQualities: (List<SabrSession.QualityOption>) -> Unit = {},
         onError: (Throwable) -> Unit = {}
     ) {
         stop()
+        currentItag = itag
 
         val cacheDir = File(appContext.cacheDir, "maytube_stream").apply { mkdirs() }
         val videoFile = File(cacheDir, "$videoId-video.stream.mp4")
@@ -103,7 +123,8 @@ class StreamingPlayer(context: Context) {
         fetchJob = scope.launch {
             try {
                 val session = SabrSession.resolve(client, config, videoId)
-                fetchAllFragments(config, session, fetchState, onProgress)
+                withContext(Dispatchers.Main) { onQualities(session.qualities) }
+                fetchAllFragments(config, session, itag, fetchState, onProgress)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -124,6 +145,7 @@ class StreamingPlayer(context: Context) {
     private suspend fun fetchAllFragments(
         config: ServerConfig,
         session: SabrSession.Session,
+        itag: Int?,
         fetchState: FetchState,
         onProgress: (fetchedMs: Long, totalMs: Long?) -> Unit
     ) = withContext(Dispatchers.IO) {
@@ -146,7 +168,7 @@ class StreamingPlayer(context: Context) {
                     if (batchOffsets.isEmpty()) break
 
                     val results = batchOffsets
-                        .map { offset -> async { offset to SabrFragmentFetcher.fetch(client, config, session.sabrPath, offset) } }
+                        .map { offset -> async { offset to SabrFragmentFetcher.fetch(client, config, session.sabrPath, offset, itag) } }
                         .awaitAll()
                         .sortedBy { it.first }
 

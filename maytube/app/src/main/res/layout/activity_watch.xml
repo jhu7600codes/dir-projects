@@ -54,6 +54,24 @@
             app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/maytube_white" />
 
+        <TextView
+            android:id="@+id/watchQualityButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:background="?attr/selectableItemBackground"
+            android:minWidth="40dp"
+            android:minHeight="40dp"
+            android:gravity="center"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:textColor="@color/maytube_white"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/watchFullscreenButton" />
+
         <ImageButton
             android:id="@+id/watchFullscreenButton"
             android:layout_width="40dp"

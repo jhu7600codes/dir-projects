@@ -19,13 +19,19 @@ object SabrFragmentFetcher {
         config: ServerConfig,
         sabrPath: String,
         offsetMs: Long,
+        itag: Int? = null,
         attempts: Int = 3
     ): List<SabrFragmentParser.Part> {
         var lastError: Exception? = null
         repeat(attempts) { attempt ->
             try {
                 val forceReplayer = if (attempt > 0) "&force_replayer=1" else ""
-                val url = "${config.baseUrl}$sabrPath&offset=$offsetMs&hd=1$forceReplayer"
+                // html5-player.js's own manual quality picker does exactly
+                // this: &user_video_itag=<itag> on the fragment request
+                // (see html5-player.js:2910, requestSabr()) to pin a
+                // specific itag instead of letting the server auto-select
+                val itagParam = if (itag != null) "&user_video_itag=$itag" else ""
+                val url = "${config.baseUrl}$sabrPath&offset=$offsetMs&hd=1$forceReplayer$itagParam"
                 val request = Request.Builder()
                     .url(url)
                     .header("Cookie", SabrSession.cookieHeader(config))

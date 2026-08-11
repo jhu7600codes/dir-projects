@@ -4,6 +4,7 @@ import android.webkit.CookieManager
 import com.maytube.app.data.ServerConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 
 /**
  * Resolves a video's SABR session (the `/sabr_playback?pid=...` base path
@@ -18,7 +19,10 @@ import okhttp3.Request
  */
 object SabrSession {
 
-    data class Session(val sabrPath: String, val totalMs: Long?)
+    data class Session(val sabrPath: String, val totalMs: Long?, val qualities: List<QualityOption>)
+
+    /** A selectable video quality/itag, as html5-player.js's own quality menu builds it. */
+    data class QualityOption(val itag: Int, val label: String, val height: Int)
 
     class ResolveException(message: String) : Exception(message)
 
@@ -64,7 +68,37 @@ object SabrSession {
         val totalMs = Regex("""0:00\s*/\s*(\d+(?::\d{2}){1,2})""").find(html)?.groupValues?.get(1)
             ?.let { parseClock(it) }
 
-        return Session(sabrPath, totalMs)
+        return Session(sabrPath, totalMs, parseQualities(html))
+    }
+
+    /**
+     * html5-player.js's quality picker (the "Quality" flyout on the HD
+     * button) is built from `window.sabrExactRes` -- embedded the same way
+     * `sabrBase` is, as a JSON-string-typed JS var (yt2009templates.js
+     * playerHDSabr(): `var sabrExactRes = '${JSON.stringify(exactData)}';`,
+     * then `JSON.parse()`'d by the page's own JS before use, see
+     * html5-player.js:3220). Each entry is `[itag, label, height, ...]`
+     * (`q[0]`/`q[1]`/`q[2]` respectively) -- only those three fields are
+     * used here, the rest (codec/super-resolution metadata) isn't needed
+     * for a plain quality switcher. Absent entirely on instances/videos
+     * that don't expose per-itag selection; callers should treat an empty
+     * list as "no manual quality picker available," not an error.
+     */
+    internal fun parseQualities(html: String): List<QualityOption> {
+        val raw = Regex("""var sabrExactRes = '(\[.*\])';""").find(html)?.groupValues?.get(1)
+            ?: return emptyList()
+        return try {
+            val array = JSONArray(raw)
+            (0 until array.length()).mapNotNull { i ->
+                val q = array.optJSONArray(i) ?: return@mapNotNull null
+                val itag = q.optInt(0, -1)
+                val label = q.optString(1, null) ?: return@mapNotNull null
+                if (itag < 0) return@mapNotNull null
+                QualityOption(itag, label, q.optInt(2, 0))
+            }
+        } catch (e: Exception) {
+            emptyList() // quality switching is a nice-to-have, never worth failing playback over
+        }
     }
 
     fun cookieHeader(config: ServerConfig): String {
