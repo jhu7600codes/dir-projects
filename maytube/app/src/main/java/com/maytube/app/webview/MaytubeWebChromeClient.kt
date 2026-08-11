@@ -248,18 +248,51 @@ class MaytubeWebChromeClient(
 
     val isFullscreen: Boolean get() = customView != null
 
+    /**
+     * Reported directly from a real device: after backing out of
+     * fullscreen (Android back button, or the quick-access menu) a few
+     * times across a session, the page's own fullscreen button stopped
+     * entering fullscreen at all -- every tap logged a rejected
+     * "Failed to execute 'exitFullscreen' on 'Document': Document not
+     * active" promise instead.
+     *
+     * Root cause: `onHideCustomView()` is meant to be invoked BY
+     * Chromium, as the callback for the page's own document.exitFullscreen()
+     * actually completing -- that round trip (JS asks to exit -> Chromium
+     * finishes the transition -> Chromium calls WebChromeClient back) is
+     * the entire contract of CustomViewCallback. This used to fire the JS
+     * exit request and then call onHideCustomView() itself immediately
+     * afterward, synchronously, in the same tick -- tearing the native
+     * surface down and reporting "already hidden" via
+     * customViewCallback.onCustomViewHidden() before Chromium's own
+     * exitFullscreen() transition had actually resolved. Interrupting
+     * that transition mid-flight is exactly what a rejected "Document not
+     * active" promise describes, and left Chromium's internal fullscreen
+     * bookkeeping wedged often enough that later requestFullscreen()
+     * calls silently did nothing -- explains a bug that only showed up
+     * after repeated fullscreen enter/exit cycles, not on the very first
+     * one.
+     *
+     * Fix: only ask the page to exit here, then let onHideCustomView (the
+     * override above) run when Chromium genuinely calls it back. The
+     * short delayed fallback covers the case where there's no real
+     * fullscreenElement to exit (nothing for Chromium to call back for)
+     * or the callback genuinely never arrives.
+     */
     fun exitFullscreenIfNeeded(webView: WebView) {
-        if (isFullscreen) {
-            webView.evaluateJavascript(
-                "(function(){ if (document.fullscreenElement) { document.exitFullscreen(); } })();",
-                null
-            )
-            onHideCustomView()
-        }
+        if (!isFullscreen) return
+        webView.evaluateJavascript(
+            "(function(){ if (document.fullscreenElement) { document.exitFullscreen(); } })();",
+            null
+        )
+        webView.postDelayed({
+            if (isFullscreen) onHideCustomView()
+        }, EXIT_FALLBACK_DELAY_MS)
     }
 
     companion object {
         private const val CONSOLE_TAG = "MaytubeWebConsole"
         private const val RELAYOUT_SETTLE_DELAY_MS = 400L
+        private const val EXIT_FALLBACK_DELAY_MS = 600L
     }
 }

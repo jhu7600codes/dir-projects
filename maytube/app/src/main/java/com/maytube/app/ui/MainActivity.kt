@@ -168,12 +168,22 @@ class MainActivity : AppCompatActivity() {
      * config change too (e.g. flipping the device while already
      * fullscreen), the moment it's actually reported instead of guessing
      * at a delay.
+     *
+     * While fullscreen is active, only the fullscreen surface itself
+     * needs this -- the underlying WebView is fully hidden behind it
+     * (see onFullscreenChanged), so there's no reason to also nudge its
+     * layout, and one less thing poking at Chromium's fullscreen state
+     * machine during a transition is one less thing that could interfere
+     * with it.
      */
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        webView.requestLayout()
-        webView.invalidate()
-        webChromeClient.relayoutFullscreenView()
+        if (webChromeClient.isFullscreen) {
+            webChromeClient.relayoutFullscreenView()
+        } else {
+            webView.requestLayout()
+            webView.invalidate()
+        }
     }
 
     @Suppress("SetJavaScriptEnabled")
