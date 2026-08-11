@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var pageProgress: ProgressBar
     private lateinit var notConfiguredView: TextView
+    private lateinit var appBar: com.google.android.material.appbar.AppBarLayout
     private lateinit var maytubeWebViewClient: MaytubeWebViewClient
     private lateinit var webChromeClient: MaytubeWebChromeClient
 
@@ -64,11 +65,23 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@registerForActivityResult
             }
-            val changed = newConfig != config
+            val previous = config
+            val hostChanged = previous == null ||
+                newConfig.host != previous.host ||
+                newConfig.port != previous.port ||
+                newConfig.useHttps != previous.useHttps
+            val changed = newConfig != previous
             config = newConfig
             maytubeWebViewClient.updateConfig(newConfig)
-            if (changed) {
-                loadHome()
+            when {
+                hostChanged -> loadHome()
+                // a flag-only change (SABR/1080p/dark mode): reload the
+                // current page in place instead of yanking the user back
+                // to the homepage for something that isn't a navigation
+                changed -> {
+                    applyFlagCookie(newConfig)
+                    webView.reload()
+                }
             }
         }
 
@@ -81,6 +94,7 @@ class MainActivity : AppCompatActivity() {
 
         pageProgress = findViewById(R.id.pageProgress)
         notConfiguredView = findViewById(R.id.notConfiguredView)
+        appBar = findViewById(R.id.appBar)
         swipeRefresh = findViewById(R.id.swipeRefresh)
         webView = findViewById(R.id.webView)
 
@@ -154,9 +168,18 @@ class MainActivity : AppCompatActivity() {
         webChromeClient = MaytubeWebChromeClient(
             activity = this,
             onProgress = ::onProgress,
-            onTitle = { title -> supportActionBar?.subtitle = title }
+            onTitle = { title -> supportActionBar?.subtitle = title },
+            onFullscreenChanged = { isFullscreen ->
+                appBar.visibility = if (isFullscreen) android.view.View.GONE else android.view.View.VISIBLE
+            },
+            onLongPress = { showQuickAccessMenu() }
         )
         webView.webChromeClient = webChromeClient
+
+        webView.setOnLongClickListener {
+            showQuickAccessMenu()
+            true
+        }
 
         webView.setDownloadListener { url, _, contentDisposition, mimeType, _ ->
             downloadArbitraryUrl(url, contentDisposition, mimeType)
@@ -192,6 +215,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun openSettings() {
         settingsLauncher.launch(Intent(this, SettingsActivity::class.java))
+    }
+
+    /**
+     * Long-press anywhere on the page (or, while a video is in native
+     * fullscreen, on the fullscreen surface itself -- see
+     * MaytubeWebChromeClient.onShowCustomView) to reach Settings/Downloads/
+     * Reload/Home without needing the toolbar, which is hidden during
+     * fullscreen.
+     */
+    private fun showQuickAccessMenu() {
+        val items = arrayOf(
+            getString(R.string.action_settings),
+            getString(R.string.action_downloads),
+            getString(R.string.action_reload),
+            getString(R.string.action_home)
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.quick_access_title)
+            .setItems(items) { _, which ->
+                if (webChromeClient.isFullscreen) {
+                    webChromeClient.exitFullscreenIfNeeded(webView)
+                }
+                when (which) {
+                    0 -> openSettings()
+                    1 -> startActivity(Intent(this, DownloadsActivity::class.java))
+                    2 -> webView.reload()
+                    3 -> loadHome()
+                }
+            }
+            .show()
     }
 
     private fun loadHome() {

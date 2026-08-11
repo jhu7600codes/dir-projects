@@ -13,7 +13,8 @@ data class ServerConfig(
     val port: Int,
     val useHttps: Boolean = false,
     val sabrEnabled: Boolean = true,
-    val prefer1080p: Boolean = false
+    val prefer1080p: Boolean = false,
+    val darkMode: Boolean = false
 ) {
     val scheme: String get() = if (useHttps) "https" else "http"
 
@@ -44,7 +45,8 @@ class ServerConfigRepository(context: Context) {
             port = port,
             useHttps = prefs.getBoolean(KEY_HTTPS, false),
             sabrEnabled = prefs.getBoolean(KEY_SABR, true),
-            prefer1080p = prefs.getBoolean(KEY_1080P, false)
+            prefer1080p = prefs.getBoolean(KEY_1080P, false),
+            darkMode = prefs.getBoolean(KEY_DARK_MODE, false)
         )
     }
 
@@ -55,6 +57,7 @@ class ServerConfigRepository(context: Context) {
             .putBoolean(KEY_HTTPS, config.useHttps)
             .putBoolean(KEY_SABR, config.sabrEnabled)
             .putBoolean(KEY_1080P, config.prefer1080p)
+            .putBoolean(KEY_DARK_MODE, config.darkMode)
             .apply()
     }
 
@@ -69,6 +72,7 @@ class ServerConfigRepository(context: Context) {
         private const val KEY_HTTPS = "use_https"
         private const val KEY_SABR = "sabr_enabled"
         private const val KEY_1080P = "prefer_1080p"
+        private const val KEY_DARK_MODE = "dark_mode"
         const val DEFAULT_PORT = 3000
     }
 }

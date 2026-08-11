@@ -112,6 +112,27 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `dark mode class is toggled based on config`() {
+        val darkOn = MobileInjector.buildInjectionScript(config.copy(darkMode = true))
+        assertTrue(darkOn.contains("classList.toggle('maytube-dark', true)"))
+
+        val darkOff = MobileInjector.buildInjectionScript(config.copy(darkMode = false))
+        assertTrue(darkOff.contains("classList.toggle('maytube-dark', false)"))
+    }
+
+    @Test
+    fun `css covers the watch-longform-buttons float and the unstyled ab-title`() {
+        // regression test: #watch-longform-buttons (float:right, holds the
+        // resize/popout icon buttons) and .watch-vid-ab-title (no CSS rule
+        // anywhere in yt2009 itself, always rendered as a raw oversized h1)
+        // both visibly collided with the masthead nav once reflowed into a
+        // single mobile column.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-longform-buttons"))
+        assertTrue(script.contains(".watch-vid-ab-title"))
+    }
+
+    @Test
     fun `flag cookie carries exp_sabr when sabr is enabled`() {
         val value = MobileInjector.flagCookieValue(config.copy(sabrEnabled = true))
         assertTrue(value.contains("exp_sabr"))

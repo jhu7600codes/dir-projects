@@ -15,9 +15,13 @@
     <string name="label_use_sabr_desc">Sets the exp_sabr flag so yt2009 streams video through its SABR/MSE player. Turn off only to debug.</string>
     <string name="label_prefer_1080p">Prefer 1080p when available</string>
     <string name="label_prefer_1080p_desc">Sets the hd_1080 flag yt2009 checks for the HD quality button.</string>
+    <string name="label_dark_mode">Dark mode</string>
+    <string name="label_dark_mode_desc">yt2009 has no dark theme of its own, so this inverts the page (and un-inverts thumbnails/video so they still look normal). Not pixel-perfect, but usable in the dark.</string>
     <string name="action_save">Save &amp; connect</string>
     <string name="error_host_required">Enter a server IP or hostname</string>
     <string name="error_port_invalid">Enter a valid port (1–65535)</string>
+
+    <string name="quick_access_title">maytube</string>
 
     <!-- Main menu -->
     <string name="action_settings">Instance settings</string>
