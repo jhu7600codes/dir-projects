@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dusk-over-the-city palette -- the whole visual identity is procedural geometry + flat
+    <!-- Dusk-over-the-city palette: the whole visual identity is procedural geometry + flat
          color, so these values do double duty: UI chrome AND (via ProceduralMeshFactory /
          Shaders) in-game fog/lighting tints. -->
     <color name="orbital_sky_top">#0B1230</color>

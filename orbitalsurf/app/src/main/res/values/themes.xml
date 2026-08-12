@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Fixed dusk-city look regardless of system light/dark setting -- the game has one
+    <!-- Fixed dusk-city look regardless of system light/dark setting: the game has one
          art direction (see colors.xml), not a themeable one, so this deliberately does NOT
          extend a DayNight base. -->
     <style name="Theme.OrbitalSurf" parent="Theme.Material3.Dark.NoActionBar">

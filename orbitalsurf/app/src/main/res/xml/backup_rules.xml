@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- DataStore writes GameSave to files/datastore/game_save.json -- see data/GameSaveSerializer.kt -->
+    <!-- DataStore writes GameSave to files/datastore/game_save.json; see data/GameSaveSerializer.kt -->
     <include domain="file" path="datastore/game_save.json" />
 </full-backup-content>

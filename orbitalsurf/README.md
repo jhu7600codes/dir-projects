@@ -37,6 +37,11 @@ different build requirements:
   the platform glue around it. Building it requires a real Android SDK
   (`ANDROID_HOME` / `local.properties`) -- open the project in Android
   Studio, let it sync, and run `:app` on a device or emulator.
+  (`./gradlew :app:assembleDebug` has been verified to build cleanly end to
+  end against `compileSdk`/`targetSdk` 34, `minSdk` 24 with AGP 8.5.2 and
+  Kotlin 1.9.24, producing an installable debug APK -- it just isn't
+  something *this* environment has an SDK or device/emulator to do
+  automatically on every change.)
 
 ## Why the split
 
