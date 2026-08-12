@@ -22,7 +22,7 @@
         <activity
             android:name=".ui.MainMenuActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
+            android:screenOrientation="landscape"
             android:launchMode="singleTop"
             android:theme="@style/Theme.OrbitalSurf">
             <intent-filter>
@@ -31,13 +31,13 @@
             </intent-filter>
         </activity>
 
-        <!-- The GLSurfaceView game screen: locked to whatever orientation it started in
-             instead of restarting the activity (and losing the running GameSession) on
-             a config change. -->
+        <!-- The GLSurfaceView game screen: the whole app is landscape-locked (see every
+             activity below), and configChanges keeps a rotation between landscape/reverse
+             landscape from restarting the activity, which would lose the running GameSession. -->
         <activity
             android:name=".ui.GameActivity"
             android:exported="false"
-            android:screenOrientation="portrait"
+            android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
             android:theme="@style/Theme.OrbitalSurf.Game"
             android:parentActivityName=".ui.MainMenuActivity" />
@@ -45,18 +45,21 @@
         <activity
             android:name=".ui.ShopActivity"
             android:exported="false"
+            android:screenOrientation="landscape"
             android:label="@string/shop_title"
             android:parentActivityName=".ui.MainMenuActivity" />
 
         <activity
             android:name=".ui.AchievementsActivity"
             android:exported="false"
+            android:screenOrientation="landscape"
             android:label="@string/achievements_title"
             android:parentActivityName=".ui.MainMenuActivity" />
 
         <activity
             android:name=".ui.DailyChallengesActivity"
             android:exported="false"
+            android:screenOrientation="landscape"
             android:label="@string/daily_challenges_title"
             android:parentActivityName=".ui.MainMenuActivity" />
 
@@ -64,7 +67,7 @@
             android:name=".ui.ResultsActivity"
             android:exported="false"
             android:label="@string/results_title"
-            android:screenOrientation="portrait"
+            android:screenOrientation="landscape"
             android:parentActivityName=".ui.MainMenuActivity" />
 
     </application>

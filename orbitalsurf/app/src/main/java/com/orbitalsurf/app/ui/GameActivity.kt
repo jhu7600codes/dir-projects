@@ -53,6 +53,14 @@ class GameActivity : AppCompatActivity() {
             val renderer = GameRenderer(gameSession, inputState, skinVisual, ::onFrame)
             binding.gameSurfaceView.start(renderer, inputState)
             surfaceStarted = true
+            // The Activity's own onResume() almost always fires *before* this coroutine gets
+            // here (it has to suspend for the save to load first), so the guarded onResume()
+            // override below never got a chance to forward the call -- GLSurfaceView's render
+            // thread starts paused and only unpauses on an explicit onResume(), so without this
+            // it would sit paused forever and never draw a single frame. Calling it here too
+            // (in addition to the override, which still covers pause/resume *after* this point)
+            // covers the case that actually happens on every launch.
+            binding.gameSurfaceView.onResume()
         }
     }
 
