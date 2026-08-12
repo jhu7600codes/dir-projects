@@ -101,6 +101,21 @@ object MobileInjector {
             width: 100% !important;
             min-width: 0 !important;
             overflow-x: hidden !important;
+            /* light neutral instead of yt2009's own plain white -- lets the
+               white cards (.video-cell etc, and #watch-channel-vids-div
+               below) actually read as distinct cards instead of blending
+               into an identically-white page. Dark mode's invert filter
+               (bottom of this file) handles this automatically, same as
+               everything else -- no separate dark-mode value needed. */
+            background: #f1f1f1 !important;
+        }
+        /* yt2009's own font stack (www-core-feather.css:
+           `body,input,textarea {font: 12px Arial, sans-serif}`) is Arial --
+           the same default system font most devices already render, so
+           swapping in the OS's own UI font stack reads as "app", not
+           "unstyled webpage", for free. */
+        body, input, textarea, select, button {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         }
 
         /* the one wrapper every page template shares, hard-locked to
@@ -427,6 +442,32 @@ object MobileInjector {
         }
         #watch-url-div, #watch-embed-div {
             width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* .yt-uix-expander-head: watch.html's "Related Videos"/"More From:
+           ..." collapsible section headers (h2.yt-uix-expander-head,
+           shared by every yt-uix-expander panel site-wide). yt2009's own
+           rule for it (www-core CSS: `.yt-uix-expander-head { cursor:
+           pointer; color:#000 }`) sets no font-size/weight at all -- always
+           rendered as a raw browser-default h2. A bold, slightly larger
+           weight with a bottom divider reads as an actual section
+           boundary instead of just another line of body text. */
+        .yt-uix-expander-head {
+            font-size: 15px !important;
+            font-weight: bold !important;
+            padding: 10px 0 8px !important;
+            margin: 12px 0 8px !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+
+        /* #watch-channel-vids-div already has its own background/border
+           (#eee/#ccc, www-core CSS) -- just rounding + insetting it to
+           match the card treatment used everywhere else on the page
+           (.video-cell etc, above). */
+        #watch-channel-vids-div {
+            border-radius: 8px !important;
+            padding: 10px !important;
             box-sizing: border-box !important;
         }
 

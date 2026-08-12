@@ -294,6 +294,22 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `applies a real font stack and page background instead of yt2009's bare defaults`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("-apple-system"))
+        assertTrue(script.contains("background: #f1f1f1"))
+    }
+
+    @Test
+    fun `styles the related-videos and more-from section headers`() {
+        // .yt-uix-expander-head is the real class yt2009 uses for both
+        // panels (watch.html), which itself sets no font-size/weight at
+        // all -- always rendered as a raw browser-default h2.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".yt-uix-expander-head"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }

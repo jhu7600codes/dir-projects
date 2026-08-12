@@ -134,6 +134,20 @@ class MainActivity : AppCompatActivity() {
         setupWebView()
 
         swipeRefresh.setOnRefreshListener { webView.reload() }
+        // Reported directly from a real device: an ordinary upward scroll
+        // (finger moving up, content scrolling down) anywhere on the page
+        // triggered a refresh, not just a genuine pull-down-from-the-top
+        // gesture. SwipeRefreshLayout's default gate for this is
+        // canChildScrollUp() -> View.canScrollVertically(child, -1), which
+        // is unreliable specifically for WebView (a well-documented
+        // WebView/SwipeRefreshLayout interop gap -- WebView's own scroll
+        // state isn't always visible through that generic check the way it
+        // is for RecyclerView/ScrollView). WebView.getScrollY() (a real,
+        // reliably-maintained View property) is what actually reflects its
+        // current scroll position, so use that directly instead: only
+        // allow the refresh gesture to engage when truly scrolled to the
+        // very top.
+        swipeRefresh.setOnChildScrollUpCallback { _, _ -> webView.scrollY > 0 }
 
         onBackPressedDispatcher.addCallback(this) {
             when {
