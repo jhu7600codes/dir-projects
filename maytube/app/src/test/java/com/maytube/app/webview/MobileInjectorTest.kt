@@ -310,6 +310,31 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `zeroes out watch-vid-title's own 320px right margin`() {
+        // regression test: the ACTUAL root cause of the giant
+        // one-word-per-line title bug, found by reading the real rule
+        // instead of guessing -- www-core CSS's
+        // #watch-vid-title.longform { margin-right: 320px } (the real
+        // markup does carry that class), left over from the original
+        // layout's 300px-wide right rail. On a mobile viewport that leaves
+        // the title maybe 60-80px of actual width, wrapping even
+        // correctly-sized text one word per line -- font-size was never
+        // actually the problem. The existing #baseDiv * safety net doesn't
+        // catch this class of bug: it only clamps max-width, and a large
+        // margin doesn't make an element wider than the viewport, just
+        // narrower than it should be.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-vid-title {"))
+        assertTrue(script.contains("margin-right: 0 !important"))
+    }
+
+    @Test
+    fun `cards the description and URL-embed block`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-video-details {"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }

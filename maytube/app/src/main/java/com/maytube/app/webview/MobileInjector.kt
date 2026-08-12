@@ -367,21 +367,35 @@ object MobileInjector {
             display: none !important;
         }
 
-        /* .watch-vid-ab-title (watch.html/back/yt2009html.js): reported
-           directly from a real device rendering *enormous* (each word of a
-           long title wrapping onto its own full-width line). This class
-           selector rule alone turned out not to be reliable across
-           instances -- some yt2009 deployments' own CSS apparently sizes
-           #watch-vid-title h1 with real, if desktop-sized, rules of its
-           own (an ID+tag selector, which under different
-           versioning/!important combinations across instances isn't
-           guaranteed to lose to a plain class selector the way it does on
-           the one version this was originally checked against). Kept here
-           as a normal stylesheet rule for anything that reads it before
-           the belt-and-suspenders inline-style version below applies (it's
-           already correct on instances where this class rule alone was
-           always enough), but the buildInjectionScript JS below is what
-           actually guarantees this now, regardless of instance. */
+        /* #watch-vid-title (watch.html/www-core CSS): the ACTUAL root cause
+           of the "giant one-word-per-line title" bug, found by finally
+           reading the real rule instead of guessing again --
+           `#watch-vid-title.longform { margin-right: 320px; }`, and the
+           real markup does carry that exact class
+           (`<div id="watch-vid-title" class="title  longform">`). 320px of
+           right margin was there to leave room for the original layout's
+           300px-wide right rail; on a ~380-400px mobile viewport it leaves
+           the title maybe 60-80px of actual width, which wraps even
+           correctly-sized text one word per line. Nothing about font-size
+           was ever actually wrong -- the box itself was being squeezed
+           down to almost nothing, and the earlier font-size-only fix
+           (still correct and kept below) could never have fixed that on
+           its own. The existing #baseDiv * safety net doesn't catch this
+           class of bug either: it only clamps max-width, and a large
+           margin doesn't make an element wider than the viewport, just
+           narrower than it should be. */
+        #watch-vid-title {
+            width: 100% !important;
+            margin-right: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        /* .watch-vid-ab-title: kept as a normal sizing rule (correct, just
+           not sufficient on its own -- see #watch-vid-title above) and
+           reinforced with a belt-and-suspenders inline-style version in
+           buildInjectionScript below, since a differently-versioned
+           instance's own CSS could in principle size #watch-vid-title h1
+           with a rule specific enough to beat a plain class selector. */
         .watch-vid-ab-title {
             font-size: 17px !important;
             line-height: 1.3 !important;
@@ -425,6 +439,20 @@ object MobileInjector {
         #watch-channel-icon img {
             width: 40px !important;
             height: 40px !important;
+        }
+
+        /* #watch-video-details (wraps the description + URL/embed boxes
+           below): no background/border of its own in yt2009's CSS, just
+           margin/padding on its inner pieces -- card-ifying the whole
+           thing to match #watch-channel-vids-div/.video-cell above,
+           instead of description text and the URL/embed inputs just
+           sitting directly on the page background one after another. */
+        #watch-video-details {
+            background: #fff !important;
+            border-radius: 8px !important;
+            padding: 4px 12px 12px !important;
+            margin-top: 10px !important;
+            box-sizing: border-box !important;
         }
 
         /* #watch-url-field/#embed_code: plain <input type="text"> holding
