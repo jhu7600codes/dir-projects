@@ -306,10 +306,10 @@ object MobileInjector {
             max-width: 100% !important;
             box-sizing: border-box !important;
             background: #fff !important;
-            border-radius: 8px !important;
-            padding: 8px !important;
-            margin: 0 0 10px !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+            margin: 0 0 16px !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18) !important;
         }
 
         /* Thumbnails: yt2009's own thumbnail wrappers are hard-locked to
@@ -394,9 +394,9 @@ object MobileInjector {
             height: auto !important;
             max-height: none !important;
             overflow: visible !important;
-            font-size: 14px !important;
+            font-size: 16px !important;
             line-height: 1.35 !important;
-            margin: 8px 0 4px !important;
+            margin: 10px 0 5px !important;
         }
 
         /* the search results sort/filter bar is a real <table> with
@@ -901,6 +901,114 @@ object MobileInjector {
                             }
                         });
                         observer.observe(baseDiv, { attributes: true, attributeFilter: ['class'] });
+                    }
+                } catch (e) {}
+
+                // "Unlimited" homepage recommendations: yt2009's own
+                // assets/site-assets/homepage-recommended.js already fetches
+                // /yt2009_recommended once on page load (targetVideos=8, real
+                // server code, back/backend.js) into
+                // #yt2009-recommended-cells-container -- and, separately, the
+                // real /videos page fetches the exact same endpoint with one
+                // extra request header (`source: recommended_page`) that bumps
+                // the server's targetVideos to 25 instead. Both mechanisms
+                // already exist in yt2009 itself; this replicates that same
+                // request (same "ids" header, computed from watch_history the
+                // same way homepage-recommended.js does) but always sends that
+                // header, and re-fires it every time the user scrolls near the
+                // bottom of the module, appending only videos not already
+                // shown (by data-id) instead of replacing the container's
+                // content the way the original single-shot call does. Stops
+                // auto-firing after two consecutive empty/all-duplicate
+                // responses, so this can't spin forever once the server
+                // genuinely has nothing further to suggest.
+                try {
+                    var recContainer = document.getElementById('yt2009-recommended-cells-container');
+                    if (recContainer && !recContainer.__maytubeInfiniteRec) {
+                        recContainer.__maytubeInfiniteRec = true;
+
+                        var maytubeRecIds = function() {
+                            var ids = '';
+                            try {
+                                if (window.localStorage && localStorage.watch_history) {
+                                    var videos = JSON.parse(localStorage.watch_history);
+                                    videos.slice(0, 3).forEach(function(v) { ids += v.id + ','; });
+                                } else if (document.cookie && document.cookie.indexOf('watch_history=') !== -1) {
+                                    var h = decodeURIComponent(
+                                        document.cookie.split('watch_history=')[1].split(';')[0]
+                                    ).split(':');
+                                    var count = 0;
+                                    for (var i = 0; i < h.length && count < 3; i++) {
+                                        if (typeof h[i] === 'string' && h[i].indexOf('&') !== -1) {
+                                            ids += h[i].split('&')[2] + ',';
+                                            count++;
+                                        }
+                                    }
+                                }
+                            } catch (e) {}
+                            return ids;
+                        };
+
+                        var maytubeRecLoading = false;
+                        var maytubeRecEmptyStreak = 0;
+                        var maytubeRecDone = false;
+
+                        var maytubeLoadMoreRec = function() {
+                            if (maytubeRecLoading || maytubeRecDone) return;
+                            maytubeRecLoading = true;
+                            var r = new XMLHttpRequest();
+                            r.open('GET', '/yt2009_recommended?r=' + Math.random());
+                            r.setRequestHeader('ids', maytubeRecIds());
+                            // yt2009's own /videos-page trick for 25 results instead of 8
+                            r.setRequestHeader('source', 'recommended_page');
+                            r.onreadystatechange = function() {
+                                if (r.readyState !== 4) return;
+                                maytubeRecLoading = false;
+                                if (r.status < 200 || r.status >= 300
+                                || r.responseText.indexOf('YT2009_NO_DATA') !== -1) {
+                                    maytubeRecDone = true;
+                                    return;
+                                }
+                                try {
+                                    var existingIds = {};
+                                    var existingCells = recContainer.querySelectorAll('[data-id]');
+                                    for (var i = 0; i < existingCells.length; i++) {
+                                        existingIds[existingCells[i].getAttribute('data-id')] = true;
+                                    }
+                                    var temp = document.createElement('div');
+                                    temp.innerHTML = r.responseText;
+                                    var newCells = temp.querySelectorAll('[data-id]');
+                                    var addedAny = false;
+                                    for (var j = 0; j < newCells.length; j++) {
+                                        var cell = newCells[j];
+                                        var id = cell.getAttribute('data-id');
+                                        if (id && !existingIds[id]) {
+                                            existingIds[id] = true;
+                                            recContainer.appendChild(cell);
+                                            addedAny = true;
+                                        }
+                                    }
+                                    maytubeRecEmptyStreak = addedAny ? 0 : maytubeRecEmptyStreak + 1;
+                                    if (maytubeRecEmptyStreak >= 2) maytubeRecDone = true;
+                                } catch (e) {
+                                    maytubeRecDone = true;
+                                }
+                            };
+                            try {
+                                r.send(null);
+                            } catch (e) {
+                                maytubeRecLoading = false;
+                                maytubeRecDone = true;
+                            }
+                        };
+
+                        window.addEventListener('scroll', function() {
+                            if (maytubeRecDone || maytubeRecLoading) return;
+                            var scrollBottom = window.innerHeight + window.scrollY;
+                            if (scrollBottom >= document.body.scrollHeight - 800) {
+                                maytubeLoadMoreRec();
+                            }
+                        }, { passive: true });
                     }
                 } catch (e) {}
 
