@@ -405,6 +405,24 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `clears the fixed-height clip on the watch page's Up Next related-video titles too`() {
+        // regression test: reported directly as "the related videos section
+        // doesn't show the titles" -- a different class from
+        // .video-short-title above (.video-mini-title, used by
+        // back/yt2009templates.js's relatedVideo(), the template that fills
+        // #watch-other-vids) but the exact same underlying bug: www-core CSS
+        // locks it to max-height:32px + overflow:hidden, sized for the
+        // original 90px-wide desktop sidebar column -- once that column is
+        // widened to the full mobile width, a title that used to wrap
+        // across 2-3 short lines can render as 1-2 much taller visual
+        // lines, clipping it down to nothing visible instead of just
+        // trimming it.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".video-mini-title {"))
+        assertEquals(2, Regex("max-height: none !important").findAll(script).count())
+    }
+
+    @Test
     fun `video cards are sized up from the earlier polish round`() {
         val script = MobileInjector.buildInjectionScript(config)
         assertTrue(script.contains("padding: 12px !important"))

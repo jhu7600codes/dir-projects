@@ -484,6 +484,30 @@ object MobileInjector {
             margin: 10px 0 5px !important;
         }
 
+        /* .video-mini-title: reported directly as "the related videos
+           section doesn't show the titles" -- this is the title class the
+           watch page's Up Next / related-videos sidebar uses
+           (back/yt2009templates.js's relatedVideo(), the template that
+           fills #watch-other-vids), a completely different class from
+           .video-short-title above even though it's the exact same bug:
+           www-core CSS locks it to `max-height: 32px; overflow: hidden`,
+           sized for the original 90px-wide desktop sidebar column at 12px
+           font. Once that column is widened to the full mobile width (the
+           #watch-other-vids fix elsewhere in this file), a title that used
+           to wrap across 2-3 short lines can end up as 1-2 much longer
+           *visual* lines at whatever line-height the browser/WebView
+           actually renders -- easily taller than a hard 32px, clipping the
+           title down to nothing visible rather than just trimming it. Same
+           fix as .video-short-title: clear the lock, give it a size that
+           actually reads on a phone. */
+        .video-mini-title {
+            max-height: none !important;
+            overflow: visible !important;
+            font-size: 14px !important;
+            line-height: 1.35 !important;
+            margin-bottom: 4px !important;
+        }
+
         /* the search results sort/filter bar is a real <table> with
            side-by-side <td>s */
         #search-options-container, #search-options-container tbody,
