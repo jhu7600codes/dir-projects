@@ -224,6 +224,25 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `fullscreen-unsupported override beats the plain player id selector on specificity`() {
+        // regression test: #watch-player-div (bare ID, specificity 100) and
+        // nbedit_style.css's own .fullscreen-unsupported (bare class,
+        // specificity 10) both use !important -- the higher-specificity ID
+        // rule silently wins by default, keeping the player locked to its
+        // normal in-page aspect-ratio box even once html5-player.js adds
+        // that class. #watch-player-div.fullscreen-unsupported (ID+class,
+        // specificity 110) is what actually overrides it; this is the
+        // actual reason fullscreen visibly did nothing, not a WebView
+        // platform limitation.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-player-div.fullscreen-unsupported"))
+        assertTrue(script.contains("position: fixed !important"))
+        // must out-rank the sticky masthead's own z-index, or the header
+        // renders on top of the now-correctly-positioned fullscreen video
+        assertTrue(script.contains("z-index: 999999 !important"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }

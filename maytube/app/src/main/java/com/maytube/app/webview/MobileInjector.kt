@@ -296,6 +296,45 @@ object MobileInjector {
             object-fit: contain !important;
         }
 
+        /* yt2009's own CSS-driven fullscreen fallback (nbedit_style.css's
+           .fullscreen-unsupported, forced via the requestFullscreen patch in
+           buildInjectionScript below) needs #watch-player-div to actually
+           cover the viewport when html5-player.js adds that class -- but the
+           responsive-embed rules directly above (also !important, and a bare
+           ID selector) would otherwise still win: #watch-player-div is an ID
+           selector (specificity 100), nbedit_style.css's own
+           `.fullscreen-unsupported { position: absolute !important; ... }`
+           is a class selector (specificity 10) -- with both !important, the
+           higher-specificity ID rule wins per the cascade, silently keeping
+           the player locked to its normal in-page aspect-ratio box no matter
+           what class html5-player.js adds. This is the actual reason
+           "fullscreen" didn't visibly do anything: not a WebView platform
+           limitation, a specificity conflict with this file's own earlier
+           rules.
+           #watch-player-div.fullscreen-unsupported (ID+class, specificity
+           110) has higher specificity than plain #watch-player-div, so this
+           correctly overrides it. Uses position:fixed + explicit viewport
+           units rather than nbedit_style.css's own position:absolute --
+           robust regardless of #baseDiv's own padding (see the page-gutter
+           rule above) or scroll position, neither of which nbedit_style.css
+           had to account for since it was never fighting an ID-selector
+           override to begin with. z-index is deliberately far above both
+           nbedit_style.css's own z-index:99 for this class *and* the sticky
+           #masthead-container above (z-index:1000) -- that masthead would
+           otherwise render on top of the fullscreen video once it's actually
+           correctly positioned. */
+        #watch-player-div.fullscreen-unsupported {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            padding-top: 0 !important;
+            margin: 0 !important;
+            z-index: 999999 !important;
+        }
+
         /* .watch-vid-ab-title (watch.html/back/yt2009html.js) has no CSS
            rule anywhere in yt2009 itself -- it always rendered as a raw
            browser-default h1 (huge, with large default margins). On the
