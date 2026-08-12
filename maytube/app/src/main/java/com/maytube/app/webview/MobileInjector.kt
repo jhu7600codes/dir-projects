@@ -111,7 +111,10 @@ object MobileInjector {
      * the screen the way #baseDiv itself was doing before this fix.
      */
     private val mobileCss = """
-        html { -webkit-text-size-adjust: 100%; }
+        html {
+            -webkit-text-size-adjust: 100%;
+            overflow-x: hidden !important;
+        }
         body {
             width: 100% !important;
             min-width: 0 !important;
@@ -362,7 +365,7 @@ object MobileInjector {
            re-establishing their own aspect-ratio box, since doing that at
            more than one nested level would compound instead of just
            fitting inside the established box. */
-        .v120WrapperOuter, .v90WrapperOuter,
+        .v120WrapperOuter, .v90WrapperOuter, .v220WrapperOuter,
         .video-thumb-link, .video-thumb-90, .video-thumb-120 {
             display: block !important;
             position: relative !important;
@@ -374,6 +377,7 @@ object MobileInjector {
             border-radius: 6px !important;
         }
         .v120WrapperOuter .v120WrapperInner, .v90WrapperOuter .v90WrapperInner,
+        .v220WrapperOuter .v220WrapperInner,
         .v120WrapperOuter .video-thumb-link, .v90WrapperOuter .video-thumb-link {
             position: absolute !important;
             top: 0 !important;
@@ -384,7 +388,7 @@ object MobileInjector {
             border: 0 !important;
             margin: 0 !important;
         }
-        .vimg90, .vimg120,
+        .vimg90, .vimg120, .vimg220,
         .video-thumb-link img, .video-thumb-90 img, .video-thumb-120 img {
             position: absolute !important;
             top: 0 !important;
@@ -409,6 +413,61 @@ object MobileInjector {
             margin: 0 !important;
             z-index: 2 !important;
         }
+
+        /* "Videos Being Watched Now" (back/yt2009templates.js's
+           homepage_watched module) reported directly off a device as a
+           strip of tiny thumbnails with a huge black void stretching off to
+           the right, letting the whole page scroll sideways -- none of the
+           .video-cell/.video-entry fixes above ever reached it, because it
+           isn't built from either: it's an entirely different, more
+           elaborate desktop magazine-grid layout -- one hero thumbnail
+           (.super-large-video, hard-locked 229px, float:left) sitting next
+           to three "normal-size-video" siblings (60.5% width, float:right,
+           which is *why* they stack into their own column next to the hero
+           thumbnail on desktop instead of sitting in one row). Those floats'
+           combined width overflows past a phone's viewport with nothing
+           around them scoping that overflow, and that -- not any one broken
+           element -- is what let the whole document scroll sideways.
+           Collapsed to the same single full-width stacked-card shape as
+           every other listing on the site, .floatL/.feedmodule-thumbnail
+           (the thumbnail's own float wrapper) included. */
+        .feeditem-bigthumb, .super-large-video, .normal-size-video,
+        .floatL, .feedmodule-thumbnail, .feedmodule-singleform-info {
+            float: none !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+        }
+        .feeditem-bigthumb {
+            background: #fff !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+            margin-bottom: 16px !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18) !important;
+        }
+        .v220WrapperOuter, .v220WideEntry {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .feedmodule-singleform-info .video-title {
+            height: auto !important;
+            overflow: visible !important;
+            font-size: 16px !important;
+            margin-top: 8px !important;
+        }
+
+        /* .floatL/.feedmodule-thumbnail/.feedmodule-singleform-info above
+           are unfloated everywhere they appear, but this module is exactly
+           the kind of bug the existing `overflow-x: hidden` on html/body
+           (top of this file) exists for -- a still-undiscovered fixed-width
+           leftover pushing the whole document sideways -- and this specific
+           instance is proof that guard needed to be on both html AND body,
+           not just body, to actually hold: it was only on body until this
+           fix, and the visible symptom was exactly "whole page scrolls
+           sideways", not just "one section looks cramped". */
 
         /* .video-short-title (the title link under each thumbnail in a
            listing, back/yt2009templates.js): www-core CSS locks it to a

@@ -373,6 +373,27 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `collapses the Videos Being Watched Now module instead of letting the whole page scroll sideways`() {
+        // regression test: reported directly off a device as a strip of tiny
+        // thumbnails next to a huge black void, with the whole page
+        // scrollable sideways. back/yt2009templates.js's homepage_watched
+        // module is built from .feeditem-bigthumb/.super-large-video (hard
+        // 229px, float:left)/.normal-size-video (60.5% width, float:right)
+        // -- an entirely different desktop magazine-grid layout that none of
+        // the .video-cell/.video-entry fixes above ever reached, and whose
+        // combined float widths overflowed the viewport with nothing
+        // scoping it -- that's what let the whole document scroll
+        // sideways, not any one broken element.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".feeditem-bigthumb, .super-large-video, .normal-size-video"))
+        assertTrue(script.contains(".v220WrapperOuter, .v220WideEntry"))
+        // the `overflow-x: hidden` guard existed only on body before this
+        // fix -- exactly why the symptom was a page that scrolls sideways,
+        // not just a cramped-looking section -- now on both html and body
+        assertEquals(2, Regex("overflow-x: hidden !important").findAll(script).count())
+    }
+
+    @Test
     fun `clears the fixed-height clip on video list titles`() {
         // regression test: .video-short-title is hard-locked to
         // height:30px + overflow:hidden in yt2009's own CSS, calibrated to
