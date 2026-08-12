@@ -257,6 +257,43 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `forces the title's inline style too, not just the class rule`() {
+        // regression test: reported directly from a real device rendering
+        // the title enormous (one word per line, full viewport width)
+        // despite the existing !important class rule -- some yt2009
+        // deployments' own CSS apparently sizes #watch-vid-title h1 with an
+        // ID+tag rule of its own that isn't guaranteed to lose to a plain
+        // class selector on every instance. An inline style set with
+        // 'important' priority outranks any external stylesheet rule
+        // regardless of selector, so this is correct no matter what a given
+        // instance's CSS actually does.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("querySelectorAll('.watch-vid-ab-title')"))
+        assertTrue(script.contains("setProperty('font-size', '17px', 'important')"))
+    }
+
+    @Test
+    fun `hides the desktop-only popout-player buttons`() {
+        // regression test: #watch-longform-buttons (yt2009's own
+        // float:right "change player size"/"popout" icon buttons) rendered
+        // displaced up near the masthead once unfloated -- and neither
+        // button does anything useful in a mobile WebView shell anyway.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-longform-buttons"))
+    }
+
+    @Test
+    fun `constrains the URL and embed code fields to the viewport`() {
+        // regression test: reported directly from a real device -- these
+        // plain <input type="text"> fields (full watch URL / <object> embed
+        // snippet) had no width constraint at all, overflowing the mobile
+        // viewport with the majority of their content unreachable (no
+        // horizontal scroll affordance on a plain input).
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-url-field, #embed_code"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }

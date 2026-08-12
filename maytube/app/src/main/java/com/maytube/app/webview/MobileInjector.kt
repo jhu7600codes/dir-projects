@@ -352,19 +352,82 @@ object MobileInjector {
             display: none !important;
         }
 
-        /* .watch-vid-ab-title (watch.html/back/yt2009html.js) has no CSS
-           rule anywhere in yt2009 itself -- it always rendered as a raw
-           browser-default h1 (huge, with large default margins). On the
-           original 960px layout there was enough surrounding space for
-           that to go unnoticed; stacked into a single mobile column it
-           collides with whatever's above it. Not a regression from any
-           rule here, just something that needed sizing for the first
-           time. */
+        /* .watch-vid-ab-title (watch.html/back/yt2009html.js): reported
+           directly from a real device rendering *enormous* (each word of a
+           long title wrapping onto its own full-width line). This class
+           selector rule alone turned out not to be reliable across
+           instances -- some yt2009 deployments' own CSS apparently sizes
+           #watch-vid-title h1 with real, if desktop-sized, rules of its
+           own (an ID+tag selector, which under different
+           versioning/!important combinations across instances isn't
+           guaranteed to lose to a plain class selector the way it does on
+           the one version this was originally checked against). Kept here
+           as a normal stylesheet rule for anything that reads it before
+           the belt-and-suspenders inline-style version below applies (it's
+           already correct on instances where this class rule alone was
+           always enough), but the buildInjectionScript JS below is what
+           actually guarantees this now, regardless of instance. */
         .watch-vid-ab-title {
             font-size: 17px !important;
             line-height: 1.3 !important;
             margin: 6px 0 !important;
             font-weight: bold !important;
+        }
+
+        /* #watch-longform-buttons: yt2009's own desktop-only "change player
+           size" / "popout" icon buttons (www-core CSS: float:right, meant
+           to sit beside the title on a 960px page). Reported directly from
+           a real device rendering oddly displaced up near the masthead once
+           unfloated into the single mobile column below -- and neither
+           button does anything useful in a mobile WebView shell to begin
+           with (there's no separate window to pop the video out into, and
+           the app already sizes the player responsively without a manual
+           toggle). Simplest and safest fix for both problems at once:
+           don't show them here at all. */
+        #watch-longform-buttons {
+            display: none !important;
+        }
+
+        /* watch.html's channel/description block (#watch-channel-vids-div):
+           real selectors read straight from watch.html/www-core CSS, same
+           as everything else in this file. Sized for the original 960px
+           two-column layout (a 300px-wide right rail); none of it is
+           unreadably broken the way the title/URL fields were, just cramped
+           and undifferentiated at mobile width. */
+        .watch-video-desc {
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+            padding: 8px 0 !important;
+        }
+        #watch-channel-stats {
+            font-size: 13px !important;
+            line-height: 1.6 !important;
+        }
+        #watch-channel-icon {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        #watch-channel-icon img {
+            width: 40px !important;
+            height: 40px !important;
+        }
+
+        /* #watch-url-field/#embed_code: plain <input type="text"> holding
+           the full watch URL / <object> embed snippet -- unconstrained
+           desktop width overflowed the mobile viewport outright (visible
+           directly on a real device: both fields showed only their first
+           ~25 characters, cut off at the screen edge with the rest
+           unreachable, no horizontal scroll affordance on a plain input
+           wide enough to need one). */
+        #watch-url-field, #embed_code {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            font-size: 12px !important;
+        }
+        #watch-url-div, #watch-embed-div {
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         #masthead-search-term, .search-term, input[name="search_query"], input[name="q"] {
@@ -469,6 +532,28 @@ object MobileInjector {
 
                 try {
                     document.documentElement.classList.toggle('maytube-dark', $darkModeJs);
+                } catch (e) {}
+
+                // Belt-and-suspenders for .watch-vid-ab-title: reported directly
+                // from a real device rendering enormous (one word per line,
+                // spanning the full viewport) despite the !important class rule
+                // above. Some yt2009 deployments' own CSS apparently sizes
+                // #watch-vid-title h1 with real rules of its own (an ID+tag
+                // selector), and depending on that instance's exact CSS/versioning
+                // this app has no visibility into, that isn't guaranteed to lose
+                // to a plain class selector every time. An inline style set with
+                // 'important' priority outranks *any* external stylesheet rule
+                // regardless of selector or !important status, so this is correct
+                // no matter what a given instance's CSS actually does -- no
+                // guessing required.
+                try {
+                    var titles = document.querySelectorAll('.watch-vid-ab-title');
+                    for (var i = 0; i < titles.length; i++) {
+                        titles[i].style.setProperty('font-size', '17px', 'important');
+                        titles[i].style.setProperty('line-height', '1.3', 'important');
+                        titles[i].style.setProperty('margin', '6px 0', 'important');
+                        titles[i].style.setProperty('font-weight', 'bold', 'important');
+                    }
                 } catch (e) {}
 
                 // Settings > native player: playback happens in
