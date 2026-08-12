@@ -181,8 +181,6 @@ object MobileInjector {
         .feeditem-compressed .feedmodule-singleform-info,
         .video-main-content, .channel-main-content, .playlist-main-content,
         .movie-main-content, .trailer-main-content, .show-main-content,
-        #masthead-search, #masthead-utility,
-        #masthead-nav-main, #masthead-nav-user,
         #watch-longform-buttons {
             float: none !important;
             display: block !important;
@@ -192,48 +190,90 @@ object MobileInjector {
             margin-right: 0 !important;
             box-sizing: border-box !important;
         }
-        /* #masthead itself got squeezed from 960px down to mobile width,
-           but #masthead-search (float:left) and #masthead-nav-user
-           (float:right) -- all sized/positioned for the original 960px bar
-           -- were untouched by that alone, so they collided/overlapped
-           instead of reflowing. unfloating the whole masthead's direct
-           children (above) fixes that, but #masthead-nav-main/-user pack
-           several links onto one line via inline margins meant for a wide
-           bar -- let those links wrap onto their own lines too */
-        #masthead-nav-main a, #masthead-nav-user a {
-            display: inline-block !important;
-            margin: 2px 8px 2px 0 !important;
-        }
 
-        /* keep search/nav reachable on long pages without needing to scroll
-           back up -- layout-only (no color changes here, deliberately: the
-           masthead's #logo is a cropped sprite image tuned for yt2009's own
-           original background, and dark mode is handled globally by the
-           invert filter below rather than per-element color overrides, so
-           hardcoding a background here would fight both of those). */
+        /* keep the masthead reachable on long pages without needing to
+           scroll back up -- layout-only (no color changes here,
+           deliberately: dark mode is handled globally by the invert filter
+           below rather than per-element color overrides). */
         #masthead-container {
             position: sticky !important;
             top: 0 !important;
             z-index: 1000 !important;
         }
 
-        /* #logo (and #masthead-qr, unused in current markup but harmless
-           to cover) are NOT plain elements -- they're .master-sprite
-           buttons, a fixed-size crop window onto one shared sprite sheet
-           image tiled with `background: ... repeat-x` (www-core-*.css).
-           #logo's real width (110px, #masthead #logo in that same file)
-           IS the crop window: it's what keeps only one copy of the
-           YouTube wordmark visible. The rule above forcing every masthead
-           child to width:100% included #logo initially, which widened
-           that crop window across the whole mobile viewport and revealed
-           the sprite tiling itself -- multiple repeated copies of the
-           logo image side by side. Sprite/icon elements get unfloated
-           like everything else, but must keep their real (small,
-           intrinsic) width, never forced to 100%. */
-        #logo, #masthead-qr {
+        /* #masthead: reported directly from a real device as unacceptably
+           tall -- the previous approach (unfloating every child into its
+           own full-width block) turned yt2009's original single-row 960px
+           bar into FIVE stacked rows (logo, search, account links,
+           quicklist/subs/history/upload, home/videos/channels) before any
+           actual page content even started. Real app headers are one
+           compact line; rebuilt as one here instead of trying to reflow
+           yt2009's own desktop nav sprawl into something that still reads
+           as one desktop-era menu bar just turned sideways.
+           #logo + the search form share the one line as a flex row;
+           everything else in the masthead (account links, quicklist/
+           subscriptions/history/upload, home/videos/channels) is hidden --
+           not lost functionality, just not permanently taking up header
+           space on every single page: channels are reached by tapping a
+           channel name, related/recommended videos are reached by tapping
+           a video, same as the rest of a normal video-watching flow. */
+        #masthead {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 10px !important;
+            padding: 8px 10px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+        #masthead-utility, #masthead-nav-main, #masthead-nav-user,
+        #masthead-qr, #masthead-end {
+            display: none !important;
+        }
+
+        /* #logo is NOT a plain element -- it's a .master-sprite button, a
+           fixed-size crop window onto one shared sprite sheet image tiled
+           with `background: ... repeat-x` (www-core-*.css). Its real width
+           (110px, #masthead #logo in that same file) IS the crop window:
+           widening it (e.g. via a naive width:100%) would reveal the
+           sprite tiling itself -- multiple repeated copies side by side.
+           Moot now that #logo's background is maytube's own single-image
+           wordmark (below) rather than a sprite crop, but flex:0 0 auto
+           (never grow/shrink to fill the row) is still exactly right for a
+           logo sharing a line with a search box that should get the rest
+           of the space. */
+        #logo {
+            flex: 0 0 auto !important;
+            float: none !important;
+            margin: 0 !important;
+        }
+
+        /* #masthead-search (the search box + button) fills whatever space
+           #logo doesn't use; .search-form (its real child, watch.html) is
+           itself made a flex row so the text input can grow to fill that
+           while the "Search" button/link keeps its own natural width
+           beside it, instead of the two stacking on separate lines. */
+        #masthead-search {
+            flex: 1 1 auto !important;
             float: none !important;
             display: block !important;
-            margin: 4px 0 !important;
+            width: auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+        }
+        .search-form {
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            width: 100% !important;
+        }
+        #masthead-search-term {
+            flex: 1 1 auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            box-sizing: border-box !important;
         }
 
         /* #logo: swap yt2009's YouTube sprite crop for maytube's own
@@ -615,7 +655,13 @@ object MobileInjector {
             box-sizing: border-box !important;
         }
 
-        #masthead-search-term, .search-term, input[name="search_query"], input[name="q"] {
+        /* #masthead-search-term deliberately excluded here -- it's flex-sized
+           within the one-line masthead now (see the #masthead rule above),
+           and this rule's width would win the cascade tie (same specificity,
+           this rule comes later) if left in, undoing that. Other pages'
+           search boxes (results page etc, .search-term/name=... but no
+           #masthead-search-term id) are unaffected. */
+        .search-term, input[name="search_query"], input[name="q"] {
             width: 55vw !important;
             max-width: 340px !important;
             font-size: 16px !important;

@@ -55,32 +55,31 @@ class MobileInjectorTest {
     }
 
     @Test
-    fun `css unfloats the masthead's own children, not just the masthead itself`() {
-        // regression test: #masthead was squeezed to mobile width but its
-        // children (#logo/#masthead-search float:left,
-        // #masthead-nav-user float:right -- all sized for the original
-        // 960px bar) were left untouched, so they overlapped each other
-        // instead of reflowing.
+    fun `masthead is a single-line flex row, not five stacked rows`() {
+        // regression test: reported directly from a real device -- the
+        // earlier fix (unfloat every masthead child into its own
+        // full-width block) turned yt2009's original single-row 960px bar
+        // into FIVE stacked rows (logo, search, account links, quicklist/
+        // subs/history/upload, home/videos/channels) before any actual
+        // page content started. #logo + the search form now share one
+        // flex row; everything else in the masthead is hidden rather than
+        // stacked.
         val script = MobileInjector.buildInjectionScript(config)
-        assertTrue(script.contains("#logo"))
-        assertTrue(script.contains("#masthead-search"))
-        assertTrue(script.contains("#masthead-nav-user"))
-        assertTrue(script.contains("#masthead-nav-main"))
+        assertTrue(script.contains("#masthead {"))
+        assertTrue(script.contains("display: flex !important"))
+        assertTrue(script.contains("#masthead-utility, #masthead-nav-main, #masthead-nav-user"))
     }
 
     @Test
     fun `logo never gets forced to full width`() {
         // regression test: #logo is a .master-sprite button -- a fixed
         // 110px crop window onto a shared sprite sheet tiled with
-        // "background: ... repeat-x". An earlier fix for the masthead
-        // overlap forced every masthead child (#logo included) to
-        // width:100%, which widened that crop window and revealed the
-        // sprite tiling itself: multiple repeated copies of the YouTube
-        // wordmark side by side. #logo may be unfloated like everything
-        // else, but must never be forced to 100% width.
+        // "background: ... repeat-x" (moot now that it's maytube's own
+        // wordmark background-image instead, but the underlying box must
+        // still never be stretched to fill the row -- it shares that row
+        // with the search box, which is what should grow instead).
         val script = MobileInjector.buildInjectionScript(config)
-        assertFalse(script.contains("#logo, #masthead-search"))
-        assertTrue(script.contains("#logo, #masthead-qr"))
+        assertTrue(script.contains("flex: 0 0 auto !important"))
     }
 
     @Test
