@@ -243,6 +243,20 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `hides the masthead outright during fake fullscreen instead of relying on z-index alone`() {
+        // regression test: reported directly from a real device -- the
+        // video correctly went full-viewport (the specificity fix worked),
+        // but #masthead-container still rendered on top of it, because it's
+        // a sibling under #baseDiv, not a descendant of #watch-player-div,
+        // so its z-index:1000 wasn't reliably losing to the player's
+        // z-index:999999 once ancestor stacking contexts got involved.
+        // Hiding it outright sidesteps that fight entirely.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("classList.toggle('maytube-pseudo-fullscreen'"))
+        assertTrue(script.contains("html.maytube-pseudo-fullscreen #masthead-container"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }

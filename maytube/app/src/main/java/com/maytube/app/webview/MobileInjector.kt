@@ -335,6 +335,23 @@ object MobileInjector {
             z-index: 999999 !important;
         }
 
+        /* #masthead-container is a full-width header bar OUTSIDE
+           #watch-player-div's own DOM subtree (a sibling under #baseDiv,
+           not a descendant of the player) -- its sticky position and
+           z-index:1000 (see the masthead rule above) still render it on top
+           of the fullscreen video in practice, because it's not actually
+           competing with #watch-player-div's z-index:999999 within the same
+           stacking context once ancestor elements are involved. Hiding it
+           outright while fake-fullscreen is active sidesteps that stacking
+           fight entirely, and matches what real fullscreen should look like
+           anyway -- no page chrome visible. Toggled on <html> (not #baseDiv
+           itself, which nbedit_style.css's own JS already repurposes for
+           the fullscreen-unsupported class) by the same MutationObserver
+           that drives MaytubeFullscreenBridge, in buildInjectionScript below. */
+        html.maytube-pseudo-fullscreen #masthead-container {
+            display: none !important;
+        }
+
         /* .watch-vid-ab-title (watch.html/back/yt2009html.js) has no CSS
            rule anywhere in yt2009 itself -- it always rendered as a raw
            browser-default h1 (huge, with large default margins). On the
@@ -552,6 +569,15 @@ object MobileInjector {
                             var isFullscreenNow = baseDiv.classList.contains('fullscreen-unsupported');
                             if (isFullscreenNow === wasFullscreen) return;
                             wasFullscreen = isFullscreenNow;
+                            // #masthead-container is a full-width header bar
+                            // OUTSIDE #watch-player-div's own DOM subtree,
+                            // not something the player's own z-index (however
+                            // high) can reliably out-stack once ancestor
+                            // stacking contexts are involved -- hiding it
+                            // outright while fake-fullscreen is active sidesteps
+                            // that entirely, and matches what real fullscreen
+                            // should look like anyway (no page chrome visible).
+                            document.documentElement.classList.toggle('maytube-pseudo-fullscreen', isFullscreenNow);
                             if (isFullscreenNow) {
                                 window.MaytubeFullscreen.onEnter();
                             } else {
