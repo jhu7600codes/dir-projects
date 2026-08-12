@@ -23,6 +23,21 @@ import org.json.JSONObject
 object MobileInjector {
 
     /**
+     * maytube's own wordmark (red rounded-square play glyph + "maytube"),
+     * replacing yt2009's YouTube sprite crop at #logo. Plain inline SVG,
+     * base64'd so it can drop straight into a CSS `url(data:...)` without
+     * escaping quotes/whitespace for embedding in a raw string. No separate
+     * dark-mode variant needed -- #logo is a background-image, not an
+     * img/video/canvas/iframe tag, so it isn't one of the elements the
+     * dark-mode rule below re-inverts back to normal; it inverts once along
+     * with the rest of the page, same as every other sprite/icon here,
+     * which is the correct behavior for flat graphic content (unlike
+     * photographic img/video content, which would look wrong inverted).
+     */
+    private const val MAYTUBE_LOGO_SVG_BASE64 =
+        "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iNTQiIHZpZXdCb3g9IjAgMCAxODAgNTQiPgogIDxyZWN0IHg9IjIiIHk9IjEyIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHJ4PSI4IiBmaWxsPSIjQ0MxQjFCIi8+CiAgPHBvbHlnb24gcG9pbnRzPSIxMywyMCAxMywzNCAyNSwyNyIgZmlsbD0iI2ZmZmZmZiIvPgogIDx0ZXh0IHg9IjQwIiB5PSIzNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSwgQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxYTFhMWEiIGxldHRlci1zcGFjaW5nPSItMC41Ij5tYXl0dWJlPC90ZXh0Pgo8L3N2Zz4K"
+
+    /**
      * Cookie flags yt2009 looks for as raw substrings of the Cookie header.
      * See yt2009html.js ("flags.includes(...)") and yt2009_flags.htm for the
      * canonical list -- these are the ones relevant to playback.
@@ -101,6 +116,21 @@ object MobileInjector {
             width: 100% !important;
             min-width: 0 !important;
             overflow-x: hidden !important;
+            /* light neutral instead of yt2009's own plain white -- lets the
+               white cards (.video-cell etc, and #watch-channel-vids-div
+               below) actually read as distinct cards instead of blending
+               into an identically-white page. Dark mode's invert filter
+               (bottom of this file) handles this automatically, same as
+               everything else -- no separate dark-mode value needed. */
+            background: #f1f1f1 !important;
+        }
+        /* yt2009's own font stack (www-core-feather.css:
+           `body,input,textarea {font: 12px Arial, sans-serif}`) is Arial --
+           the same default system font most devices already render, so
+           swapping in the OS's own UI font stack reads as "app", not
+           "unstyled webpage", for free. */
+        body, input, textarea, select, button {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         }
 
         /* the one wrapper every page template shares, hard-locked to
@@ -206,6 +236,20 @@ object MobileInjector {
             margin: 4px 0 !important;
         }
 
+        /* #logo: swap yt2009's YouTube sprite crop for maytube's own
+           wordmark (see MAYTUBE_LOGO_SVG_BASE64's kdoc above). Overrides
+           every property .master-sprite's shared rule sets for it
+           (background-image/repeat/position all come from that one
+           shared class -- www-core-*.css) rather than relying on it. */
+        #logo {
+            background-image: url(data:image/svg+xml;base64,$MAYTUBE_LOGO_SVG_BASE64) !important;
+            background-repeat: no-repeat !important;
+            background-position: left center !important;
+            background-size: contain !important;
+            width: 150px !important;
+            height: 45px !important;
+        }
+
         /* grid/list video listing cells: inline-block percentage widths
            (sometimes set inline per-instance) -- forced full width so they
            stack one per row instead of cramming down to illegible slivers.
@@ -226,6 +270,93 @@ object MobileInjector {
             padding: 8px !important;
             margin: 0 0 10px !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Thumbnails: yt2009's own thumbnail wrappers are hard-locked to
+           tiny fixed pixel boxes sized for the original dense desktop grid
+           (back/yt2009templates.js's real markup + www-core CSS):
+           .v120WrapperOuter/.v90WrapperOuter (122px/92px) contain
+           .v120WrapperInner/.v90WrapperInner (120x72px/90x54px,
+           overflow:hidden), which contain either a .video-thumb-link
+           anchor or the <img class="vimg120|vimg90"> directly. The generic
+           `img { max-width:100% }` rule near the top of this file already
+           lets .vimg120/.vimg90 grow past their own hardcoded 120x90/90x70
+           pixel size, but these WRAPPING divs' fixed pixel dimensions +
+           overflow:hidden clip the image right back down regardless --
+           that's the actual reason thumbnails still read as small even
+           with the general img rule in place.
+
+           Two wrapper shapes exist across yt2009's ~8 different listing
+           templates (search/homepage/recommended use WrapperOuter+Inner;
+           channel/playlist listings use .video-thumb-link/.video-thumb-90/
+           .video-thumb-120 directly, no extra wrapper divs) -- both
+           covered. The *WrapperOuter (or .video-thumb-link/90/120 when
+           used standalone) becomes a real 16:9 box; nested descendants
+           inside a *WrapperOuter fill that box at 100%/100% rather than
+           re-establishing their own aspect-ratio box, since doing that at
+           more than one nested level would compound instead of just
+           fitting inside the established box. */
+        .v120WrapperOuter, .v90WrapperOuter,
+        .video-thumb-link, .video-thumb-90, .video-thumb-120 {
+            display: block !important;
+            position: relative !important;
+            width: 100% !important;
+            height: 0 !important;
+            padding-top: 56.25% !important;
+            overflow: hidden !important;
+            border: 0 !important;
+            border-radius: 6px !important;
+        }
+        .v120WrapperOuter .v120WrapperInner, .v90WrapperOuter .v90WrapperInner,
+        .v120WrapperOuter .video-thumb-link, .v90WrapperOuter .video-thumb-link {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            padding-top: 0 !important;
+            border: 0 !important;
+            margin: 0 !important;
+        }
+        .vimg90, .vimg120,
+        .video-thumb-link img, .video-thumb-90 img, .video-thumb-120 img {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin-top: 0 !important;
+            object-fit: cover !important;
+        }
+        /* .video-time (the duration badge, e.g. "23:38"): yt2009's own
+           positioning is a negative top margin (-15px) calibrated to pull
+           it up over the bottom-right corner of the original tiny 72px/54px
+           -tall thumbnail -- doesn't reach nearly far enough up a proper
+           16:9 box at mobile width. Its containing block is now one of the
+           positioned elements above (.v120WrapperInner or the *WrapperOuter
+           itself), so absolute positioning against that same box places it
+           correctly regardless of the thumbnail's now much larger size. */
+        .video-time, .video-corner-text {
+            position: absolute !important;
+            right: 4px !important;
+            bottom: 4px !important;
+            margin: 0 !important;
+            z-index: 2 !important;
+        }
+
+        /* .video-short-title (the title link under each thumbnail in a
+           listing, back/yt2009templates.js): www-core CSS locks it to a
+           fixed height:30px + overflow:hidden, calibrated to whatever
+           small font-size the original 120px-wide desktop cells used --
+           bumping the font size without clearing that height would just
+           clip the now-larger text instead of making it more readable. */
+        .video-short-title, .playlist-short-title {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            font-size: 14px !important;
+            line-height: 1.35 !important;
+            margin: 8px 0 4px !important;
         }
 
         /* the search results sort/filter bar is a real <table> with
@@ -296,19 +427,192 @@ object MobileInjector {
             object-fit: contain !important;
         }
 
-        /* .watch-vid-ab-title (watch.html/back/yt2009html.js) has no CSS
-           rule anywhere in yt2009 itself -- it always rendered as a raw
-           browser-default h1 (huge, with large default margins). On the
-           original 960px layout there was enough surrounding space for
-           that to go unnoticed; stacked into a single mobile column it
-           collides with whatever's above it. Not a regression from any
-           rule here, just something that needed sizing for the first
-           time. */
+        /* yt2009's own CSS-driven fullscreen fallback (nbedit_style.css's
+           .fullscreen-unsupported, forced via the requestFullscreen patch in
+           buildInjectionScript below) needs #watch-player-div to actually
+           cover the viewport when html5-player.js adds that class -- but the
+           responsive-embed rules directly above (also !important, and a bare
+           ID selector) would otherwise still win: #watch-player-div is an ID
+           selector (specificity 100), nbedit_style.css's own
+           `.fullscreen-unsupported { position: absolute !important; ... }`
+           is a class selector (specificity 10) -- with both !important, the
+           higher-specificity ID rule wins per the cascade, silently keeping
+           the player locked to its normal in-page aspect-ratio box no matter
+           what class html5-player.js adds. This is the actual reason
+           "fullscreen" didn't visibly do anything: not a WebView platform
+           limitation, a specificity conflict with this file's own earlier
+           rules.
+           #watch-player-div.fullscreen-unsupported (ID+class, specificity
+           110) has higher specificity than plain #watch-player-div, so this
+           correctly overrides it. Uses position:fixed + explicit viewport
+           units rather than nbedit_style.css's own position:absolute --
+           robust regardless of #baseDiv's own padding (see the page-gutter
+           rule above) or scroll position, neither of which nbedit_style.css
+           had to account for since it was never fighting an ID-selector
+           override to begin with. z-index is deliberately far above both
+           nbedit_style.css's own z-index:99 for this class *and* the sticky
+           #masthead-container above (z-index:1000) -- that masthead would
+           otherwise render on top of the fullscreen video once it's actually
+           correctly positioned. */
+        #watch-player-div.fullscreen-unsupported {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            padding-top: 0 !important;
+            margin: 0 !important;
+            z-index: 999999 !important;
+        }
+
+        /* #masthead-container is a full-width header bar OUTSIDE
+           #watch-player-div's own DOM subtree (a sibling under #baseDiv,
+           not a descendant of the player) -- its sticky position and
+           z-index:1000 (see the masthead rule above) still render it on top
+           of the fullscreen video in practice, because it's not actually
+           competing with #watch-player-div's z-index:999999 within the same
+           stacking context once ancestor elements are involved. Hiding it
+           outright while fake-fullscreen is active sidesteps that stacking
+           fight entirely, and matches what real fullscreen should look like
+           anyway -- no page chrome visible. Toggled on <html> (not #baseDiv
+           itself, which nbedit_style.css's own JS already repurposes for
+           the fullscreen-unsupported class) by the same MutationObserver
+           that drives MaytubeFullscreenBridge, in buildInjectionScript below. */
+        html.maytube-pseudo-fullscreen #masthead-container {
+            display: none !important;
+        }
+
+        /* #watch-vid-title (watch.html/www-core CSS): the ACTUAL root cause
+           of the "giant one-word-per-line title" bug, found by finally
+           reading the real rule instead of guessing again --
+           `#watch-vid-title.longform { margin-right: 320px; }`, and the
+           real markup does carry that exact class
+           (`<div id="watch-vid-title" class="title  longform">`). 320px of
+           right margin was there to leave room for the original layout's
+           300px-wide right rail; on a ~380-400px mobile viewport it leaves
+           the title maybe 60-80px of actual width, which wraps even
+           correctly-sized text one word per line. Nothing about font-size
+           was ever actually wrong -- the box itself was being squeezed
+           down to almost nothing, and the earlier font-size-only fix
+           (still correct and kept below) could never have fixed that on
+           its own. The existing #baseDiv * safety net doesn't catch this
+           class of bug either: it only clamps max-width, and a large
+           margin doesn't make an element wider than the viewport, just
+           narrower than it should be. */
+        #watch-vid-title {
+            width: 100% !important;
+            margin-right: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        /* .watch-vid-ab-title: kept as a normal sizing rule (correct, just
+           not sufficient on its own -- see #watch-vid-title above) and
+           reinforced with a belt-and-suspenders inline-style version in
+           buildInjectionScript below, since a differently-versioned
+           instance's own CSS could in principle size #watch-vid-title h1
+           with a rule specific enough to beat a plain class selector. */
         .watch-vid-ab-title {
             font-size: 17px !important;
             line-height: 1.3 !important;
             margin: 6px 0 !important;
             font-weight: bold !important;
+        }
+
+        /* #watch-longform-buttons: yt2009's own desktop-only "change player
+           size" / "popout" icon buttons (www-core CSS: float:right, meant
+           to sit beside the title on a 960px page). Reported directly from
+           a real device rendering oddly displaced up near the masthead once
+           unfloated into the single mobile column below -- and neither
+           button does anything useful in a mobile WebView shell to begin
+           with (there's no separate window to pop the video out into, and
+           the app already sizes the player responsively without a manual
+           toggle). Simplest and safest fix for both problems at once:
+           don't show them here at all. */
+        #watch-longform-buttons {
+            display: none !important;
+        }
+
+        /* watch.html's channel/description block (#watch-channel-vids-div):
+           real selectors read straight from watch.html/www-core CSS, same
+           as everything else in this file. Sized for the original 960px
+           two-column layout (a 300px-wide right rail); none of it is
+           unreadably broken the way the title/URL fields were, just cramped
+           and undifferentiated at mobile width. */
+        .watch-video-desc {
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+            padding: 8px 0 !important;
+        }
+        #watch-channel-stats {
+            font-size: 13px !important;
+            line-height: 1.6 !important;
+        }
+        #watch-channel-icon {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        #watch-channel-icon img {
+            width: 40px !important;
+            height: 40px !important;
+        }
+
+        /* #watch-video-details (wraps the description + URL/embed boxes
+           below): no background/border of its own in yt2009's CSS, just
+           margin/padding on its inner pieces -- card-ifying the whole
+           thing to match #watch-channel-vids-div/.video-cell above,
+           instead of description text and the URL/embed inputs just
+           sitting directly on the page background one after another. */
+        #watch-video-details {
+            background: #fff !important;
+            border-radius: 8px !important;
+            padding: 4px 12px 12px !important;
+            margin-top: 10px !important;
+            box-sizing: border-box !important;
+        }
+
+        /* #watch-url-field/#embed_code: plain <input type="text"> holding
+           the full watch URL / <object> embed snippet -- unconstrained
+           desktop width overflowed the mobile viewport outright (visible
+           directly on a real device: both fields showed only their first
+           ~25 characters, cut off at the screen edge with the rest
+           unreachable, no horizontal scroll affordance on a plain input
+           wide enough to need one). */
+        #watch-url-field, #embed_code {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            font-size: 12px !important;
+        }
+        #watch-url-div, #watch-embed-div {
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* .yt-uix-expander-head: watch.html's "Related Videos"/"More From:
+           ..." collapsible section headers (h2.yt-uix-expander-head,
+           shared by every yt-uix-expander panel site-wide). yt2009's own
+           rule for it (www-core CSS: `.yt-uix-expander-head { cursor:
+           pointer; color:#000 }`) sets no font-size/weight at all -- always
+           rendered as a raw browser-default h2. A bold, slightly larger
+           weight with a bottom divider reads as an actual section
+           boundary instead of just another line of body text. */
+        .yt-uix-expander-head {
+            font-size: 15px !important;
+            font-weight: bold !important;
+            padding: 10px 0 8px !important;
+            margin: 12px 0 8px !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+
+        /* #watch-channel-vids-div already has its own background/border
+           (#eee/#ccc, www-core CSS) -- just rounding + insetting it to
+           match the card treatment used everywhere else on the page
+           (.video-cell etc, above). */
+        #watch-channel-vids-div {
+            border-radius: 8px !important;
+            padding: 10px !important;
+            box-sizing: border-box !important;
         }
 
         #masthead-search-term, .search-term, input[name="search_query"], input[name="q"] {
@@ -415,6 +719,28 @@ object MobileInjector {
                     document.documentElement.classList.toggle('maytube-dark', $darkModeJs);
                 } catch (e) {}
 
+                // Belt-and-suspenders for .watch-vid-ab-title: reported directly
+                // from a real device rendering enormous (one word per line,
+                // spanning the full viewport) despite the !important class rule
+                // above. Some yt2009 deployments' own CSS apparently sizes
+                // #watch-vid-title h1 with real rules of its own (an ID+tag
+                // selector), and depending on that instance's exact CSS/versioning
+                // this app has no visibility into, that isn't guaranteed to lose
+                // to a plain class selector every time. An inline style set with
+                // 'important' priority outranks *any* external stylesheet rule
+                // regardless of selector or !important status, so this is correct
+                // no matter what a given instance's CSS actually does -- no
+                // guessing required.
+                try {
+                    var titles = document.querySelectorAll('.watch-vid-ab-title');
+                    for (var i = 0; i < titles.length; i++) {
+                        titles[i].style.setProperty('font-size', '17px', 'important');
+                        titles[i].style.setProperty('line-height', '1.3', 'important');
+                        titles[i].style.setProperty('margin', '6px 0', 'important');
+                        titles[i].style.setProperty('font-weight', 'bold', 'important');
+                    }
+                } catch (e) {}
+
                 // Settings > native player: playback happens in
                 // PlayerActivity instead, via its own separate SABR fetch
                 // (see VideoDownloader/SabrFragmentDownloader) -- letting
@@ -445,6 +771,90 @@ object MobileInjector {
                                 'text-align:center;color:#fff;background:#000;padding:16px;box-sizing:border-box;font-size:13px;z-index:5;';
                             box.appendChild(hint);
                         }
+                    }
+                } catch (e) {}
+
+                // Fullscreen: force yt2009's OWN CSS-driven "fullscreen-unsupported"
+                // fallback (nbedit_style.css, loaded by watch.html: .fullscreen-unsupported
+                // { position:absolute; width:100%; height:100%; z-index:99 }) instead of
+                // ever letting Android WebView's real native fullscreen engage.
+                //
+                // WebView's HTML5 video-fullscreen path is known to drop sibling DOM
+                // overlays: html5-player.js's own play/pause/seek/HD controls live in
+                // sibling divs next to <video> inside #watch-player-div, not inside the
+                // <video> element itself, so real native fullscreen here renders bare
+                // video with zero controls -- confirmed side-by-side against Fennec,
+                // which (notably) shows those same controls, meaning it likely already
+                // hits this exact fallback path itself rather than truly going native.
+                //
+                // assets/site-assets/html5-player.js's own fullscreen button handler
+                // already wraps player_element.requestFullscreen() (player_element ==
+                // #watch-player-div) in try/catch specifically for this: forcing that
+                // call to throw synchronously is what triggers its fallback. Its matching
+                // exit path expects document.exitFullscreen() to throw the same way when
+                // there's nothing real to exit -- real WebView doesn't do that on its own
+                // (rejects a Promise instead, invisibly to a plain sync try/catch), so
+                // that's patched too, or the page gets stuck showing the fake-fullscreen
+                // CSS with no way out via the page's own button.
+                try {
+                    var playerDiv = document.getElementById('watch-player-div');
+                    if (playerDiv && !playerDiv.__maytubeFsPatched) {
+                        playerDiv.__maytubeFsPatched = true;
+                        var forceUnsupported = function() {
+                            throw new DOMException('maytube: forcing the yt2009 CSS fullscreen fallback', 'NotSupportedError');
+                        };
+                        playerDiv.requestFullscreen = forceUnsupported;
+                        playerDiv.webkitRequestFullscreen = forceUnsupported;
+                        playerDiv.webkitRequestFullScreen = forceUnsupported;
+                    }
+                } catch (e) {}
+
+                try {
+                    if (!document.__maytubeExitFsPatched) {
+                        document.__maytubeExitFsPatched = true;
+                        var origExitFullscreen = document.exitFullscreen ? document.exitFullscreen.bind(document) : null;
+                        document.exitFullscreen = function() {
+                            if (!document.fullscreenElement) {
+                                throw new DOMException('maytube: nothing is really fullscreen', 'InvalidStateError');
+                            }
+                            return origExitFullscreen ? origExitFullscreen() : undefined;
+                        };
+                    }
+                } catch (e) {}
+
+                // Relay yt2009's own fullscreen-unsupported class toggle (see above)
+                // back to native code so the app can still apply the same system-bar-
+                // hiding/landscape-lock/keep-screen-on treatment real native fullscreen
+                // would have gotten from MaytubeWebChromeClient.onShowCustomView --
+                // otherwise "fullscreen" here would just be a same-size CSS overlay with
+                // the Android status bar and app toolbar still sitting on top of it.
+                // #baseDiv is present on every page template (see the CSS kdoc above),
+                // so this is safe to attach unconditionally, not just on watch pages.
+                try {
+                    var baseDiv = document.getElementById('baseDiv');
+                    if (baseDiv && !baseDiv.__maytubeFsObserved && window.MaytubeFullscreen) {
+                        baseDiv.__maytubeFsObserved = true;
+                        var wasFullscreen = baseDiv.classList.contains('fullscreen-unsupported');
+                        var observer = new MutationObserver(function() {
+                            var isFullscreenNow = baseDiv.classList.contains('fullscreen-unsupported');
+                            if (isFullscreenNow === wasFullscreen) return;
+                            wasFullscreen = isFullscreenNow;
+                            // #masthead-container is a full-width header bar
+                            // OUTSIDE #watch-player-div's own DOM subtree,
+                            // not something the player's own z-index (however
+                            // high) can reliably out-stack once ancestor
+                            // stacking contexts are involved -- hiding it
+                            // outright while fake-fullscreen is active sidesteps
+                            // that entirely, and matches what real fullscreen
+                            // should look like anyway (no page chrome visible).
+                            document.documentElement.classList.toggle('maytube-pseudo-fullscreen', isFullscreenNow);
+                            if (isFullscreenNow) {
+                                window.MaytubeFullscreen.onEnter();
+                            } else {
+                                window.MaytubeFullscreen.onExit();
+                            }
+                        });
+                        observer.observe(baseDiv, { attributes: true, attributeFilter: ['class'] });
                     }
                 } catch (e) {}
 

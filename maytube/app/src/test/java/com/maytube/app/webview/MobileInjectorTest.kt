@@ -180,6 +180,194 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `forces yt2009's own CSS fullscreen fallback instead of real native fullscreen`() {
+        // regression test: real WebView fullscreen (onShowCustomView) drops
+        // html5-player.js's own sibling control divs, rendering bare video
+        // with no play/seek/HD controls -- confirmed side-by-side against
+        // Fennec, which shows those controls. Forcing #watch-player-div's
+        // requestFullscreen() to throw synchronously is what triggers
+        // html5-player.js's own try/catch fallback into its existing
+        // CSS-driven "fullscreen-unsupported" mode (nbedit_style.css),
+        // which keeps everything intact.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("getElementById('watch-player-div')"))
+        assertTrue(script.contains("playerDiv.requestFullscreen ="))
+        assertTrue(script.contains("NotSupportedError"))
+    }
+
+    @Test
+    fun `patches document exitFullscreen to throw when nothing is really fullscreen`() {
+        // regression test: html5-player.js's own exit path only runs its
+        // cleanup (which un-does the fake-fullscreen CSS classes) inside a
+        // catch block, expecting document.exitFullscreen() to throw
+        // synchronously when there's nothing real to exit. Real WebView
+        // instead resolves/rejects a Promise, invisibly to a plain
+        // synchronous try/catch -- without this patch, the page gets stuck
+        // showing the fake-fullscreen CSS with no way out via its own button.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("document.exitFullscreen = function()"))
+        assertTrue(script.contains("InvalidStateError"))
+    }
+
+    @Test
+    fun `relays yt2009's fullscreen-unsupported class toggle to native code`() {
+        // regression test: without this, "fullscreen" would just be a
+        // same-size CSS overlay with the Android status bar/app toolbar
+        // still on top of it -- MaytubeFullscreenBridge is what lets
+        // MaytubeWebChromeClient still apply the same system-chrome-hiding/
+        // landscape-lock treatment real native fullscreen would have gotten.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("fullscreen-unsupported"))
+        assertTrue(script.contains("MutationObserver"))
+        assertTrue(script.contains("window.MaytubeFullscreen.onEnter()"))
+        assertTrue(script.contains("window.MaytubeFullscreen.onExit()"))
+    }
+
+    @Test
+    fun `fullscreen-unsupported override beats the plain player id selector on specificity`() {
+        // regression test: #watch-player-div (bare ID, specificity 100) and
+        // nbedit_style.css's own .fullscreen-unsupported (bare class,
+        // specificity 10) both use !important -- the higher-specificity ID
+        // rule silently wins by default, keeping the player locked to its
+        // normal in-page aspect-ratio box even once html5-player.js adds
+        // that class. #watch-player-div.fullscreen-unsupported (ID+class,
+        // specificity 110) is what actually overrides it; this is the
+        // actual reason fullscreen visibly did nothing, not a WebView
+        // platform limitation.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-player-div.fullscreen-unsupported"))
+        assertTrue(script.contains("position: fixed !important"))
+        // must out-rank the sticky masthead's own z-index, or the header
+        // renders on top of the now-correctly-positioned fullscreen video
+        assertTrue(script.contains("z-index: 999999 !important"))
+    }
+
+    @Test
+    fun `hides the masthead outright during fake fullscreen instead of relying on z-index alone`() {
+        // regression test: reported directly from a real device -- the
+        // video correctly went full-viewport (the specificity fix worked),
+        // but #masthead-container still rendered on top of it, because it's
+        // a sibling under #baseDiv, not a descendant of #watch-player-div,
+        // so its z-index:1000 wasn't reliably losing to the player's
+        // z-index:999999 once ancestor stacking contexts got involved.
+        // Hiding it outright sidesteps that fight entirely.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("classList.toggle('maytube-pseudo-fullscreen'"))
+        assertTrue(script.contains("html.maytube-pseudo-fullscreen #masthead-container"))
+    }
+
+    @Test
+    fun `forces the title's inline style too, not just the class rule`() {
+        // regression test: reported directly from a real device rendering
+        // the title enormous (one word per line, full viewport width)
+        // despite the existing !important class rule -- some yt2009
+        // deployments' own CSS apparently sizes #watch-vid-title h1 with an
+        // ID+tag rule of its own that isn't guaranteed to lose to a plain
+        // class selector on every instance. An inline style set with
+        // 'important' priority outranks any external stylesheet rule
+        // regardless of selector, so this is correct no matter what a given
+        // instance's CSS actually does.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("querySelectorAll('.watch-vid-ab-title')"))
+        assertTrue(script.contains("setProperty('font-size', '17px', 'important')"))
+    }
+
+    @Test
+    fun `hides the desktop-only popout-player buttons`() {
+        // regression test: #watch-longform-buttons (yt2009's own
+        // float:right "change player size"/"popout" icon buttons) rendered
+        // displaced up near the masthead once unfloated -- and neither
+        // button does anything useful in a mobile WebView shell anyway.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-longform-buttons"))
+    }
+
+    @Test
+    fun `constrains the URL and embed code fields to the viewport`() {
+        // regression test: reported directly from a real device -- these
+        // plain <input type="text"> fields (full watch URL / <object> embed
+        // snippet) had no width constraint at all, overflowing the mobile
+        // viewport with the majority of their content unreachable (no
+        // horizontal scroll affordance on a plain input).
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-url-field, #embed_code"))
+    }
+
+    @Test
+    fun `applies a real font stack and page background instead of yt2009's bare defaults`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("-apple-system"))
+        assertTrue(script.contains("background: #f1f1f1"))
+    }
+
+    @Test
+    fun `styles the related-videos and more-from section headers`() {
+        // .yt-uix-expander-head is the real class yt2009 uses for both
+        // panels (watch.html), which itself sets no font-size/weight at
+        // all -- always rendered as a raw browser-default h2.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".yt-uix-expander-head"))
+    }
+
+    @Test
+    fun `zeroes out watch-vid-title's own 320px right margin`() {
+        // regression test: the ACTUAL root cause of the giant
+        // one-word-per-line title bug, found by reading the real rule
+        // instead of guessing -- www-core CSS's
+        // #watch-vid-title.longform { margin-right: 320px } (the real
+        // markup does carry that class), left over from the original
+        // layout's 300px-wide right rail. On a mobile viewport that leaves
+        // the title maybe 60-80px of actual width, wrapping even
+        // correctly-sized text one word per line -- font-size was never
+        // actually the problem. The existing #baseDiv * safety net doesn't
+        // catch this class of bug: it only clamps max-width, and a large
+        // margin doesn't make an element wider than the viewport, just
+        // narrower than it should be.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-vid-title {"))
+        assertTrue(script.contains("margin-right: 0 !important"))
+    }
+
+    @Test
+    fun `cards the description and URL-embed block`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#watch-video-details {"))
+    }
+
+    @Test
+    fun `replaces the YouTube logo with maytube's own wordmark`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#logo {"))
+        assertTrue(script.contains("data:image/svg+xml;base64,"))
+        assertTrue(script.contains("background-repeat: no-repeat !important"))
+    }
+
+    @Test
+    fun `makes thumbnails a real 16by9 box instead of yt2009's tiny fixed pixel crop`() {
+        // regression test: .v120WrapperInner/.v90WrapperInner (and
+        // .video-thumb-90/120 used directly in other listing templates) are
+        // hard-locked to 120x72px/90x54px + overflow:hidden in yt2009's own
+        // CSS -- the generic `img{max-width:100%}` rule alone can't undo
+        // that, since the wrapping DIV is what actually clips the image
+        // down, not the image's own size.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".v120WrapperOuter, .v90WrapperOuter"))
+        assertTrue(script.contains("padding-top: 56.25% !important"))
+        assertTrue(script.contains("object-fit: cover !important"))
+    }
+
+    @Test
+    fun `clears the fixed-height clip on video list titles`() {
+        // regression test: .video-short-title is hard-locked to
+        // height:30px + overflow:hidden in yt2009's own CSS, calibrated to
+        // the original tiny desktop font size -- a bigger font-size without
+        // clearing this would just get clipped instead of more readable.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".video-short-title, .playlist-short-title"))
+        assertTrue(script.contains("overflow: visible !important"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }

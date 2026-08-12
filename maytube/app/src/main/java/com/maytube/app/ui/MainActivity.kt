@@ -31,6 +31,7 @@ import com.maytube.app.R
 import com.maytube.app.data.ServerConfig
 import com.maytube.app.data.ServerConfigRepository
 import com.maytube.app.download.VideoDownloader
+import com.maytube.app.webview.MaytubeFullscreenBridge
 import com.maytube.app.webview.MaytubeWebChromeClient
 import com.maytube.app.webview.MaytubeWebViewClient
 import com.maytube.app.webview.MobileInjector
@@ -133,6 +134,20 @@ class MainActivity : AppCompatActivity() {
         setupWebView()
 
         swipeRefresh.setOnRefreshListener { webView.reload() }
+        // Reported directly from a real device: an ordinary upward scroll
+        // (finger moving up, content scrolling down) anywhere on the page
+        // triggered a refresh, not just a genuine pull-down-from-the-top
+        // gesture. SwipeRefreshLayout's default gate for this is
+        // canChildScrollUp() -> View.canScrollVertically(child, -1), which
+        // is unreliable specifically for WebView (a well-documented
+        // WebView/SwipeRefreshLayout interop gap -- WebView's own scroll
+        // state isn't always visible through that generic check the way it
+        // is for RecyclerView/ScrollView). WebView.getScrollY() (a real,
+        // reliably-maintained View property) is what actually reflects its
+        // current scroll position, so use that directly instead: only
+        // allow the refresh gesture to engage when truly scrolled to the
+        // very top.
+        swipeRefresh.setOnChildScrollUpCallback { _, _ -> webView.scrollY > 0 }
 
         onBackPressedDispatcher.addCallback(this) {
             when {
@@ -210,9 +225,13 @@ class MainActivity : AppCompatActivity() {
         // onDestroy -- a config change can still land on a finishing
         // activity
         if (!::webChromeClient.isInitialized || !::webView.isInitialized) return
-        if (webChromeClient.isFullscreen) {
+        if (webChromeClient.hasNativeFullscreenSurface) {
             webChromeClient.relayoutFullscreenView()
         } else {
+            // covers both plain (non-fullscreen) browsing and yt2009's own
+            // CSS-driven fullscreen fallback -- both render as ordinary
+            // WebView content, unlike the native surface above, so the
+            // WebView itself is what needs the nudge either way
             webView.requestLayout()
             webView.invalidate()
         }
@@ -253,6 +272,21 @@ class MainActivity : AppCompatActivity() {
             onLongPress = { showQuickAccessMenu() }
         )
         webView.webChromeClient = webChromeClient
+
+        // yt2009's own CSS-driven "fullscreen-unsupported" fallback (see
+        // MobileInjector.buildInjectionScript's requestFullscreen patch and
+        // MaytubeWebChromeClient.setPseudoFullscreen for the full story --
+        // real native WebView fullscreen drops yt2009's own custom controls,
+        // so it's deliberately disabled in favor of this) reports its own
+        // enter/exit back through here instead of onShowCustomView/
+        // onHideCustomView, which never fire for it since no native
+        // fullscreen ever actually engages.
+        webView.addJavascriptInterface(
+            MaytubeFullscreenBridge(this) { isFullscreen ->
+                webChromeClient.setPseudoFullscreen(isFullscreen)
+            },
+            "MaytubeFullscreen"
+        )
 
         webView.setOnLongClickListener {
             showQuickAccessMenu()
