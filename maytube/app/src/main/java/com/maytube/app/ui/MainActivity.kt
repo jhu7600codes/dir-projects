@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Message
 import android.view.Menu
 import android.view.MenuItem
+import android.view.OrientationEventListener
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -58,6 +59,14 @@ class MainActivity : AppCompatActivity() {
 
     private var config: ServerConfig? = null
     private var activeDownloadJob: Job? = null
+    private var currentUrl: String? = null
+
+    // rotate-to-landscape-means-fullscreen (see setupOrientationListener's
+    // kdoc for why this needs raw sensor orientation, not
+    // onConfigurationChanged; OrientationBucket/orientationBucketFor live in
+    // OrientationBucket.kt as a plain unit-testable function)
+    private lateinit var orientationListener: OrientationEventListener
+    private var lastOrientationBucket = OrientationBucket.UNKNOWN
 
     private val settingsLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -132,6 +141,7 @@ class MainActivity : AppCompatActivity() {
         playNativelyFab.setOnClickListener { playCurrentVideoNatively() }
 
         setupWebView()
+        setupOrientationListener()
 
         swipeRefresh.setOnRefreshListener { webView.reload() }
         // Reported directly from a real device: an ordinary upward scroll
@@ -180,10 +190,14 @@ class MainActivity : AppCompatActivity() {
         // webView unconditionally). Every callback below that touches
         // webView has to check it was actually set up first.
         if (::webView.isInitialized) webView.onResume()
+        if (::orientationListener.isInitialized && orientationListener.canDetectOrientation()) {
+            orientationListener.enable()
+        }
     }
 
     override fun onPause() {
         if (::webView.isInitialized) webView.onPause()
+        if (::orientationListener.isInitialized) orientationListener.disable()
         CookieManager.getInstance().flush()
         super.onPause()
     }
@@ -236,6 +250,64 @@ class MainActivity : AppCompatActivity() {
             webView.invalidate()
         }
     }
+
+    /**
+     * Rotate to landscape while watching a video: auto-enter fullscreen.
+     * Rotate back to portrait: auto-exit it. Requested directly, and
+     * matches what most video apps already do -- yt2009 itself has no
+     * concept of this (it's a 2009-era desktop site; nothing in
+     * html5-player.js reacts to orientation at all), so this drives the
+     * exact same button-click path a manual tap would (see
+     * MaytubeWebChromeClient.enterFullscreenIfNeeded/exitFullscreenIfNeeded).
+     *
+     * Deliberately built on OrientationEventListener (raw
+     * accelerometer/rotation-vector sensor data) rather than reusing
+     * onConfigurationChanged above, for a reason that isn't obvious until
+     * you trace it through: entering fullscreen locks
+     * requestedOrientation to SCREEN_ORIENTATION_SENSOR_LANDSCAPE (see
+     * MaytubeWebChromeClient.applyFullscreenChrome) specifically so the
+     * window can't be rotated back to portrait by the system while
+     * fullscreen. That's correct for "don't let a stray tilt near
+     * portrait ports snap it closed" -- but it also means once fullscreen
+     * is active, physically turning the phone back to portrait can NEVER
+     * produce a portrait onConfigurationChanged callback on its own: the
+     * window is locked away from portrait, so the system has nothing to
+     * deliver a config change for. Something has to notice the physical
+     * rotation independently of whether the window is allowed to follow
+     * it, and revert the lock (by exiting fullscreen) before the window
+     * even has a chance to rotate -- that's exactly what
+     * OrientationEventListener provides: it reports the device's actual
+     * physical orientation from the sensor, completely independent of
+     * requestedOrientation.
+     *
+     * Bucketed into PORTRAIT/LANDSCAPE with an explicit dead zone around
+     * each 90-degree boundary (only acted on when the bucket actually
+     * changes, not on every sensor tick) so a phone resting near 45
+     * degrees, or briefly passing through that angle mid-rotation, doesn't
+     * flap fullscreen on/off.
+     */
+    private fun setupOrientationListener() {
+        orientationListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientationDegrees: Int) {
+                val bucket = orientationBucketFor(orientationDegrees, ORIENTATION_DEAD_ZONE_DEGREES)
+                if (bucket == OrientationBucket.UNKNOWN || bucket == lastOrientationBucket) return
+                lastOrientationBucket = bucket
+                if (!::webChromeClient.isInitialized || !::webView.isInitialized) return
+                if (!isOnWatchPage()) return
+                when (bucket) {
+                    OrientationBucket.LANDSCAPE -> webChromeClient.enterFullscreenIfNeeded(webView)
+                    OrientationBucket.PORTRAIT -> {
+                        if (webChromeClient.isFullscreen) {
+                            webChromeClient.exitFullscreenIfNeeded(webView)
+                        }
+                    }
+                    OrientationBucket.UNKNOWN -> {}
+                }
+            }
+        }
+    }
+
+    private fun isOnWatchPage(): Boolean = MobileInjector.extractVideoId(currentUrl) != null
 
     @Suppress("SetJavaScriptEnabled")
     private fun setupWebView() {
@@ -321,6 +393,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onPageFinished(url: String?) {
+        currentUrl = url
         swipeRefresh.isRefreshing = false
         notConfiguredView.visibility = android.view.View.GONE
         // Settings > native player: offer the native player specifically on
@@ -545,5 +618,12 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Snackbar.make(webView, R.string.download_failed, Snackbar.LENGTH_LONG).show()
         }
+    }
+
+    companion object {
+        // width of the "neither bucket" dead zone around each 45-degree
+        // diagonal (90 - this = how close to a cardinal orientation counts
+        // as that bucket) -- see orientationBucketFor's kdoc (OrientationBucket.kt)
+        private const val ORIENTATION_DEAD_ZONE_DEGREES = 15
     }
 }

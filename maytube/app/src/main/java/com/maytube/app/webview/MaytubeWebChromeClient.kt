@@ -361,6 +361,29 @@ class MaytubeWebChromeClient(
         }, EXIT_FALLBACK_DELAY_MS)
     }
 
+    /**
+     * Companion to [exitFullscreenIfNeeded], for MainActivity's
+     * rotate-to-landscape-means-fullscreen behavior: clicks yt2009's own
+     * fullscreen button (assets/site-assets/html5-player.js,
+     * `.video_controls .fullscreen`) exactly as if the user had tapped it
+     * themselves, taking its ENTER branch. That's deliberate, not a
+     * shortcut -- routing through the same button the user would press
+     * means this takes the exact same forced-CSS-fallback path every other
+     * entry into fullscreen in this app already does (see
+     * MobileInjector's requestFullscreen patch); there's no separate
+     * "enter fullscreen" concept to keep in sync with that one.
+     *
+     * No-ops if already fullscreen (real or pseudo -- nothing to enter) or
+     * if the button isn't on the page at all: not a watch page, or the
+     * player hasn't finished setting up its controls yet.
+     * querySelector returning null in that case is harmless, same as
+     * [exitFullscreenIfNeeded]'s button lookup.
+     */
+    fun enterFullscreenIfNeeded(webView: WebView) {
+        if (isFullscreen) return
+        webView.evaluateJavascript(ENTER_FULLSCREEN_JS, null)
+    }
+
     companion object {
         private const val CONSOLE_TAG = "MaytubeWebConsole"
         private const val RELAYOUT_SETTLE_DELAY_MS = 400L
@@ -375,6 +398,16 @@ class MaytubeWebChromeClient(
                 if (document.fullscreenElement) { document.exitFullscreen(); return; }
                 var btn = document.querySelector('.video_controls .fullscreen');
                 if (btn && btn.classList.contains('opened')) { btn.click(); }
+            })();
+        """
+
+        // mirror image of EXIT_FULLSCREEN_JS above -- click the same
+        // button, but only when it's NOT already marked "opened", taking
+        // html5-player.js's enter branch instead of its exit one
+        private const val ENTER_FULLSCREEN_JS = """
+            (function() {
+                var btn = document.querySelector('.video_controls .fullscreen');
+                if (btn && !btn.classList.contains('opened')) { btn.click(); }
             })();
         """
     }
