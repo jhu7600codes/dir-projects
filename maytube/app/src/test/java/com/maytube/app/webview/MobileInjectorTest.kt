@@ -256,6 +256,44 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `gives the sticky masthead an opaque background so scrolled content can't show through it`() {
+        // regression test: reported directly from a real device -- once
+        // scrolled on a watch page, the video visibly showed through behind
+        // the header instead of being covered by it. www-core CSS's real
+        // #masthead-container rule has no background at all (margin +
+        // border-bottom only) -- fine for the original desktop site, where
+        // this element was always position:static and simply scrolled away
+        // with everything below it, so nothing was ever behind it to show
+        // through. Making it position:sticky (this file, a separate earlier
+        // fix) is what turned "nothing behind it" into "the page's own
+        // scrolled content, persistently" -- a requirement nothing supplied
+        // until now.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("position: sticky !important"))
+        assertTrue(script.contains("#masthead-container {"))
+        val mastheadRule = script.substringAfter("#masthead-container {").substringBefore("}")
+        assertTrue(mastheadRule.contains("background: #f1f1f1 !important"))
+    }
+
+    @Test
+    fun `dismisses the hover-only volume and captions popups on an outside tap`() {
+        // regression test: reported directly from a real device -- tapping
+        // the volume or captions/cc button popped its menu open (WebView
+        // synthesizes a mouseover for a plain tap, same as every mobile
+        // browser, specifically so hover-dependent UI like this doesn't
+        // completely break on touch) but it then stayed open indefinitely,
+        // since a single discrete tap has no equivalent to a real pointer
+        // leaving the element afterward -- the mouseout that would close it
+        // (assets/site-assets/html5-player.js) never fires from touch.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("addEventListener('touchstart'"))
+        assertTrue(script.contains(".volume_popout"))
+        assertTrue(script.contains("volumePanel.style.bottom = '-64px'"))
+        assertTrue(script.contains(".captions_popup"))
+        assertTrue(script.contains("captionsPopup.style.display = 'none'"))
+    }
+
+    @Test
     fun `forces the title's inline style too, not just the class rule`() {
         // regression test: reported directly from a real device rendering
         // the title enormous (one word per line, full viewport width)

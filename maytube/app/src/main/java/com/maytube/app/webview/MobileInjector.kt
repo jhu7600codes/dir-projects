@@ -195,13 +195,27 @@ object MobileInjector {
         }
 
         /* keep the masthead reachable on long pages without needing to
-           scroll back up -- layout-only (no color changes here,
-           deliberately: dark mode is handled globally by the invert filter
-           below rather than per-element color overrides). */
+           scroll back up. Reported directly from a real device on a watch
+           page: once scrolled, the header rendered with the video visibly
+           showing through behind it instead of covering it. Root cause,
+           found by reading www-core CSS's real #masthead-container rule:
+           it has no background at all (`margin` + `border-bottom` only) --
+           entirely reasonable for the original desktop site, where this
+           element was never anything but `position: static` and simply
+           scrolled away with the rest of the page along with whatever was
+           below it, so nothing was ever behind it to show through. Making
+           it `position: sticky` (this rule) is what turned "nothing behind
+           it" into "the page's own scrolled content, persistently, for as
+           long as the header is stuck" -- a real new requirement that
+           sticky positioning introduces, which nothing here supplied
+           until now. `#f1f1f1` matches the page background set on `body`
+           above, so the header reads as part of the same surface instead
+           of a mismatched white bar. */
         #masthead-container {
             position: sticky !important;
             top: 0 !important;
             z-index: 1000 !important;
+            background: #f1f1f1 !important;
         }
 
         /* #masthead: reported directly from a real device as unacceptably
@@ -1010,6 +1024,49 @@ object MobileInjector {
                             }
                         });
                         observer.observe(baseDiv, { attributes: true, attributeFilter: ['class'] });
+                    }
+                } catch (e) {}
+
+                // The player's volume slider (.volume_popout) and captions/
+                // subtitles menu (.captions_popup, inside .player_additions_popout)
+                // are both built entirely on hover: assets/site-assets/html5-player.js
+                // opens them from a "mouseover" listener on their trigger button and
+                // closes them from a "mouseout" listener on the popup itself (or a
+                // mousemove-based hit-test against it, for captions). Reported
+                // directly from a real device: tapping either button pops its menu
+                // open same as a real mouse hovering it -- WebView (like every
+                // mobile browser) synthesizes a mouseover for a plain tap, precisely
+                // so hover-dependent sites like this don't completely break on
+                // touch -- but then it stays open indefinitely, because a single
+                // discrete tap has no equivalent to a real pointer actually leaving
+                // the element afterward, so the matching mouseout that would close
+                // it never fires. This is that missing close signal's mobile
+                // equivalent: tapping anywhere outside the open popup (and its own
+                // trigger button, so the SAME tap that opens it doesn't also
+                // instantly close it again) forces it back to its own closed state,
+                // exactly what a real mouseout would have done.
+                try {
+                    if (!document.__maytubePlayerPopupDismiss) {
+                        document.__maytubePlayerPopupDismiss = true;
+                        document.addEventListener('touchstart', function(e) {
+                            var volumePanel = document.querySelector('.volume_popout');
+                            var volumeBtn = document.querySelector('.video_controls .volume_container');
+                            if (volumePanel
+                            && !volumePanel.contains(e.target)
+                            && (!volumeBtn || !volumeBtn.contains(e.target))) {
+                                // mirrors what volume_panel's own "mouseout" handler
+                                // slides it back to (html5-player.js, non_css_anim_remove)
+                                volumePanel.style.bottom = '-64px';
+                            }
+                            var captionsPopup = document.querySelector('.captions_popup');
+                            var ccBtn = document.querySelector('.player_additions_popout .cc');
+                            if (captionsPopup
+                            && captionsPopup.style.display !== 'none'
+                            && !captionsPopup.contains(e.target)
+                            && (!ccBtn || !ccBtn.contains(e.target))) {
+                                captionsPopup.style.display = 'none';
+                            }
+                        }, { passive: true, capture: true });
                     }
                 } catch (e) {}
 
