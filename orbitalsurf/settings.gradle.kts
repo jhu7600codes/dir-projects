@@ -27,6 +27,4 @@ include(":core")
 // without the SDK set up and only need to build/test :core, comment out
 // the line below; ./gradlew :core:test will keep working either way
 // thanks to org.gradle.configureondemand=true in gradle.properties.
-// Commented out until the :app module itself is scaffolded (see README) --
-// re-enabled in the commit that adds app/build.gradle.kts.
-// include(":app")
+include(":app")

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dusk-over-the-city palette -- the whole visual identity is procedural geometry + flat
+         color, so these values do double duty: UI chrome AND (via ProceduralMeshFactory /
+         Shaders) in-game fog/lighting tints. -->
+    <color name="orbital_sky_top">#0B1230</color>
+    <color name="orbital_sky_bottom">#2B3A67</color>
+    <color name="orbital_accent">#FF6F3C</color>
+    <color name="orbital_accent_variant">#FFC145</color>
+    <color name="orbital_surface">#151A33</color>
+    <color name="orbital_surface_variant">#232B52</color>
+    <color name="orbital_on_surface">#F4F1EA</color>
+    <color name="orbital_on_surface_muted">#A9AFCB</color>
+    <color name="orbital_success">#4CC9A0</color>
+    <color name="orbital_danger">#E8544B</color>
+    <color name="orbital_plates_gold">#FFC145</color>
+
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

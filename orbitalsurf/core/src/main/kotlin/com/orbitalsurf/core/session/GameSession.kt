@@ -13,6 +13,7 @@ import com.orbitalsurf.core.progression.RemainingPowerup
 import com.orbitalsurf.core.progression.ScoreSystem
 import com.orbitalsurf.core.progression.SpeedCurve
 import com.orbitalsurf.core.progression.toMissionPickupKind
+import com.orbitalsurf.core.world.Chunk
 import com.orbitalsurf.core.world.PickupKind
 import com.orbitalsurf.core.world.PickupPlacement
 import com.orbitalsurf.core.world.SurfaceSampler
@@ -59,7 +60,7 @@ class GameSession(
     private val scoreSystem = ScoreSystem()
     private val missionSystem = MissionSystem(seed = seed)
 
-    private val collectedPickupIds = mutableSetOf<String>()
+    private val collectedPickupIdsInternal = mutableSetOf<String>()
     private val reachedCheckpointsThisRun = mutableSetOf<Int>()
     private val pickupCountsThisRun = mutableMapOf<MissionPickupKind, Int>()
     private var platesEarnedThisRun = 0L
@@ -80,6 +81,12 @@ class GameSession(
 
     val isGameOver: Boolean get() = gameOver
 
+    /** The current streamed window, for the renderer to draw -- mirrors `WorldStreamer.activeChunks`. */
+    val activeChunks: List<Chunk> get() = worldStreamer.activeChunks
+
+    /** Pickup ids already collected this run, so the renderer can skip drawing them. */
+    val collectedPickupIds: Set<String> get() = collectedPickupIdsInternal
+
     fun update(dtSeconds: Double, input: SteerInput): RunFrameResult {
         if (gameOver) return currentFrameResult()
 
@@ -97,7 +104,7 @@ class GameSession(
             dtSeconds = dtSeconds,
             forwardSpeed = forwardSpeed,
             chunks = chunks,
-            collectedPickupIds = collectedPickupIds,
+            collectedPickupIds = collectedPickupIdsInternal,
             config = physicsConfig,
             pickupCollectionRadius = pickupRadius,
         )
@@ -158,7 +165,7 @@ class GameSession(
     )
 
     private fun handlePickup(pickup: PickupPlacement, scoreMultiplier: Double, platesMultiplier: Double) {
-        collectedPickupIds += pickup.id
+        collectedPickupIdsInternal += pickup.id
         when (val kind = pickup.kind) {
             PickupKind.PlatesCoin -> {
                 platesEarnedThisRun += (PLATES_PER_COIN * platesMultiplier).toLong()

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/achievementLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/orbital_on_surface"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="Follow jhu codes bullshit on Appteka" />
+
+        <TextView
+            android:id="@+id/achievementProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/orbital_on_surface_muted"
+            android:textSize="13sp"
+            tools:text="1,000 / 10,000" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/actionButton"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="Open" />
+
+</LinearLayout>

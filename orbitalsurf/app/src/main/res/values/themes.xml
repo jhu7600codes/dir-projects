@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fixed dusk-city look regardless of system light/dark setting -- the game has one
+         art direction (see colors.xml), not a themeable one, so this deliberately does NOT
+         extend a DayNight base. -->
+    <style name="Theme.OrbitalSurf" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/orbital_accent</item>
+        <item name="colorOnPrimary">@color/orbital_on_surface</item>
+        <item name="colorSecondary">@color/orbital_accent_variant</item>
+        <item name="colorOnSecondary">@color/orbital_sky_top</item>
+        <item name="colorSurface">@color/orbital_surface</item>
+        <item name="colorOnSurface">@color/orbital_on_surface</item>
+        <item name="android:colorBackground">@color/orbital_sky_top</item>
+        <item name="colorError">@color/orbital_danger</item>
+        <item name="android:statusBarColor">@color/orbital_sky_top</item>
+        <item name="android:navigationBarColor">@color/orbital_sky_top</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.OrbitalSurf.Game">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

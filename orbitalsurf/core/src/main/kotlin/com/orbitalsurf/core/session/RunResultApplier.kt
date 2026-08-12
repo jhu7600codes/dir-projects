@@ -19,7 +19,7 @@ object RunResultApplier {
         var checkpointUnlocks = save.checkpointUnlocks
         summary.reachedCheckpoints.forEach { checkpointUnlocks = checkpointUnlocks.markReached(it) }
 
-        val dailySystem = reconstructDailySystem(save)
+        val dailySystem = dailyChallengeSystemFrom(save)
         dailySystem.ensureUpToDate(todayEpochDay)
         val newlyCompletedDailies = dailySystem.evaluateRun(
             DailyRunStats(
@@ -61,7 +61,13 @@ object RunResultApplier {
         return system.unlockedStatThresholds(after.playerStats) - system.unlockedStatThresholds(before.playerStats)
     }
 
-    private fun reconstructDailySystem(save: GameSave): DailyChallengeSystem {
+    /**
+     * Rebuilds a live [DailyChallengeSystem] from a save's persisted `(lastResetEpochDay,
+     * completedChallengeIds)` pair -- the same reconstruction [apply] uses internally, exposed
+     * so UI code (e.g. a Daily Challenges screen) can display today's set + completion state
+     * without duplicating this logic.
+     */
+    fun dailyChallengeSystemFrom(save: GameSave): DailyChallengeSystem {
         val drawn = if (save.dailyLastResetEpochDay == DailyChallengeSystem.NEVER_RESET) {
             emptyList()
         } else {
