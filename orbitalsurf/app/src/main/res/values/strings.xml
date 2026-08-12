@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Orbital Surf</string>
+
+    <!-- Main menu -->
+    <string name="menu_play">Play</string>
+    <string name="menu_shop">Shop</string>
+    <string name="menu_achievements">Achievements</string>
+    <string name="menu_daily_challenges">Daily Challenges</string>
+    <string name="menu_best_score_format">Best: %1$d</string>
+    <string name="menu_plates_format">%1$d plates</string>
+
+    <!-- In-game HUD -->
+    <string name="hud_score_format">%1$d</string>
+    <string name="hud_missions_title">Missions</string>
+    <string name="hud_use_voucher">Skip</string>
+    <string name="hud_multiplier_format">x%1$.1f</string>
+
+    <!-- Shop -->
+    <string name="shop_title">Shop</string>
+    <string name="shop_section_vouchers">Mission Skip Vouchers</string>
+    <string name="shop_section_headstarts">Headstarts</string>
+    <string name="shop_section_skins">Skins</string>
+    <string name="shop_buy">Buy</string>
+    <string name="shop_owned">Owned</string>
+    <string name="shop_price_format">%1$d plates</string>
+    <string name="shop_headstart_item_format">Checkpoint %1$d</string>
+    <string name="shop_headstart_locked">Reach this checkpoint in a run to unlock it here</string>
+    <string name="shop_insufficient_plates">Not enough plates</string>
+
+    <!-- Achievements -->
+    <string name="achievements_title">Achievements</string>
+    <string name="achievement_locked">Locked</string>
+    <string name="achievement_unlocked">Unlocked</string>
+    <string name="achievement_visit_link">Open</string>
+    <string name="achievement_progress_format">%1$d / %2$d</string>
+
+    <!-- Daily challenges -->
+    <string name="daily_challenges_title">Daily Challenges</string>
+    <string name="daily_challenge_reward_format">+%1$d plates</string>
+    <string name="daily_challenge_completed">Completed</string>
+
+    <!-- Results -->
+    <string name="results_title">Run Complete</string>
+    <string name="results_score_format">Score: %1$d</string>
+    <string name="results_best_score_format">Best: %1$d</string>
+    <string name="results_plates_earned_format">+%1$d plates</string>
+    <string name="results_new_best">New best score!</string>
+    <string name="results_play_again">Play Again</string>
+    <string name="results_menu">Menu</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_ball_skin_preview">Selected skin preview</string>
+</resources>
