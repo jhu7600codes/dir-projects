@@ -2,6 +2,7 @@ package com.orbitalsurf.app.input
 
 import android.view.MotionEvent
 import kotlin.math.abs
+import kotlin.math.sign
 
 /**
  * Converts raw touch events from `GameSurfaceView` into [GameInputState] updates: horizontal
@@ -28,8 +29,11 @@ class TouchSteerController(private val inputState: GameInputState) {
                 val dy = event.y - startY
                 if (abs(dx) > TAP_SLOP_PX || abs(dy) > TAP_SLOP_PX) movedPastSlop = true
 
+                // A small deadzone right around the start point so tiny finger jitter while
+                // trying to hold a straight line doesn't register as steering input at all.
+                val deadzoned = if (abs(dx) <= DEADZONE_PX) 0f else dx - (DEADZONE_PX * sign(dx))
                 val halfWidth = (viewWidthPx / 2).coerceAtLeast(1)
-                val axis = dx / (halfWidth * DRAG_SENSITIVITY)
+                val axis = deadzoned / (halfWidth * DRAG_SENSITIVITY)
                 inputState.lateralAxis = axis.toDouble().coerceIn(-1.0, 1.0)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -45,7 +49,10 @@ class TouchSteerController(private val inputState: GameInputState) {
     private companion object {
         const val TAP_SLOP_PX = 24f
         const val TAP_TIME_MS = 250L
-        // Fraction of half the screen width that counts as a "full" steering deflection.
-        const val DRAG_SENSITIVITY = 0.5f
+        const val DEADZONE_PX = 16f
+        // Fraction of half the screen width that counts as a "full" steering deflection --
+        // higher = a longer, more deliberate drag needed for full lock, less twitchy than
+        // requiring only a quarter of the screen width.
+        const val DRAG_SENSITIVITY = 0.85f
     }
 }

@@ -144,6 +144,95 @@ class BallSimulatorTest {
     }
 
     @Test
+    fun `riding a ramp imparts vertical velocity proportional to forward speed and slope`() {
+        val ramp = chunkOf(SurfaceSegment.Ramp(0.0, 20.0, -10.0, 10.0, startHeight = 10.0, endHeight = 20.0))
+        val slope = 10.0 / 20.0
+        val heightOnRamp = 10.0 + slope * 5.0
+        val state = BallState.startingAt(distance = 5.0, height = heightOnRamp + config.ballRadius)
+
+        val slow = BallSimulator.step(state, SteerInput.NEUTRAL, dtSeconds = 0.02, forwardSpeed = 2.0, chunks = listOf(ramp), collectedPickupIds = emptySet(), config = config)
+        val fast = BallSimulator.step(state, SteerInput.NEUTRAL, dtSeconds = 0.02, forwardSpeed = 10.0, chunks = listOf(ramp), collectedPickupIds = emptySet(), config = config)
+
+        assertTrue(slow.state.grounded)
+        assertTrue(fast.state.grounded)
+        assertEquals(slope * 2.0, slow.state.verticalVelocity, 1e-6)
+        assertEquals(slope * 10.0, fast.state.verticalVelocity, 1e-6)
+        assertTrue(
+            "a faster ball climbing the same ramp should have more vertical velocity",
+            fast.state.verticalVelocity > slow.state.verticalVelocity,
+        )
+    }
+
+    @Test
+    fun `a faster ball launches higher off the end of an upward ramp than a slower one`() {
+        val ramp = chunkOf(SurfaceSegment.Ramp(0.0, 20.0, -10.0, 10.0, startHeight = 10.0, endHeight = 20.0))
+
+        fun peakHeightAfterRamp(forwardSpeed: Double): Double {
+            var state = BallState.startingAt(distance = 0.0, height = 10.0 + config.ballRadius)
+            var peak = state.height
+            repeat(400) {
+                val result = BallSimulator.step(
+                    state, SteerInput.NEUTRAL, dtSeconds = 0.02, forwardSpeed = forwardSpeed,
+                    chunks = listOf(ramp), collectedPickupIds = emptySet(), config = config,
+                )
+                state = result.state
+                if (!state.grounded) peak = maxOf(peak, state.height)
+            }
+            return peak
+        }
+
+        val slowPeak = peakHeightAfterRamp(3.0)
+        val fastPeak = peakHeightAfterRamp(12.0)
+
+        assertTrue(
+            "expected a faster ball to launch higher off the ramp ($fastPeak) than a slower one ($slowPeak)",
+            fastPeak > slowPeak,
+        )
+    }
+
+    @Test
+    fun `turning authority is reduced at high forward speed compared to low speed`() {
+        val state = BallState.startingAt(distance = 0.0, height = 10.0 + config.ballRadius)
+
+        val lowSpeed = BallSimulator.step(
+            state, SteerInput(1.0, false), dtSeconds = 0.5, forwardSpeed = 0.0,
+            chunks = listOf(flatChunk), collectedPickupIds = emptySet(), config = config,
+        )
+        val highSpeed = BallSimulator.step(
+            state, SteerInput(1.0, false), dtSeconds = 0.5, forwardSpeed = 30.0,
+            chunks = listOf(flatChunk), collectedPickupIds = emptySet(), config = config,
+        )
+
+        assertTrue(
+            "expected less lateral speed at high forward speed (${highSpeed.state.lateralVelocity}) " +
+                "than at low forward speed (${lowSpeed.state.lateralVelocity})",
+            highSpeed.state.lateralVelocity < lowSpeed.state.lateralVelocity,
+        )
+    }
+
+    @Test
+    fun `turning authority is reduced while airborne compared to grounded`() {
+        val groundedState = BallState.startingAt(distance = 0.0, height = 10.0 + config.ballRadius)
+        val airborneState = BallState(distance = 0.0, lateral = 0.0, height = 50.0, verticalVelocity = 0.0, grounded = false)
+
+        val groundedResult = BallSimulator.step(
+            groundedState, SteerInput(1.0, false), dtSeconds = 0.5, forwardSpeed = 0.0,
+            chunks = listOf(flatChunk), collectedPickupIds = emptySet(), config = config,
+        )
+        val airborneResult = BallSimulator.step(
+            airborneState, SteerInput(1.0, false), dtSeconds = 0.5, forwardSpeed = 0.0,
+            chunks = listOf(flatChunk), collectedPickupIds = emptySet(), config = config,
+        )
+
+        assertTrue(!airborneResult.state.grounded)
+        assertTrue(
+            "expected less lateral speed airborne (${airborneResult.state.lateralVelocity}) " +
+                "than grounded (${groundedResult.state.lateralVelocity})",
+            airborneResult.state.lateralVelocity < groundedResult.state.lateralVelocity,
+        )
+    }
+
+    @Test
     fun `walking over an uncollected pickup emits CollectedPickup, but not if already collected`() {
         val pickup = PickupPlacement("pk-1", distance = 5.0, lateral = 0.0, height = 1.0, kind = PickupKind.PlatesCoin)
         val chunk = chunkOf(SurfaceSegment.RooftopSlab(0.0, 20.0, -10.0, 10.0, height = 10.0), pickups = listOf(pickup))
