@@ -312,6 +312,32 @@ object MobileInjector {
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18) !important;
         }
 
+        /* THE actual reason thumbnails/cards still looked small even after
+           the .video-cell/.v120WrapperOuter sizing above: found by reading
+           www-core CSS's `.grid-view .video-entry { width: 124px }` (every
+           listing that shows star ratings/views/username under the
+           thumbnail -- homepage recommended, related videos, etc -- is
+           rendered inside a `#*-feedmodule-body.grid-view` container, and
+           each cell's actual content sits in a nested `.video-entry`/
+           `.channel-entry`/`.playlist-entry` div, back/yt2009templates.js).
+           .video-cell (the outer card, sized above) was never the box doing
+           the clipping -- .video-entry, ONE LEVEL IN, was hard-locked to
+           124px this whole time, and every percentage-based size on
+           .v120WrapperOuter/.video-main-content/etc further inside it
+           resolves against that still-124px containing block regardless of
+           how wide their own `width:100%` looks in isolation -- the exact
+           same class of bug #baseDiv was for the page as a whole (see that
+           class kdoc above), just one level deeper and missed on the first
+           redesign pass. `.v90WideEntry` (the smaller thumbnail variant
+           used in sidebars/comments) has the same kind of hard lock
+           (width:92px, same file) and gets the same fix. */
+        .video-entry, .channel-entry, .playlist-entry, .movie-entry,
+        .trailer-entry, .show-entry, .v120WideEntry, .v90WideEntry {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
         /* Thumbnails: yt2009's own thumbnail wrappers are hard-locked to
            tiny fixed pixel boxes sized for the original dense desktop grid
            (back/yt2009templates.js's real markup + www-core CSS):
@@ -984,7 +1010,13 @@ object MobileInjector {
                                         var id = cell.getAttribute('data-id');
                                         if (id && !existingIds[id]) {
                                             existingIds[id] = true;
-                                            recContainer.appendChild(cell);
+                                            // insertBefore the sentinel, not
+                                            // appendChild -- the sentinel has
+                                            // to stay the LAST child for the
+                                            // IntersectionObserver below to
+                                            // keep meaning "near the bottom"
+                                            // after more than one page loads
+                                            recContainer.insertBefore(cell, maytubeRecSentinel);
                                             addedAny = true;
                                         }
                                     }
@@ -1002,13 +1034,48 @@ object MobileInjector {
                             }
                         };
 
-                        window.addEventListener('scroll', function() {
-                            if (maytubeRecDone || maytubeRecLoading) return;
-                            var scrollBottom = window.innerHeight + window.scrollY;
-                            if (scrollBottom >= document.body.scrollHeight - 800) {
-                                maytubeLoadMoreRec();
-                            }
-                        }, { passive: true });
+                        // A window 'scroll' listener + manual scrollHeight math
+                        // (the first version of this) never actually fired on a
+                        // real device: the module usually renders short enough
+                        // that the page doesn't need to scroll far enough past
+                        // "document.body.scrollHeight - 800" to cross the
+                        // threshold before the user gives up, and a listener
+                        // that's never triggered by an intervening scroll event
+                        // also never gets a chance to re-check that math once
+                        // more content (and thus more scrollable height) exists.
+                        // IntersectionObserver doesn't have either problem: it's
+                        // driven off a real sentinel element actually entering
+                        // the viewport (not a recomputed height comparison), and
+                        // rootMargin gives it the same "start loading a bit
+                        // early" lookahead -- including firing immediately on
+                        // setup if the sentinel is already on-screen because the
+                        // page is short, which the old scroll-event-gated version
+                        // could never do on its own.
+                        var maytubeRecSentinel = document.createElement('div');
+                        maytubeRecSentinel.id = 'maytube-rec-sentinel';
+                        maytubeRecSentinel.style.cssText = 'height:1px;';
+                        recContainer.appendChild(maytubeRecSentinel);
+
+                        if (window.IntersectionObserver) {
+                            var maytubeRecObserver = new IntersectionObserver(function(entries) {
+                                if (maytubeRecDone || maytubeRecLoading) return;
+                                if (entries[0] && entries[0].isIntersecting) {
+                                    maytubeLoadMoreRec();
+                                }
+                            }, { rootMargin: '800px 0px' });
+                            maytubeRecObserver.observe(maytubeRecSentinel);
+                        } else {
+                            // fallback for a WebView old enough to lack
+                            // IntersectionObserver: the original scroll-math
+                            // approach, better than nothing
+                            window.addEventListener('scroll', function() {
+                                if (maytubeRecDone || maytubeRecLoading) return;
+                                var scrollBottom = window.innerHeight + window.scrollY;
+                                if (scrollBottom >= document.body.scrollHeight - 800) {
+                                    maytubeLoadMoreRec();
+                                }
+                            }, { passive: true });
+                        }
                     }
                 } catch (e) {}
 

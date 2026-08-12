@@ -356,6 +356,23 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `frees video-entry from its own 124px containing-block lock so the bigger thumbnail actually has room`() {
+        // regression test: reported directly from a real device as still
+        // small even after the .video-cell/.v120WrapperOuter sizing above --
+        // the real bug was one level deeper. `.grid-view .video-entry` in
+        // yt2009's own CSS is hard-locked to width:124px, and .video-entry is
+        // the parent of .v120WrapperOuter, not .video-cell -- so
+        // .v120WrapperOuter's own `width:100%` was correctly resolving
+        // against .video-entry's still-124px containing block regardless of
+        // how wide the outer .video-cell card had become. Same class of bug
+        // as #baseDiv (a percentage resolving against a still-fixed-width
+        // ancestor), one level further in and missed on the first pass.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".video-entry, .channel-entry, .playlist-entry"))
+        assertTrue(script.contains(".v120WideEntry, .v90WideEntry"))
+    }
+
+    @Test
     fun `clears the fixed-height clip on video list titles`() {
         // regression test: .video-short-title is hard-locked to
         // height:30px + overflow:hidden in yt2009's own CSS, calibrated to
@@ -381,11 +398,34 @@ class MobileInjectorTest {
         // extra "source: recommended_page" header on the /videos page for
         // 25 instead. This reuses that same real mechanism -- same ids
         // header computation, same endpoint -- but always sends that header
-        // and re-fires on scroll, appending only new (by data-id) videos.
+        // and appends only new (by data-id) videos.
         val script = MobileInjector.buildInjectionScript(config)
         assertTrue(script.contains("yt2009-recommended-cells-container"))
         assertTrue(script.contains("/yt2009_recommended?r="))
         assertTrue(script.contains("setRequestHeader('source', 'recommended_page')"))
+    }
+
+    @Test
+    fun `drives infinite-scroll off a sentinel IntersectionObserver, not a scroll-event height guess`() {
+        // regression test: the first version of this gated everything behind
+        // a window 'scroll' listener that recomputed
+        // "innerHeight + scrollY >= body.scrollHeight - 800" -- reported
+        // directly from a real device as never firing at all, because a
+        // short module doesn't need much scrolling to begin with and a
+        // listener that's never invoked never gets to re-check that math
+        // once more (scrollable) content exists. A sentinel element watched
+        // by IntersectionObserver doesn't depend on a scroll event happening
+        // at all -- it fires the moment the sentinel is (or becomes) visible,
+        // including immediately on setup for a short page. New cells must be
+        // insertBefore'd ahead of the sentinel (not appendChild'd after it),
+        // or the sentinel stops being the last child after the first load and
+        // stops meaning "near the bottom" for every load after that.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("IntersectionObserver"))
+        assertTrue(script.contains("maytube-rec-sentinel"))
+        assertTrue(script.contains("insertBefore(cell, maytubeRecSentinel)"))
+        // still has the scroll-math fallback for a WebView too old to have
+        // IntersectionObserver at all
         assertTrue(script.contains("addEventListener('scroll'"))
     }
 
