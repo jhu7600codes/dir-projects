@@ -15,6 +15,7 @@ import com.orbitalsurf.core.session.RunFrameResult
 import com.orbitalsurf.core.session.RunResultApplier
 import com.orbitalsurf.core.world.PowerupType
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.Random
 import java.util.concurrent.TimeUnit
 
@@ -22,14 +23,20 @@ import java.util.concurrent.TimeUnit
  * Hosts the [com.orbitalsurf.app.view.GameSurfaceView] for one run. Owns the [GameSession] and
  * drives the HUD from [GameRenderer]'s per-frame callback -- which arrives on the GL thread, so
  * every HUD update here hops back to the main thread via [runOnUiThread].
+ *
+ * `GLSurfaceView.start()` (which calls `setRenderer()`) MUST run synchronously in [onCreate],
+ * before this method returns: the underlying `Surface` callback fires once the view is attached
+ * to the window, and if that happens before a renderer/GL thread exists to receive it, the
+ * event is silently dropped -- the GL thread that gets created later has no way to know a
+ * surface already exists and waits forever, never drawing a frame. That's why the save load
+ * below is a one-time blocking read (`runBlocking`, not a coroutine): starting the surface
+ * has to happen before onCreate returns, not after an async hop.
  */
 class GameActivity : AppCompatActivity() {
     private lateinit var binding: ActivityGameBinding
     private lateinit var gameSession: GameSession
-    private lateinit var inputState: GameInputState
 
     private var voucherCount = 0
-    private var surfaceStarted = false
     private var lastHudUpdateMillis = 0L
 
     @Volatile
@@ -42,35 +49,23 @@ class GameActivity : AppCompatActivity() {
 
         val startDistance = intent.getDoubleExtra(EXTRA_START_DISTANCE, 0.0)
         val repository = (application as OrbitalSurfApp).gameSaveRepository
+        val save = runBlocking { repository.load() }
+        voucherCount = save.inventory.missionSkipVouchers
+        val skinVisual = SkinCatalog.forId(save.inventory.equippedSkinId)
 
-        lifecycleScope.launch {
-            val save = repository.load()
-            voucherCount = save.inventory.missionSkipVouchers
-            val skinVisual = SkinCatalog.forId(save.inventory.equippedSkinId)
-
-            gameSession = GameSession(seed = Random().nextLong(), startDistance = startDistance)
-            inputState = GameInputState()
-            val renderer = GameRenderer(gameSession, inputState, skinVisual, ::onFrame)
-            binding.gameSurfaceView.start(renderer, inputState)
-            surfaceStarted = true
-            // The Activity's own onResume() almost always fires *before* this coroutine gets
-            // here (it has to suspend for the save to load first), so the guarded onResume()
-            // override below never got a chance to forward the call -- GLSurfaceView's render
-            // thread starts paused and only unpauses on an explicit onResume(), so without this
-            // it would sit paused forever and never draw a single frame. Calling it here too
-            // (in addition to the override, which still covers pause/resume *after* this point)
-            // covers the case that actually happens on every launch.
-            binding.gameSurfaceView.onResume()
-        }
+        gameSession = GameSession(seed = Random().nextLong(), startDistance = startDistance)
+        val inputState = GameInputState()
+        val renderer = GameRenderer(gameSession, inputState, skinVisual, ::onFrame)
+        binding.gameSurfaceView.start(renderer, inputState)
     }
 
     override fun onResume() {
         super.onResume()
-        if (surfaceStarted) binding.gameSurfaceView.onResume()
+        binding.gameSurfaceView.onResume()
     }
 
     override fun onPause() {
-        if (surfaceStarted) binding.gameSurfaceView.onPause()
+        binding.gameSurfaceView.onPause()
         super.onPause()
     }
 
