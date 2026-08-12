@@ -367,6 +367,29 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `video cards are sized up from the earlier polish round`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("padding: 12px !important"))
+        assertTrue(script.contains("font-size: 16px !important"))
+    }
+
+    @Test
+    fun `infinite-scrolls the homepage recommended module using yt2009's own recommended_page trick`() {
+        // regression test: yt2009's own homepage-recommended.js already
+        // fetches /yt2009_recommended once (targetVideos=8, back/backend.js)
+        // into #yt2009-recommended-cells-container, and separately sends an
+        // extra "source: recommended_page" header on the /videos page for
+        // 25 instead. This reuses that same real mechanism -- same ids
+        // header computation, same endpoint -- but always sends that header
+        // and re-fires on scroll, appending only new (by data-id) videos.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("yt2009-recommended-cells-container"))
+        assertTrue(script.contains("/yt2009_recommended?r="))
+        assertTrue(script.contains("setRequestHeader('source', 'recommended_page')"))
+        assertTrue(script.contains("addEventListener('scroll'"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }
