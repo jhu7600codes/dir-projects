@@ -23,6 +23,21 @@ import org.json.JSONObject
 object MobileInjector {
 
     /**
+     * maytube's own wordmark (red rounded-square play glyph + "maytube"),
+     * replacing yt2009's YouTube sprite crop at #logo. Plain inline SVG,
+     * base64'd so it can drop straight into a CSS `url(data:...)` without
+     * escaping quotes/whitespace for embedding in a raw string. No separate
+     * dark-mode variant needed -- #logo is a background-image, not an
+     * img/video/canvas/iframe tag, so it isn't one of the elements the
+     * dark-mode rule below re-inverts back to normal; it inverts once along
+     * with the rest of the page, same as every other sprite/icon here,
+     * which is the correct behavior for flat graphic content (unlike
+     * photographic img/video content, which would look wrong inverted).
+     */
+    private const val MAYTUBE_LOGO_SVG_BASE64 =
+        "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iNTQiIHZpZXdCb3g9IjAgMCAxODAgNTQiPgogIDxyZWN0IHg9IjIiIHk9IjEyIiB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHJ4PSI4IiBmaWxsPSIjQ0MxQjFCIi8+CiAgPHBvbHlnb24gcG9pbnRzPSIxMywyMCAxMywzNCAyNSwyNyIgZmlsbD0iI2ZmZmZmZiIvPgogIDx0ZXh0IHg9IjQwIiB5PSIzNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSwgQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxYTFhMWEiIGxldHRlci1zcGFjaW5nPSItMC41Ij5tYXl0dWJlPC90ZXh0Pgo8L3N2Zz4K"
+
+    /**
      * Cookie flags yt2009 looks for as raw substrings of the Cookie header.
      * See yt2009html.js ("flags.includes(...)") and yt2009_flags.htm for the
      * canonical list -- these are the ones relevant to playback.
@@ -221,6 +236,20 @@ object MobileInjector {
             margin: 4px 0 !important;
         }
 
+        /* #logo: swap yt2009's YouTube sprite crop for maytube's own
+           wordmark (see MAYTUBE_LOGO_SVG_BASE64's kdoc above). Overrides
+           every property .master-sprite's shared rule sets for it
+           (background-image/repeat/position all come from that one
+           shared class -- www-core-*.css) rather than relying on it. */
+        #logo {
+            background-image: url(data:image/svg+xml;base64,$MAYTUBE_LOGO_SVG_BASE64) !important;
+            background-repeat: no-repeat !important;
+            background-position: left center !important;
+            background-size: contain !important;
+            width: 150px !important;
+            height: 45px !important;
+        }
+
         /* grid/list video listing cells: inline-block percentage widths
            (sometimes set inline per-instance) -- forced full width so they
            stack one per row instead of cramming down to illegible slivers.
@@ -241,6 +270,93 @@ object MobileInjector {
             padding: 8px !important;
             margin: 0 0 10px !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Thumbnails: yt2009's own thumbnail wrappers are hard-locked to
+           tiny fixed pixel boxes sized for the original dense desktop grid
+           (back/yt2009templates.js's real markup + www-core CSS):
+           .v120WrapperOuter/.v90WrapperOuter (122px/92px) contain
+           .v120WrapperInner/.v90WrapperInner (120x72px/90x54px,
+           overflow:hidden), which contain either a .video-thumb-link
+           anchor or the <img class="vimg120|vimg90"> directly. The generic
+           `img { max-width:100% }` rule near the top of this file already
+           lets .vimg120/.vimg90 grow past their own hardcoded 120x90/90x70
+           pixel size, but these WRAPPING divs' fixed pixel dimensions +
+           overflow:hidden clip the image right back down regardless --
+           that's the actual reason thumbnails still read as small even
+           with the general img rule in place.
+
+           Two wrapper shapes exist across yt2009's ~8 different listing
+           templates (search/homepage/recommended use WrapperOuter+Inner;
+           channel/playlist listings use .video-thumb-link/.video-thumb-90/
+           .video-thumb-120 directly, no extra wrapper divs) -- both
+           covered. The *WrapperOuter (or .video-thumb-link/90/120 when
+           used standalone) becomes a real 16:9 box; nested descendants
+           inside a *WrapperOuter fill that box at 100%/100% rather than
+           re-establishing their own aspect-ratio box, since doing that at
+           more than one nested level would compound instead of just
+           fitting inside the established box. */
+        .v120WrapperOuter, .v90WrapperOuter,
+        .video-thumb-link, .video-thumb-90, .video-thumb-120 {
+            display: block !important;
+            position: relative !important;
+            width: 100% !important;
+            height: 0 !important;
+            padding-top: 56.25% !important;
+            overflow: hidden !important;
+            border: 0 !important;
+            border-radius: 6px !important;
+        }
+        .v120WrapperOuter .v120WrapperInner, .v90WrapperOuter .v90WrapperInner,
+        .v120WrapperOuter .video-thumb-link, .v90WrapperOuter .video-thumb-link {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            padding-top: 0 !important;
+            border: 0 !important;
+            margin: 0 !important;
+        }
+        .vimg90, .vimg120,
+        .video-thumb-link img, .video-thumb-90 img, .video-thumb-120 img {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin-top: 0 !important;
+            object-fit: cover !important;
+        }
+        /* .video-time (the duration badge, e.g. "23:38"): yt2009's own
+           positioning is a negative top margin (-15px) calibrated to pull
+           it up over the bottom-right corner of the original tiny 72px/54px
+           -tall thumbnail -- doesn't reach nearly far enough up a proper
+           16:9 box at mobile width. Its containing block is now one of the
+           positioned elements above (.v120WrapperInner or the *WrapperOuter
+           itself), so absolute positioning against that same box places it
+           correctly regardless of the thumbnail's now much larger size. */
+        .video-time, .video-corner-text {
+            position: absolute !important;
+            right: 4px !important;
+            bottom: 4px !important;
+            margin: 0 !important;
+            z-index: 2 !important;
+        }
+
+        /* .video-short-title (the title link under each thumbnail in a
+           listing, back/yt2009templates.js): www-core CSS locks it to a
+           fixed height:30px + overflow:hidden, calibrated to whatever
+           small font-size the original 120px-wide desktop cells used --
+           bumping the font size without clearing that height would just
+           clip the now-larger text instead of making it more readable. */
+        .video-short-title, .playlist-short-title {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            font-size: 14px !important;
+            line-height: 1.35 !important;
+            margin: 8px 0 4px !important;
         }
 
         /* the search results sort/filter bar is a real <table> with

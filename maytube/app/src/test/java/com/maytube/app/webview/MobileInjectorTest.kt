@@ -335,6 +335,39 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `replaces the YouTube logo with maytube's own wordmark`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("#logo {"))
+        assertTrue(script.contains("data:image/svg+xml;base64,"))
+        assertTrue(script.contains("background-repeat: no-repeat !important"))
+    }
+
+    @Test
+    fun `makes thumbnails a real 16by9 box instead of yt2009's tiny fixed pixel crop`() {
+        // regression test: .v120WrapperInner/.v90WrapperInner (and
+        // .video-thumb-90/120 used directly in other listing templates) are
+        // hard-locked to 120x72px/90x54px + overflow:hidden in yt2009's own
+        // CSS -- the generic `img{max-width:100%}` rule alone can't undo
+        // that, since the wrapping DIV is what actually clips the image
+        // down, not the image's own size.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".v120WrapperOuter, .v90WrapperOuter"))
+        assertTrue(script.contains("padding-top: 56.25% !important"))
+        assertTrue(script.contains("object-fit: cover !important"))
+    }
+
+    @Test
+    fun `clears the fixed-height clip on video list titles`() {
+        // regression test: .video-short-title is hard-locked to
+        // height:30px + overflow:hidden in yt2009's own CSS, calibrated to
+        // the original tiny desktop font size -- a bigger font-size without
+        // clearing this would just get clipped instead of more readable.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".video-short-title, .playlist-short-title"))
+        assertTrue(script.contains("overflow: visible !important"))
+    }
+
+    @Test
     fun `extracts video id from a watch url`() {
         assertEquals("dQw4w9WgXcQ", MobileInjector.extractVideoId("http://host:3000/watch?v=dQw4w9WgXcQ"))
     }
