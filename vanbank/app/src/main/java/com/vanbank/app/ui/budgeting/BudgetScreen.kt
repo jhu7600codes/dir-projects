@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.yml.charts.common.model.PlotType
 import co.yml.charts.ui.piechart.charts.PieChart
 import co.yml.charts.ui.piechart.models.PieChartConfig
 import co.yml.charts.ui.piechart.models.PieChartData
@@ -104,7 +105,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onBack: () -> Unit) {
                 CategoryPalette[index % CategoryPalette.size],
             )
         }
-        val pieChartData = PieChartData(slices = slices, plotType = PieChartData.PlotType.Pie)
+        val pieChartData = PieChartData(slices = slices, plotType = PlotType.Pie)
         val pieChartConfig = PieChartConfig(
             labelVisible = false,
             isAnimationEnable = true,

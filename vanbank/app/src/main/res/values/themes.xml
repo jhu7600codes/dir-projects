@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme -- the real palette lives in Compose (ui/theme),
+    <!-- Base application theme: the real palette lives in Compose (ui/theme),
          this just needs to exist for the manifest / splash window and stays
          dark to match so there's no white flash before Compose takes over. -->
     <style name="Theme.VanBank" parent="android:Theme.Material.NoActionBar">

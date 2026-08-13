@@ -2,8 +2,6 @@ package com.vanbank.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +14,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -50,12 +47,9 @@ fun QuickActionsGrid(actions: List<QuickAction>, modifier: Modifier = Modifier, 
 @Composable
 private fun QuickActionItem(action: QuickAction, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(bounded = false),
-                onClick = action.onClick,
-            ),
+        // Default clickable indication: Material3 supplies the ripple via LocalIndication,
+        // so this doesn't need to build one by hand (that API churns a lot between versions).
+        modifier = modifier.clickable(onClick = action.onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         androidx.compose.foundation.layout.Box(
