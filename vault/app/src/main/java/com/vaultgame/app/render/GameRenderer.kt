@@ -149,14 +149,14 @@ class GameRenderer(private val skinVisual: SkinVisual) {
     private fun drawObstacle(canvas: Canvas, w: Int, h: Int, obstacle: Obstacle, playerDistance: Double) {
         val forward = obstacle.distance - playerDistance
         val lanes = if (obstacle.type.spansAllLanes) listOf(-1.0, 0.0, 1.0) else listOf(obstacle.lane.index.toDouble())
-        val color = when (obstacle.type) {
+        val obstacleColor = when (obstacle.type) {
             ObstacleType.LOW_VENT -> Color.parseColor("#7A6BC9")
             ObstacleType.OVERHEAD_PIPE -> Color.parseColor("#5FA8D3")
             ObstacleType.CRATE_STACK -> Color.parseColor("#B5793B")
             ObstacleType.ROOF_GAP -> Color.parseColor("#0E0C1A")
             ObstacleType.CLOTHESLINE -> Color.parseColor("#E8544B")
         }
-        paint.color = color
+        paint.color = obstacleColor
         for (laneOffset in lanes) {
             val heightAboveGround = when (obstacle.type.avoidedBy) {
                 AvoidAction.SLIDE -> 0.55 // waist-height obstacle you duck under
