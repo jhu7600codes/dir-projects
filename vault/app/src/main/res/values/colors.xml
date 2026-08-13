@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Warm rooftop-sunset palette, high contrast for readability at speed. Used both as UI
+         chrome and (via GameRenderer) in-game sky/skyline/lane tints. -->
+    <color name="vault_sky_top">#2B2350</color>
+    <color name="vault_sky_mid">#FF6F3C</color>
+    <color name="vault_sky_bottom">#FFC24D</color>
+    <color name="vault_skyline">#161A2E</color>
+    <color name="vault_roof">#3A3358</color>
+    <color name="vault_roof_edge">#4E4470</color>
+    <color name="vault_lane_line">#FFD9A0</color>
+
+    <color name="vault_accent">#FF6F3C</color>
+    <color name="vault_accent_variant">#FFC145</color>
+    <color name="vault_surface">#1C1B33</color>
+    <color name="vault_surface_variant">#2B2A4A</color>
+    <color name="vault_on_surface">#FBF6EE</color>
+    <color name="vault_on_surface_muted">#B8B3D6</color>
+
+    <color name="vault_success">#4CC9A0</color>
+    <color name="vault_danger">#E8544B</color>
+    <color name="vault_plates_gold">#FFC145</color>
+
+    <color name="vault_obstacle_vent">#7A6BC9</color>
+    <color name="vault_obstacle_pipe">#5FA8D3</color>
+    <color name="vault_obstacle_crate">#B5793B</color>
+    <color name="vault_obstacle_gap">#0E0C1A</color>
+    <color name="vault_obstacle_line">#E8544B</color>
+    <color name="vault_coin">#FFD65A</color>
+
+    <color name="vault_powerup_magnet">#7A6BC9</color>
+    <color name="vault_powerup_jetpack">#5FA8D3</color>
+    <color name="vault_powerup_speed">#4CC9A0</color>
+    <color name="vault_powerup_shield">#8CE0FF</color>
+    <color name="vault_powerup_multiplier">#FFD65A</color>
+
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

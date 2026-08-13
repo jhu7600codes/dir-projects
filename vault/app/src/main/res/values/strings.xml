@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vault</string>
+
+    <!-- Main menu -->
+    <string name="menu_play">Play</string>
+    <string name="menu_skins">Skins</string>
+    <string name="menu_missions">Missions</string>
+    <string name="menu_shop">Shop</string>
+    <string name="menu_daily_challenge">Daily Challenge</string>
+    <string name="menu_achievements">Achievements</string>
+    <string name="menu_leaderboard">Leaderboard</string>
+    <string name="menu_best_score_format">Best: %1$d</string>
+    <string name="menu_plates_format">%1$d plates</string>
+    <string name="menu_login_streak_format">Day %1$d streak: +%2$d plates</string>
+    <string name="menu_headstart_format">Start at %1$dm</string>
+
+    <!-- HUD -->
+    <string name="hud_score_format">%1$d</string>
+    <string name="hud_plates_format">%1$d</string>
+    <string name="pause_button_description">Pause</string>
+
+    <!-- Pause -->
+    <string name="pause_title">Paused</string>
+    <string name="pause_resume">Resume</string>
+    <string name="pause_quit">Quit Run</string>
+
+    <!-- Results -->
+    <string name="results_title">Run Complete</string>
+    <string name="results_score_format">Score: %1$d</string>
+    <string name="results_best_score_format">Best: %1$d</string>
+    <string name="results_new_best">New Best!</string>
+    <string name="results_coins_format">Coins collected: %1$d</string>
+    <string name="results_distance_format">Distance: %1$dm</string>
+    <string name="results_plates_earned_format">+%1$d plates earned</string>
+    <string name="results_new_achievements">New Achievements!</string>
+    <string name="results_play_again">Play Again</string>
+    <string name="results_main_menu">Main Menu</string>
+
+    <!-- Shop -->
+    <string name="shop_title">Shop</string>
+    <string name="shop_tab_skins">Skins</string>
+    <string name="shop_tab_powerups">Powerups</string>
+    <string name="shop_tab_vouchers">Vouchers</string>
+    <string name="shop_tab_headstarts">Headstarts</string>
+    <string name="shop_buy">Buy</string>
+    <string name="shop_owned">Owned</string>
+    <string name="shop_equip">Equip</string>
+    <string name="shop_equipped">Equipped</string>
+    <string name="shop_price_format">%1$d plates</string>
+    <string name="shop_insufficient_funds">Not enough plates</string>
+    <string name="shop_locked_prerequisite">Buy the previous upgrade first</string>
+
+    <!-- Missions / Daily -->
+    <string name="missions_title">Missions</string>
+    <string name="missions_reward_format">Complete all 3 for a x%1$.1f score boost</string>
+    <string name="mission_progress_format">%1$d / %2$d</string>
+    <string name="missions_skip_format">Use skip voucher (%1$d owned)</string>
+    <string name="missions_skip_none">No skip vouchers -- buy one in the shop</string>
+    <string name="missions_pending_multiplier_format">Banked boost for your next run: x%1$.1f</string>
+    <string name="missions_set_complete">Set complete! New goals rolled.</string>
+    <string name="daily_title">Daily Challenge</string>
+    <string name="daily_reward_format">Reward: %1$d plates</string>
+    <string name="daily_claim">Claim</string>
+    <string name="daily_claimed">Claimed</string>
+    <string name="daily_login_claim">Claim daily login bonus</string>
+
+    <!-- Achievements -->
+    <string name="achievements_title">Achievements</string>
+    <string name="achievement_locked">Locked</string>
+    <string name="achievement_unlocked">Unlocked</string>
+
+    <!-- Leaderboard -->
+    <string name="leaderboard_title">Leaderboard</string>
+    <string name="leaderboard_empty">No runs yet -- go set a record.</string>
+    <string name="leaderboard_entry_format">#%1$d  Score %2$d  •  %3$dm  •  %4$d coins</string>
+
+    <!-- Skin select -->
+    <string name="skins_title">Skins</string>
+</resources>

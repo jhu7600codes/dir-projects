@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/vault_sky_top"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/missions_title"
+        android:textColor="@color/vault_on_surface"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/rewardText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="@color/vault_accent_variant"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/rewardAnchor"
+        tools:text="Complete all 3 for a x1.5 score boost" />
+
+    <View android:id="@+id/rewardAnchor" android:layout_width="0dp" android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="70dp"/>
+
+    <LinearLayout
+        android:id="@+id/missionsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/rewardText" />
+
+    <TextView
+        android:id="@+id/pendingMultiplierText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textColor="@color/vault_plates_gold"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/missionsContainer"
+        tools:text="Banked boost for your next run: x1.5"
+        tools:visibility="visible" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/skipButton"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginBottom="24dp"
+        android:backgroundTint="@color/vault_accent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="Use skip voucher (2 owned)" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
