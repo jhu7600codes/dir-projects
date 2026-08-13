@@ -98,9 +98,8 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Vico: pure-Compose charting for the budgeting category breakdown.
-    implementation("com.patrykandpatrick.vico:compose:1.14.0")
-    implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
+    // YCharts: Compose-native pie/bar charting for the budgeting category breakdown.
+    implementation("co.yml:ycharts:2.1.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
