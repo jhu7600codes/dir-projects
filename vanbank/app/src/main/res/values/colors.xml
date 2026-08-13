@@ -1,0 +1,6 @@
+<resources>
+    <color name="vb_background">#0A0A0A</color>
+    <color name="vb_panel">#141C2B</color>
+    <color name="vb_accent">#3D5AFE</color>
+    <color name="vb_text">#F5F6FA</color>
+</resources>

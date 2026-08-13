@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme -- the real palette lives in Compose (ui/theme),
+         this just needs to exist for the manifest / splash window and stays
+         dark to match so there's no white flash before Compose takes over. -->
+    <style name="Theme.VanBank" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/vb_background</item>
+        <item name="android:statusBarColor" tools:targetApi="21">@color/vb_background</item>
+        <item name="android:navigationBarColor" tools:targetApi="21">@color/vb_background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+    </style>
+</resources>
