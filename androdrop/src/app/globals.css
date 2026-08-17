@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/*
+ * Material You color tokens.
+ *
+ * True Android dynamic color derives its tonal palette from the device
+ * wallpaper — that API doesn't exist on the web. This is the standard
+ * fallback M3 apps use off-platform: a fixed tonal palette generated from
+ * one seed color (#4C6EF5), applied consistently in both themes. The
+ * Android app (Compose) uses real dynamicColorScheme() and will diverge
+ * per-device, which is expected.
+ */
+:root {
+  --md-primary: #4c56b8;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #dee0ff;
+  --md-on-primary-container: #00105c;
+
+  --md-secondary-container: #e1e0f9;
+  --md-on-secondary-container: #191a2c;
+
+  --md-surface: #fbf8ff;
+  --md-on-surface: #1b1b1f;
+  --md-surface-container: #f0eef9;
+  --md-surface-variant: #e3e1ec;
+  --md-on-surface-variant: #46464f;
+  --md-outline: #767680;
+  --md-outline-variant: #c7c5d0;
+
+  --md-error: #ba1a1a;
+  --md-on-error: #ffffff;
+  --md-error-container: #ffdad6;
+  --md-on-error-container: #410002;
+
+  --background: var(--md-surface);
+  --foreground: var(--md-on-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --md-primary: #bac3ff;
+    --md-on-primary: #1a2478;
+    --md-primary-container: #2f3b8f;
+    --md-on-primary-container: #dee0ff;
+
+    --md-secondary-container: #434659;
+    --md-on-secondary-container: #e1e0f9;
+
+    --md-surface: #131316;
+    --md-on-surface: #e4e2e6;
+    --md-surface-container: #1f1f23;
+    --md-surface-variant: #46464f;
+    --md-on-surface-variant: #c7c5d0;
+    --md-outline: #90909a;
+    --md-outline-variant: #46464f;
+
+    --md-error: #ffb4ab;
+    --md-on-error: #690005;
+    --md-error-container: #93000a;
+    --md-on-error-container: #ffdad6;
+
+    --background: var(--md-surface);
+    --foreground: var(--md-on-surface);
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-primary: var(--md-primary);
+  --color-on-primary: var(--md-on-primary);
+  --color-primary-container: var(--md-primary-container);
+  --color-on-primary-container: var(--md-on-primary-container);
+
+  --color-secondary-container: var(--md-secondary-container);
+  --color-on-secondary-container: var(--md-on-secondary-container);
+
+  --color-surface: var(--md-surface);
+  --color-on-surface: var(--md-on-surface);
+  --color-surface-container: var(--md-surface-container);
+  --color-surface-variant: var(--md-surface-variant);
+  --color-on-surface-variant: var(--md-on-surface-variant);
+  --color-outline: var(--md-outline);
+  --color-outline-variant: var(--md-outline-variant);
+
+  --color-error: var(--md-error);
+  --color-on-error: var(--md-on-error);
+  --color-error-container: var(--md-error-container);
+  --color-on-error-container: var(--md-on-error-container);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overscroll-behavior-y: none;
+}
+
+/* Big, thumb-friendly touch target — M3 buttons are 56dp tall. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 56px;
+  padding: 0 24px;
+  border-radius: 28px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 150ms ease, transform 100ms ease, opacity 150ms ease;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.btn-filled {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn-tonal {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.btn-outlined {
+  background: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-outline);
+}
+
+.btn-error {
+  background: var(--color-error-container);
+  color: var(--color-on-error-container);
+}
