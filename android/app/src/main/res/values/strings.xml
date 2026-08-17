@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">androdrop</string>
+    <string name="notification_channel_service_name">androdrop background</string>
+    <string name="notification_channel_service_desc">Keeps watching for incoming transfers</string>
+    <string name="notification_channel_incoming_name">Incoming transfers</string>
+    <string name="notification_channel_incoming_desc">Alerts when someone sends you a file</string>
+</resources>

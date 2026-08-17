@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Same seed color as the web app's static M3 fallback palette; used
+         only for the manifest-level window background/launcher icon, not
+         for in-app Compose theming (that uses AndrodropTheme.kt). -->
+    <color name="md_seed_primary">#4C6EF5</color>
+    <color name="md_theme_background">#FBF8FF</color>
+    <color name="md_theme_background_dark">#131316</color>
+</resources>

@@ -4,10 +4,10 @@ Cross-device airdrop-style file transfer. Pair two devices with a 6-character
 code (or a QR code), push files from one to the other, accept or decline on
 the receiving end, download over a short-lived signed URL.
 
-**Status:** steps 1–4 are done — Next.js app, Supabase schema/storage/RLS,
-VAPID + web push route + service worker, and the PWA pages (pairing screen +
-live incoming-transfer accept/decline overlay). Verified working end-to-end
-locally. Android app and Vercel deploy are next, pending your go-ahead.
+**Status:** steps 1–4 (Next.js app, Supabase schema/storage/RLS, VAPID + web
+push route + service worker, PWA pages) are done and verified working
+end-to-end locally. The Android app (`/android`) is also built — see
+`android/README.md`. Vercel deployment is next, pending your go-ahead.
 
 ## Stack
 
@@ -15,8 +15,9 @@ locally. Android app and Vercel deploy are next, pending your go-ahead.
 - **Supabase** — Postgres (`devices`, `transfers`), private Storage bucket,
   Realtime, RLS
 - **Web Push (VAPID)** — for the installed-PWA / iOS Safari 16.4+ leg
-- **Android app** (`/android`, not yet scaffolded) — Kotlin, Compose,
-  Material You
+- **Android app** (`/android`) — Kotlin, Compose, Material You. Talks to
+  this same API over plain REST (not a LocalSend-style local-network
+  alternative) — see `android/README.md`.
 
 ## Architecture
 
@@ -45,6 +46,10 @@ transfers         id, sender_device_id, target_device_id, file_paths (jsonb),
 - `GET /api/pair/:code` — resolve a pairing code to public device info
 - `POST /api/transfer` — multipart upload; creates a pending transfer
 - `GET /api/transfer/:id` — poll status (fallback if push isn't available)
+- `GET /api/transfer/incoming?deviceId=` — list pending transfers for a
+  device; used by the Android app's foreground service to poll for incoming
+  transfers (Android has no Realtime/push channel wired up — see
+  `android/README.md`)
 - `POST /api/transfer/:id/respond` — accept (→ signed URLs) or decline (→
   deletes the files)
 - `POST /api/push/subscribe`, `DELETE /api/push/subscribe` — web push

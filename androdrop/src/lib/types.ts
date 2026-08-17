@@ -57,3 +57,10 @@ export interface TransferDetailResponse {
   respondedAt: string | null;
   expiresAt: string;
 }
+
+export interface IncomingTransferSummary {
+  id: string;
+  senderName: string;
+  files: Pick<TransferFileView, "name" | "size" | "type">[];
+  createdAt: string;
+}
