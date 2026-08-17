@@ -1,4 +1,5 @@
 "use client";
+import { ENV_DEFAULTS } from "@/lib/env-defaults";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -24,11 +25,7 @@ export async function enablePushForDevice(deviceId: string): Promise<"granted" |
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return "denied";
 
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  if (!publicKey) {
-    console.warn("NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set — cannot subscribe to push.");
-    return "unsupported";
-  }
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ENV_DEFAULTS.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
   const registration = await navigator.serviceWorker.register("/sw.js");
   await navigator.serviceWorker.ready;
