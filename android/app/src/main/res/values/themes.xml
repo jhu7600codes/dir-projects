@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- All real UI theming lives in Compose (AndrodropTheme.kt). This XML
+         theme only covers what the OS needs before Compose content is set:
+         the window background and system bar appearance. -->
+    <style name="Theme.Androdrop" parent="android:Theme.DeviceDefault.DayNight">
+        <item name="android:windowBackground">@color/md_theme_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
+    </style>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">androdrop share sheet hook</string>
+    <string name="xposed_description">Pins androdrop as a top entry in the system share sheet (ResolverActivity/ChooserActivity). Experimental — see xposed/README.md.</string>
+
+    <string-array name="xposed_scope">
+        <item>android</item>
+    </string-array>
+</resources>
