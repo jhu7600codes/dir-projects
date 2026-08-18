@@ -22,6 +22,7 @@ import com.maytube.app.browse.WatchHistory
 import com.maytube.app.browse.Yt2009Api
 import com.maytube.app.data.ServerConfig
 import com.maytube.app.data.ServerConfigRepository
+import com.maytube.app.util.isTv
 import kotlinx.coroutines.launch
 
 /**
@@ -50,9 +51,11 @@ class HomeActivity : AppCompatActivity() {
                 finish()
                 return@registerForActivityResult
             }
-            if (!newConfig.nativePlayer) {
+            if (!newConfig.nativePlayer && !isTv(this)) {
                 // switched back to WebView mode: hand off to MainActivity
-                // and get out of the way
+                // and get out of the way. Never on a TV -- see
+                // DeviceUtils.isTv's kdoc, MainActivity's WebView is a dead
+                // end there regardless of what this flag says.
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
                 return@registerForActivityResult
@@ -81,9 +84,11 @@ class HomeActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener { loadHome() }
 
         val existing = repository.get()
-        if (existing == null || !existing.nativePlayer) {
+        if (existing == null || (!existing.nativePlayer && !isTv(this))) {
             // shouldn't normally happen (MainActivity gates this), but
-            // don't strand the user on a broken screen if it does
+            // don't strand the user on a broken screen if it does. A null
+            // config always goes to Settings regardless of device type --
+            // there's nothing to browse yet either way.
             startActivity(Intent(this, if (existing == null) SettingsActivity::class.java else MainActivity::class.java))
             finish()
             return

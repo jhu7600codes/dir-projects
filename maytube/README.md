@@ -110,6 +110,27 @@ one file is a standard, well-supported Android SDK pattern. This also means
 real progress can be shown (fetched-so-far vs. total duration, parsed from
 the watch page) instead of DownloadManager's silent wait.
 
+## Android TV
+
+MainActivity's WebView (yt2009's own touch/mouse-hover-oriented desktop
+site) has no D-pad story at all, so on a TV the app skips it entirely:
+`DeviceUtils.isTv` detects a `UI_MODE_TYPE_TELEVISION` device and routes
+straight into the same native browse/watch/comments shell
+(`HomeActivity`/`WatchActivity`/`SearchActivity`/`PlayerActivity`,
+built on `Yt2009Api`'s HTML scraping + `StreamingPlayer`'s real ExoPlayer
+streaming) that Settings > native player already offers on phones — this
+isn't optional on a TV the way it is on a phone, so it applies regardless
+of that setting's stored value. The screens themselves are plain
+`RecyclerView`/`androidx.media3.ui.PlayerView` layouts, not a separate
+Leanback UI: a `View` made clickable is automatically D-pad-focusable, and
+Android's own default focus highlight (on by every TV OS version this
+targets) covers the rest without extra styling. One APK, one set of
+screens, for both device types — see `AndroidManifest.xml`'s
+`android.software.leanback`/`android.hardware.touchscreen`
+`<uses-feature>` declarations (both `required="false"`, so the same
+listing installs on phones and TVs alike) and the `LEANBACK_LAUNCHER`
+intent-filter on `MainActivity`.
+
 ## Setup
 
 1. Open this project (the `maytube/` directory) in Android Studio, or build

@@ -6,6 +6,19 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
+    <!-- TV support: both declared not-required, so the same single APK
+         installs on phones (no leanback feature, has a touchscreen) and TV
+         (has leanback, no touchscreen) alike. Without the touchscreen one
+         specifically, Android/the Play Store assume a touchscreen IS
+         required by default and hide the app from TV devices entirely,
+         regardless of the LEANBACK_LAUNCHER entry point below. See
+         DeviceUtils.isTv's kdoc for how the app actually behaves once
+         launched on a TV (routes straight into the native
+         browse/watch/comments shell; MainActivity's WebView has no
+         story for a device with no touchscreen and no pointer). -->
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
     <application
         android:name=".MaytubeApp"
         android:allowBackup="true"
@@ -13,6 +26,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:banner="@drawable/tv_banner"
         android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true"
@@ -20,6 +34,12 @@
         android:supportsRtl="true"
         tools:targetApi="34">
 
+        <!-- MainActivity is the entry point on both phone and TV; see
+             DeviceUtils.isTv's kdoc + MainActivity.onCreate: on a TV it
+             immediately hands off to HomeActivity (the native shell) and
+             never inflates its own WebView layout at all. Keeping one
+             entry point rather than a separate TV-only Activity avoids
+             duplicating that redirect logic. -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
@@ -28,6 +48,10 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
 
