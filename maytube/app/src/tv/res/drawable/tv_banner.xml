@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android TV leanback launcher banner (required 320x180dp). Echoes the
+     phone launcher icon (ic_launcher_background/foreground: #CC1B1B card
+     plus white play triangle) rather than inventing a separate TV-only
+     mark: same brand, different aspect ratio. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path android:fillColor="#CC1B1B" android:pathData="M0,0 L320,0 L320,180 L0,180 Z" />
+    <!-- white rounded-square card, centered -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M110,40 L210,40 A10,10 0 0 1 220,50 L220,130 A10,10 0 0 1 210,140 L110,140 A10,10 0 0 1 100,130 L100,50 A10,10 0 0 1 110,40 Z" />
+    <!-- play triangle, same proportions as ic_launcher_foreground -->
+    <path android:fillColor="#CC1B1B" android:pathData="M138,64 L184,90 L138,116 Z" />
+</vector>

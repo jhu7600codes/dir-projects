@@ -32,6 +32,7 @@ import com.maytube.app.R
 import com.maytube.app.data.ServerConfig
 import com.maytube.app.data.ServerConfigRepository
 import com.maytube.app.download.VideoDownloader
+import com.maytube.app.util.isTv
 import com.maytube.app.webview.MaytubeFullscreenBridge
 import com.maytube.app.webview.MaytubeWebChromeClient
 import com.maytube.app.webview.MaytubeWebViewClient
@@ -113,8 +114,18 @@ class MainActivity : AppCompatActivity() {
         // creating/loading this Activity's WebView at all -- checked
         // before setContentView so a native-mode launch never even
         // inflates the WebView layout.
+        //
+        // isTv(this) here is a defensive fallback, not the app's actual TV
+        // story -- that's the separate tv build flavor (see
+        // build.gradle.kts's productFlavors kdoc), whose own manifest
+        // removes this Activity outright so there's no runtime detection to
+        // get wrong. This only matters if the *mobile* flavor's APK (the
+        // one that still has this WebView) somehow ends up running on a TV
+        // some other way -- better it silently redirects to the native
+        // shell than shows a WebView with no D-pad story at all. See
+        // DeviceUtils.isTv's kdoc.
         val existingConfig = repository.get()
-        if (existingConfig?.nativePlayer == true) {
+        if (existingConfig?.nativePlayer == true || isTv(this)) {
             startActivity(Intent(this, HomeActivity::class.java))
             finish()
             return

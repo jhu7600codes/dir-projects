@@ -19,6 +19,52 @@ android {
         }
     }
 
+    // Two genuinely separate APKs from one source tree, not one universal
+    // APK that runtime-detects a TV and redirects -- reported directly as
+    // "bad concept" after that redirect approach visibly failed to kick in
+    // on a real device and showed the touch-oriented WebView UI on a TV
+    // screen instead. Splitting into flavors removes that failure mode by
+    // construction for the tv flavor: src/tv/AndroidManifest.xml
+    // tools:node="remove"s MainActivity (the WebView Activity) outright, so
+    // there's no launch-time detection to get wrong -- the WebView simply
+    // isn't a reachable component in that APK at all, only HomeActivity's
+    // native browse/watch/comments shell is. The mobile flavor is
+    // byte-for-byte what this app always was (its own AndroidManifest.xml
+    // has no TV-specific declarations at all); DeviceUtils.isTv's
+    // redirect logic stays in the shared Kotlin source as a harmless
+    // defensive fallback (belt-and-suspenders if the mobile APK ever ends
+    // up sideloaded onto a TV box some other way), not as this feature's
+    // actual mechanism anymore.
+    flavorDimensions += "target"
+    productFlavors {
+        create("mobile") {
+            dimension = "target"
+            // BuildConfig.IS_TV_FLAVOR: see HomeActivity's onCreate/
+            // settingsLauncher guards. isTv(context) (DeviceUtils.kt,
+            // runtime UiModeManager check) is what actually matters for the
+            // mobile flavor -- this build still has MainActivity/WebView to
+            // fall back to, so a false negative here just means "acts like
+            // a phone," not a crash.
+            buildConfigField("boolean", "IS_TV_FLAVOR", "false")
+        }
+        create("tv") {
+            dimension = "target"
+            applicationIdSuffix = ".tv"
+            versionNameSuffix = "-tv"
+            // Compile-time-certain counterpart to isTv(context)'s runtime
+            // heuristic, specifically for HomeActivity's own guards: this
+            // flavor's manifest removes MainActivity outright (see its
+            // AndroidManifest.xml kdoc), so anywhere those guards would
+            // otherwise navigate to MainActivity has to be unconditionally
+            // skipped in this flavor -- not just skipped when isTv(context)
+            // happens to return true, since a device that fails that
+            // runtime check (the exact bug that motivated this flavor
+            // split to begin with) would otherwise crash trying to launch
+            // an Activity that isn't a component in this APK at all.
+            buildConfigField("boolean", "IS_TV_FLAVOR", "true")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
