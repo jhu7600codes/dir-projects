@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- tv flavor overlay, merged on top of src/main/AndroidManifest.xml
+     (see app/build.gradle.kts's productFlavors kdoc for why this is a
+     separate flavor/APK rather than one universal build that
+     runtime-detects a TV). Two changes from the mobile flavor's manifest:
+
+     1. MainActivity (the WebView Activity) is removed outright, via
+        tools:node="remove", so it isn't a reachable component in this
+        APK at all, not merely unreachable by default routing. There's no
+        detection step here to fail the way MainActivity's own
+        isTv()-driven redirect could on a real device.
+
+     2. HomeActivity (the native browse/watch/comments shell's entry
+        screen) becomes the launcher directly instead, for both a regular
+        launcher (some TV boxes/sideloading tools still look for
+        MAIN/LAUNCHER, not just MAIN/LEANBACK_LAUNCHER) and the real TV
+        leanback launcher row. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- required="true": this build genuinely has no UI for a device
+         without a D-pad-navigable TV launcher, unlike the mobile flavor,
+         which has no TV-specific requirements at all. touchscreen stays
+         not-required (not "must be absent"): the standard TV declaration. -->
+    <uses-feature android:name="android.software.leanback" android:required="true" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <application android:banner="@drawable/tv_banner">
+
+        <activity android:name=".ui.MainActivity" tools:node="remove" />
+
+        <activity
+            android:name=".ui.HomeActivity"
+            android:exported="true"
+            tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- both are reachable from HomeActivity in every flavor already
+             (its own menu), but the base manifest declares MainActivity as
+             their Up-button parent since it's also the mobile flavor's
+             other entry point into them; that target doesn't exist in this
+             flavor at all, so it's overridden here instead of left
+             dangling. -->
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:parentActivityName=".ui.HomeActivity"
+            tools:replace="android:parentActivityName" />
+        <activity
+            android:name=".ui.DownloadsActivity"
+            android:parentActivityName=".ui.HomeActivity"
+            tools:replace="android:parentActivityName" />
+
+    </application>
+
+</manifest>

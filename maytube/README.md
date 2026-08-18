@@ -112,35 +112,62 @@ the watch page) instead of DownloadManager's silent wait.
 
 ## Android TV
 
-MainActivity's WebView (yt2009's own touch/mouse-hover-oriented desktop
-site) has no D-pad story at all, so on a TV the app skips it entirely:
-`DeviceUtils.isTv` detects a `UI_MODE_TYPE_TELEVISION` device and routes
-straight into the same native browse/watch/comments shell
-(`HomeActivity`/`WatchActivity`/`SearchActivity`/`PlayerActivity`,
-built on `Yt2009Api`'s HTML scraping + `StreamingPlayer`'s real ExoPlayer
-streaming) that Settings > native player already offers on phones — this
-isn't optional on a TV the way it is on a phone, so it applies regardless
-of that setting's stored value. The screens themselves are plain
-`RecyclerView`/`androidx.media3.ui.PlayerView` layouts, not a separate
-Leanback UI: a `View` made clickable is automatically D-pad-focusable, and
-Android's own default focus highlight (on by every TV OS version this
-targets) covers the rest without extra styling. One APK, one set of
-screens, for both device types — see `AndroidManifest.xml`'s
-`android.software.leanback`/`android.hardware.touchscreen`
-`<uses-feature>` declarations (both `required="false"`, so the same
-listing installs on phones and TVs alike) and the `LEANBACK_LAUNCHER`
-intent-filter on `MainActivity`.
+`MainActivity`'s WebView (yt2009's own touch/mouse-hover-oriented desktop
+site) has no D-pad story at all — there's no cursor, no touch, and even
+its recently-fixed volume/captions menus only work around *touch*, not
+"no pointer at all". Rather than trying to detect a TV at runtime and
+redirect away from it (an earlier version of this did exactly that, in
+the same APK as the WebView, and it visibly failed to trigger on a real
+device), TV support is a genuinely separate **build flavor**:
+
+- **`mobile`** — the app as always: `MainActivity`'s WebView by default,
+  with Settings > native player as an opt-in alternative.
+- **`tv`** — `com.maytube.app.tv`, `src/tv/AndroidManifest.xml` merged on
+  top of the shared one. `MainActivity` is removed outright
+  (`tools:node="remove"`) so the WebView isn't a reachable component in
+  this APK *at all* — no runtime detection to get wrong. `HomeActivity`
+  (the same native browse/watch/comments shell —
+  `Yt2009Api`'s HTML scraping + `StreamingPlayer`'s real ExoPlayer
+  streaming — that Settings > native player already offers on phones)
+  becomes the launcher directly, with both a plain `LAUNCHER`
+  intent-filter and a `LEANBACK_LAUNCHER` one for the TV home screen's
+  app row, plus a banner and `android.software.leanback`/
+  `android.hardware.touchscreen` `<uses-feature>` declarations.
+
+  Those screens didn't need a separate Leanback-style UI to work with a
+  D-pad: they're plain `RecyclerView`/`androidx.media3.ui.PlayerView`
+  layouts, and a `View` made clickable (`setOnClickListener`, used
+  throughout) is automatically focusable-in-non-touch-mode, with
+  Android's own default focus highlight (on since API 26 — every real TV
+  OS version this targets) covering the rest for free.
+
+  `BuildConfig.IS_TV_FLAVOR` (compile-time-certain, set per flavor in
+  `build.gradle.kts`) is what `HomeActivity` actually checks before ever
+  navigating back to `MainActivity` — not the runtime `DeviceUtils.isTv`
+  check alone, since that Activity plain doesn't exist in this flavor's
+  manifest and a false-negative there would otherwise crash instead of
+  just "acting like a phone." `DeviceUtils.isTv` still runs in the
+  *mobile* flavor's own `MainActivity`/`HomeActivity` as a defensive
+  fallback, in case that build's APK (the one that still has the WebView)
+  ever ends up running on a TV some other way.
+
+Build/install either with `./gradlew assembleMobileDebug` /
+`./gradlew assembleTvDebug` (or the Debug/Release build-variant picker in
+Android Studio); both share every screen, network/scraping, and playback
+class, so a fix to one benefits both automatically.
 
 ## Setup
 
 1. Open this project (the `maytube/` directory) in Android Studio, or build
-   from the command line with `./gradlew assembleDebug`.
+   from the command line with `./gradlew assembleMobileDebug` (phone/tablet)
+   or `./gradlew assembleTvDebug` (Android TV — see "Android TV" above).
 2. Install on a device/emulator that can reach your yt2009 instance (same
    LAN, VPN, etc).
 3. On first launch, enter your instance's IP/hostname and port. maytube
    loads `http://<host>:<port>/`.
-4. From the toolbar menu you can reopen Settings, force-reload, jump back
-   home, download the currently open video, or view past downloads.
+4. From the toolbar/options menu you can reopen Settings, force-reload,
+   jump back home, download the currently open video, or view past
+   downloads.
 
 This was verified against a locally installed Android SDK
 (`compileSdk 34`, `minSdk 24`) — `./gradlew assembleDebug` and

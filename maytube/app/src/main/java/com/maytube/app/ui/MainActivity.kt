@@ -113,13 +113,17 @@ class MainActivity : AppCompatActivity() {
         // browse/watch/comments shell (HomeActivity) instead of ever
         // creating/loading this Activity's WebView at all -- checked
         // before setContentView so a native-mode launch never even
-        // inflates the WebView layout. On a TV this isn't optional the way
-        // it is on a phone: yt2009's own touch/mouse-hover-oriented site has
-        // no D-pad story at all, so a TV device always takes this path
-        // regardless of the persisted nativePlayer flag or whether a server
-        // is even configured yet (HomeActivity itself already handles a
-        // null config by routing straight to SettingsActivity, same as the
-        // WebView path below would have). See DeviceUtils.isTv's kdoc.
+        // inflates the WebView layout.
+        //
+        // isTv(this) here is a defensive fallback, not the app's actual TV
+        // story -- that's the separate tv build flavor (see
+        // build.gradle.kts's productFlavors kdoc), whose own manifest
+        // removes this Activity outright so there's no runtime detection to
+        // get wrong. This only matters if the *mobile* flavor's APK (the
+        // one that still has this WebView) somehow ends up running on a TV
+        // some other way -- better it silently redirects to the native
+        // shell than shows a WebView with no D-pad story at all. See
+        // DeviceUtils.isTv's kdoc.
         val existingConfig = repository.get()
         if (existingConfig?.nativePlayer == true || isTv(this)) {
             startActivity(Intent(this, HomeActivity::class.java))

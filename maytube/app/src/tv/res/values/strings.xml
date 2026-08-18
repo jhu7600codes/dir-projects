@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- overrides the mobile flavor's app_name (res/values/strings.xml) so the
+     two flavors are distinguishable in an app switcher/launcher if both
+     ever end up installed on the same device (different applicationId
+     suffix, so that's possible) -->
+<resources>
+    <string name="app_name">maytube TV</string>
+</resources>

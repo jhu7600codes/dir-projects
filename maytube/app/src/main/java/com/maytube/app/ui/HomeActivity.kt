@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.maytube.app.BuildConfig
 import com.maytube.app.MaytubeApp
 import com.maytube.app.R
 import com.maytube.app.browse.HairlineDividerDecoration
@@ -51,11 +52,15 @@ class HomeActivity : AppCompatActivity() {
                 finish()
                 return@registerForActivityResult
             }
-            if (!newConfig.nativePlayer && !isTv(this)) {
+            if (!newConfig.nativePlayer && !BuildConfig.IS_TV_FLAVOR && !isTv(this)) {
                 // switched back to WebView mode: hand off to MainActivity
-                // and get out of the way. Never on a TV -- see
-                // DeviceUtils.isTv's kdoc, MainActivity's WebView is a dead
-                // end there regardless of what this flag says.
+                // and get out of the way. Never on the tv flavor --
+                // MainActivity/WebView isn't even a component in that APK
+                // (see its AndroidManifest.xml), so this has to be a
+                // compile-time-certain skip (BuildConfig.IS_TV_FLAVOR), not
+                // just a skip when the runtime isTv() heuristic happens to
+                // agree -- see build.gradle.kts's productFlavors kdoc for
+                // exactly why that distinction matters here.
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
                 return@registerForActivityResult
@@ -84,11 +89,14 @@ class HomeActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener { loadHome() }
 
         val existing = repository.get()
-        if (existing == null || (!existing.nativePlayer && !isTv(this))) {
-            // shouldn't normally happen (MainActivity gates this), but
+        if (existing == null || (!existing.nativePlayer && !BuildConfig.IS_TV_FLAVOR && !isTv(this))) {
+            // shouldn't normally happen (MainActivity gates this, or this
+            // Activity IS the entry point at all on the tv flavor -- see
+            // BuildConfig.IS_TV_FLAVOR's kdoc in build.gradle.kts), but
             // don't strand the user on a broken screen if it does. A null
-            // config always goes to Settings regardless of device type --
-            // there's nothing to browse yet either way.
+            // config always goes to Settings regardless of device/flavor --
+            // there's nothing to browse yet either way, and SettingsActivity
+            // exists in both flavors' manifests.
             startActivity(Intent(this, if (existing == null) SettingsActivity::class.java else MainActivity::class.java))
             finish()
             return
