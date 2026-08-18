@@ -8,6 +8,9 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.webkit.CookieManager
+import android.webkit.WebSettings
+import android.webkit.WebView
 import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -19,6 +22,7 @@ import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.maytube.app.BuildConfig
 import com.maytube.app.MaytubeApp
 import com.maytube.app.R
 import com.maytube.app.browse.CommentPage
@@ -31,24 +35,35 @@ import com.maytube.app.browse.Yt2009Api
 import com.maytube.app.data.ServerConfig
 import com.maytube.app.download.SabrSession
 import com.maytube.app.player.StreamingPlayer
+import com.maytube.app.webview.MobileInjector
 import kotlinx.coroutines.launch
 
 /**
- * The native watch screen: [StreamingPlayer] (true live-streaming, see its
- * kdoc) pinned at top, everything else -- title/channel/description,
- * related videos, comments -- in one flat RecyclerView below (see
- * WatchAdapter). Replaces the old buffer-then-play VideoView-based
- * PlayerActivity for Settings > native player.
+ * The native watch screen: title/channel/description, related videos, and
+ * comments in one flat RecyclerView (see WatchAdapter), with the actual
+ * player pinned above it. Which player depends on the build flavor:
+ *
+ * - mobile: [StreamingPlayer] (true live-streaming ExoPlayer fed from
+ *   maytube's own SABR fragment fetch, see its kdoc), same as always.
+ * - tv (BuildConfig.IS_TV_FLAVOR): requested directly ("just use the
+ *   fucking WEBVIEW for the TV ver also") -- [watchPlayerWebView] loads
+ *   yt2009's own real embed player (`/embed/<id>`, the exact page its own
+ *   generated `<iframe>` embed codes already point at) instead. Real
+ *   Chromium MSE playback again, same reason MainActivity's WebView was
+ *   the mobile flavor's approach from the very start of this project,
+ *   rather than maytube's own SABR-fragment-parsing/ExoPlayer pipeline
+ *   for this one screen specifically.
  */
 @OptIn(markerClass = [UnstableApi::class])
 class WatchActivity : AppCompatActivity() {
 
     private lateinit var playerView: PlayerView
+    private lateinit var playerWebView: WebView
     private lateinit var bufferingSpinner: ProgressBar
     private lateinit var qualityButton: TextView
     private lateinit var list: RecyclerView
     private lateinit var adapter: WatchAdapter
-    private lateinit var streamingPlayer: StreamingPlayer
+    private var streamingPlayer: StreamingPlayer? = null
     private lateinit var watchHistory: WatchHistory
 
     private var config: ServerConfig? = null
@@ -70,16 +85,13 @@ class WatchActivity : AppCompatActivity() {
         videoId = intent.getStringExtra(EXTRA_VIDEO_ID)
 
         playerView = findViewById(R.id.watchPlayerView)
+        playerWebView = findViewById(R.id.watchPlayerWebView)
         bufferingSpinner = findViewById(R.id.watchBufferingSpinner)
         qualityButton = findViewById(R.id.watchQualityButton)
         list = findViewById(R.id.watchList)
 
-        streamingPlayer = StreamingPlayer(this)
-        playerView.player = streamingPlayer.player
-
         findViewById<ImageButton>(R.id.watchCloseButton).setOnClickListener { finish() }
         findViewById<ImageButton>(R.id.watchFullscreenButton).setOnClickListener { toggleFullscreen() }
-        qualityButton.setOnClickListener { showQualityPicker() }
 
         adapter = WatchAdapter(
             onRelatedClick = ::openVideo,
@@ -97,13 +109,61 @@ class WatchActivity : AppCompatActivity() {
         }
 
         watchHistory.recordWatched(id)
-        startPlayback(itag = null)
+        if (BuildConfig.IS_TV_FLAVOR) {
+            startEmbedPlayback(cfg, id)
+        } else {
+            playerView.player = StreamingPlayer(this).also { streamingPlayer = it }.player
+            qualityButton.setOnClickListener { showQualityPicker() }
+            startPlayback(itag = null)
+        }
         loadDetails(cfg, id)
     }
 
     override fun onDestroy() {
-        streamingPlayer.release()
+        streamingPlayer?.release()
+        // harmless even on the mobile flavor, where this WebView never
+        // actually loads anything -- destroy()ing an unused WebView is a
+        // documented no-op, not an error
+        playerWebView.destroy()
         super.onDestroy()
+    }
+
+    /**
+     * tv flavor only -- see class kdoc. Same maytube_flags cookie
+     * MainActivity's applyFlagCookie sets before every WebView page load
+     * (SABR/1080p preference, MobileInjector.flagCookieValue), just fired
+     * once here instead of on every navigation, since this WebView only
+     * ever loads the one embed page for this Activity's lifetime.
+     * yt2009_embed.js does also accept `?sabr=1` as a request-scoped
+     * override, but not an equivalent for 1080p, so the cookie is still
+     * the only way to carry that preference in.
+     */
+    @Suppress("SetJavaScriptEnabled")
+    private fun startEmbedPlayback(cfg: ServerConfig, id: String) {
+        playerView.visibility = View.GONE
+        qualityButton.visibility = View.GONE
+        playerWebView.visibility = View.VISIBLE
+
+        val settings = playerWebView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.mediaPlaybackRequiresUserGesture = false
+        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        settings.cacheMode = WebSettings.LOAD_DEFAULT
+        settings.allowFileAccess = false
+        settings.allowContentAccess = false
+
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(playerWebView, true)
+        cookieManager.setCookie(
+            cfg.baseUrl,
+            "maytube_flags=${MobileInjector.flagCookieValue(cfg)}; Path=/; Max-Age=63072000"
+        ) {
+            cookieManager.flush()
+            bufferingSpinner.visibility = View.GONE
+            playerWebView.loadUrl("${cfg.baseUrl}/embed/$id")
+        }
     }
 
     private fun openVideo(video: VideoSummary) {
@@ -112,10 +172,12 @@ class WatchActivity : AppCompatActivity() {
     }
 
     private fun startPlayback(itag: Int?) {
+        // mobile flavor only -- see onCreate's flavor branch
+        val player = streamingPlayer ?: return
         val cfg = config ?: return
         val id = videoId ?: return
         bufferingSpinner.visibility = View.VISIBLE
-        streamingPlayer.start(
+        player.start(
             cfg,
             id,
             itag = itag,
@@ -243,9 +305,20 @@ class WatchActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // plain PlayerView, no WebView/Chromium custom-view fullscreen
-        // involved (see PlayerActivity/MaytubeWebChromeClient's history
-        // with that) -- re-measures itself correctly on its own
+        // mobile flavor: plain PlayerView, no WebView/Chromium custom-view
+        // fullscreen involved (see PlayerActivity/MaytubeWebChromeClient's
+        // history with that) -- re-measures itself correctly on its own.
+        //
+        // tv flavor: playerWebView has no WebChromeClient at all (see
+        // startEmbedPlayback), so there's no real native fullscreen custom
+        // view here either -- Chromium's video-fullscreen surface is
+        // exactly what dropped html5-player.js's own controls on the
+        // mobile flavor's full watch page (see MobileInjector's
+        // requestFullscreen-patch history), and this deliberately doesn't
+        // opt into that risk a second time for a screen whose "make it
+        // bigger" story is already this Activity's own
+        // toggleFullscreen()/watchFullscreenButton, not the embed page's
+        // own fullscreen button.
     }
 
     companion object {

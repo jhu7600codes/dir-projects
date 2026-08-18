@@ -126,20 +126,30 @@ device), TV support is a genuinely separate **build flavor**:
   top of the shared one. `MainActivity` is removed outright
   (`tools:node="remove"`) so the WebView isn't a reachable component in
   this APK *at all* — no runtime detection to get wrong. `HomeActivity`
-  (the same native browse/watch/comments shell —
-  `Yt2009Api`'s HTML scraping + `StreamingPlayer`'s real ExoPlayer
-  streaming — that Settings > native player already offers on phones)
-  becomes the launcher directly, with both a plain `LAUNCHER`
-  intent-filter and a `LEANBACK_LAUNCHER` one for the TV home screen's
-  app row, plus a banner and `android.software.leanback`/
-  `android.hardware.touchscreen` `<uses-feature>` declarations.
+  (the same native browse/comments shell — `Yt2009Api`'s HTML scraping —
+  that Settings > native player already offers on phones) becomes the
+  launcher directly, with both a plain `LAUNCHER` intent-filter and a
+  `LEANBACK_LAUNCHER` one for the TV home screen's app row, plus a
+  banner and `android.software.leanback`/`android.hardware.touchscreen`
+  `<uses-feature>` declarations.
 
   Those screens didn't need a separate Leanback-style UI to work with a
-  D-pad: they're plain `RecyclerView`/`androidx.media3.ui.PlayerView`
-  layouts, and a `View` made clickable (`setOnClickListener`, used
-  throughout) is automatically focusable-in-non-touch-mode, with
-  Android's own default focus highlight (on since API 26 — every real TV
-  OS version this targets) covering the rest for free.
+  D-pad: they're plain `RecyclerView` layouts, and a `View` made
+  clickable (`setOnClickListener`, used throughout) is automatically
+  focusable-in-non-touch-mode, with Android's own default focus
+  highlight (on since API 26 — every real TV OS version this targets)
+  covering the rest for free.
+
+  The one screen that *does* differ per flavor is `WatchActivity`'s
+  actual player (requested directly): the mobile flavor keeps
+  `StreamingPlayer`'s ExoPlayer-fed-from-maytube's-own-SABR-fetch
+  pipeline, but the tv flavor loads yt2009's own real embed player
+  (`/embed/<id>` — the exact page its own generated `<iframe>` embed
+  codes already point at) into a plain `WebView` instead. Same
+  real-Chromium-MSE-does-the-work approach the mobile flavor's
+  `MainActivity` WebView already relies on for playback, just for one
+  screen instead of the whole site — `BuildConfig.IS_TV_FLAVOR` picks
+  which one `WatchActivity.onCreate` sets up.
 
   `BuildConfig.IS_TV_FLAVOR` (compile-time-certain, set per flavor in
   `build.gradle.kts`) is what `HomeActivity` actually checks before ever
