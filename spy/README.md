@@ -51,12 +51,13 @@ blend in. The whole interface is in Russian.
 ## Assets
 
 `logo.png` and the three mascot doodles (`mascot_spiey`, `mascot_voter`,
-`mascot_leicher`, cut from the supplied `icon.png`) live in
-`app/src/main/res/drawable/` and are used contextually: spiey on the reveal
-cards, voter on the vote/result/win screens, leicher as a small easter egg
-on the empty player list. The launcher icon is generated from `logo.png` --
-an adaptive icon (`mipmap-anydpi-v26`) plus flattened legacy PNGs at every
-density, both on a near-black background.
+`mascot_leicher` -- the original individual character art, each already a
+transparent-background PNG) live in `app/src/main/res/drawable/` and are
+used contextually: spiey on the reveal cards, voter on the vote/result/win
+screens, leicher as a small easter egg on the empty player list. The
+launcher icon is generated from `logo.png` -- an adaptive icon
+(`mipmap-anydpi-v26`) plus flattened legacy PNGs at every density, both on a
+near-black background.
 
 ## Building
 
@@ -68,8 +69,7 @@ or from the command line:
 ```
 
 Targets `compileSdk`/`targetSdk` 34, `minSdk` 24, AGP 8.5.2, Kotlin 1.9.24 --
-the same toolchain as the repo's other Android modules. This sandbox has no
-Android SDK installed, so that build hasn't been run end-to-end here; the
-source was written and reviewed carefully against those exact library
-versions, but treat the first sync in Android Studio as the real
-smoke test.
+the same toolchain as the repo's other Android modules. `:app:assembleDebug`
+has been run end-to-end in this environment (Android SDK platform 34 +
+build-tools 34.0.0, `compileDebugKotlin` and the full `assembleDebug` task
+graph both green) and produces an installable `app-debug.apk`.
