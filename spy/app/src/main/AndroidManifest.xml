@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- No permissions needed: the whole game is local, in-memory state passed
+         around a single ViewModel; nothing is ever written to disk or sent
+         over a network. -->
+
+    <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Spy"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true"
+        tools:targetApi="34">
+
+        <!-- configChanges covers orientation ourselves: the vote screen locks
+             into landscape at runtime (requestedOrientation) and everything
+             else stays portrait. Without this the activity would be torn down
+             and recreated on that switch, which is a visible flicker for
+             something that should feel instant when the phone is being
+             passed around the table. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Spy">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nothing is ever persisted: game state lives only in memory for the
+     lifetime of the process, so there is nothing worth including here. -->
+<full-backup-content>
+</full-backup-content>
