@@ -1,9 +1,10 @@
 package com.spy.game.viewmodel
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.spy.game.data.DEFAULT_TIMER_SECONDS
 import com.spy.game.data.GamePhase
@@ -20,8 +21,16 @@ import kotlinx.coroutines.launch
  * Single source of truth for a game of Spy. Everything is in-memory only --
  * there's no backend and nothing is persisted, so a process death just means
  * a new game.
+ *
+ * This is an [AndroidViewModel] (not a plain [androidx.lifecycle.ViewModel])
+ * solely so [WordBank.loadDictionary] has a [android.content.Context] to
+ * read `assets/words_ru.txt` from.
  */
-class GameViewModel : ViewModel() {
+class GameViewModel(application: Application) : AndroidViewModel(application) {
+
+    init {
+        WordBank.loadDictionary(application)
+    }
 
     var phase by mutableStateOf(GamePhase.SETUP)
         private set
