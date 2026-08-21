@@ -11,8 +11,7 @@ blend in. The whole interface is in Russian.
 1. **Настройка** -- add player names (3 minimum).
 2. **Раздача ролей** -- pass the phone around; each player taps to reveal
    their own card in turn. One random player gets "ШПИОН"; everyone else
-   sees the same word, drawn from a ~90-entry bank of Russian
-   locations/professions/buildings/etc., grouped by category.
+   sees the same word, drawn from a ~6,800-word pool (see Word bank below).
 3. **Обсуждение** -- a 3-minute discussion timer (start/pause/reset), or
    call a meeting early.
 4. **Голосование** -- forces landscape (this is the one screen meant to sit
@@ -44,9 +43,27 @@ blend in. The whole interface is in Russian.
 - `ui/components` -- shared primitives (`SpyCard`, `SpyPrimaryButton`,
   `SpySecondaryButton`, `MascotImage`) so every screen shares the same
   rounded-card look.
-- `data/WordBank.kt` -- the ~90-word bank, grouped into seven categories
-  (cities, professions, buildings, transport, nature/leisure, events,
-  institutions).
+- `data/WordBank.kt` -- see Word bank below.
+
+## Word bank
+
+The pool isn't a fixed hand-picked list -- it's two sources merged together:
+
+- ~90 curated entries in `WordBank.kt` itself, grouped into seven real
+  categories (cities, professions, buildings, transport, nature/leisure,
+  events, institutions), always available.
+- `app/src/main/assets/words_ru.txt` -- ~6,700 general Russian words, loaded
+  once at startup (`WordBank.loadDictionary`) and shown under the generic
+  "Слово" category, since the source list carries no category data. It's
+  filtered down from [hingston/russian](https://github.com/hingston/russian)'s
+  10,000-most-common-Russian-words list (Leeds University Russian corpus
+  frequency data, [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/))
+  by dropping pronouns/prepositions/particles, most infinitive verbs (by
+  suffix), patronymics, and profanity -- what's left is mostly concrete
+  nouns and adjectives. It isn't a perfect part-of-speech filter (there's no
+  morphological analyzer running on-device), so the occasional adjective,
+  surname, or odd word slips through; that's an accepted trade-off against
+  bundling a full NLP model for a party game's word list.
 
 ## Assets
 
