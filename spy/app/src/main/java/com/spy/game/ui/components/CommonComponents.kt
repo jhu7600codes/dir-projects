@@ -6,7 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -112,12 +111,18 @@ fun SpyCard(
     }
 }
 
-/** One of the three mascot doodles, drawn contextually across the screens. */
+/**
+ * One of the three mascot doodles, drawn contextually across the screens.
+ *
+ * The source art is a tall portrait doodle (roughly 1:2), not a square icon,
+ * so this constrains height only and lets width follow the painter's own
+ * aspect ratio instead of squashing it into a square box.
+ */
 @Composable
 fun MascotImage(painter: Painter, modifier: Modifier = Modifier, size: Dp = 96.dp) {
     Image(
         painter = painter,
         contentDescription = null,
-        modifier = modifier.size(size),
+        modifier = modifier.height(size),
     )
 }
