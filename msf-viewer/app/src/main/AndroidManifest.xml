@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        No permissions: reading the opened file's display name only needs
+        the URI-grant that comes with the incoming VIEW intent (content://)
+        or is a plain path read (file://) - see FileNameResolver. File
+        *content* is never read; the spec says it can be ignored entirely.
+    -->
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.MsfViewer"
+        android:supportsRtl="true">
+        <!--
+            Deliberately no android:icon - the task calls for the plain
+            default/generic Android system icon, not custom artwork.
+        -->
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <!--
+                No MAIN/LAUNCHER intent-filter on purpose: this app has no
+                home-screen entry point. The only way in is opening a .msf
+                file from a file manager's "open with" chooser.
+            -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!--
+                    .msf has no registered MIME type, so file managers pass
+                    it through as content:// or file:// with a guessed (or
+                    absent) type. Matching on mimeType="*/*" plus a path
+                    pattern on the extension covers both common cases; two
+                    case variants of the extension are listed since
+                    pathPattern is a literal/case-sensitive glob.
+                -->
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.msf" />
+                <data android:pathPattern=".*\\.MSF" />
+                <data android:pathPattern=".*\\.Msf" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

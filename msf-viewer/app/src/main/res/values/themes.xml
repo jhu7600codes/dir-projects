@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Actual theming (Material You dynamic color, typography) lives in
+         Compose (ui/theme/Theme.kt) - this XML theme only controls the
+         window before the first Compose frame draws, so it stays minimal
+         and just matches a light window background to avoid a flash. -->
+    <style name="Theme.MsfViewer" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+    </style>
+</resources>
