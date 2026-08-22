@@ -180,8 +180,35 @@ class, so a fix to one benefits both automatically.
    downloads.
 
 This was verified against a locally installed Android SDK
-(`compileSdk 34`, `minSdk 24`) — `./gradlew assembleDebug` and
-`./gradlew lintDebug` both succeed cleanly.
+(`compileSdk 34`, `minSdk 21`) — `./gradlew assembleMobileDebug`/
+`assembleTvDebug` and `./gradlew lintMobileDebug`/`lintTvDebug` all
+succeed cleanly.
+
+## Legacy Android support (API 21+)
+
+Requested directly: run as far back as the current dependency stack
+(AndroidX/Media3/Coil) actually allows, rather than a separate legacy
+build or rewrite. 21 (Lollipop, 2014) turned out to be that real floor —
+none of those libraries' own AAR metadata demands anything higher, so
+this wasn't a dependency-swapping exercise. It's also roughly where
+WebView's MSE support (what SABR playback needs) becomes usable at all;
+going lower would mean the core playback mechanism stops working
+regardless of what this app's own code does.
+
+"Make it detect which API and use it" — the actual work was auditing
+every `Build.VERSION.SDK_INT`-gated call for a real fallback on 21-23,
+not just silencing lint:
+
+- `Context.getColor(int)` (API 23+) → `ContextCompat.getColor` (the
+  AndroidX shim, works down to 21) — the one genuine `NewApi` lint error
+  minSdk 21 turned up.
+- `WatchActivity`'s fullscreen toggle called `WindowInsetsController`
+  (API 30+) with no `else` branch at all — meaning tapping fullscreen on
+  any pre-R device silently did nothing to the status/nav bars (lint
+  can't catch this kind of gap; it's not a compile error, just an
+  incomplete branch). Given the same two-sided
+  `WindowInsetsController`-vs-`systemUiVisibility` treatment
+  `PlayerActivity`/`MaytubeWebChromeClient` already had.
 
 ## Known limitations / follow-ups
 

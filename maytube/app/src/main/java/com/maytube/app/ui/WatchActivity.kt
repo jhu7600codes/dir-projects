@@ -291,14 +291,40 @@ class WatchActivity : AppCompatActivity() {
             ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
         list.visibility = if (isFullscreen) View.GONE else View.VISIBLE
+        setSystemChromeHidden(isFullscreen)
+    }
+
+    /**
+     * Two different APIs depending on minSdk (21) vs. what's actually
+     * current: WindowInsetsController is R+ only. Below that, the
+     * pre-AndroidX systemUiVisibility flags (same ones
+     * PlayerActivity/MaytubeWebChromeClient already use for the exact same
+     * purpose) are the only way to hide the system bars at all -- without
+     * this branch, "fullscreen" on a pre-R device only did the
+     * orientation-lock/hide-the-list part above, silently leaving the
+     * status/nav bars on screen the whole time.
+     */
+    private fun setSystemChromeHidden(hidden: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(!isFullscreen)
+            window.setDecorFitsSystemWindows(!hidden)
             val controller = window.insetsController
-            if (isFullscreen) {
+            if (hidden) {
                 controller?.hide(WindowInsets.Type.systemBars())
                 controller?.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             } else {
                 controller?.show(WindowInsets.Type.systemBars())
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = if (hidden) {
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            } else {
+                0
             }
         }
     }

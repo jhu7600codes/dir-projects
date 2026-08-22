@@ -9,7 +9,19 @@ android {
 
     defaultConfig {
         applicationId = "com.maytube.app"
-        minSdk = 24
+        // Requested directly: run as far back as the current dependency
+        // stack (AndroidX/Media3/Coil) actually allows without ripping any
+        // of it out, rather than a separate legacy build/rewrite. 21
+        // (Lollipop, 2014) is that real floor -- also roughly where
+        // WebView's MSE support (what SABR playback needs) becomes usable
+        // at all, so going lower would mean the core playback mechanism
+        // itself stops working regardless of what this app's own code
+        // does. Every API 24+ call this codebase used before this change
+        // is now behind a Build.VERSION.SDK_INT gate with a real fallback
+        // for 21-23 (see MainActivity/WatchActivity/PlayerActivity's
+        // hideSystemChrome-style methods) rather than a hard floor -- "make
+        // it detect which API and use it," not a parallel legacy variant.
+        minSdk = 21
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0-milestone1"
