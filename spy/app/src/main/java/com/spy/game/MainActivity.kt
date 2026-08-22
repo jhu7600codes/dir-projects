@@ -13,9 +13,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spy.game.data.GamePhase
+import com.spy.game.ui.screens.DemoScreen
+import com.spy.game.ui.screens.EliminationScreen
 import com.spy.game.ui.screens.EndScreen
 import com.spy.game.ui.screens.PlayScreen
 import com.spy.game.ui.screens.ResultScreen
@@ -44,6 +50,16 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun SpyApp(viewModel: GameViewModel = viewModel()) {
+    // The tutorial/demo lives outside GamePhase entirely -- it's a scripted
+    // walkthrough reachable from Setup, not a state the real game ever
+    // enters, so it's just a plain boolean overlaying the phase switch below.
+    var showDemo by remember { mutableStateOf(false) }
+
+    if (showDemo) {
+        DemoScreen(onDone = { showDemo = false })
+        return
+    }
+
     // The whole game is one state machine driven by GamePhase -- every
     // screen below just renders viewModel's current state and reports
     // user actions back to it, with no navigation back-stack to manage.
@@ -55,6 +71,7 @@ private fun SpyApp(viewModel: GameViewModel = viewModel()) {
         when (phase) {
             GamePhase.SETUP -> SetupScreen(
                 onStartGame = viewModel::startGame,
+                onShowDemo = { showDemo = true },
             )
 
             GamePhase.REVEAL -> {
@@ -72,11 +89,12 @@ private fun SpyApp(viewModel: GameViewModel = viewModel()) {
 
             GamePhase.PLAY -> PlayScreen(
                 activePlayers = viewModel.activePlayers,
+                hintRoundNumber = viewModel.hintRoundNumber,
+                discussionStarted = viewModel.discussionStarted,
                 timerSeconds = viewModel.timerSeconds,
-                timerRunning = viewModel.timerRunning,
-                onToggleTimer = viewModel::toggleTimer,
-                onResetTimer = viewModel::resetTimer,
-                onCallMeeting = viewModel::callMeeting,
+                onAdvanceHintRound = viewModel::advanceHintRound,
+                onStartDiscussion = viewModel::startDiscussion,
+                onCallMeetingEarly = viewModel::callMeeting,
             )
 
             GamePhase.VOTE -> {
@@ -91,6 +109,11 @@ private fun SpyApp(viewModel: GameViewModel = viewModel()) {
                     )
                 }
             }
+
+            GamePhase.ELIMINATION -> EliminationScreen(
+                eliminatedPlayer = viewModel.lastOutcome?.eliminatedPlayer,
+                onFinished = viewModel::finishElimination,
+            )
 
             GamePhase.RESULT -> {
                 val outcome = viewModel.lastOutcome

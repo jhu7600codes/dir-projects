@@ -1,11 +1,19 @@
 package com.spy.game.ui.components
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -13,15 +21,21 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.spy.game.ui.theme.SpyOutline
 import com.spy.game.ui.theme.SpyRed
+import com.spy.game.ui.theme.SpyRedDark
+import com.spy.game.ui.theme.SpyRedLight
 import com.spy.game.ui.theme.SpySurface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -125,4 +139,72 @@ fun MascotImage(painter: Painter, modifier: Modifier = Modifier, size: Dp = 96.d
         contentDescription = null,
         modifier = modifier.height(size),
     )
+}
+
+/**
+ * The big red "call the meeting" button -- a physical arcade-button
+ * illusion: a darker, fixed base sits [pressDepth] below a lighter,
+ * glossy face. Pressing it animates the face down onto the base (and back
+ * up on release), so it visually gets pushed in rather than just changing
+ * color like a normal Material button.
+ */
+@Composable
+fun SpyBigRedButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    size: Dp = 200.dp,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val pressDepth = 12.dp
+    val faceOffset by animateDpAsState(
+        targetValue = if (pressed) pressDepth else 0.dp,
+        animationSpec = tween(durationMillis = if (pressed) 60 else 140),
+        label = "big-red-button-press",
+    )
+
+    Box(
+        modifier = modifier.size(size),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        // Base/shadow layer: fixed in place, always visible below the face.
+        Box(
+            modifier = Modifier
+                .padding(top = pressDepth)
+                .size(size - pressDepth)
+                .clip(CircleShape)
+                .background(SpyRedDark),
+        )
+        // Face layer: glossy gradient, slides down onto the base when pressed.
+        Box(
+            modifier = Modifier
+                .offset(y = faceOffset)
+                .size(size - pressDepth)
+                .clip(CircleShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = if (enabled) listOf(SpyRedLight, SpyRed) else listOf(SpyOutline, SpyOutline),
+                    ),
+                )
+                .border(2.dp, if (enabled) SpyRedDark else SpyOutline, CircleShape)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onClick = onClick,
+                )
+                .padding(16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
 }
