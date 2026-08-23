@@ -20,7 +20,9 @@
 
     <string name="paste_cookie_link">Trouble signing in? Paste a cookie instead</string>
     <string name="paste_cookie_title">Paste cookie</string>
-    <string name="paste_cookie_instructions">Google blocks sign-in from embedded browsers like this one. Instead, sign into youtube.com in Chrome, open its site info (the lock icon) → Cookies, or use a \"cookies.txt\" export extension, and paste the full Cookie header value here.</string>
+    <string name="paste_cookie_instructions">Google blocks sign-in from embedded browsers like this one\'s WebView - no phone-only fix gets around that reliably. This does, all on this phone, no computer needed:\n\n1. In a Firefox-based browser that supports extensions (Firefox, Fennec, Iceraven…), install the free \"Cookie-Editor\" add-on from its Settings → Add-ons.\n2. Tap \"Open YouTube in browser\" below and sign in there normally (a real browser isn\'t blocked the way this WebView is).\n3. On the signed-in youtube.com page, open Cookie-Editor → Export → \"Header String\" - it copies the cookie to your clipboard.\n4. Come back here and tap \"Paste from clipboard\" below.</string>
+    <string name="open_firefox_button">Open YouTube in browser</string>
+    <string name="paste_from_clipboard">Paste from clipboard</string>
     <string name="paste_cookie_hint">SID=…; HSID=…; SAPISID=…; …</string>
     <string name="paste_cookie_invalid">That doesn\'t look like a signed-in YouTube cookie (no SAPISID found)</string>
     <string name="save">Save</string>

@@ -1,6 +1,11 @@
 package com.jhulian.android.youtube.classic.auth
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -79,6 +84,31 @@ class LoginActivity : AppCompatActivity() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_paste_cookie, null)
         val input = dialogView.findViewById<EditText>(R.id.cookieInput)
 
+        // Deliberately no package name here (not "org.mozilla.firefox" or
+        // any other specific browser) - a plain, unrestricted ACTION_VIEW
+        // lets Android route to whatever the user actually has (Firefox,
+        // Fennec, Iceraven, their default browser...), showing a chooser
+        // itself if more than one is installed. Guessing a package would
+        // just mean "doesn't work if you use anything else."
+        dialogView.findViewById<View>(R.id.openFirefoxButton).setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com")))
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, "No browser found", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialogView.findViewById<View>(R.id.pasteFromClipboardButton).setOnClickListener {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clipText = clipboard.primaryClipText()?.trim()
+            if (clipText.isNullOrBlank()) {
+                Toast.makeText(this, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+            } else {
+                input.setText(clipText)
+                input.setSelection(clipText.length)
+            }
+        }
+
         AlertDialog.Builder(this)
             .setTitle(R.string.paste_cookie_title)
             .setView(dialogView)
@@ -86,6 +116,9 @@ class LoginActivity : AppCompatActivity() {
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
+
+    private fun ClipboardManager.primaryClipText(): String? =
+        if (hasPrimaryClip()) primaryClip?.getItemAt(0)?.coerceToText(this@LoginActivity)?.toString() else null
 
     private fun trySaveCookie(rawInput: String) {
         val cookie = rawInput.trim()
