@@ -1,6 +1,8 @@
 package com.fivepesos.app.ui.screens
 
 import android.net.Uri
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -59,6 +61,7 @@ fun GoogleCoinImportScreen(
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var pendingImageUrl by remember { mutableStateOf<String?>(null) }
     var isImporting by remember { mutableStateOf(false) }
+    var loadError by remember { mutableStateOf(false) }
 
     BackHandler {
         val webView = webViewRef
@@ -115,7 +118,25 @@ fun GoogleCoinImportScreen(
                     WebView(ctx).apply {
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
-                        webViewClient = WebViewClient()
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
+                                loadError = false
+                            }
+
+                            override fun onReceivedError(
+                                view: WebView,
+                                request: WebResourceRequest,
+                                error: WebResourceError,
+                            ) {
+                                // Only the main page failing counts as "can't
+                                // browse" -- a failed sub-resource (an ad
+                                // tracker, a missing icon) shouldn't blank
+                                // out an otherwise-working page.
+                                if (request.isForMainFrame) {
+                                    loadError = true
+                                }
+                            }
+                        }
                         setOnLongClickListener {
                             val result = hitTestResult
                             val url = result.extra
@@ -141,6 +162,44 @@ fun GoogleCoinImportScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(color = MetroAccent)
+                }
+            }
+
+            // Fully opaque, covering the WebView -- Chromium draws its own
+            // white "webpage not available" page into the view on a load
+            // failure regardless of this callback, so hiding it means
+            // painting over it rather than suppressing it.
+            if (loadError) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MetroBackground),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "couldn't reach google", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Light)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "check this device's connection and try again",
+                            color = MetroSecondaryText,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 40.dp),
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        Text(
+                            text = "try again",
+                            color = MetroAccent,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clickable {
+                                    loadError = false
+                                    webViewRef?.reload()
+                                }
+                                .padding(12.dp),
+                        )
+                    }
                 }
             }
         }
