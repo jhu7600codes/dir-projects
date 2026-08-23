@@ -1,0 +1,7 @@
+<resources>
+    <!-- Matches the corner color baked into the coin artwork, so the
+         adaptive-icon foreground blends into its background with no
+         visible seam. Also used as the window background pre-Compose. -->
+    <color name="window_background">#6B7280</color>
+    <color name="ic_launcher_background">#6B7280</color>
+</resources>
