@@ -4,11 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.msfviewer.app"
+    // Must match the actual Kotlin package layout (com.msfviewer, not
+    // com.msfviewer.app) -- the manifest's relative ".MainActivity" name
+    // resolves against this at build time, and a mismatch here silently
+    // packages fine but crashes at launch with ClassNotFoundException.
+    namespace = "com.msfviewer"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.msfviewer.app"
+        applicationId = "com.msfviewer"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
