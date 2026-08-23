@@ -31,11 +31,16 @@ insensitive) becomes a "unit":
 - The filename "fish" (case-insensitive, extension stripped) skips the
   algorithm entirely and renders an easter egg screen instead.
 
-A few points the spec states by example rather than exhaustively (repeat
-count applying to an uppercase letter's whole digit group, punctuation
-adjacency being resolved against the nearest *unit* rather than the
-nearest letter/digit) are called out as documented assumptions in
-`MesfParser`'s doc comment.
+`MesfParser` is a direct Kotlin port of a reference MESF web renderer's
+exact algorithm, not an independent reading of the prose spec -- a few
+edge cases the prose leaves ambiguous are resolved by matching that
+reference precisely (documented in `MesfParser`'s doc comment): only a
+*lowercase* letter treats a following digit as a repeat count (uppercase
+never does); a repeat count of 0 still yields one unit; and punctuation's
+size boost checks only the literal adjacent character for a letter/digit,
+independently on each side -- so a punctuation mark can both bump the
+unit before it *and* spawn its own transparent unit, and a run of
+punctuation marks doesn't chain through spaces.
 
 ## Architecture
 

@@ -3,25 +3,34 @@ package com.msfviewer.parser
 /**
  * Turns a `.msf` filename into the list of [MesfUnit]s the spec describes.
  *
- * A few points in the spec are stated generally rather than exhaustively;
- * the choices below are noted where they matter, so the behavior is
- * traceable back to the spec text rather than silently invented:
+ * This is a direct Kotlin port of the reference MESF web renderer's exact
+ * algorithm (not a from-scratch reading of the prose spec), since the
+ * prose leaves some cases genuinely ambiguous and the reference resolves
+ * them concretely. The behaviors worth calling out because they're easy
+ * to get wrong by reasoning from the spec text alone:
  *
- * - "a digit appearing directly after a letter is a repeat count for that
- *   letter" is read as: the digit multiplies *everything that single
- *   letter produced* (so an uppercase letter's whole digit-split group
- *   repeats together, not just its last digit) -- this is the direct
- *   generalization of the given "a2b" example, which only shows a
- *   single-unit letter.
- * - A repeat count of 0 legitimately produces zero units for that letter
- *   -- literal reading of "repeat count", not special-cased away.
- * - Punctuation's "+2 to the unit immediately before/after" targets the
- *   nearest actual emitted unit in the output sequence, which includes
- *   transparent space-units (the spec explicitly calls a space "a unit").
- *   The documented fallback ("no letter/number on either side" -> the
- *   punctuation becomes its own bigger transparent unit) is reachable
- *   exactly when there is no unit anywhere before or after it in the
- *   whole name -- i.e. the name is punctuation-only.
+ * - Only a **lowercase** letter treats a following digit as a repeat
+ *   count. A digit right after an **uppercase** letter is not consumed by
+ *   it -- it's parsed on its own as a standalone color digit. ("J2" is
+ *   red, black, green -- not red, black, red, black.)
+ * - A repeat count of 0 still produces exactly one unit (a minimum of 1),
+ *   not zero.
+ * - Punctuation's size boost looks only at the *literal* adjacent
+ *   characters, not the nearest unit transitively -- a space or another
+ *   punctuation mark immediately next to it does not count as a
+ *   "letter/number neighbor", even though a space is itself a unit. So a
+ *   punctuation mark between two spaces bumps neither space; it becomes
+ *   its own bigger transparent unit instead, and spaces are never resized.
+ * - The "becomes its own bigger transparent unit" fallback is checked
+ *   independently for the *following* side only: whenever the immediately
+ *   next character isn't a letter/digit, the punctuation spawns its own
+ *   transparent unit -- even if its *preceding* side did successfully
+ *   bump a real unit. So trailing punctuation, or punctuation between two
+ *   punctuation marks, produces an extra transparent unit in addition to
+ *   any boost it gave the unit before it.
+ * - When the following side does have a letter/digit neighbor, only the
+ *   *first* unit that letter/digit produces gets the +2 (relevant for an
+ *   uppercase letter, which can produce more than one unit).
  */
 object MesfParser {
 
@@ -47,7 +56,7 @@ object MesfParser {
     fun parse(filename: String): MesfParseResult {
         val baseName = stripExtension(filename)
 
-        if (baseName.equals("fish", ignoreCase = true)) {
+        if (baseName.trim().equals("fish", ignoreCase = true)) {
             return MesfParseResult(baseName = baseName, isEasterEgg = true, units = emptyList())
         }
 
@@ -57,81 +66,100 @@ object MesfParser {
     private fun digitsOf(value: Int): List<Int> =
         if (value < 10) listOf(value) else value.toString().map { it - '0' }
 
+    private fun isLetterOrDigit(c: Char?): Boolean =
+        c != null && (c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9')
+
+    /** A punctuation mark whose "bump the next unit" side hasn't resolved
+     * yet -- the unit it targets doesn't exist until the following
+     * character is processed. */
+    private object PendingBoost
+
     private fun tokenize(name: String): List<MesfUnit> {
-        val units = mutableListOf<MesfUnit>()
-
-        // Punctuation marks seen so far that are still waiting for the
-        // *next* unit to appear, to bump it (+2 each). Drained the moment
-        // any unit is appended.
-        var pendingAfterBoosts = 0
-
-        // Punctuation marks that, at the moment they were seen, had no
-        // unit before them either. If a later unit ever appears, they're
-        // resolved via pendingAfterBoosts (addUnit clears both together).
-        // Whatever is left here at the end of the string had no unit on
-        // either side -- the name was punctuation-only from that point.
-        var orphanPunctCount = 0
-
-        fun addUnit(colorNumber: Int?) {
-            val unit = MesfUnit(colorNumber = colorNumber)
-            if (pendingAfterBoosts > 0) {
-                unit.size += 2 * pendingAfterBoosts
-                pendingAfterBoosts = 0
-            }
-            orphanPunctCount = 0
-            units.add(unit)
-        }
-
-        // Emits a letter's color(s), applying a following digit (if any)
-        // as a repeat count for the whole group. Returns the next index.
-        fun processLetter(colorDigits: List<Int>, index: Int): Int {
-            var next = index + 1
-            val repeatCount = if (next < name.length && name[next] in '0'..'9') {
-                val count = name[next] - '0'
-                next += 1
-                count
-            } else {
-                1
-            }
-            repeat(repeatCount) { colorDigits.forEach(::addUnit) }
-            return next
-        }
-
+        // Mixed list of real units and PendingBoost placeholders, built in
+        // one left-to-right pass exactly like the reference: a
+        // placeholder always sits immediately before the real unit(s) its
+        // owning punctuation mark is waiting to bump.
+        val slots = mutableListOf<Any>() // MesfUnit | PendingBoost
+        val n = name.length
         var i = 0
-        while (i < name.length) {
+
+        while (i < n) {
             val ch = name[i]
-            i = when {
-                ch in 'a'..'z' -> processLetter(listOf(ch - 'a' + 1), i)
-                ch in 'A'..'Z' -> processLetter(digitsOf(ch - 'A' + 1), i)
+            when {
+                ch in 'a'..'z' -> {
+                    val colorNumber = ch - 'a' + 1
+                    var next = i + 1
+                    var repeatCount = 1
+                    if (next < n && name[next] in '0'..'9') {
+                        repeatCount = name[next] - '0'
+                        next += 1
+                    }
+                    // A repeat count of 0 still yields one unit (matches
+                    // the reference's Math.max(repeat, 1) clamp).
+                    kotlin.repeat(maxOf(repeatCount, 1)) {
+                        slots.add(MesfUnit(colorNumber = colorNumber))
+                    }
+                    i = next
+                }
+                ch in 'A'..'Z' -> {
+                    // Uppercase never consumes a following digit -- unlike
+                    // lowercase, there's no repeat-count lookahead here.
+                    val position = ch - 'A' + 1
+                    digitsOf(position).forEach { digit ->
+                        slots.add(MesfUnit(colorNumber = digit))
+                    }
+                    i += 1
+                }
                 ch in '0'..'9' -> {
-                    // Standalone digit -- not consumed as a repeat count
-                    // above, since processLetter already skips past those.
-                    addUnit(ch - '0')
-                    i + 1
+                    slots.add(MesfUnit(colorNumber = ch - '0'))
+                    i += 1
                 }
                 ch == ' ' -> {
-                    addUnit(null)
-                    i + 1
+                    slots.add(MesfUnit(colorNumber = null))
+                    i += 1
                 }
                 else -> {
-                    // Punctuation: not a unit itself.
-                    if (units.isNotEmpty()) {
-                        units.last().size += 2
-                    } else {
-                        orphanPunctCount += 1
+                    val prevCh = if (i > 0) name[i - 1] else null
+                    if (isLetterOrDigit(prevCh)) {
+                        // The most recently emitted slot is always a real
+                        // unit here, never a still-pending placeholder: a
+                        // placeholder is only ever created when the next
+                        // character is a letter/digit, and that character
+                        // gets processed on the very next loop iteration,
+                        // immediately turning it into a real unit before
+                        // any other punctuation mark could be reached.
+                        (slots.lastOrNull() as? MesfUnit)?.let { it.size += 2 }
                     }
-                    pendingAfterBoosts += 1
-                    i + 1
+                    val nextCh = if (i + 1 < n) name[i + 1] else null
+                    if (isLetterOrDigit(nextCh)) {
+                        slots.add(PendingBoost)
+                    } else {
+                        // No letter/number on the following side -- becomes
+                        // its own bigger transparent unit, regardless of
+                        // whether the preceding side already got bumped.
+                        slots.add(MesfUnit(colorNumber = null, size = 3))
+                    }
+                    i += 1
                 }
             }
         }
 
-        // Punctuation with no unit on either side becomes its own bigger
-        // transparent unit (base size 1, +2 since it's its own neighbor).
-        repeat(orphanPunctCount) {
-            units.add(MesfUnit(colorNumber = null, size = 3))
+        // Resolve placeholders: each one bumps the size of the first real
+        // unit that appears after it (skipping over any other
+        // placeholders in between, though by construction there never
+        // are any -- a placeholder is always immediately followed by a
+        // real unit on the next loop iteration above).
+        val resolved = slots.filterIsInstance<MesfUnit>()
+        for (k in slots.indices) {
+            if (slots[k] !== PendingBoost) continue
+            var targetIndex = k + 1
+            while (targetIndex < slots.size && slots[targetIndex] === PendingBoost) targetIndex += 1
+            if (targetIndex < slots.size) {
+                val resolvedIndex = slots.subList(0, targetIndex).count { it is MesfUnit }
+                resolved.getOrNull(resolvedIndex)?.let { it.size += 2 }
+            }
         }
 
-        return units
+        return resolved
     }
 }

@@ -26,7 +26,12 @@ object MesfColorTable {
         val r2 = (c2 shr 16) and 0xFF
         val g2 = (c2 shr 8) and 0xFF
         val b2 = c2 and 0xFF
-        return rgb((r1 + r2) / 2, (g1 + g2) / 2, (b1 + b2) / 2)
+        // Round-half-up (matches JS's Math.round(sum / 2)), not truncation:
+        // for a non-negative sum, (sum + 1) / 2 under integer division is
+        // exactly Math.round(sum / 2.0). This matters -- e.g. blend(1, 3)'s
+        // red channel is (255+0)/2 = 127.5, which rounds up to 128, not
+        // down to 127.
+        return rgb((r1 + r2 + 1) / 2, (g1 + g2 + 1) / 2, (b1 + b2 + 1) / 2)
     }
 
     private fun buildColorTable(): IntArray {

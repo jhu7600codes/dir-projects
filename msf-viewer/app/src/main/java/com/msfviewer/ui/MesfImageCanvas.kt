@@ -16,13 +16,22 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
 import com.msfviewer.parser.MesfColorTable
 import com.msfviewer.parser.MesfLayout
+import kotlin.math.ceil
+
+// Matches the reference web renderer's checkerboard behind the image, so
+// transparent units (spaces, orphaned punctuation) read as "no color"
+// rather than as invisible/missing squares.
+private val CheckerLight = Color(0xFF1A1D1B)
+private val CheckerDark = Color(0xFF0F1210)
+private const val CHECKER_SQUARES_ACROSS = 8
 
 /**
  * Renders a computed [MesfLayout] by drawing each unit as a plain filled
  * square -- the whole "image" the spec describes. Transparent units
- * (colorNumber == null) simply aren't painted, letting the surface behind
- * show through. The canvas is scaled so the layout's base-unit grid fills
- * the available width, at whatever height that implies.
+ * (colorNumber == null) simply aren't painted, letting the checkerboard
+ * behind them show through. The canvas is scaled so the layout's
+ * base-unit grid fills the available width, at whatever height that
+ * implies.
  */
 @Composable
 fun MesfImageCanvas(layout: MesfLayout, modifier: Modifier = Modifier) {
@@ -40,6 +49,7 @@ fun MesfImageCanvas(layout: MesfLayout, modifier: Modifier = Modifier) {
                 .aspectRatio(aspect),
         ) {
             val basePx = size.width / layout.widthUnits
+            drawCheckerboard(size.width, size.height)
             for (placed in layout.placedUnits) {
                 val colorNumber = placed.unit.colorNumber ?: continue
                 drawUnit(
@@ -49,6 +59,23 @@ fun MesfImageCanvas(layout: MesfLayout, modifier: Modifier = Modifier) {
                     sizePx = placed.unit.size * basePx,
                 )
             }
+        }
+    }
+}
+
+private fun DrawScope.drawCheckerboard(width: Float, height: Float) {
+    val square = width / CHECKER_SQUARES_ACROSS
+    if (square <= 0f) return
+    val cols = ceil(width / square).toInt()
+    val rows = ceil(height / square).toInt()
+    for (row in 0 until rows) {
+        for (col in 0 until cols) {
+            val isLight = (row + col) % 2 == 0
+            drawRect(
+                color = if (isLight) CheckerLight else CheckerDark,
+                topLeft = Offset(col * square, row * square),
+                size = Size(square, square),
+            )
         }
     }
 }

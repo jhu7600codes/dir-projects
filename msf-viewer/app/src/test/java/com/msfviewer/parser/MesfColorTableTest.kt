@@ -48,7 +48,10 @@ class MesfColorTableTest {
     }
 
     // Independent re-implementation of the averaging blend, so this test
-    // doesn't just call back into the code under test.
+    // doesn't just call back into the code under test. Uses
+    // kotlin.math.round on the true float average, deliberately a
+    // different code path than production's integer (sum+1)/2 trick --
+    // both are round-half-up, so they must agree on every channel.
     private fun blend(c1: Int, c2: Int): Int {
         val r1 = (c1 shr 16) and 0xFF
         val g1 = (c1 shr 8) and 0xFF
@@ -56,9 +59,9 @@ class MesfColorTableTest {
         val r2 = (c2 shr 16) and 0xFF
         val g2 = (c2 shr 8) and 0xFF
         val b2 = c2 and 0xFF
-        val r = (r1 + r2) / 2
-        val g = (g1 + g2) / 2
-        val b = (b1 + b2) / 2
+        val r = Math.round((r1 + r2) / 2.0).toInt()
+        val g = Math.round((g1 + g2) / 2.0).toInt()
+        val b = Math.round((b1 + b2) / 2.0).toInt()
         return (r shl 16) or (g shl 8) or b
     }
 }
