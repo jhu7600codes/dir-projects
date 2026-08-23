@@ -1,0 +1,114 @@
+# YouTube Classic
+
+A from-scratch Android client (Kotlin) that recreates the 2018-2019 YouTube
+app's UI - white chrome, bottom tab bar (Home / Trending / Subscriptions /
+Library), hard-edged thumbnails - on top of
+[NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) instead
+of the official YouTube Data API. No API key, no OAuth client.
+
+## Why no API key / OAuth
+
+Everything that's normally an API call is either public-page scraping
+(NewPipeExtractor) or a cookie-authenticated call to YouTube's own internal
+`/youtubei/v1/*` endpoints, using a session captured by logging into
+youtube.com in a plain embedded WebView - the same approach
+[PipePipe](https://github.com/InfinityLoop1308/PipePipe) uses instead of
+Google Sign-In. See `auth/LoginActivity.kt` and `network/Innertube.kt`.
+
+## Project layout
+
+```
+app/src/main/kotlin/com/ytclassic/app/
+├── YtClassicApp.kt          Application: NewPipe.init(), session/downloads init
+├── extractor/                NewPipeExtractor plumbing (no auth needed)
+│   ├── OkHttpDownloader.kt   The Downloader NewPipeExtractor requires to make HTTP calls
+│   └── YouTubeRepository.kt  Coroutine wrappers: trending/search/streamInfo/comments/channel
+├── auth/
+│   ├── LoginActivity.kt      WebView login -> captures the youtube.com cookie jar
+│   └── SessionManager.kt     Encrypted on-device storage for that cookie
+├── network/                  Everything that needs the cookie session
+│   ├── Innertube.kt          SAPISIDHASH auth + shared POST helper
+│   ├── InnertubeActions.kt   like/dislike, subscribe, post a comment
+│   ├── InnertubeFeedClient.kt Home/Subscriptions feeds (browse endpoint)
+│   └── SponsorBlockClient.kt  Public SponsorBlock API, k-anonymous hash-prefix lookup
+├── playback/
+│   ├── PlaybackService.kt    MediaSessionService - background/offline playback
+│   ├── StreamSelector.kt     Picks HLS / progressive / video+audio-only streams
+│   └── SponsorBlockController.kt  Auto-skip / manual-skip against playback position
+├── download/                 Video+audio download -> single mp4 (MediaMuxer, no ffmpeg)
+├── data/model/                UI models + mappers from NewPipeExtractor / innertube JSON
+└── ui/                        MainActivity (tabs), player, search, channel, settings, downloads
+```
+
+## What's implemented
+
+1. **Extraction**: search, trending, video/stream info, comments-with-replies
+   all go through NewPipeExtractor (`extractor/YouTubeRepository.kt`) - no
+   API key.
+2. **Auth**: WebView cookie login (`auth/LoginActivity.kt`), persisted
+   encrypted on-device (`auth/SessionManager.kt`).
+3. **UI**: Home/Trending/Subscriptions/Library bottom tabs, video list,
+   player screen with comments, all styled off 2019 Android app screenshots
+   (white top bar, red accents only, square thumbnails, no forced dark
+   theme - the era this recreates predates YouTube's dark mode).
+4. **Write actions**: like/dislike, subscribe/unsubscribe, and posting a
+   top-level comment, all via cookie-authenticated innertube calls
+   (`network/InnertubeActions.kt`). Comment *replies* are read-only for now.
+5. **SponsorBlock**: segments fetched by SHA-256 hash-prefix (the same
+   k-anonymity scheme the browser extension uses), spliced into playback via
+   `playback/SponsorBlockController.kt` with both auto-skip and a manual
+   "Skip" chip, plus segment markers on the seek bar.
+6. **Background/offline playback**: a `MediaSessionService`
+   (`playback/PlaybackService.kt`) keeps ExoPlayer alive independent of the
+   Activity; video-only + audio-only adaptive streams are stitched back
+   together by a custom `MediaSource.Factory` on the service side (the
+   video/audio pairing is passed across the MediaController boundary via
+   `MediaItem.requestMetadata.extras`, the one part of a MediaItem that
+   actually survives session IPC). Downloads
+   (`download/DownloadService.kt`) pull both tracks to disk and mux them
+   into one playable mp4 with Android's `MediaMuxer` - no ffmpeg/native code.
+
+## Known gaps / where to look if something's off
+
+- **Home feed** falls back to Trending when signed out (there's no public
+  "recommended for you" surface to scrape); when signed in it calls
+  innertube's `browse` endpoint directly (`network/InnertubeFeedClient.kt`),
+  which NewPipeExtractor deliberately doesn't cover.
+- **Channel tabs**: uses NewPipeExtractor's tab-based channel API
+  (`ChannelInfo.tabs` + `ChannelTabInfo`). This is the API surface most
+  likely to have moved between NewPipeExtractor versions - if channel
+  videos come back empty, check `YouTubeRepository.channel()` against the
+  NewPipeExtractor version actually resolved in the build.
+- **Comment posting params**: `InnertubeActions.postComment` fishes
+  `createCommentParams` out of a throwaway `/next` call by walking the
+  whole JSON tree (`util/JsonWalk.kt`) rather than modeling YouTube's exact
+  (frequently-reshuffled) response schema. Subscribe/unsubscribe's opaque
+  `params` blobs are reverse-engineered constants and are the most likely
+  thing to need refreshing against a live browser capture if YouTube
+  changes that flow.
+- **PiP, reply posting, and a true multi-select SponsorBlock category
+  picker** aren't wired up yet - the plumbing (settings keys, controller
+  hooks) is there, the UI for them isn't.
+- This was written without an Android SDK available to actually compile
+  it in the dev sandbox - everything is written against NewPipeExtractor
+  v0.26.5's documented API surface, but do a build before assuming
+  anything here is bug-for-bug correct.
+
+## Building
+
+Standard Android Studio / Gradle project - open the `youtube-classic/`
+folder in Android Studio, or:
+
+```
+./gradlew :app:assembleDebug
+```
+
+Requires an Android SDK (compileSdk 34) and a JDK 17.
+
+## Legal
+
+Unofficial, unaffiliated with Google/YouTube. It only does what a browser
+logged into youtube.com can already do - no bypassing of paid features, no
+ad-server spoofing, no bulk scraping infrastructure. SponsorBlock segment
+data comes from https://sponsor.ajay.app's public API and belongs to that
+project and its contributors.

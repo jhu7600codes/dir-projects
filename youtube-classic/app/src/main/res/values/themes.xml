@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Deliberately NOT DayNight - the 2019 app this recreates predates
+         YouTube's dark theme (added later that year) and always launched
+         light/white regardless of system theme. No forced theme override,
+         no dark variant: it just doesn't participate in the system setting. -->
+    <style name="Theme.YtClassic" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/yt_white</item>
+        <item name="colorPrimaryDark">@color/yt_white</item>
+        <item name="colorAccent">@color/yt_red</item>
+        <item name="colorControlActivated">@color/yt_red</item>
+        <item name="colorControlHighlight">@color/yt_chip_background</item>
+        <item name="android:windowBackground">@color/yt_background</item>
+        <item name="android:statusBarColor">@color/yt_status_bar</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:navigationBarColor">@color/yt_white</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="toolbarStyle">@style/Widget.YtClassic.Toolbar</item>
+        <item name="bottomNavigationStyle">@style/Widget.YtClassic.BottomNav</item>
+    </style>
+
+    <style name="Widget.YtClassic.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">@color/yt_white</item>
+        <item name="titleTextColor">@color/yt_text_primary</item>
+        <item name="android:elevation" tools:targetApi="lollipop">0dp</item>
+    </style>
+
+    <style name="Widget.YtClassic.BottomNav" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="android:background">@color/yt_white</item>
+        <item name="itemIconTint">@color/bottom_nav_tint</item>
+        <item name="itemTextColor">@color/bottom_nav_tint</item>
+        <item name="labelVisibilityMode">labeled</item>
+        <item name="itemRippleColor">@android:color/transparent</item>
+        <item name="android:elevation" tools:targetApi="lollipop">8dp</item>
+    </style>
+
+    <style name="Theme.YtClassic.Player" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="android:windowBackground">@color/yt_player_background</item>
+        <item name="android:statusBarColor">@color/yt_player_background</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="colorAccent">@color/yt_red</item>
+    </style>
+
+    <style name="YtClassic.SubscribeButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="cornerRadius">2dp</item>
+        <item name="backgroundTint">@color/yt_text_primary</item>
+        <item name="android:textColor">@color/yt_white</item>
+    </style>
+
+    <style name="YtClassic.SubscribeButton.Subscribed" parent="YtClassic.SubscribeButton">
+        <item name="backgroundTint">@color/yt_chip_background</item>
+        <item name="android:textColor">@color/yt_text_secondary</item>
+    </style>
+</resources>

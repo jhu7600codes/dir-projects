@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pulled from screenshots of the 2018-2019 Android YouTube app: white
+         chrome, black text, red only as an accent (selected tab, subscribe
+         button, live/progress indicators) - not the solid-red 2017 top bar. -->
+    <color name="yt_red">#FF0000</color>
+    <color name="yt_red_dark">#CC0000</color>
+    <color name="yt_white">#FFFFFF</color>
+    <color name="yt_black">#0F0F0F</color>
+    <color name="yt_text_primary">#0F0F0F</color>
+    <color name="yt_text_secondary">#606060</color>
+    <color name="yt_text_tertiary">#909090</color>
+    <color name="yt_divider">#E5E5E5</color>
+    <color name="yt_surface">#FFFFFF</color>
+    <color name="yt_background">#FFFFFF</color>
+    <color name="yt_chip_background">#F2F2F2</color>
+    <color name="yt_nav_unselected">#606060</color>
+    <color name="yt_scrubber_played">#FF0000</color>
+    <color name="yt_scrubber_buffered">#CCCCCC</color>
+    <color name="yt_scrubber_background">#4DFFFFFF</color>
+    <color name="sponsorblock_segment">#00D400</color>
+    <color name="yt_player_background">#000000</color>
+    <color name="yt_status_bar">#FFFFFF</color>
+</resources>
