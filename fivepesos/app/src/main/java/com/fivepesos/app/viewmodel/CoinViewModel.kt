@@ -9,6 +9,7 @@ import com.fivepesos.app.data.CoinArt
 import com.fivepesos.app.data.CoinSkin
 import com.fivepesos.app.data.Face
 import com.fivepesos.app.data.FlipPhase
+import com.fivepesos.app.data.ImageTarget
 import com.fivepesos.app.data.SettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,6 +30,7 @@ data class CoinUiState(
     val displayedFace: Face = Face.HEADS,
     val phase: FlipPhase = FlipPhase.IDLE,
     val settingsOpen: Boolean = false,
+    val googleImportOpen: Boolean = false,
 )
 
 class CoinViewModel(application: Application) : AndroidViewModel(application) {
@@ -63,6 +65,19 @@ class CoinViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleSettings(open: Boolean) {
         _ui.update { it.copy(settingsOpen = open) }
+    }
+
+    fun toggleGoogleImport(open: Boolean) {
+        _ui.update { it.copy(googleImportOpen = open) }
+    }
+
+    /** A photo picked (gallery) or downloaded (Google search) for either
+     * face of "Your Own Coin" -- both paths land here. */
+    fun importImage(target: ImageTarget, uri: Uri) {
+        when (target) {
+            ImageTarget.HEADS -> setCustomHeads(uri)
+            ImageTarget.TAILS -> setCustomTails(uri)
+        }
     }
 
     fun setSpinForever(value: Boolean) {

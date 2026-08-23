@@ -10,6 +10,9 @@ enum class Face { HEADS, TAILS }
 /** Where the flip/spin state machine currently is. */
 enum class FlipPhase { IDLE, FLIPPING, RESULT }
 
+/** Which "Your Own Coin" slot a picked/downloaded image should fill. */
+enum class ImageTarget { HEADS, TAILS }
+
 /**
  * How a skin's two faces are actually drawn. [Photo] renders bundled bitmap
  * assets (the real 5 Pesos coin); [Engraved] is a small procedural coin --
@@ -54,14 +57,9 @@ val BuiltInSkins: List<CoinSkin> = listOf(
     CoinSkin(
         id = "ruble2014",
         displayName = "2014 Ruble",
-        art = CoinArt.Engraved(
-            rimColor = Color(0xFF8A6A16),
-            faceColorLight = Color(0xFFF3DE9A),
-            faceColorDark = Color(0xFFC9A227),
-            headsSymbol = "₽",
-            headsCaption = "ONE RUBLE",
-            tailsSymbol = "2014",
-            tailsCaption = "RUSSIA",
+        art = CoinArt.Photo(
+            headsRes = R.drawable.coin_ruble2014_heads,
+            tailsRes = R.drawable.coin_ruble2014_tails,
         ),
     ),
     CoinSkin(

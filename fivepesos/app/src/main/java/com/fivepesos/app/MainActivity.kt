@@ -72,5 +72,8 @@ private fun FivePesosApp(viewModel: CoinViewModel = viewModel()) {
         onSelectSkin = viewModel::selectSkin,
         onPickHeads = { pickHeads.launch(arrayOf("image/*")) },
         onPickTails = { pickTails.launch(arrayOf("image/*")) },
+        onOpenGoogleImport = { viewModel.toggleGoogleImport(true) },
+        onCloseGoogleImport = { viewModel.toggleGoogleImport(false) },
+        onImportImage = viewModel::importImage,
     )
 }

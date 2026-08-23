@@ -1,12 +1,21 @@
 package com.fivepesos.app.ui.screens
 
+import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.fivepesos.app.data.CoinArt
 import com.fivepesos.app.data.Face
 import com.fivepesos.app.data.FlipPhase
+import com.fivepesos.app.data.ImageTarget
 import com.fivepesos.app.ui.components.CoinFaceView
 import com.fivepesos.app.viewmodel.CoinUiState
 
@@ -42,6 +52,9 @@ fun CoinScreen(
     onSelectSkin: (String) -> Unit,
     onPickHeads: () -> Unit,
     onPickTails: () -> Unit,
+    onOpenGoogleImport: () -> Unit,
+    onCloseGoogleImport: () -> Unit,
+    onImportImage: (ImageTarget, Uri) -> Unit,
 ) {
     val customIncomplete = state.selectedSkin.art is CoinArt.Custom &&
         (state.customHeadsUri == null || state.customTailsUri == null)
@@ -58,7 +71,13 @@ fun CoinScreen(
                 face = state.displayedFace,
                 customHeadsUri = state.customHeadsUri,
                 customTailsUri = state.customTailsUri,
-                modifier = Modifier.size(220.dp),
+                // A fraction of screen width, not a fixed dp size -- a fixed
+                // 220.dp rendered far larger than the original design's coin
+                // (which sits at roughly a quarter of screen width) on a
+                // typical phone.
+                modifier = Modifier
+                    .fillMaxWidth(0.32f)
+                    .aspectRatio(1f),
             )
 
             Spacer(Modifier.height(40.dp))
@@ -103,14 +122,32 @@ fun CoinScreen(
             Icon(imageVector = Icons.Filled.Settings, contentDescription = "Settings", tint = Color.White)
         }
 
-        if (state.settingsOpen) {
-            SettingsOverlay(
+        // Settings is a deliberate full-screen "Metro" panel, not a small
+        // floating popover -- see SettingsScreen.kt.
+        AnimatedVisibility(
+            visible = state.settingsOpen,
+            enter = slideInHorizontally(animationSpec = tween(220)) { it } + fadeIn(tween(220)),
+            exit = slideOutHorizontally(animationSpec = tween(180)) { it } + fadeOut(tween(180)),
+        ) {
+            SettingsScreen(
                 state = state,
-                onDismiss = onCloseSettings,
+                onClose = onCloseSettings,
                 onSpinForeverChange = onSpinForeverChange,
                 onSelectSkin = onSelectSkin,
                 onPickHeads = onPickHeads,
                 onPickTails = onPickTails,
+                onOpenGoogleImport = onOpenGoogleImport,
+            )
+        }
+
+        AnimatedVisibility(
+            visible = state.googleImportOpen,
+            enter = slideInHorizontally(animationSpec = tween(220)) { it } + fadeIn(tween(220)),
+            exit = slideOutHorizontally(animationSpec = tween(180)) { it } + fadeOut(tween(180)),
+        ) {
+            GoogleCoinImportScreen(
+                onClose = onCloseGoogleImport,
+                onImageChosen = onImportImage,
             )
         }
     }

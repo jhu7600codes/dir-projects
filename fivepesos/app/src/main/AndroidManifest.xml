@@ -2,10 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- No storage permission needed: "Your Own Coin" images are picked via
-         the system document picker (ActivityResultContracts.OpenDocument),
-         which hands back a content:// Uri directly; we just take a
-         persistable read grant on it. -->
+    <!-- "Your Own Coin" images either come from the system document picker
+         (ActivityResultContracts.OpenDocument, a content:// Uri, no
+         storage permission needed, just a persistable read grant) or from
+         the in-app "search Google for a coin" WebView, which needs
+         INTERNET to load pages and to download whatever image is picked. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
