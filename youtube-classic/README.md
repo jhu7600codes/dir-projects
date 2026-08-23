@@ -148,7 +148,20 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   signed-out Shorts surface NewPipeExtractor or an anonymous browse call
   can reach, so it shows a sign-in prompt when signed out. Playback itself
   needs no special handling: NewPipeExtractor already resolves
-  `/shorts/{id}` URLs the same way as `/watch?v={id}`. If a signed-in
+  `/shorts/{id}` URLs the same way as `/watch?v={id}`. The per-item overlay
+  (`layout/item_short.xml`) matches the classic (2021-era) Shorts chrome:
+  channel avatar + name + a Subscribe pill above the title on the
+  bottom-left, and a plain (no button-background) icon rail on the right -
+  like/dislike/comment/share, count labels only where the feed response
+  actually carries one (it doesn't carry per-item like/comment counts, so
+  those stay hidden rather than showing a fake number). Tapping the
+  channel row opens `ChannelActivity`; tapping comment opens the full
+  player screen, which is where this app's actual comments UI lives. The
+  bottom scrim (`drawable/scrim_bottom.xml`) had its gradient direction
+  backwards - dark at the *top* of its 180dp strip instead of at the
+  bottom screen edge - which showed as a hard dark line partway up the
+  screen instead of a smooth fade behind the text; fixed by swapping the
+  two stop colors. If a signed-in
   fetch comes back with zero videos, the fragment now shows an actual
   "no results" empty state instead of a blank black screen
   (`ShortsUiState.hasLoaded` in `ShortsViewModel.kt` distinguishes "still

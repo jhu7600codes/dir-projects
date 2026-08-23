@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import com.jhulian.android.youtube.classic.R
 import com.jhulian.android.youtube.classic.data.model.VideoUi
 import com.jhulian.android.youtube.classic.databinding.ItemShortBinding
 
@@ -19,8 +21,10 @@ import com.jhulian.android.youtube.classic.databinding.ItemShortBinding
  * vertical feed where at most one is ever playing.
  */
 class ShortsAdapter(
-    private val onTap: (VideoUi) -> Unit,
+    private val onLike: (VideoUi) -> Unit,
+    private val onComment: (VideoUi) -> Unit,
     private val onShare: (VideoUi) -> Unit,
+    private val onChannel: (VideoUi) -> Unit,
 ) : ListAdapter<VideoUi, ShortsAdapter.ShortViewHolder>(DIFF_CALLBACK) {
 
     private var activePosition = -1
@@ -34,7 +38,7 @@ class ShortsAdapter(
 
     override fun onBindViewHolder(holder: ShortViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(item, onTap, onShare)
+        holder.bind(item, onLike, onComment, onShare, onChannel)
         holder.setActive(position == activePosition, if (position == activePosition) activePlayer else null)
     }
 
@@ -51,10 +55,21 @@ class ShortsAdapter(
     }
 
     class ShortViewHolder(private val binding: ItemShortBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(video: VideoUi, onTap: (VideoUi) -> Unit, onShare: (VideoUi) -> Unit) {
+        fun bind(
+            video: VideoUi,
+            onLike: (VideoUi) -> Unit,
+            onComment: (VideoUi) -> Unit,
+            onShare: (VideoUi) -> Unit,
+            onChannel: (VideoUi) -> Unit,
+        ) {
             binding.channelName.text = video.channelName
             binding.title.text = video.title
             Glide.with(binding.thumbnail).load(video.thumbnailUrl).into(binding.thumbnail)
+            Glide.with(binding.channelAvatar)
+                .load(video.channelAvatarUrl)
+                .placeholder(R.drawable.ic_account_circle)
+                .transform(CircleCrop())
+                .into(binding.channelAvatar)
 
             binding.root.setOnClickListener {
                 val player = binding.playerView.player ?: return@setOnClickListener
@@ -66,8 +81,12 @@ class ShortsAdapter(
                     binding.pauseOverlayIcon.visibility = View.GONE
                 }
             }
+            binding.likeButton.setOnClickListener { onLike(video) }
+            binding.commentButton.setOnClickListener { onComment(video) }
             binding.shareButton.setOnClickListener { onShare(video) }
-            binding.likeButton.setOnClickListener { onTap(video) }
+            binding.channelAvatar.setOnClickListener { onChannel(video) }
+            binding.channelName.setOnClickListener { onChannel(video) }
+            binding.subscribeButton.setOnClickListener { onChannel(video) }
         }
 
         fun setActive(active: Boolean, player: Player?) {

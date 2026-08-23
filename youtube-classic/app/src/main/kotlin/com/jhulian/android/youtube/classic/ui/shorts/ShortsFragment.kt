@@ -26,6 +26,8 @@ import com.jhulian.android.youtube.classic.data.model.VideoUi
 import com.jhulian.android.youtube.classic.databinding.FragmentShortsBinding
 import com.jhulian.android.youtube.classic.extractor.YouTubeRepository
 import com.jhulian.android.youtube.classic.playback.PlaybackService
+import com.jhulian.android.youtube.classic.ui.channel.ChannelActivity
+import com.jhulian.android.youtube.classic.ui.player.PlayerActivity
 import com.jhulian.android.youtube.classic.playback.StreamSelector
 import kotlinx.coroutines.launch
 
@@ -64,7 +66,8 @@ class ShortsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = ShortsAdapter(
-            onTap = { /* like via innertube not wired here yet - sign-in-gated like on the player screen covers that path */ },
+            onLike = { /* like via innertube not wired here yet - sign-in-gated like on the player screen covers that path */ },
+            onComment = { video -> PlayerActivity.start(requireContext(), video.url) },
             onShare = { video ->
                 startActivity(
                     Intent(Intent.ACTION_SEND).apply {
@@ -72,6 +75,14 @@ class ShortsFragment : Fragment() {
                         putExtra(Intent.EXTRA_TEXT, video.url)
                     },
                 )
+            },
+            onChannel = { video ->
+                video.channelUrl?.let { channelUrl ->
+                    startActivity(
+                        Intent(requireContext(), ChannelActivity::class.java)
+                            .putExtra(ChannelActivity.EXTRA_CHANNEL_URL, channelUrl),
+                    )
+                }
             },
         )
 
