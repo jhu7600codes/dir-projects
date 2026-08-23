@@ -210,6 +210,40 @@ not just silencing lint:
   `WindowInsetsController`-vs-`systemUiVisibility` treatment
   `PlayerActivity`/`MaytubeWebChromeClient` already had.
 
+## Tablet optimization (WebView CSS)
+
+Requested directly. Everything in `MobileInjector`'s CSS up to this point
+assumes a phone-width viewport (~320-420px) — reasonable given that's
+most real usage, but stretches badly on a tablet: a single `.video-cell`
+per row becomes one enormous card with a small thumbnail lost in a sea
+of whitespace, and `#baseDiv`'s own text content runs to absurd line
+lengths edge to edge. Two plain `min-width` media queries (real viewport
+width, not device sniffing — the same mechanism every `#baseDiv`-width
+fix elsewhere in this file already relies on):
+
+- `#baseDiv` itself caps out and centers (900px past 700px wide, 1100px
+  past 1000px) instead of stretching forever.
+- Grid-style listings (homepage recommended, `/videos`, channel grids)
+  grow into 2 columns past 700px and 3 past 1000px. Search results reuse
+  the exact same `.video-cell` markup but were never a grid, even on the
+  original desktop site (`searchVideo()` lays each result out as a
+  horizontal thumb+description list row) — yt2009's own `grid-view`
+  class is what actually distinguishes the two, always present as an
+  ancestor of the grid kind and never around search results, so the
+  column rule is scoped to `.grid-view .video-cell` specifically rather
+  than bare `.video-cell`, or this would have turned search results into
+  a broken 2-up grid of list rows instead of leaving them as the
+  single-column list they're actually meant to be.
+
+Deliberately doesn't touch the watch page's player/`#watch-this-vid`
+sizing: restoring yt2009's original float-based two-column watch layout
+(player left, channel info/related videos/comments right — all
+originally nested inside `#watch-other-vids` per `watch.html`) at wide
+widths is a real further improvement, but not one this pass could verify
+is safe without a tablet to check it against. `#baseDiv`'s own cap above
+already stops the player from being edge-to-edge full-bleed on a large
+tablet even without it.
+
 ## Known limitations / follow-ups
 
 - The CSS injector's first version used plausible-sounding class names that
