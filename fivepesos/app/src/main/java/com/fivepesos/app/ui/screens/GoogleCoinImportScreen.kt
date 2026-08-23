@@ -9,18 +9,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.fivepesos.app.data.ImageTarget
 import com.fivepesos.app.data.downloadImageToFile
 import com.fivepesos.app.ui.theme.MetroAccent
@@ -85,31 +81,38 @@ fun GoogleCoinImportScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(MetroBackground)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(end = 8.dp),
-        ) {
-            IconButton(onClick = onClose) {
-                Icon(imageVector = Icons.Filled.Close, contentDescription = "Close", tint = Color.White)
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MetroBackground)
+            .statusBarsPadding(),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "‹ back",
+                color = MetroAccent,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(onClick = onClose).padding(vertical = 8.dp),
+            )
             Text(
                 text = "search google for a coin",
                 color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Light,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            Text(
+                text = "hold down on a coin photo to use it as heads or tails",
+                color = MetroSecondaryText,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
             )
         }
-        Text(
-            text = "Hold down on a coin photo to use it as heads or tails.",
-            color = MetroSecondaryText,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 6.dp),
-        )
 
+        // Full-bleed, deliberately outside the header's horizontal inset --
+        // this is a browser, it shouldn't have dead margins down its sides.
         Box(modifier = Modifier.weight(1f)) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
@@ -164,17 +167,24 @@ private fun MetroImageChooserDialog(
     onUseAsHeads: () -> Unit,
     onUseAsTails: () -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        // Metro has no rounded-corner system dialog chrome -- take over the
+        // full width ourselves so this stays a sharp black rectangle.
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 16.dp)
                 .background(MetroSurface)
                 .padding(20.dp),
         ) {
             Text(
-                text = "use this image as...",
+                text = "use this image as",
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Light,
                 modifier = Modifier.padding(bottom = 16.dp),
             )
             MetroDialogButton(label = "use as heads", onClick = onUseAsHeads)
