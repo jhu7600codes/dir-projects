@@ -2,13 +2,18 @@ package com.jhulian.android.youtube.classic.auth
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
+import com.jhulian.android.youtube.classic.R
 import com.jhulian.android.youtube.classic.YtClassicApp
 import com.jhulian.android.youtube.classic.databinding.ActivityLoginBinding
 
@@ -66,6 +71,31 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.webView.loadUrl(LOGIN_URL)
+
+        binding.pasteCookieLink.setOnClickListener { showPasteCookieDialog() }
+    }
+
+    private fun showPasteCookieDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_paste_cookie, null)
+        val input = dialogView.findViewById<EditText>(R.id.cookieInput)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.paste_cookie_title)
+            .setView(dialogView)
+            .setPositiveButton(R.string.save) { _, _ -> trySaveCookie(input.text.toString()) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun trySaveCookie(rawInput: String) {
+        val cookie = rawInput.trim()
+        if (!cookie.contains("SAPISID=") && !cookie.contains("__Secure-3PAPISID=")) {
+            Toast.makeText(this, R.string.paste_cookie_invalid, Toast.LENGTH_LONG).show()
+            return
+        }
+        (application as YtClassicApp).sessionManager.saveSession(cookie, null)
+        setResult(RESULT_OK)
+        finish()
     }
 
     private fun checkForSignedInSession(url: String?) {

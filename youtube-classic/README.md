@@ -93,18 +93,34 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   `:app:lintDebug` both pass clean, so the NewPipeExtractor/Media3 API
   surface used throughout (including the channel-tabs call and the merged
   video-only/audio-only playback path) is confirmed to compile against
-  v0.26.5 and Media3 1.4.1. It hasn't been run on a device/emulator yet,
-  so runtime behavior - especially the reverse-engineered innertube
-  `params` blobs and the exact JSON shape `postComment`/the feed clients
-  walk - is unverified beyond "the code that calls it compiles."
+  v0.26.5 and Media3 1.4.1. It hasn't been run on a device/emulator in this
+  environment (no KVM available to run one), so behavior against live
+  YouTube is verified by diffing `extractor/OkHttpDownloader.kt` line for
+  line against NewPipe's own proven `DownloaderImpl` (real device reports
+  had caught a real discrepancy there - see git history) rather than by
+  an actual run. If extraction ever throws again, `Log.e` calls in
+  `VideoListViewModel`/`PlayerViewModel` now put a full stack trace in
+  logcat under those tags.
 - **WebView Google sign-in**: Google's sign-in page blocks embedded
-  WebViews outright ("This browser or app may not be secure") based mainly
-  on the `X-Requested-With` header WebView has historically sent on every
-  request. `LoginActivity` clears that header via
-  `WebSettingsCompat.setRequestedWithHeaderOriginAllowList` (the documented
-  fix), gated behind a `WebViewFeature.isFeatureSupported` check - on
-  WebView versions too old to support that API at all, the block can still
-  appear and there's no further workaround here.
+  WebViews outright ("This browser or app may not be secure"). The
+  `X-Requested-With` header fix (`WebSettingsCompat.setRequestedWithHeaderOriginAllowList`)
+  is applied, but Google's detection isn't limited to that one header and
+  can still trigger regardless of client-side WebView tweaks - this is a
+  moving target Google actively defends, not something any app can
+  permanently guarantee past. Because of that, `LoginActivity` also has a
+  guaranteed-to-work fallback: "Trouble signing in? Paste a cookie
+  instead" opens a dialog to paste the `Cookie` header value copied from an
+  already-signed-in browser tab (devtools' Network panel, or a cookie
+  export extension) - the same mechanism yt-dlp's browser-cookie import
+  relies on, and immune to the WebView block since no WebView is involved.
+- **Shorts**: NewPipeExtractor already resolves `/shorts/{id}` URLs the
+  same way as `/watch?v={id}`, so playback needs no special handling.
+  `InnertubeFeedClient` now also scans Home/Subscriptions responses for
+  `reelItemRenderer` (Shorts) entries alongside `videoRenderer`, so Shorts
+  show up in those feeds as regular rows (appended after the videos) and
+  open in the normal player - there's no dedicated vertical-swipe Shorts
+  viewer, and Shorts' vertical thumbnails get center-cropped into the same
+  16:9 thumbnail box as everything else.
 
 ## Building
 

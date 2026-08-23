@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.ui.player
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jhulian.android.youtube.classic.data.model.CommentUi
@@ -59,6 +60,7 @@ class PlayerViewModel : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "load($url) failed", e)
                 _state.value = _state.value.copy(isLoading = false, error = e.message ?: "Failed to load video")
             }
         }
@@ -75,6 +77,7 @@ class PlayerViewModel : ViewModel() {
                     commentsLoading = false,
                 )
             } catch (e: Exception) {
+                Log.e(TAG, "loadComments($url) failed", e)
                 _state.value = _state.value.copy(commentsLoading = false)
             }
         }
@@ -147,7 +150,16 @@ class PlayerViewModel : ViewModel() {
     }
 
     companion object {
+        private const val TAG = "PlayerViewModel"
+
         fun extractVideoId(url: String): String? {
+            val shortsMarker = "/shorts/"
+            val shortsIdx = url.indexOf(shortsMarker)
+            if (shortsIdx >= 0) {
+                val start = shortsIdx + shortsMarker.length
+                val end = url.indexOf('?', start).let { if (it == -1) url.length else it }
+                return url.substring(start, end)
+            }
             val marker = "v="
             val idx = url.indexOf(marker)
             if (idx < 0) return null

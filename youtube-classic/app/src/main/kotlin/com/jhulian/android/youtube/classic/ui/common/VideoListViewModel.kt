@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.ui.common
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jhulian.android.youtube.classic.data.model.VideoUi
@@ -56,6 +57,7 @@ class VideoListViewModel(private val source: VideoListSource) : ViewModel() {
                     VideoListSource.Subscriptions -> loadFeed(isHome = false)
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "refresh() failed for $source", e)
                 _state.value = _state.value.copy(isLoading = false, error = e.message ?: "error")
             }
         }
@@ -103,8 +105,13 @@ class VideoListViewModel(private val source: VideoListSource) : ViewModel() {
                     canLoadMore = result.nextPage != null,
                 )
             } catch (e: Exception) {
+                Log.e(TAG, "loadMore() failed for $source", e)
                 _state.value = _state.value.copy(isLoadingMore = false)
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "VideoListViewModel"
     }
 }

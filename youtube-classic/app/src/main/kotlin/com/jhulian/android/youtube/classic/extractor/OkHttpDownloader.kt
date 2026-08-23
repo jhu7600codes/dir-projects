@@ -32,14 +32,17 @@ class OkHttpDownloader private constructor(private val client: OkHttpClient) : D
             .url(url)
             .addHeader("User-Agent", USER_AGENT)
 
+        // Always remove-then-add for every header NewPipeExtractor supplies,
+        // matching NewPipe's own DownloaderImpl exactly. This matters for an
+        // empty value list too: that means "clear whatever default we set
+        // for this header" (e.g. dropping our own User-Agent so the
+        // extractor's own value wins) - a single if/else on list size, as
+        // an earlier version of this file had, silently skips that case and
+        // leaves a stale header the request wasn't supposed to carry.
         for ((headerName, headerValues) in headers) {
-            if (headerValues.size > 1) {
-                requestBuilder.removeHeader(headerName)
-                for (value in headerValues) {
-                    requestBuilder.addHeader(headerName, value)
-                }
-            } else if (headerValues.size == 1) {
-                requestBuilder.header(headerName, headerValues[0])
+            requestBuilder.removeHeader(headerName)
+            for (value in headerValues) {
+                requestBuilder.addHeader(headerName, value)
             }
         }
 
@@ -63,9 +66,12 @@ class OkHttpDownloader private constructor(private val client: OkHttpClient) : D
     }
 
     companion object {
+        // Matches NewPipe's own DownloaderImpl exactly - extraction relies on
+        // YouTube's response shape for a given UA/client combination, so
+        // reusing NewPipe's proven value rather than a similar-looking one
+        // of our own avoids subtly different server-side behavior.
         private const val USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
 
         val instance: OkHttpDownloader by lazy {
             OkHttpDownloader(

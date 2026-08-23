@@ -31,4 +31,21 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+    <!-- Google actively blocks embedded WebView sign-in past a certain
+         point, no matter how the WebView is configured - this is the
+         guaranteed-to-work fallback: paste the Cookie header value from an
+         already-signed-in browser tab (e.g. via devtools' Network panel, or
+         a "cookies.txt" export extension), same approach yt-dlp's
+         cookie import option relies on. -->
+    <TextView
+        android:id="@+id/pasteCookieLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:text="@string/paste_cookie_link"
+        android:textColor="@color/yt_red"
+        android:textSize="13sp" />
+
 </LinearLayout>

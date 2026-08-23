@@ -18,6 +18,14 @@
     <string name="sign_in_prompt">Sign in to like videos, comment and subscribe</string>
     <string name="signed_in_as">Signed in as %1$s</string>
 
+    <string name="paste_cookie_link">Trouble signing in? Paste a cookie instead</string>
+    <string name="paste_cookie_title">Paste cookie</string>
+    <string name="paste_cookie_instructions">Google blocks sign-in from embedded browsers like this one. Instead, sign into youtube.com in Chrome, open its site info (the lock icon) → Cookies, or use a \"cookies.txt\" export extension, and paste the full Cookie header value here.</string>
+    <string name="paste_cookie_hint">SID=…; HSID=…; SAPISID=…; …</string>
+    <string name="paste_cookie_invalid">That doesn\'t look like a signed-in YouTube cookie (no SAPISID found)</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+
     <string name="subscribe">SUBSCRIBE</string>
     <string name="subscribed">SUBSCRIBED</string>
 

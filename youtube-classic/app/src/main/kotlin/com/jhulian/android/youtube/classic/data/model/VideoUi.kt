@@ -113,6 +113,46 @@ fun videoRendererToVideoUi(renderer: JSONObject): VideoUi? {
     )
 }
 
+/**
+ * Shorts entry from a `reelItemRenderer` (the renderer YouTube uses for
+ * Shorts shelves in Home/search). Shorts are just regular videos under
+ * `/shorts/{id}` rather than `/watch?v={id}` - NewPipeExtractor's
+ * `StreamInfo.getInfo()` already knows that URL shape, so once one of these
+ * makes it into a [VideoUi] it plays back through the exact same
+ * [com.jhulian.android.youtube.classic.ui.player.PlayerActivity] path as
+ * any other video; there's no separate vertical-swipe Shorts viewer here,
+ * just "Shorts show up in your feed and are watchable" rather than being
+ * silently dropped.
+ */
+fun reelItemRendererToVideoUi(renderer: JSONObject): VideoUi? {
+    val videoId = renderer.optString("videoId").takeIf { it.isNotBlank() } ?: return null
+    val title = renderer.optJSONObject("headline")?.textOrNull()
+        ?: renderer.optJSONObject("accessibilityText")?.textOrNull()
+        ?: "Short"
+
+    val thumbnailUrl = renderer.optJSONObject("thumbnail")
+        ?.optJSONArray("thumbnails")
+        ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it) } }
+        ?.maxByOrNull { it.optInt("height") }
+        ?.optString("url")
+
+    val views = renderer.optJSONObject("viewCountText")?.textOrNull()
+        ?: renderer.optJSONObject("accessibilityText")?.textOrNull()
+
+    return VideoUi(
+        videoId = videoId,
+        url = "https://www.youtube.com/shorts/$videoId",
+        title = title,
+        thumbnailUrl = thumbnailUrl,
+        channelName = "",
+        channelUrl = null,
+        channelAvatarUrl = null,
+        durationText = "Short",
+        isLive = false,
+        metadataLine = views.orEmpty(),
+    )
+}
+
 private fun JSONObject.textOrNull(): String? {
     optString("simpleText").takeIf { it.isNotBlank() }?.let { return it }
     val runs = optJSONArray("runs") ?: return null
@@ -132,10 +172,19 @@ private fun extractVideoId(url: String): String {
         return if (end == -1) url.substring(start) else url.substring(start, end)
     }
     // youtu.be/<id> short links.
-    val shortMarker = "youtu.be/"
-    val shortIdx = url.indexOf(shortMarker)
-    if (shortIdx >= 0) {
-        return url.substring(shortIdx + shortMarker.length)
+    val shortLinkMarker = "youtu.be/"
+    val shortLinkIdx = url.indexOf(shortLinkMarker)
+    if (shortLinkIdx >= 0) {
+        return url.substring(shortLinkIdx + shortLinkMarker.length)
+    }
+    // /shorts/<id> - Shorts are regular videos under a different URL path;
+    // NewPipeExtractor's StreamInfo.getInfo() plays them the same way.
+    val shortsMarker = "/shorts/"
+    val shortsIdx = url.indexOf(shortsMarker)
+    if (shortsIdx >= 0) {
+        val start = shortsIdx + shortsMarker.length
+        val end = url.indexOf('?', start).let { if (it == -1) url.length else it }
+        return url.substring(start, end)
     }
     return url
 }

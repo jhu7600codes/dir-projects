@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/paste_cookie_instructions"
+        android:textColor="@color/yt_text_secondary"
+        android:textSize="13sp" />
+
+    <EditText
+        android:id="@+id/cookieInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="top|start"
+        android:hint="@string/paste_cookie_hint"
+        android:inputType="textMultiLine|textNoSuggestions"
+        android:minLines="4"
+        android:maxLines="8"
+        android:textColor="@color/yt_text_primary"
+        android:textColorHint="@color/yt_text_tertiary"
+        android:textSize="12sp" />
+
+</LinearLayout>
