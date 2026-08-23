@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.ytclassic.app"
+    namespace = "com.jhulian.android.youtube.classic"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.ytclassic.app"
+        applicationId = "com.jhulian.android.youtube.classic"
         // NewPipeExtractor requires core library desugaring (java.time / nio)
         // below API 33; minSdk 24 covers everything else this app needs
         // (Media3 background playback, foreground services for downloads).

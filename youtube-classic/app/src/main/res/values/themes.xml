@@ -27,7 +27,11 @@
 
     <style name="Widget.YtClassic.BottomNav" parent="Widget.MaterialComponents.BottomNavigationView">
         <item name="android:background">@color/yt_white</item>
-        <item name="itemIconTint">@color/bottom_nav_tint</item>
+        <!-- No itemIconTint: each tab icon is its own selected/unselected
+             drawable pair (see ic_tab_home.xml etc.) rather than a single
+             glyph re-tinted by state, because the real Subscriptions icon
+             stays red in both states while the others swap gray/red - a
+             single shared tint list can't express that. -->
         <item name="itemTextColor">@color/bottom_nav_tint</item>
         <item name="labelVisibilityMode">labeled</item>
         <item name="itemRippleColor">@android:color/transparent</item>

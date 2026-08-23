@@ -18,7 +18,7 @@ Google Sign-In. See `auth/LoginActivity.kt` and `network/Innertube.kt`.
 ## Project layout
 
 ```
-app/src/main/kotlin/com/ytclassic/app/
+app/src/main/kotlin/com/jhulian/android/youtube/classic/
 ├── YtClassicApp.kt          Application: NewPipe.init(), session/downloads init
 ├── extractor/                NewPipeExtractor plumbing (no auth needed)
 │   ├── OkHttpDownloader.kt   The Downloader NewPipeExtractor requires to make HTTP calls
@@ -97,6 +97,14 @@ app/src/main/kotlin/com/ytclassic/app/
   so runtime behavior - especially the reverse-engineered innertube
   `params` blobs and the exact JSON shape `postComment`/the feed clients
   walk - is unverified beyond "the code that calls it compiles."
+- **WebView Google sign-in**: Google's sign-in page blocks embedded
+  WebViews outright ("This browser or app may not be secure") based mainly
+  on the `X-Requested-With` header WebView has historically sent on every
+  request. `LoginActivity` clears that header via
+  `WebSettingsCompat.setRequestedWithHeaderOriginAllowList` (the documented
+  fix), gated behind a `WebViewFeature.isFeatureSupported` check - on
+  WebView versions too old to support that API at all, the block can still
+  appear and there's no further workaround here.
 
 ## Building
 
