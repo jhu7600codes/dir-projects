@@ -33,12 +33,14 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <!--
-                    .msf has no registered MIME type, so file managers pass
-                    it through as content:// or file:// with a guessed (or
-                    absent) type. Matching on mimeType="*/*" plus a path
-                    pattern on the extension covers both common cases; two
-                    case variants of the extension are listed since
-                    pathPattern is a literal/case-sensitive glob.
+                    Neither .msf nor .vsf has a registered MIME type, so
+                    file managers pass them through as content:// or
+                    file:// with a guessed (or absent) type. Matching on
+                    mimeType="*/*" plus a path pattern on the extension
+                    covers both common cases; multiple pathPattern entries
+                    within one intent-filter OR together (scheme/mimeType/
+                    host still AND across the filter as a whole), so both
+                    extensions' case variants can share this one filter.
                 -->
                 <data android:scheme="content" />
                 <data android:scheme="file" />
@@ -47,6 +49,9 @@
                 <data android:pathPattern=".*\\.msf" />
                 <data android:pathPattern=".*\\.MSF" />
                 <data android:pathPattern=".*\\.Msf" />
+                <data android:pathPattern=".*\\.vsf" />
+                <data android:pathPattern=".*\\.VSF" />
+                <data android:pathPattern=".*\\.Vsf" />
             </intent-filter>
         </activity>
     </application>

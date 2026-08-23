@@ -1,8 +1,9 @@
 # MSF Viewer
 
 A single-screen Android app (Kotlin + Jetpack Compose + Material 3) that
-opens `.msf` files. The MESF format carries no pixel data at all -- the
-whole image is generated from the filename, per the fixed spec below.
+opens `.msf` and `.vsf` files. Neither format carries any pixel/frame
+data at all -- the whole image (or video) is generated from the filename,
+per the fixed spec below.
 
 ## The MESF spec
 
@@ -42,34 +43,64 @@ independently on each side -- so a punctuation mark can both bump the
 unit before it *and* spawn its own transparent unit, and a run of
 punctuation marks doesn't chain through spaces.
 
+## The VESF spec (`.vsf`)
+
+VESF ("Video Encoded via Seed") is MESF extended to video: a `.vsf`
+filename is split on `-`, and each segment between two dashes (or the
+start/end of the name) is tokenized as an independent MESF frame using
+the exact same per-character rules above. The frames play back as a
+looping animation, one screen redraw per frame, no controls.
+
+This wasn't part of the original locked MESF spec, so a couple of things
+are judgment calls rather than fixed rules, made and documented in
+`VsfParser`'s doc comment:
+
+- `-` is a **pure** frame separator. It's consumed by the split before any
+  character-level parsing happens, so it never triggers MESF's ordinary
+  punctuation behavior (no size boost, no orphan transparent unit) --
+  unlike every *other* punctuation character, which still works exactly
+  as it does in a `.msf` file, independently within each frame.
+- The "fish" easter egg check runs once against the whole name, before
+  splitting -- not per frame.
+- A leading/trailing/doubled `-` produces an empty frame (zero units,
+  nothing drawn for that frame's duration), not an error.
+- Playback rate and looping aren't specified either; this picks a fixed
+  ~350ms per frame, looping indefinitely while the file is open. A
+  single-frame `.vsf` (no dashes) just renders once, statically.
+
 ## Architecture
 
 - **`parser/`** -- the whole format, as a standalone module with no
   Android framework dependency: `MesfColorTable` (the color table, computed
   once), `MesfParser` (filename -> `List<MesfUnit>`, plus easter-egg
-  detection), `MesfLayoutEngine` (units -> a flow layout in base-unit
-  coordinates). Covered by JVM unit tests in `app/src/test`.
-- **`ui/`** -- `MsfViewerScreen` (the one screen: rendered image or the
+  detection and the per-character `tokenize` VsfParser reuses),
+  `VsfParser` (`.vsf` filename -> `List<List<MesfUnit>>`, one list per
+  frame), `MesfLayoutEngine` (units -> a flow layout in base-unit
+  coordinates, used per-frame for video). Covered by JVM unit tests in
+  `app/src/test`.
+- **`ui/`** -- `MsfViewerScreen` (the one screen: dispatches on extension
+  to either the static MESF image or the looping VESF animation, or the
   fish easter egg, plus a Material 3 card of facts about the file),
-  `MesfImageCanvas` (draws a computed layout with `Canvas`/`drawRect`),
-  `ui/theme` (Material You dynamic color on Android 12+, static fallback
-  below that).
+  `MesfImageCanvas` (draws one computed layout with `Canvas`/`drawRect`,
+  reused for every video frame), `ui/theme` (Material You dynamic color on
+  Android 12+, static fallback below that).
 - **`util/FileNameResolver`** -- resolves the real filename from whatever
   Uri the file manager handed over. Most file managers pass a `content://`
   Uri, whose path is often an opaque document id -- the actual name comes
   from `ContentResolver` querying `OpenableColumns.DISPLAY_NAME`. `file://`
   Uris are read directly. File *content* is never read; an empty/zero-byte
-  `.msf` file works exactly the same as one with data in it, since only
-  the filename matters.
+  `.msf`/`.vsf` file works exactly the same as one with data in it, since
+  only the filename matters.
 - **`MainActivity`** -- no launcher entry point, no menus, no settings.
-  The only way in is the manifest's `VIEW` intent-filter for `.msf` files.
+  The only way in is the manifest's `VIEW` intent-filter for `.msf` and
+  `.vsf` files.
 
 ## No launcher icon, on purpose
 
 The manifest declares no `android:icon` and no `MAIN`/`LAUNCHER`
 intent-filter -- the task calls for the plain default Android system icon
 and no home-screen entry, so the app is only reachable through a file
-manager's "open with" chooser for `.msf` files.
+manager's "open with" chooser for `.msf`/`.vsf` files.
 
 ## Building
 
@@ -83,7 +114,7 @@ export ANDROID_HOME=/path/to/android-sdk   # cmdline-tools + platform-tools
 
 Output: `app/build/outputs/apk/debug/app-debug.apk`. Verified building a
 real debug APK in this environment (Android SDK platform 34 + build-tools
-34.0.0), all 25 unit tests green, `assembleDebug` green.
+34.0.0), all 34 unit tests green, `assembleDebug` green.
 
 ## Known gaps
 

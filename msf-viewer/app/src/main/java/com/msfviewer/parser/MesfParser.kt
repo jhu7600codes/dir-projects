@@ -74,7 +74,13 @@ object MesfParser {
      * character is processed. */
     private object PendingBoost
 
-    private fun tokenize(name: String): List<MesfUnit> {
+    /**
+     * The character-by-character tokenizer on its own, with no extension
+     * stripping or easter-egg check -- exposed (module-internal) so
+     * [VsfParser] can run the identical per-character rules on each frame
+     * of a `.vsf` name after it's already been split on '-'.
+     */
+    internal fun tokenize(name: String): List<MesfUnit> {
         // Mixed list of real units and PendingBoost placeholders, built in
         // one left-to-right pass exactly like the reference: a
         // placeholder always sits immediately before the real unit(s) its
