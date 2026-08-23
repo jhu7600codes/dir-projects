@@ -33,7 +33,7 @@ object YouTubeRepository {
         val extractor = service.kioskList.getExtractorById("Trending", null)
         extractor.fetchPage()
         val page = extractor.initialPage
-        PageResult(page.items, page.nextPage)
+        PageResult(page.items.filterIsInstance<StreamInfoItem>(), page.nextPage)
     }
 
     suspend fun search(query: String): PageResult<StreamInfoItem> = withContext(Dispatchers.IO) {
@@ -100,8 +100,8 @@ object YouTubeRepository {
 
         ChannelData(
             name = info.name.orEmpty(),
-            avatarUrl = info.avatars?.let { avatars -> avatars.maxByOrNull { it.height }?.url },
-            bannerUrl = info.banners?.let { banners -> banners.maxByOrNull { it.height }?.url },
+            avatarUrl = info.avatars.maxByOrNull { it.height }?.url,
+            bannerUrl = info.banners.maxByOrNull { it.height }?.url,
             subscriberCount = info.subscriberCount,
             description = info.description,
             videos = videos,

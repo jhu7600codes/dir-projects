@@ -40,10 +40,28 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        // Custom playback (playback/PlaybackService.kt's merged video-only +
+        // audio-only MediaSource.Factory) necessarily reaches into Media3
+        // APIs marked @UnstableApi - opt in at the module level instead of
+        // annotating every call site up the chain, same as Media3's own
+        // sample apps do.
+        freeCompilerArgs += "-opt-in=androidx.media3.common.util.UnstableApi"
     }
 
     buildFeatures {
         viewBinding = true
+    }
+
+    lint {
+        // Kotlin's own -opt-in flag above already makes the @UnstableApi
+        // usage (the custom merged video-only/audio-only MediaSource.Factory
+        // in playback/, and everything that has to reference it - the
+        // player screen, download/playback intents, etc.) a deliberate,
+        // module-wide decision rather than something each call site needs
+        // to re-declare. Lint's opt-in detector doesn't read that compiler
+        // flag, so without this it would flag every one of those call
+        // sites as if the opt-in were accidental.
+        disable += "UnsafeOptInUsageError"
     }
 
     packaging {

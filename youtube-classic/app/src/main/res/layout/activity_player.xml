@@ -149,14 +149,20 @@
                     <include
                         android:id="@+id/actionShare"
                         layout="@layout/player_action_chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="8dp" />
                     <include
                         android:id="@+id/actionDownload"
                         layout="@layout/player_action_chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="8dp" />
                     <include
                         android:id="@+id/actionSave"
                         layout="@layout/player_action_chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="8dp" />
 
                 </LinearLayout>

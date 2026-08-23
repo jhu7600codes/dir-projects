@@ -10,7 +10,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 /**
- * Everything needed to call YouTube's internal `/youtubei/v1/*` (innertube)
+ * Everything needed to call YouTube's internal `/youtubei/v1/` (innertube)
  * endpoints as a logged-in web client, authenticated purely off the cookie
  * jar [com.ytclassic.app.auth.SessionManager] captured from the WebView
  * login - no API key, no OAuth token.
@@ -58,7 +58,7 @@ object Innertube {
      * Proves the request holds the SAPISID cookie for this exact origin
      * without it needing to double as a bearer token.
      */
-    private fun sapisidHash(cookieHeader: String, sapisid: String): String {
+    private fun sapisidHash(sapisid: String): String {
         val timestamp = System.currentTimeMillis() / 1000
         val input = "$timestamp $sapisid $ORIGIN"
         val digest = MessageDigest.getInstance("SHA-1").digest(input.toByteArray(Charsets.UTF_8))
@@ -92,7 +92,7 @@ object Innertube {
                     ?: extractCookieValue(cookieHeader, "__Secure-3PAPISID")
                 requestBuilder.header("Cookie", cookieHeader)
                 if (sapisid != null) {
-                    requestBuilder.header("Authorization", sapisidHash(cookieHeader, sapisid))
+                    requestBuilder.header("Authorization", sapisidHash(sapisid))
                 }
             }
 

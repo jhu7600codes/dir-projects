@@ -2,6 +2,7 @@ package com.ytclassic.app.playback
 
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -32,6 +33,7 @@ import okhttp3.OkHttpClient
  * [MediaSource.Factory] below reassembles it into a synced
  * [MergingMediaSource] on this side, where the real ExoPlayer lives.
  */
+@UnstableApi
 class PlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
@@ -45,15 +47,22 @@ class PlaybackService : MediaSessionService() {
         )
         val defaultFactory = DefaultMediaSourceFactory(dataSourceFactory)
 
-        val mediaSourceFactory = MediaSource.Factory { mediaItem: MediaItem ->
-            val audioUrl = mediaItem.requestMetadata.extras?.getString(EXTRA_AUDIO_URL)
-            if (audioUrl.isNullOrBlank()) {
-                defaultFactory.createMediaSource(mediaItem)
-            } else {
-                val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
-                val audioSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(MediaItem.fromUri(audioUrl))
-                MergingMediaSource(videoSource, audioSource)
+        // MediaSource.Factory has several other abstract members
+        // (setDrmSessionManagerProvider, setLoadErrorHandlingPolicy,
+        // getSupportedTypes) that aren't relevant here - delegate the whole
+        // interface to the default factory and only override the one method
+        // that needs the video-only/audio-only merge logic.
+        val mediaSourceFactory = object : MediaSource.Factory by defaultFactory {
+            override fun createMediaSource(mediaItem: MediaItem): MediaSource {
+                val audioUrl = mediaItem.requestMetadata.extras?.getString(EXTRA_AUDIO_URL)
+                return if (audioUrl.isNullOrBlank()) {
+                    defaultFactory.createMediaSource(mediaItem)
+                } else {
+                    val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
+                    val audioSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                        .createMediaSource(MediaItem.fromUri(audioUrl))
+                    MergingMediaSource(videoSource, audioSource)
+                }
             }
         }
 

@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.preference.PreferenceManager
@@ -32,6 +33,7 @@ import com.ytclassic.app.util.Formatters
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.stream.StreamInfo
 
+@UnstableApi
 class PlayerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPlayerBinding
@@ -259,7 +261,7 @@ class PlayerActivity : AppCompatActivity() {
         val intent = Intent(this, DownloadService::class.java).apply {
             putExtra(DownloadService.EXTRA_VIDEO_ID, videoId)
             putExtra(DownloadService.EXTRA_TITLE, info.name)
-            putExtra(DownloadService.EXTRA_THUMBNAIL, info.thumbnails?.maxByOrNull { it.height }?.url)
+            putExtra(DownloadService.EXTRA_THUMBNAIL, info.thumbnails.maxByOrNull { it.height }?.url)
             if (progressive != null) {
                 putExtra(DownloadService.EXTRA_PROGRESSIVE_URL, progressive.content)
             } else {
@@ -327,7 +329,7 @@ class PlayerActivity : AppCompatActivity() {
         binding.descriptionText.text = info.description?.content ?: ""
 
         Glide.with(binding.channelAvatar)
-            .load(info.uploaderAvatars?.maxByOrNull { it.height }?.url)
+            .load(info.uploaderAvatars.maxByOrNull { it.height }?.url)
             .placeholder(R.drawable.ic_account_circle)
             .transform(CircleCrop())
             .into(binding.channelAvatar)

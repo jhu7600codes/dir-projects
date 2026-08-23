@@ -89,10 +89,14 @@ app/src/main/kotlin/com/ytclassic/app/
 - **PiP, reply posting, and a true multi-select SponsorBlock category
   picker** aren't wired up yet - the plumbing (settings keys, controller
   hooks) is there, the UI for them isn't.
-- This was written without an Android SDK available to actually compile
-  it in the dev sandbox - everything is written against NewPipeExtractor
-  v0.26.5's documented API surface, but do a build before assuming
-  anything here is bug-for-bug correct.
+- **Runtime correctness beyond compiling**: `:app:assembleDebug` and
+  `:app:lintDebug` both pass clean, so the NewPipeExtractor/Media3 API
+  surface used throughout (including the channel-tabs call and the merged
+  video-only/audio-only playback path) is confirmed to compile against
+  v0.26.5 and Media3 1.4.1. It hasn't been run on a device/emulator yet,
+  so runtime behavior - especially the reverse-engineered innertube
+  `params` blobs and the exact JSON shape `postComment`/the feed clients
+  walk - is unverified beyond "the code that calls it compiles."
 
 ## Building
 
@@ -103,7 +107,12 @@ folder in Android Studio, or:
 ./gradlew :app:assembleDebug
 ```
 
-Requires an Android SDK (compileSdk 34) and a JDK 17.
+Requires an Android SDK (compileSdk 34, build-tools 34.0.0) and a JDK 17.
+Debug builds clean with `./gradlew :app:lintDebug` too (the one intentional
+suppression, `UnsafeOptInUsageError`, is documented next to it in
+`app/build.gradle.kts` - it's Media3's `@UnstableApi` surface, opted into
+module-wide since the custom playback path in `playback/PlaybackService.kt`
+has to reach into it).
 
 ## Legal
 

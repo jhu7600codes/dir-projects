@@ -1,6 +1,7 @@
 package com.ytclassic.app.playback
 
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
@@ -15,6 +16,7 @@ object StreamSelector {
      * stream stitched back together by the service's custom
      * `MediaSource.Factory`.
      */
+    @UnstableApi
     fun buildMediaItem(info: StreamInfo, maxHeight: Int): MediaItem? {
         info.hlsUrl?.takeIf { it.isNotBlank() }?.let {
             return MediaItem.fromUri(it)
