@@ -153,18 +153,30 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   "no results" empty state instead of a blank black screen
   (`ShortsUiState.hasLoaded` in `ShortsViewModel.kt` distinguishes "still
   loading" from "loaded, but empty").
-- **Signed-in Home/Subscriptions/Shorts returning zero items**: seen on a
-  real device, not yet root-caused - reproducing it needs a live signed-in
-  session and this environment has no emulator (no KVM) to test against.
-  `network/Innertube.kt`'s request `buildContext()` was fleshed out with
-  the fuller set of client fields a real WEB client sends (platform,
-  browser/OS strings, form factor, etc.) and both `Innertube.post()` and
-  `InnertubeFeedClient.browse()` now `Log.e`/`Log.w` the HTTP status and
-  the first ~2000 chars of the response body whenever a call fails or
-  comes back with zero items (tags `Innertube` / `InnertubeFeedClient`).
-  If this is still happening, `adb logcat -s Innertube InnertubeFeedClient`
-  while reproducing it is the fastest way to get a real answer instead of
-  another guess.
+- **Signed-in Home/Subscriptions/Shorts returning zero items - root-caused
+  and fixed.** A real device's `adb`/on-device-root logcat (tags
+  `Innertube`/`InnertubeFeedClient`) turned up two distinct bugs:
+  1. Home and Subscriptions were getting real `HTTP 200` responses with
+     real signed-in data (`"logged_in":1"`, a real `datasyncId`) - but the
+     response's own `context` string literally said
+     `yt_web_unknown_form_factor_kevlar_w2w`: YouTube's web client has
+     migrated these surfaces to a newer "Kevlar" view-model JSON schema
+     (`lockupViewModel`/`shortsLockupViewModel`) that this app's parser
+     didn't know about yet, only the classic `videoRenderer`/
+     `reelItemRenderer` shape - so every item in an otherwise-successful
+     response was silently skipped. `data/model/VideoUi.kt` now also parses
+     `lockupViewModel` (regular videos) and `shortsLockupViewModel`
+     (Shorts), alongside the old renderers, and `JsonWalk` gained
+     `findFirstArray()` to support it.
+  2. The Shorts tab's browse call used a guessed `browseId` of `"FEshorts"`,
+     which comes back `HTTP 400 INVALID_ARGUMENT` - there's no standalone
+     Shorts browse surface; the Shorts shelf only exists embedded inside
+     the Home feed response. `InnertubeFeedClient.shorts()` now reuses the
+     Home request and filters its result down to just the short-form items
+     instead of calling a browseId that doesn't exist.
+  `Innertube.post()` and `InnertubeFeedClient`'s per-call logging (tags
+  `Innertube`/`InnertubeFeedClient`) is what surfaced both of these and is
+  left in place for the next time YouTube reshuffles this.
 
 ## Building
 

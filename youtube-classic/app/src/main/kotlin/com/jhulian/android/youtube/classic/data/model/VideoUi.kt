@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.data.model
 
+import com.jhulian.android.youtube.classic.util.JsonWalk
 import org.json.JSONObject
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
@@ -154,6 +155,11 @@ fun reelItemRendererToVideoUi(renderer: JSONObject): VideoUi? {
 }
 
 private fun JSONObject.textOrNull(): String? {
+    // "content" is the shape the newer view-model renderers (lockupViewModel,
+    // shortsLockupViewModel) use for plain text fields; "simpleText"/"runs"
+    // are the classic renderer shape. Checking all three makes this helper
+    // usable across both schemas.
+    optString("content").takeIf { it.isNotBlank() }?.let { return it }
     optString("simpleText").takeIf { it.isNotBlank() }?.let { return it }
     val runs = optJSONArray("runs") ?: return null
     val builder = StringBuilder()
@@ -161,6 +167,134 @@ private fun JSONObject.textOrNull(): String? {
         builder.append(runs.getJSONObject(i).optString("text"))
     }
     return builder.toString().takeIf { it.isNotBlank() }
+}
+
+/** Highest-width image URL out of a view-model `{"sources": [{url,width,height}, ...]}` array. */
+private fun JSONObject.bestSourceUrl(): String? =
+    optJSONArray("sources")
+        ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it) } }
+        ?.maxByOrNull { it.optInt("width") }
+        ?.optString("url")
+        ?.takeIf { it.isNotBlank() }
+
+/**
+ * Home/Subscriptions feed item from the newer `lockupViewModel` renderer -
+ * the "Kevlar" view-model-based grid schema YouTube's web client has been
+ * migrating surfaces to (confirmed via a real device: the raw browse
+ * response's `context` field literally says `"...kevlar_w2w"`, and its
+ * `videoRenderer`/`reelItemRenderer` scan came back empty because the real
+ * payload only contains `lockupViewModel`/`shortsLockupViewModel` nodes).
+ * Structure per YouTube's current web client (also documented by yt-dlp's
+ * lockup-view-model extraction):
+ * ```
+ * lockupViewModel: {
+ *   contentId: "<videoId>", contentType: "LOCKUP_CONTENT_TYPE_VIDEO",
+ *   metadata: { lockupMetadataViewModel: {
+ *     title: { content: "..." },
+ *     metadata: { contentMetadataViewModel: { metadataRows: [
+ *       { metadataParts: [{ text: { content: "Channel Name" } }] },
+ *       { metadataParts: [{ text: { content: "1.2M views" } }, { text: { content: "3 days ago" } }] },
+ *     ] } },
+ *   } },
+ *   contentImage: { thumbnailViewModel: { image: { sources: [...] },
+ *     overlays: [{ thumbnailOverlayBadgeViewModel: { thumbnailBadges: [
+ *       { thumbnailBadgeViewModel: { text: "12:34" } },
+ *     ] } }] } },
+ * }
+ * ```
+ */
+fun lockupViewModelToVideoUi(renderer: JSONObject): VideoUi? {
+    val contentType = renderer.optString("contentType")
+    if (contentType.isNotBlank() && !contentType.contains("VIDEO")) return null // skip playlists/channels/posts
+
+    val videoId = renderer.optString("contentId").takeIf { it.isNotBlank() }
+        ?: JsonWalk.findFirstString(renderer, "videoId")?.takeIf { it.isNotBlank() }
+        ?: return null
+
+    val lockupMetadata = renderer.optJSONObject("metadata")?.optJSONObject("lockupMetadataViewModel")
+    val title = lockupMetadata?.optJSONObject("title")?.textOrNull() ?: return null
+
+    val thumbnailUrl = renderer.optJSONObject("contentImage")
+        ?.optJSONObject("thumbnailViewModel")
+        ?.optJSONObject("image")
+        ?.bestSourceUrl()
+
+    val badgeText = JsonWalk.findAllObjectsWithKey(renderer, "thumbnailBadgeViewModel")
+        .firstOrNull()
+        ?.optString("text")
+        ?.takeIf { it.isNotBlank() }
+    val isLive = badgeText?.contains("LIVE", ignoreCase = true) == true
+
+    val metadataParts = lockupMetadata
+        .optJSONObject("metadata")
+        ?.optJSONObject("contentMetadataViewModel")
+        ?.optJSONArray("metadataRows")
+        ?.let { rows -> (0 until rows.length()).map { rows.getJSONObject(it) } }
+        ?.map { row ->
+            row.optJSONArray("metadataParts")
+                ?.let { parts -> (0 until parts.length()).map { parts.getJSONObject(it) } }
+                ?.mapNotNull { it.optJSONObject("text")?.textOrNull() }
+                ?.joinToString("  •  ")
+                .orEmpty()
+        }
+        ?.filter { it.isNotBlank() }
+        .orEmpty()
+
+    val channelName = metadataParts.firstOrNull().orEmpty()
+    val metadataLine = metadataParts.drop(1).joinToString("  •  ")
+
+    return VideoUi(
+        videoId = videoId,
+        url = "https://www.youtube.com/watch?v=$videoId",
+        title = title,
+        thumbnailUrl = thumbnailUrl,
+        channelName = channelName,
+        channelUrl = null,
+        channelAvatarUrl = null,
+        durationText = if (isLive) null else badgeText,
+        isLive = isLive,
+        metadataLine = metadataLine,
+    )
+}
+
+/**
+ * Shorts shelf item from the newer `shortsLockupViewModel` renderer (the
+ * "Kevlar" counterpart to `reelItemRenderer` - see [lockupViewModelToVideoUi]).
+ * Its exact field names are less consistently documented than
+ * `lockupViewModel`'s, so this leans on [JsonWalk] to find the handful of
+ * genuinely stable keys (`videoId`, `sources`) rather than a fixed path,
+ * with `overlayMetadata`'s primary/secondary text as a best-effort title/
+ * view-count read on top of that.
+ */
+fun shortsLockupViewModelToVideoUi(renderer: JSONObject): VideoUi? {
+    val videoId = JsonWalk.findFirstString(renderer, "videoId")?.takeIf { it.isNotBlank() }
+        ?: return null
+
+    val overlayMetadata = renderer.optJSONObject("overlayMetadata")
+    val title = overlayMetadata?.optJSONObject("primaryText")?.textOrNull()
+        ?: renderer.optString("accessibilityText").takeIf { it.isNotBlank() }
+        ?: "Short"
+    val views = overlayMetadata?.optJSONObject("secondaryText")?.textOrNull()
+
+    val thumbnailUrl = renderer.optJSONObject("thumbnail")?.bestSourceUrl()
+        ?: JsonWalk.findFirstArray(renderer, "sources")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it) } }
+            ?.maxByOrNull { it.optInt("width") }
+            ?.optString("url")
+            ?.takeIf { it.isNotBlank() }
+
+    return VideoUi(
+        videoId = videoId,
+        url = "https://www.youtube.com/shorts/$videoId",
+        title = title,
+        thumbnailUrl = thumbnailUrl,
+        channelName = "",
+        channelUrl = null,
+        channelAvatarUrl = null,
+        durationText = "Short",
+        isLive = false,
+        metadataLine = views.orEmpty(),
+    )
 }
 
 private fun extractVideoId(url: String): String {

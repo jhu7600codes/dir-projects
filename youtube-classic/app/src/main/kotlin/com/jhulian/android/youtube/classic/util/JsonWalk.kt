@@ -37,6 +37,18 @@ object JsonWalk {
         return found
     }
 
+    /** The first JSON array found anywhere in the tree under property [key]. */
+    fun findFirstArray(root: Any?, key: String): JSONArray? {
+        var found: JSONArray? = null
+        walk(root) { node ->
+            if (found == null && node is JSONObject && node.has(key)) {
+                val value = node.opt(key)
+                if (value is JSONArray) found = value
+            }
+        }
+        return found
+    }
+
     private fun walk(node: Any?, visit: (Any) -> Unit) {
         when (node) {
             is JSONObject -> {
