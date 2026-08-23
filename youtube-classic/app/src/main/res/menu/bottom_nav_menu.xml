@@ -5,9 +5,9 @@
         android:icon="@drawable/ic_tab_home"
         android:title="@string/tab_home" />
     <item
-        android:id="@+id/nav_trending"
-        android:icon="@drawable/ic_tab_trending"
-        android:title="@string/tab_trending" />
+        android:id="@+id/nav_shorts"
+        android:icon="@drawable/ic_tab_shorts"
+        android:title="@string/tab_shorts" />
     <item
         android:id="@+id/nav_subscriptions"
         android:icon="@drawable/ic_tab_subscriptions"

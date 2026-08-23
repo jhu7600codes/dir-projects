@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Custom Media3 controller layout, wired in via
      app:controller_layout_id on the PlayerView in activity_player.xml.
-     Reserved ids (exo_play_pause, exo_progress, exo_position, exo_duration,
-     exo_rew, exo_ffwd, exo_fullscreen) are the ones PlayerControlView looks
-     for and wires up itself; anything else is just a plain view we manage
-     ourselves in PlayerActivity. -->
+     Reserved ids (exo_play_pause, exo_rew, exo_ffwd, exo_progress,
+     exo_position, exo_duration, exo_fullscreen) MUST use "@id/..." here,
+     never "@+id/..." - these are already declared as resources inside the
+     media3-ui library itself (see its own res/values/values.xml), and with
+     non-transitive R classes (this project has android.nonTransitiveRClass
+     enabled) declaring them with a "+" mints a brand-new, unrelated id in
+     this app's own R class instead of binding to the library's. That was
+     the actual bug behind the controls looking broken: PlayerControlView's
+     Java code looks these views up by the *library's* compiled-in R.id
+     constants, so it silently never found ours - the values.xml check that
+     caught this is `grep 'name="exo_play_pause"' in the unpacked
+     media3-ui-1.4.1.aar`. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
@@ -14,35 +22,40 @@
         android:layout_height="match_parent"
         android:background="#66000000" />
 
-    <ImageButton
-        android:id="@+id/exo_rew"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center_vertical|start"
-        android:layout_marginStart="32dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_arrow_back" />
-
-    <ImageButton
-        android:id="@+id/exo_play_pause"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="@android:color/transparent"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_play_arrow" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <ImageButton
-        android:id="@+id/exo_ffwd"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center_vertical|end"
-        android:layout_marginEnd="32dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_arrow_back"
-        android:scaleX="-1" />
+        <ImageButton
+            android:id="@id/exo_rew"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="24dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_fast_rewind" />
+
+        <ImageButton
+            android:id="@id/exo_play_pause"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_play_arrow" />
+
+        <ImageButton
+            android:id="@id/exo_ffwd"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="24dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_fast_forward" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -53,7 +66,7 @@
         android:paddingHorizontal="8dp">
 
         <TextView
-            android:id="@+id/exo_position"
+            android:id="@id/exo_position"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
@@ -61,7 +74,7 @@
             tools:text="0:42" />
 
         <androidx.media3.ui.DefaultTimeBar
-            android:id="@+id/exo_progress"
+            android:id="@id/exo_progress"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -74,7 +87,7 @@
             app:played_ad_marker_color="@color/sponsorblock_segment" />
 
         <TextView
-            android:id="@+id/exo_duration"
+            android:id="@id/exo_duration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
@@ -82,7 +95,7 @@
             tools:text="10:00" />
 
         <ImageButton
-            android:id="@+id/exo_fullscreen"
+            android:id="@id/exo_fullscreen"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@android:color/transparent"

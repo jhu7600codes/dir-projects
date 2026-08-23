@@ -37,14 +37,6 @@ class VideoListViewModel(private val source: VideoListSource) : ViewModel() {
         viewModelScope.launch {
             try {
                 when (source) {
-                    VideoListSource.Trending -> {
-                        val page = YouTubeRepository.trending()
-                        nextPage = page.nextPage
-                        _state.value = VideoListUiState(
-                            items = page.items.map { it.toVideoUi() },
-                            canLoadMore = page.nextPage != null,
-                        )
-                    }
                     is VideoListSource.Search -> {
                         val page = YouTubeRepository.search(source.query)
                         nextPage = page.nextPage
@@ -90,7 +82,6 @@ class VideoListViewModel(private val source: VideoListSource) : ViewModel() {
         viewModelScope.launch {
             try {
                 val result = when (source) {
-                    VideoListSource.Trending -> null // Trending kiosk has no further pagination in practice.
                     is VideoListSource.Search -> YouTubeRepository.searchMore(source.query, page)
                     else -> null
                 }

@@ -68,6 +68,12 @@ class PlaybackService : MediaSessionService() {
 
         val player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
+            // Media3 doesn't expose seek-increment XML attrs on PlayerView
+            // in this version - the rewind/forward buttons in
+            // player_control_view.xml call Player.seekBack()/seekForward(),
+            // and these are what those actually seek by.
+            .setSeekBackIncrementMs(10_000)
+            .setSeekForwardIncrementMs(10_000)
             .build()
         mediaSession = MediaSession.Builder(this, player).build()
     }

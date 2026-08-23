@@ -1,7 +1,7 @@
 # YouTube Classic
 
 A from-scratch Android client (Kotlin) that recreates the 2018-2019 YouTube
-app's UI - white chrome, bottom tab bar (Home / Trending / Subscriptions /
+app's UI - white chrome, bottom tab bar (Home / Shorts / Subscriptions /
 Library), hard-edged thumbnails - on top of
 [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) instead
 of the official YouTube Data API. No API key, no OAuth client.
@@ -29,7 +29,7 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
 ├── network/                  Everything that needs the cookie session
 │   ├── Innertube.kt          SAPISIDHASH auth + shared POST helper
 │   ├── InnertubeActions.kt   like/dislike, subscribe, post a comment
-│   ├── InnertubeFeedClient.kt Home/Subscriptions feeds (browse endpoint)
+│   ├── InnertubeFeedClient.kt Home/Subscriptions/Shorts feeds (browse endpoint)
 │   └── SponsorBlockClient.kt  Public SponsorBlock API, k-anonymous hash-prefix lookup
 ├── playback/
 │   ├── PlaybackService.kt    MediaSessionService - background/offline playback
@@ -37,7 +37,7 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
 │   └── SponsorBlockController.kt  Auto-skip / manual-skip against playback position
 ├── download/                 Video+audio download -> single mp4 (MediaMuxer, no ffmpeg)
 ├── data/model/                UI models + mappers from NewPipeExtractor / innertube JSON
-└── ui/                        MainActivity (tabs), player, search, channel, settings, downloads
+└── ui/                        MainActivity (tabs), player, search, shorts, channel, settings, downloads
 ```
 
 ## What's implemented
@@ -47,10 +47,19 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    API key.
 2. **Auth**: WebView cookie login (`auth/LoginActivity.kt`), persisted
    encrypted on-device (`auth/SessionManager.kt`).
-3. **UI**: Home/Trending/Subscriptions/Library bottom tabs, video list,
-   player screen with comments, all styled off 2019 Android app screenshots
-   (white top bar, red accents only, square thumbnails, no forced dark
-   theme - the era this recreates predates YouTube's dark mode).
+3. **UI**: Home/Shorts/Subscriptions/Library bottom tabs, video list, player
+   screen with comments, all styled off 2019 Android app screenshots (white
+   top bar, red accents only, square thumbnails, no forced dark theme - the
+   era this recreates predates YouTube's dark mode). Icons were redrawn
+   against an actual period screenshot rather than from memory - Home and
+   Library swap between dedicated outline/filled-red drawables by selection
+   state, while Subscriptions is a fixed-red glyph that never changes
+   color. The player's transport controls (rewind/play-pause/forward) are a
+   custom Media3 `PlayerControlView` layout - `@id/exo_play_pause` etc. must
+   reference the *library's* pre-declared ids, never `@+id/exo_play_pause`,
+   or PlayerControlView's Java code can't find them and the controls end up
+   unwired and mispositioned (this was a real bug, caught from a device
+   screenshot - see git history).
 4. **Write actions**: like/dislike, subscribe/unsubscribe, and posting a
    top-level comment, all via cookie-authenticated innertube calls
    (`network/InnertubeActions.kt`). Comment *replies* are read-only for now.
@@ -113,14 +122,16 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   already-signed-in browser tab (devtools' Network panel, or a cookie
   export extension) - the same mechanism yt-dlp's browser-cookie import
   relies on, and immune to the WebView block since no WebView is involved.
-- **Shorts**: NewPipeExtractor already resolves `/shorts/{id}` URLs the
-  same way as `/watch?v={id}`, so playback needs no special handling.
-  `InnertubeFeedClient` now also scans Home/Subscriptions responses for
-  `reelItemRenderer` (Shorts) entries alongside `videoRenderer`, so Shorts
-  show up in those feeds as regular rows (appended after the videos) and
-  open in the normal player - there's no dedicated vertical-swipe Shorts
-  viewer, and Shorts' vertical thumbnails get center-cropped into the same
-  16:9 thumbnail box as everything else.
+- **Shorts** has its own tab now (`ui/shorts/`), replacing Trending -
+  Trending itself lives on as Home's signed-out fallback rather than a tab
+  of its own. It's a real vertical, one-swipe-per-video feed
+  (`RecyclerView` + `PagerSnapHelper`), with one shared `MediaController`
+  attached only to whichever item is centered (see `ShortsAdapter`) rather
+  than one ExoPlayer per item. Needs a session - there's no public/
+  signed-out Shorts surface NewPipeExtractor or an anonymous browse call
+  can reach, so it shows a sign-in prompt when signed out. Playback itself
+  needs no special handling: NewPipeExtractor already resolves
+  `/shorts/{id}` URLs the same way as `/watch?v={id}`.
 
 ## Building
 

@@ -16,13 +16,17 @@ import com.jhulian.android.youtube.classic.ui.common.VideoListFragment
 import com.jhulian.android.youtube.classic.ui.common.VideoListSource
 import com.jhulian.android.youtube.classic.ui.library.LibraryFragment
 import com.jhulian.android.youtube.classic.ui.search.SearchActivity
+import com.jhulian.android.youtube.classic.ui.shorts.ShortsFragment
 
 /**
- * Hosts the four-tab bottom nav (Home/Trending/Subscriptions/Library) from
- * the 2018-2019 YouTube app. Tabs are added once and shown/hidden rather
- * than replaced, so each keeps its scroll position and loaded data when you
- * switch away and back - the same "app remembers where you left off"
- * behaviour that shipped alongside this exact tab layout.
+ * Hosts the four-tab bottom nav: Home/Shorts/Subscriptions/Library. The
+ * original 2018-2019 app's fourth tab was Trending, not Shorts (Shorts
+ * didn't exist yet) - swapped in on request, since a personalized-feed
+ * Home plus a public Trending kiosk already covers what that tab did.
+ * Tabs are added once and shown/hidden rather than replaced, so each keeps
+ * its scroll position and loaded data when you switch away and back - the
+ * same "app remembers where you left off" behaviour that shipped alongside
+ * this era's tab layout.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -80,18 +84,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun createFragment(itemId: Int): Fragment = when (itemId) {
         R.id.nav_home -> VideoListFragment.newInstance(VideoListSource.Home)
-        R.id.nav_trending -> VideoListFragment.newInstance(VideoListSource.Trending)
+        R.id.nav_shorts -> ShortsFragment()
         R.id.nav_subscriptions -> VideoListFragment.newInstance(VideoListSource.Subscriptions)
         R.id.nav_library -> LibraryFragment()
         else -> VideoListFragment.newInstance(VideoListSource.Home)
     }
 
     private fun updateToolbarForTab(itemId: Int) {
+        // Shorts is full-screen/immersive like the real app - no top bar at
+        // all, not even a title, so the vertical feed can use the whole
+        // screen above the bottom nav.
+        if (itemId == R.id.nav_shorts) {
+            binding.toolbar.visibility = View.GONE
+            binding.toolbarDivider.visibility = View.GONE
+            return
+        }
+        binding.toolbar.visibility = View.VISIBLE
+        binding.toolbarDivider.visibility = View.VISIBLE
+
         val isHome = itemId == R.id.nav_home
         binding.toolbarLogo.visibility = if (isHome) View.VISIBLE else View.GONE
         binding.toolbarTitle.visibility = if (isHome) View.GONE else View.VISIBLE
         binding.toolbarTitle.text = when (itemId) {
-            R.id.nav_trending -> getString(R.string.tab_trending)
             R.id.nav_subscriptions -> getString(R.string.tab_subscriptions)
             R.id.nav_library -> getString(R.string.tab_library)
             else -> ""
