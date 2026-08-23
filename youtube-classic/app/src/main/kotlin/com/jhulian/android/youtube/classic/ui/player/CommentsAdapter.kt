@@ -2,6 +2,7 @@ package com.jhulian.android.youtube.classic.ui.player
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.text.HtmlCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -96,7 +97,7 @@ class CommentsAdapter(
             val comment = row.comment
             binding.authorAndTime.text = listOfNotNull(comment.authorName, comment.relativeTime)
                 .joinToString("  •  ")
-            binding.commentText.text = comment.text
+            binding.commentText.text = HtmlCompat.fromHtml(comment.text, HtmlCompat.FROM_HTML_MODE_LEGACY)
             binding.likeCount.text = if (comment.likeCount > 0) Formatters.compactCount(comment.likeCount.toLong()) else ""
             binding.likeButton.setOnClickListener { onLike(comment) }
 
@@ -127,7 +128,7 @@ class CommentsAdapter(
         fun bind(comment: CommentUi, onLike: (CommentUi) -> Unit) {
             binding.authorAndTime.text = listOfNotNull(comment.authorName, comment.relativeTime)
                 .joinToString("  •  ")
-            binding.commentText.text = comment.text
+            binding.commentText.text = HtmlCompat.fromHtml(comment.text, HtmlCompat.FROM_HTML_MODE_LEGACY)
             binding.likeCount.text = if (comment.likeCount > 0) Formatters.compactCount(comment.likeCount.toLong()) else ""
             binding.likeButton.setOnClickListener { onLike(comment) }
 

@@ -36,7 +36,7 @@
             android:background="@drawable/bg_duration_badge"
             android:paddingHorizontal="4dp"
             android:paddingVertical="1dp"
-            android:textColor="@color/yt_white"
+            android:textColor="@android:color/white"
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="@id/thumbnail"
             app:layout_constraintBottom_toBottomOf="@id/thumbnail"

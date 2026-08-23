@@ -2,7 +2,10 @@
 <resources>
     <!-- Pulled from screenshots of the 2018-2019 Android YouTube app: white
          chrome, black text, red only as an accent (selected tab, subscribe
-         button, live/progress indicators) - not the solid-red 2017 top bar. -->
+         button, live/progress indicators) - not the solid-red 2017 top bar.
+         This is the light (default) palette; values-night/colors.xml
+         overrides the tokens that actually change for dark mode - the app
+         is DayNight (see themes.xml), it just defaults to this look. -->
     <color name="yt_red">#FF0000</color>
     <color name="yt_red_dark">#CC0000</color>
     <color name="yt_white">#FFFFFF</color>
@@ -15,6 +18,7 @@
     <color name="yt_background">#FFFFFF</color>
     <color name="yt_chip_background">#F2F2F2</color>
     <color name="yt_nav_unselected">#606060</color>
+    <color name="yt_icon">#0F0F0F</color>
     <color name="yt_scrubber_played">#FF0000</color>
     <color name="yt_scrubber_buffered">#CCCCCC</color>
     <color name="yt_scrubber_background">#4DFFFFFF</color>

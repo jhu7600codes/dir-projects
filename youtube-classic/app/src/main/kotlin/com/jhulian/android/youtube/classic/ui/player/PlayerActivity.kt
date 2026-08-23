@@ -4,7 +4,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
+import android.widget.ImageButton
+import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -47,6 +52,9 @@ class PlayerActivity : AppCompatActivity() {
     private var mediaItemLoaded = false
     private var localFilePath: String? = null
 
+    private var playerTitleText: TextView? = null
+    private lateinit var seekGestureDetector: GestureDetector
+
     private val sessionManager get() = (application as YtClassicApp).sessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,11 +62,15 @@ class PlayerActivity : AppCompatActivity() {
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setUpPlayerTopBarAndGestures()
+
         localFilePath = intent.getStringExtra(EXTRA_LOCAL_FILE_PATH)
         if (localFilePath != null) {
             // Offline playback of a file DownloadService already produced -
             // no extraction, no comments/sponsor lookups, no innertube calls.
-            binding.videoTitle.text = intent.getStringExtra(EXTRA_LOCAL_TITLE)
+            val title = intent.getStringExtra(EXTRA_LOCAL_TITLE)
+            binding.videoTitle.text = title
+            playerTitleText?.text = title
             binding.videoMetadata.text = ""
             binding.channelRow.visibility = View.GONE
             binding.descriptionContainer.visibility = View.GONE
@@ -85,6 +97,54 @@ class PlayerActivity : AppCompatActivity() {
         val sponsorEnabled = prefs.getBoolean("pref_sponsorblock_enabled", true)
         val category = prefs.getString("pref_sponsorblock_categories", "sponsor") ?: "sponsor"
         viewModel.load(url, sponsorEnabled, listOf(category))
+    }
+
+    /**
+     * The controller layout's back/title/overflow row and the double-tap-
+     * to-seek zones - the two things the 2019 player actually had instead
+     * of dedicated rewind/forward buttons. `playerView.findViewById` works
+     * here because PlayerView inflates its controller layout synchronously
+     * as part of its own view construction, which has already happened by
+     * the time `setContentView`/binding.inflate returns.
+     */
+    private fun setUpPlayerTopBarAndGestures() {
+        binding.playerView.findViewById<ImageButton>(R.id.playerBackButton)?.setOnClickListener { finish() }
+        playerTitleText = binding.playerView.findViewById(R.id.playerTitleText)
+        binding.playerView.findViewById<ImageButton>(R.id.playerOverflowButton)?.setOnClickListener { anchor ->
+            PopupMenu(this, anchor).apply {
+                menu.add(getString(R.string.download_video))
+                menu.add(getString(R.string.action_more))
+                setOnMenuItemClickListener { item ->
+                    when (item.title) {
+                        getString(R.string.download_video) -> startDownload()
+                        else -> viewModel.state.value.streamInfo?.url?.let { shareVideo(it) }
+                    }
+                    true
+                }
+            }.show()
+        }
+
+        seekGestureDetector = GestureDetector(
+            this,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    val player = controller ?: return false
+                    val isRightSide = e.x > binding.playerView.width / 2f
+                    if (isRightSide) {
+                        player.seekForward()
+                        Toast.makeText(this@PlayerActivity, "+10s »", Toast.LENGTH_SHORT).show()
+                    } else {
+                        player.seekBack()
+                        Toast.makeText(this@PlayerActivity, "« -10s", Toast.LENGTH_SHORT).show()
+                    }
+                    return true
+                }
+            },
+        )
+        binding.playerView.setOnTouchListener { _, event ->
+            seekGestureDetector.onTouchEvent(event)
+            false // Let PlayerView still handle single taps to show/hide its controller.
+        }
     }
 
     private fun connectToPlaybackService() {
@@ -311,6 +371,7 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun renderStreamInfo(info: StreamInfo) {
         binding.videoTitle.text = info.name
+        playerTitleText?.text = info.name
         val metadataParts = listOfNotNull(
             if (info.viewCount >= 0) Formatters.viewCount(info.viewCount) else null,
             info.uploadDate?.offsetDateTime()?.let { Formatters.relativeTime(it.toEpochSecond()) }
@@ -326,7 +387,13 @@ class PlayerActivity : AppCompatActivity() {
         } else {
             ""
         }
-        binding.descriptionText.text = info.description?.content ?: ""
+        // Descriptions come back as HTML (line breaks are literal <br> tags,
+        // links are <a> tags) - render it, don't just dump the markup.
+        val descriptionHtml = info.description?.content ?: ""
+        binding.descriptionText.text = androidx.core.text.HtmlCompat.fromHtml(
+            descriptionHtml,
+            androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY,
+        )
 
         Glide.with(binding.channelAvatar)
             .load(info.uploaderAvatars.maxByOrNull { it.height }?.url)

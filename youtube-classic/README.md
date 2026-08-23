@@ -49,25 +49,42 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    encrypted on-device (`auth/SessionManager.kt`).
 3. **UI**: Home/Shorts/Subscriptions/Library bottom tabs, video list, player
    screen with comments, all styled off 2019 Android app screenshots (white
-   top bar, red accents only, square thumbnails, no forced dark theme - the
-   era this recreates predates YouTube's dark mode). Icons were redrawn
+   top bar, red accents only, square thumbnails). Icons were redrawn
    against an actual period screenshot rather than from memory - Home and
    Library swap between dedicated outline/filled-red drawables by selection
    state, while Subscriptions is a fixed-red glyph that never changes
-   color. The player's transport controls (rewind/play-pause/forward) are a
-   custom Media3 `PlayerControlView` layout - `@id/exo_play_pause` etc. must
-   reference the *library's* pre-declared ids, never `@+id/exo_play_pause`,
-   or PlayerControlView's Java code can't find them and the controls end up
-   unwired and mispositioned (this was a real bug, caught from a device
-   screenshot - see git history).
-4. **Write actions**: like/dislike, subscribe/unsubscribe, and posting a
+   color. The player's controls are a custom Media3 `PlayerControlView`
+   layout matching the real 2019 chrome: a top bar (back / title /
+   overflow) rather than a generic transport bar, a single center
+   play/pause target, and no dedicated rewind/forward buttons - skipping
+   back/forward 10s is a double-tap on either half of the screen (see the
+   `GestureDetector` in `PlayerActivity.setUpPlayerTopBarAndGestures()`),
+   same as the real app. Reserved ids (`@id/exo_play_pause`,
+   `@id/exo_progress`, etc.) must reference the *library's* pre-declared
+   ids, never `@+id/exo_play_pause`, or PlayerControlView's Java code can't
+   find them and the controls end up unwired and mispositioned (this was a
+   real bug, caught from a device screenshot - see git history). Video
+   descriptions and comments are rendered through
+   `HtmlCompat.fromHtml(..., FROM_HTML_MODE_LEGACY)` rather than shown raw,
+   since YouTube's innertube responses embed real HTML (`<br>`, `<a href>`)
+   in that text.
+4. **Dark mode**: `Theme.YtClassic` is `DayNight` and follows the system
+   theme; `values-night/` supplies the dark palette (colors, chip
+   backgrounds, dividers, status bar) and icon tinting is driven off a
+   single `@color/yt_icon` token that flips with it. Anything that sits
+   *over media content* (thumbnail duration badges, the SponsorBlock skip
+   chip, in-player text) intentionally stays hardcoded `@android:color/white`
+   instead of using a theme-flipping token, since those sit on a
+   thumbnail/video frame, not app chrome, and would go invisible in dark
+   mode if they flipped too.
+5. **Write actions**: like/dislike, subscribe/unsubscribe, and posting a
    top-level comment, all via cookie-authenticated innertube calls
    (`network/InnertubeActions.kt`). Comment *replies* are read-only for now.
-5. **SponsorBlock**: segments fetched by SHA-256 hash-prefix (the same
+6. **SponsorBlock**: segments fetched by SHA-256 hash-prefix (the same
    k-anonymity scheme the browser extension uses), spliced into playback via
    `playback/SponsorBlockController.kt` with both auto-skip and a manual
    "Skip" chip, plus segment markers on the seek bar.
-6. **Background/offline playback**: a `MediaSessionService`
+7. **Background/offline playback**: a `MediaSessionService`
    (`playback/PlaybackService.kt`) keeps ExoPlayer alive independent of the
    Activity; video-only + audio-only adaptive streams are stitched back
    together by a custom `MediaSource.Factory` on the service side (the
@@ -131,7 +148,23 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   signed-out Shorts surface NewPipeExtractor or an anonymous browse call
   can reach, so it shows a sign-in prompt when signed out. Playback itself
   needs no special handling: NewPipeExtractor already resolves
-  `/shorts/{id}` URLs the same way as `/watch?v={id}`.
+  `/shorts/{id}` URLs the same way as `/watch?v={id}`. If a signed-in
+  fetch comes back with zero videos, the fragment now shows an actual
+  "no results" empty state instead of a blank black screen
+  (`ShortsUiState.hasLoaded` in `ShortsViewModel.kt` distinguishes "still
+  loading" from "loaded, but empty").
+- **Signed-in Home/Subscriptions/Shorts returning zero items**: seen on a
+  real device, not yet root-caused - reproducing it needs a live signed-in
+  session and this environment has no emulator (no KVM) to test against.
+  `network/Innertube.kt`'s request `buildContext()` was fleshed out with
+  the fuller set of client fields a real WEB client sends (platform,
+  browser/OS strings, form factor, etc.) and both `Innertube.post()` and
+  `InnertubeFeedClient.browse()` now `Log.e`/`Log.w` the HTTP status and
+  the first ~2000 chars of the response body whenever a call fails or
+  comes back with zero items (tags `Innertube` / `InnertubeFeedClient`).
+  If this is still happening, `adb logcat -s Innertube InnertubeFeedClient`
+  while reproducing it is the fastest way to get a real answer instead of
+  another guess.
 
 ## Building
 

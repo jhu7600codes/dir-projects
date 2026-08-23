@@ -36,10 +36,17 @@ object Innertube {
     private const val CLIENT_VERSION = "2.20240701.00.00"
     private const val ORIGIN = "https://www.youtube.com"
     private const val BASE_URL = "https://www.youtube.com/youtubei/v1"
+    private const val TAG = "Innertube"
 
     private val client = OkHttpClient.Builder().build()
     private val jsonMedia = "application/json".toMediaType()
 
+    // A sparse context (just clientName/clientVersion/hl/gl) is enough for
+    // the simple write actions (like/subscribe/comment), but `browse` calls
+    // - the ones behind Home/Subscriptions/Shorts - are reported to come
+    // back content-free far more often with a minimal context than a real
+    // browser's, which sends all of this. Matches the shape yt-dlp's WEB
+    // client definition sends.
     fun buildContext(): JSONObject = JSONObject().apply {
         put(
             "client",
@@ -48,6 +55,23 @@ object Innertube {
                 put("clientVersion", CLIENT_VERSION)
                 put("hl", "en")
                 put("gl", "US")
+                put("platform", "DESKTOP")
+                put("clientFormFactor", "UNKNOWN_FORM_FACTOR")
+                put("browserName", "Chrome")
+                put("browserVersion", "126.0.0.0")
+                put("osName", "Windows")
+                put("osVersion", "10.0")
+                put("userAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0")
+                put("originalUrl", ORIGIN)
+                put("screenPixelDensity", 1)
+                put("screenDensityFloat", 1)
+                put("utcOffsetMinutes", 0)
+            },
+        )
+        put(
+            "user",
+            JSONObject().apply {
+                put("lockedSafetyMode", false)
             },
         )
     }
@@ -86,6 +110,9 @@ object Innertube {
                 .header("X-YouTube-Client-Name", "1")
                 .header("X-YouTube-Client-Version", CLIENT_VERSION)
                 .header("Origin", ORIGIN)
+                .header("X-Origin", ORIGIN)
+                .header("X-Goog-AuthUser", "0")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0")
 
             if (!cookieHeader.isNullOrBlank()) {
                 val sapisid = extractCookieValue(cookieHeader, "SAPISID")
@@ -99,6 +126,7 @@ object Innertube {
             client.newCall(requestBuilder.build()).execute().use { response ->
                 val text = response.body?.string().orEmpty()
                 if (!response.isSuccessful) {
+                    android.util.Log.e(TAG, "POST $endpoint -> HTTP ${response.code}: ${text.take(500)}")
                     throw InnertubeException(response.code, text)
                 }
                 if (text.isBlank()) JSONObject() else JSONObject(text)

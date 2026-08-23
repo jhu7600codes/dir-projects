@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.network
 
+import android.util.Log
 import com.jhulian.android.youtube.classic.data.model.VideoUi
 import com.jhulian.android.youtube.classic.data.model.reelItemRendererToVideoUi
 import com.jhulian.android.youtube.classic.data.model.videoRendererToVideoUi
@@ -48,6 +49,19 @@ object InnertubeFeedClient {
             .mapNotNull { videoRendererToVideoUi(it) }
         val shorts = JsonWalk.findAllObjectsWithKey(response, "reelItemRenderer")
             .mapNotNull { reelItemRendererToVideoUi(it) }
-        return videos + shorts
+        val results = videos + shorts
+
+        if (results.isEmpty()) {
+            // This is the one thing that can't be root-caused without
+            // seeing a real response: could be a stale API key/context,
+            // a wrong browseId, an auth/cookie problem the server accepts
+            // but treats as signed-out, or a genuinely empty feed. Logging
+            // the raw body (truncated) means the *next* report of "Home is
+            // empty" comes with the actual answer instead of another guess.
+            Log.w(TAG, "browse($browseId) returned 0 items. Raw response (first 2000 chars): ${response.toString().take(2000)}")
+        }
+        return results
     }
+
+    private const val TAG = "InnertubeFeedClient"
 }

@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import com.jhulian.android.youtube.classic.R
 import com.jhulian.android.youtube.classic.YtClassicApp
 import com.jhulian.android.youtube.classic.data.model.VideoUi
 import com.jhulian.android.youtube.classic.databinding.FragmentShortsBinding
@@ -106,7 +107,16 @@ class ShortsFragment : Fragment() {
 
     private fun render(state: ShortsUiState) {
         binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
-        binding.emptyState.visibility = if (state.requiresSignIn) View.VISIBLE else View.GONE
+
+        val showEmpty = state.hasLoaded && !state.isLoading && state.items.isEmpty()
+        binding.emptyState.visibility = if (showEmpty) View.VISIBLE else View.GONE
+        binding.signInButton.visibility = if (state.requiresSignIn) View.VISIBLE else View.GONE
+        binding.emptyText.text = if (state.requiresSignIn) {
+            getString(R.string.empty_no_shorts)
+        } else {
+            getString(R.string.empty_no_results)
+        }
+
         adapter.submitList(state.items) {
             if (currentActivePosition == -1 && state.items.isNotEmpty()) {
                 currentActivePosition = 0

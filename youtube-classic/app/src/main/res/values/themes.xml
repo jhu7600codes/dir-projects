@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Deliberately NOT DayNight - the 2019 app this recreates predates
-         YouTube's dark theme (added later that year) and always launched
-         light/white regardless of system theme. No forced theme override,
-         no dark variant: it just doesn't participate in the system setting. -->
-    <style name="Theme.YtClassic" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <!-- A real DayNight theme - follows the system light/dark setting like
+         any modern app, rather than staying pinned to the 2019-era app's
+         original light-only look. Light values live here; dark overrides
+         are in values-night/colors.xml (surfaces/text/icons) and this same
+         style name in values-night/themes.xml (the two boolean
+         "Light" flags, which colors.xml qualifiers can't flip on their own). -->
+    <style name="Theme.YtClassic" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/yt_white</item>
         <item name="colorPrimaryDark">@color/yt_white</item>
         <item name="colorAccent">@color/yt_red</item>

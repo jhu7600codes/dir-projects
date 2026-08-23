@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Custom Media3 controller layout, wired in via
      app:controller_layout_id on the PlayerView in activity_player.xml.
-     Reserved ids (exo_play_pause, exo_rew, exo_ffwd, exo_progress,
-     exo_position, exo_duration, exo_fullscreen) MUST use "@id/..." here,
-     never "@+id/..." - these are already declared as resources inside the
-     media3-ui library itself (see its own res/values/values.xml), and with
-     non-transitive R classes (this project has android.nonTransitiveRClass
-     enabled) declaring them with a "+" mints a brand-new, unrelated id in
-     this app's own R class instead of binding to the library's. That was
-     the actual bug behind the controls looking broken: PlayerControlView's
-     Java code looks these views up by the *library's* compiled-in R.id
-     constants, so it silently never found ours - the values.xml check that
-     caught this is `grep 'name="exo_play_pause"' in the unpacked
-     media3-ui-1.4.1.aar`. -->
+     Reserved ids (exo_play_pause, exo_progress, exo_position, exo_duration,
+     exo_fullscreen) MUST use "@id/..." here, never "@+id/..." - see the
+     kdoc this replaced in git history for why.
+
+     The real 2019 player didn't have dedicated rewind/forward buttons
+     flanking play/pause - just a big center tap target and double-tap
+     zones on either side of the screen to skip back/forward (wired up in
+     PlayerActivity via a GestureDetector, not here), plus a top bar with
+     back/title/overflow that shows and hides with the rest of the
+     controls. This layout matches that instead of a generic media-player
+     transport bar. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
@@ -20,42 +19,56 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#66000000" />
+        android:background="#4D000000" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_gravity="top"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:background="#66000000"
+        android:paddingHorizontal="4dp">
 
         <ImageButton
-            android:id="@id/exo_rew"
+            android:id="@+id/playerBackButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginEnd="24dp"
             android:background="@android:color/transparent"
             android:contentDescription="@null"
-            android:src="@drawable/ic_fast_rewind" />
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@android:color/white" />
+
+        <TextView
+            android:id="@+id/playerTitleText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            tools:text="Video title" />
 
         <ImageButton
-            android:id="@id/exo_play_pause"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_play_arrow" />
-
-        <ImageButton
-            android:id="@id/exo_ffwd"
+            android:id="@+id/playerOverflowButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginStart="24dp"
             android:background="@android:color/transparent"
             android:contentDescription="@null"
-            android:src="@drawable/ic_fast_forward" />
+            android:src="@drawable/ic_more_vert"
+            app:tint="@android:color/white" />
 
     </LinearLayout>
+
+    <ImageButton
+        android:id="@id/exo_play_pause"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        android:background="@android:color/transparent"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_play_arrow" />
 
     <LinearLayout
         android:layout_width="match_parent"
