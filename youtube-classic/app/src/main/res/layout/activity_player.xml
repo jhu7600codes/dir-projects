@@ -17,8 +17,13 @@
         <!-- Nested ConstraintLayout purely so dimensionRatio can size the
              PlayerView to 16:9 off the full screen width; the outer
              FrameLayout then wraps to that height so the ProgressBar/skip
-             chip below can overlay it with plain gravity. -->
+             chip below can overlay it with plain gravity. In fullscreen
+             (PlayerActivity.setFullscreen()) this and playerView both get
+             switched to MATCH_PARENT/no-ratio programmatically instead, so
+             the video fills the whole landscape screen rather than staying
+             16:9-boxed. -->
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/playerViewWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -59,6 +64,7 @@
     </FrameLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/detailsScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

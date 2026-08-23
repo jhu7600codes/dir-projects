@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.ui
 
+import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -7,14 +8,24 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 import com.jhulian.android.youtube.classic.R
 import com.jhulian.android.youtube.classic.YtClassicApp
 import com.jhulian.android.youtube.classic.auth.LoginActivity
 import com.jhulian.android.youtube.classic.databinding.ActivityMainBinding
+import com.jhulian.android.youtube.classic.playback.PlaybackService
 import com.jhulian.android.youtube.classic.ui.common.VideoListFragment
 import com.jhulian.android.youtube.classic.ui.common.VideoListSource
 import com.jhulian.android.youtube.classic.ui.library.LibraryFragment
+import com.jhulian.android.youtube.classic.ui.player.PlayerActivity
 import com.jhulian.android.youtube.classic.ui.search.SearchActivity
 import com.jhulian.android.youtube.classic.ui.shorts.ShortsFragment
 
@@ -28,11 +39,15 @@ import com.jhulian.android.youtube.classic.ui.shorts.ShortsFragment
  * same "app remembers where you left off" behaviour that shipped alongside
  * this era's tab layout.
  */
+@UnstableApi
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val fragments = mutableMapOf<Int, Fragment>()
     private var activeTabId: Int = R.id.nav_home
+
+    private var miniPlayerControllerFuture: ListenableFuture<MediaController>? = null
+    private val miniPlayerController get() = miniPlayerControllerFuture?.takeIf { it.isDone }?.get()
 
     private val sessionManager get() = (application as YtClassicApp).sessionManager
 
@@ -52,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         }
         binding.actionAccount.setOnClickListener { showAccountMenu() }
         setUpLogoEasterEgg()
+        connectMiniPlayer()
 
         binding.bottomNav.setOnItemSelectedListener { item ->
             showTab(item.itemId)
@@ -80,6 +96,63 @@ class MainActivity : AppCompatActivity() {
 
         activeTabId = itemId
         updateToolbarForTab(itemId)
+        updateMiniPlayer()
+    }
+
+    /**
+     * Docked mini player - the thing that's missing when you back out of
+     * `PlayerActivity` while a video keeps playing in the background
+     * (that background playback itself already worked; there was just no
+     * on-screen way to see or control it without reopening the full
+     * player). Connects its own `MediaController` to the same
+     * [PlaybackService] session `PlayerActivity`/`ShortsFragment` use, so
+     * it reflects whatever any of them started playing.
+     */
+    private fun connectMiniPlayer() {
+        binding.miniPlayer.setOnClickListener {
+            val url = miniPlayerController?.currentMediaItem?.mediaId
+            if (!url.isNullOrBlank()) PlayerActivity.start(this, url)
+        }
+        binding.miniPlayerPlayPause.setOnClickListener {
+            val controller = miniPlayerController ?: return@setOnClickListener
+            if (controller.isPlaying) controller.pause() else controller.play()
+        }
+        binding.miniPlayerClose.setOnClickListener {
+            miniPlayerController?.stop()
+            miniPlayerController?.clearMediaItems()
+            updateMiniPlayer()
+        }
+
+        val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
+        val future = MediaController.Builder(this, token).buildAsync()
+        miniPlayerControllerFuture = future
+        future.addListener(
+            {
+                future.get().addListener(
+                    object : Player.Listener {
+                        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = updateMiniPlayer()
+                        override fun onIsPlayingChanged(isPlaying: Boolean) = updateMiniPlayer()
+                        override fun onPlaybackStateChanged(playbackState: Int) = updateMiniPlayer()
+                    },
+                )
+                updateMiniPlayer()
+            },
+            MoreExecutors.directExecutor(),
+        )
+    }
+
+    private fun updateMiniPlayer() {
+        val controller = miniPlayerController
+        val item = controller?.currentMediaItem
+        // Shorts already shows its video full-bleed on its own tab - a
+        // docked bar on top of that would just be a redundant duplicate.
+        val show = item != null && controller.playbackState != Player.STATE_IDLE && activeTabId != R.id.nav_shorts
+        binding.miniPlayer.visibility = if (show) View.VISIBLE else View.GONE
+        if (!show || item == null) return
+
+        binding.miniPlayerTitle.text = item.mediaMetadata.title
+        Glide.with(binding.miniPlayerThumbnail).load(item.mediaMetadata.artworkUri).into(binding.miniPlayerThumbnail)
+        binding.miniPlayerPlayPause.setImageResource(if (controller.isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow)
     }
 
     private fun createFragment(itemId: Int): Fragment = when (itemId) {
@@ -160,6 +233,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         popup.show()
+    }
+
+    override fun onDestroy() {
+        miniPlayerControllerFuture?.let { MediaController.releaseFuture(it) }
+        super.onDestroy()
     }
 
     companion object {

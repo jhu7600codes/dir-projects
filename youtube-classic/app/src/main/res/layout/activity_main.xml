@@ -99,6 +99,65 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+    <!-- Docked mini player: shown whenever the shared PlaybackService
+         session has an active video and the Shorts tab (which already
+         shows its video full-bleed) isn't the one on screen - see
+         MainActivity.updateMiniPlayer(). Tapping it reopens the full
+         PlayerActivity for whatever's playing; close stops playback
+         outright rather than just hiding the bar. -->
+    <LinearLayout
+        android:id="@+id/miniPlayer"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/yt_surface"
+        android:elevation="4dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/miniPlayerThumbnail"
+            android:layout_width="96dp"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@color/yt_chip_background"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/miniPlayerTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="12dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@color/yt_text_primary"
+            android:textSize="13sp"
+            tools:text="Mini player video title goes here" />
+
+        <ImageButton
+            android:id="@+id/miniPlayerPlayPause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="10dp"
+            android:src="@drawable/ic_pause"
+            app:tint="@color/yt_icon"
+            android:contentDescription="@string/action_more" />
+
+        <ImageButton
+            android:id="@+id/miniPlayerClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="10dp"
+            android:src="@drawable/ic_close"
+            android:contentDescription="@string/action_more" />
+
+    </LinearLayout>
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

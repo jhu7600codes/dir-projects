@@ -54,20 +54,32 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    Library swap between dedicated outline/filled-red drawables by selection
    state, while Subscriptions is a fixed-red glyph that never changes
    color. The player's controls are a custom Media3 `PlayerControlView`
-   layout matching the real 2019 chrome: a top bar (back / title /
-   overflow) rather than a generic transport bar, a single center
-   play/pause target, and no dedicated rewind/forward buttons - skipping
-   back/forward 10s is a double-tap on either half of the screen (see the
+   layout matching a real 2019 player screenshot: a top bar (back / title /
+   overflow) instead of a generic transport bar, and a center play/pause
+   flanked by -10s/+10s buttons at a modest gap (not glued to the screen
+   edges - that was a separate, earlier bug, see below) rather than a
+   dedicated skip-to-previous/next pair. Double-tapping either half of the
+   screen does the same 10s skip as a second option (see the
    `GestureDetector` in `PlayerActivity.setUpPlayerTopBarAndGestures()`),
-   same as the real app. Reserved ids (`@id/exo_play_pause`,
-   `@id/exo_progress`, etc.) must reference the *library's* pre-declared
-   ids, never `@+id/exo_play_pause`, or PlayerControlView's Java code can't
-   find them and the controls end up unwired and mispositioned (this was a
-   real bug, caught from a device screenshot - see git history). Video
-   descriptions and comments are rendered through
-   `HtmlCompat.fromHtml(..., FROM_HTML_MODE_LEGACY)` rather than shown raw,
-   since YouTube's innertube responses embed real HTML (`<br>`, `<a href>`)
-   in that text.
+   matching the fact that real YouTube versions have shipped both at once.
+   Reserved ids (`@id/exo_play_pause`, `@id/exo_progress`, etc.) must
+   reference the *library's* pre-declared ids, never `@+id/exo_play_pause`,
+   or PlayerControlView's Java code can't find them and the controls end up
+   unwired and mispositioned (this was a real bug, caught from a device
+   screenshot - see git history) - the rewind/forward buttons are a
+   deliberate exception: they're plain app-local ids
+   (`playerRewindButton`/`playerForwardButton`), wired manually in
+   `PlayerActivity`, because Media3's auto-wired `exo_rew`/`exo_ffwd` ids
+   only exist on its *legacy* separate-play/pause controller layout, not
+   the modern combined-`exo_play_pause` one this app uses. Tapping the
+   fullscreen button actually goes fullscreen now (rotates to landscape,
+   hides the system bars, and expands the video off its normal 16:9 box to
+   fill the screen - see `PlayerActivity.setFullscreen()`); previously the
+   button was inert since nothing had ever registered
+   `PlayerView.setFullscreenButtonClickListener`. Video descriptions and
+   comments are rendered through `HtmlCompat.fromHtml(...,
+   FROM_HTML_MODE_LEGACY)` rather than shown raw, since YouTube's innertube
+   responses embed real HTML (`<br>`, `<a href>`) in that text.
 4. **Dark mode**: `Theme.YtClassic` is `DayNight` and follows the system
    theme; `values-night/` supplies the dark palette (colors, chip
    backgrounds, dividers, status bar) and icon tinting is driven off a
@@ -93,6 +105,19 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    actually survives session IPC). Downloads
    (`download/DownloadService.kt`) pull both tracks to disk and mux them
    into one playable mp4 with Android's `MediaMuxer` - no ffmpeg/native code.
+8. **Mini player**: background playback above already kept a video going
+   after leaving `PlayerActivity`, but there was no on-screen way to see or
+   control it without reopening the full player - `MainActivity` now docks
+   a small bar above the bottom nav (thumbnail, title, play/pause, close)
+   whenever the shared `PlaybackService` session has something active,
+   connecting its own `MediaController` to that same session
+   (`MainActivity.connectMiniPlayer()`/`updateMiniPlayer()`) rather than
+   tracking playback state itself. Hidden while the Shorts tab is showing,
+   since that already renders its video full-bleed. Tapping it reopens
+   `PlayerActivity` for whatever's playing, using the `MediaItem`'s
+   `mediaId` - `StreamSelector.buildMediaItem()` now sets that to the
+   original watch-page URL (plus title/artwork in `mediaMetadata`) for
+   exactly this, alongside the stream URL itself.
 
 ## Known gaps / where to look if something's off
 

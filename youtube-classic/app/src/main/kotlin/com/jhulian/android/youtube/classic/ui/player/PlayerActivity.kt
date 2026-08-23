@@ -3,16 +3,25 @@ package com.jhulian.android.youtube.classic.ui.player
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
@@ -54,6 +63,11 @@ class PlayerActivity : AppCompatActivity() {
 
     private var playerTitleText: TextView? = null
     private lateinit var seekGestureDetector: GestureDetector
+    private var isFullscreen = false
+
+    private val fullscreenBackCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() = setFullscreen(false)
+    }
 
     private val sessionManager get() = (application as YtClassicApp).sessionManager
 
@@ -62,6 +76,7 @@ class PlayerActivity : AppCompatActivity() {
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        onBackPressedDispatcher.addCallback(this, fullscreenBackCallback)
         setUpPlayerTopBarAndGestures()
 
         localFilePath = intent.getStringExtra(EXTRA_LOCAL_FILE_PATH)
@@ -124,6 +139,14 @@ class PlayerActivity : AppCompatActivity() {
             }.show()
         }
 
+        binding.playerView.findViewById<ImageButton>(R.id.playerRewindButton)?.setOnClickListener {
+            controller?.seekBack()
+        }
+        binding.playerView.findViewById<ImageButton>(R.id.playerForwardButton)?.setOnClickListener {
+            controller?.seekForward()
+        }
+        binding.playerView.setFullscreenButtonClickListener { fullscreen -> setFullscreen(fullscreen) }
+
         seekGestureDetector = GestureDetector(
             this,
             object : GestureDetector.SimpleOnGestureListener() {
@@ -144,6 +167,78 @@ class PlayerActivity : AppCompatActivity() {
         binding.playerView.setOnTouchListener { _, event ->
             seekGestureDetector.onTouchEvent(event)
             false // Let PlayerView still handle single taps to show/hide its controller.
+        }
+    }
+
+    /**
+     * There's no automatic "fullscreen" behavior from PlayerView/PlayerControlView
+     * beyond forwarding the button tap (confirmed via javap on media3-ui:
+     * `setFullscreenButtonClickListener` exists, but there's no matching
+     * "do the resize for me" call) - everything here (orientation, system
+     * bars, and swapping the video from a 16:9 box to filling the screen)
+     * is this app's own job.
+     */
+    private fun setFullscreen(fullscreen: Boolean) {
+        isFullscreen = fullscreen
+        fullscreenBackCallback.isEnabled = fullscreen
+        requestedOrientation = if (fullscreen) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+        setImmersiveMode(fullscreen)
+
+        binding.detailsScrollView.visibility = if (fullscreen) View.GONE else View.VISIBLE
+
+        val containerParams = binding.playerContainer.layoutParams as LinearLayout.LayoutParams
+        containerParams.height = if (fullscreen) 0 else ViewGroup.LayoutParams.WRAP_CONTENT
+        containerParams.weight = if (fullscreen) 1f else 0f
+        binding.playerContainer.layoutParams = containerParams
+
+        val wrapperParams = binding.playerViewWrapper.layoutParams
+        wrapperParams.height = if (fullscreen) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT
+        binding.playerViewWrapper.layoutParams = wrapperParams
+
+        val playerViewParams = binding.playerView.layoutParams as ConstraintLayout.LayoutParams
+        if (fullscreen) {
+            playerViewParams.width = ConstraintLayout.LayoutParams.MATCH_PARENT
+            playerViewParams.height = ConstraintLayout.LayoutParams.MATCH_PARENT
+            playerViewParams.dimensionRatio = null
+        } else {
+            playerViewParams.width = 0
+            playerViewParams.height = 0
+            playerViewParams.dimensionRatio = "16:9"
+        }
+        binding.playerView.layoutParams = playerViewParams
+
+        // exo_fullscreen is a media3-ui id, not one of this app module's own -
+        // with nonTransitiveRClass, that means androidx.media3.ui.R.id here,
+        // not (this file's already-imported) com.jhulian.android.youtube.classic.R.id.
+        binding.playerView.findViewById<ImageButton>(androidx.media3.ui.R.id.exo_fullscreen)?.setImageResource(
+            if (fullscreen) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen,
+        )
+    }
+
+    private fun setImmersiveMode(immersive: Boolean) {
+        val insetsController = WindowCompat.getInsetsController(window, binding.root)
+        if (immersive) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            insetsController.hide(WindowInsetsCompat.Type.systemBars())
+            insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        } else {
+            WindowCompat.setDecorFitsSystemWindows(window, true)
+            insetsController.show(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Manually rotating the device (rather than tapping the fullscreen
+        // button) should behave the same way the real app does - landscape
+        // means fullscreen, portrait means the normal embedded player.
+        when (newConfig.orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> if (!isFullscreen) setFullscreen(true)
+            Configuration.ORIENTATION_PORTRAIT -> if (isFullscreen) setFullscreen(false)
         }
     }
 

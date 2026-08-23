@@ -3,15 +3,22 @@
      app:controller_layout_id on the PlayerView in activity_player.xml.
      Reserved ids (exo_play_pause, exo_progress, exo_position, exo_duration,
      exo_fullscreen) MUST use "@id/..." here, never "@+id/..." - see the
-     kdoc this replaced in git history for why.
+     kdoc this replaced in git history for why. playerRewindButton/
+     playerForwardButton are plain "@+id/..." app ids, not the library's
+     "exo_rew"/"exo_ffwd" - those two are only auto-wired on the *legacy*
+     exo_legacy_player_control_view.xml layout (the one with separate
+     exo_play/exo_pause ids); this layout uses the modern combined
+     exo_play_pause id instead, so PlayerControlView never looks for a
+     plain exo_rew/exo_ffwd here. Wired manually in
+     PlayerActivity.setUpPlayerTopBarAndGestures() instead - same as the
+     top bar's back/overflow buttons just below.
 
-     The real 2019 player didn't have dedicated rewind/forward buttons
-     flanking play/pause - just a big center tap target and double-tap
-     zones on either side of the screen to skip back/forward (wired up in
-     PlayerActivity via a GestureDetector, not here), plus a top bar with
-     back/title/overflow that shows and hides with the rest of the
-     controls. This layout matches that instead of a generic media-player
-     transport bar. -->
+     Matches a real 2019-era player screenshot: a center play/pause
+     flanked by -10s/+10s buttons at a modest gap (not glued to the screen
+     edges - that was an earlier, unrelated bug, see git history), plus
+     the double-tap zones on either half of the screen as a second way to
+     do the same 10s skip (wired up in PlayerActivity via a
+     GestureDetector, not here). -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
@@ -61,14 +68,40 @@
 
     </LinearLayout>
 
-    <ImageButton
-        android:id="@id/exo_play_pause"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="@android:color/transparent"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_play_arrow" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/playerRewindButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="28dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_fast_rewind" />
+
+        <ImageButton
+            android:id="@id/exo_play_pause"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_play_arrow" />
+
+        <ImageButton
+            android:id="@+id/playerForwardButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="28dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_fast_forward" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
