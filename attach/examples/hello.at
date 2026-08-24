@@ -1,0 +1,5 @@
+attach Babel
+
+Babel create GREETING
+    message meadow Import &3
+    print message

@@ -1,0 +1,11 @@
+attach Babel
+attach ALang
+
+import class BabelAlang
+    Babel create PNG
+        pngClass meadow Import &5
+    AttachList to ALangModList
+        notice "Babel"
+            print "idfk why it doesnt work babel is here"
+        notice "No Attach Modules Found"
+            print ALangModList
