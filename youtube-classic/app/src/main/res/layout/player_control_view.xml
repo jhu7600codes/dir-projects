@@ -5,21 +5,25 @@
      exo_fullscreen) MUST use "@id/..." here, never "@+id/..." - see the
      kdoc this replaced in git history for why.
 
-     Matches a real device screenshot pixel-for-pixel rather than a generic
-     transport bar: NO dim/scrim over the video at all (confirmed by
-     sampling actual pixel values - the video shows through completely
-     undimmed); a top row with no background of its own, sitting directly
-     on the video, where the collapse/back icon and title/channel text are
-     literally solid black (again, sampled pixel values, not a guess) and
-     only the caption/settings icons on the right are white; and a bottom
-     info+scrubber block that DOES sit on a solid black bar, unlike the
-     top. Real YouTube accepts that a black title can be low-contrast on a
-     dark video - this matches that trade-off rather than "fixing" it with
-     an invented scrim, since the ask here is to reproduce the real
-     design, not improve on it. -->
+     No dim over the *whole* video (confirmed by sampling actual pixel
+     values off a real screenshot - the video shows through completely
+     undimmed away from the top/bottom bars), but the top row does get a
+     light gradient scrim of its own behind it (`scrim_top.xml`) for the
+     same reason the bottom bar sits on a solid black one: white text
+     needs *something* behind it on a bright video. (An earlier round
+     tried literal black top-bar text/icons with no scrim at all, matched
+     off a real screenshot at the time - turned out that screenshot was
+     from a modified/patched YouTube build with a real display bug, not
+     the actual design, so that's reverted back to plain white here.) -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_gravity="top"
+        android:background="@drawable/scrim_top" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -37,7 +41,7 @@
             android:background="@android:color/transparent"
             android:contentDescription="@null"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@android:color/black" />
+            app:tint="@android:color/white" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -52,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textStyle="bold"
                 android:textSize="16sp"
                 tools:text="Video title" />
@@ -63,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="#4D4D4D"
+                android:textColor="#E6FFFFFF"
                 android:textSize="12sp"
                 tools:text="Channel name" />
 

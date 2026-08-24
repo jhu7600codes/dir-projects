@@ -54,33 +54,38 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    Library swap between dedicated outline/filled-red drawables by selection
    state, while Subscriptions is a fixed-red glyph that never changes
    color. The player's controls are a custom Media3 `PlayerControlView`
-   layout matching real device screenshots pixel-for-pixel rather than a
-   generic transport bar - sampled actual pixel values off them rather than
-   eyeballing, since that's what caught the previous round still reading as
-   "generic ExoPlayer" despite an already-custom layout:
-   - No dim/scrim over the video at all - the sampled pixels showed the
-     video completely undimmed behind the controls.
-   - The top row has no background of its own and sits directly on the
-     video: the collapse/back icon and title/channel text are literally
-     solid black (again, sampled, not guessed), while only the
-     captions/settings icons on the right are white. Real YouTube accepts
-     the contrast risk that comes with a fixed black title on unpredictable
-     video content rather than adding a scrim - this matches that
-     trade-off instead of "fixing" it.
-   - The bottom info row + scrubber *does* sit on a solid black bar, unlike
-     the top - `exo_position`/`exo_duration` plus a manually-updated
-     current-quality label sit in one row above a full-width, edge-to-edge
-     `exo_progress`, with `exo_fullscreen` at the row's end.
+   layout, iterated against several real device screenshots rather than a
+   generic transport bar:
+   - The top row sits directly on the video with a light gradient scrim of
+     its own (`drawable/scrim_top.xml`) behind white title/channel text and
+     white back/captions/settings icons - not the plain black text this
+     screen briefly had with no scrim at all, which turned out to be
+     matched off a screenshot from a modified/patched YouTube build with a
+     genuine display bug, not the real design.
+   - The bottom info row + scrubber sits on its own solid black bar -
+     `exo_position`/`exo_duration` plus a manually-updated current-quality
+     label in one row above a full-width, edge-to-edge `exo_progress`,
+     with `exo_fullscreen` at the row's end.
    - A *single* center play/pause, no flanking rewind/forward buttons (an
      earlier round added some off an ambiguous reference image that turned
      out to be a different feature's mockup, not the base player).
      Double-tapping either half of the screen does a 10s skip instead (see
      the `GestureDetector` in `PlayerActivity.setUpPlayerTopBarAndGestures()`).
-     The button itself is a solid white circle with a dark glyph
+     The button is a solid white circle with a dark glyph
      (`drawable/bg_circle_white.xml`) rather than a bare icon with nothing
-     behind it - that flat-icon-on-nothing look is what stock, unstyled
-     Media3/ExoPlayer controls default to, and was the concrete reason the
-     screen still read as ExoPlayer rather than YouTube.
+     behind it - matching a real device screenshot cropped down to just
+     that button - but PlayerControlView's Java overwrites `exo_play_pause`'s
+     *icon* on every state change with its own bundled
+     `exo_styled_controls_play`/`_pause` drawables (a solid circle with the
+     glyph cut out of it as one path, not a plain glyph), regardless of
+     this layout's `android:src` - so a black tint on that combined
+     drawable rendered as an inverted black-circle-white-holes button
+     sitting *inside* our own white circle background, instead of the
+     intended white-circle-black-glyph look. `drawable/exo_styled_controls_play.xml`
+     and `_pause.xml` in this app override those two library resource
+     names outright (AGP's resource merger lets an app module's drawable
+     of the same name win over a library's) with plain glyphs, so our
+     background + tint actually apply the way the XML says.
 
    Reserved ids (`@id/exo_play_pause`, `@id/exo_progress`, etc.) must
    reference the *library's* pre-declared ids, never `@+id/exo_play_pause`,
