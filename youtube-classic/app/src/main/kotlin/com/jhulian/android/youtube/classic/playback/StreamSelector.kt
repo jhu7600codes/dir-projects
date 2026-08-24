@@ -3,6 +3,7 @@ package com.jhulian.android.youtube.classic.playback
 import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -30,12 +31,14 @@ object StreamSelector {
             .setTitle(info.name)
             .setArtworkUri(info.thumbnails.maxByOrNull { it.height }?.url?.let { Uri.parse(it) })
             .build()
+        val subtitles = subtitleConfigurations(info)
 
         info.hlsUrl?.takeIf { it.isNotBlank() }?.let { hlsUrl ->
             return MediaItem.Builder()
                 .setUri(hlsUrl)
                 .setMediaId(info.url)
                 .setMediaMetadata(metadata)
+                .setSubtitleConfigurations(subtitles)
                 .build()
         }
 
@@ -47,6 +50,7 @@ object StreamSelector {
                 .setUri(progressive.content)
                 .setMediaId(info.url)
                 .setMediaMetadata(metadata)
+                .setSubtitleConfigurations(subtitles)
                 .build()
         }
 
@@ -57,6 +61,7 @@ object StreamSelector {
             .setUri(videoOnly.content)
             .setMediaId(info.url)
             .setMediaMetadata(metadata)
+            .setSubtitleConfigurations(subtitles)
             .setRequestMetadata(
                 MediaItem.RequestMetadata.Builder()
                     .setExtras(
@@ -68,6 +73,30 @@ object StreamSelector {
             )
             .build()
     }
+
+    /**
+     * The CC button in the player reads these off the prepared `Player`'s
+     * text track group, toggling them on/off via `trackSelectionParameters`
+     * rather than rebuilding the MediaItem - see
+     * `PlayerActivity.toggleCaptions()`. Off by default: Media3's default
+     * track selector doesn't auto-select a text track just because one is
+     * present.
+     */
+    private fun subtitleConfigurations(info: StreamInfo): List<MediaItem.SubtitleConfiguration> =
+        info.subtitles.orEmpty().mapNotNull { subtitle ->
+            val uri = subtitle.content.takeIf { it.isNotBlank() }?.let { Uri.parse(it) } ?: return@mapNotNull null
+            val mimeType = when (subtitle.extension.lowercase()) {
+                "vtt" -> MimeTypes.TEXT_VTT
+                "ttml" -> MimeTypes.APPLICATION_TTML
+                "srt", "srv1", "srv2", "srv3" -> MimeTypes.APPLICATION_SUBRIP
+                else -> return@mapNotNull null
+            }
+            MediaItem.SubtitleConfiguration.Builder(uri)
+                .setMimeType(mimeType)
+                .setLanguage(subtitle.languageTag)
+                .setLabel(subtitle.displayLanguageName)
+                .build()
+        }
 
     fun bestVideoOnly(info: StreamInfo, maxHeight: Int): VideoStream? =
         info.videoOnlyStreams

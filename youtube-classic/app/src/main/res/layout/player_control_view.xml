@@ -5,25 +5,21 @@
      exo_fullscreen) MUST use "@id/..." here, never "@+id/..." - see the
      kdoc this replaced in git history for why.
 
-     A prior round here added -10s/+10s buttons flanking play/pause off an
-     ambiguous reference screenshot (a chapters-feature mockup that turned
-     out not to be the base player chrome). A real device screenshot of
-     the actual app - fullscreen, controls visible, single video tapped -
-     shows just ONE control: a solid white circle with a dark play/pause
-     glyph, no flanking buttons at all. That's also the fix for looking
-     like "generic ExoPlayer": stock ExoPlayer/media3-ui draws play/pause
-     as a bare icon with no shape behind it - the solid white chip
-     (bg_circle_white.xml) is the actual, real, distinctly-YouTube look.
-     10s skip is double-tap on either half of the screen only (wired up in
-     PlayerActivity via a GestureDetector, not here). -->
+     Matches a real device screenshot pixel-for-pixel rather than a generic
+     transport bar: NO dim/scrim over the video at all (confirmed by
+     sampling actual pixel values - the video shows through completely
+     undimmed); a top row with no background of its own, sitting directly
+     on the video, where the collapse/back icon and title/channel text are
+     literally solid black (again, sampled pixel values, not a guess) and
+     only the caption/settings icons on the right are white; and a bottom
+     info+scrubber block that DOES sit on a solid black bar, unlike the
+     top. Real YouTube accepts that a black title can be low-contrast on a
+     dark video - this matches that trade-off rather than "fixing" it with
+     an invented scrim, since the ask here is to reproduce the real
+     design, not improve on it. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#4D000000" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,8 +27,8 @@
         android:layout_gravity="top"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#66000000"
-        android:paddingHorizontal="4dp">
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="6dp">
 
         <ImageButton
             android:id="@+id/playerBackButton"
@@ -41,26 +37,53 @@
             android:background="@android:color/transparent"
             android:contentDescription="@null"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@android:color/white" />
+            app:tint="@android:color/black" />
 
-        <TextView
-            android:id="@+id/playerTitleText"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            tools:text="Video title" />
+            android:layout_marginStart="4dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/playerTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                tools:text="Video title" />
+
+            <TextView
+                android:id="@+id/playerChannelText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="#4D4D4D"
+                android:textSize="12sp"
+                tools:text="Channel name" />
+
+        </LinearLayout>
 
         <ImageButton
-            android:id="@+id/playerOverflowButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:id="@+id/playerCaptionsButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@android:color/transparent"
             android:contentDescription="@null"
-            android:src="@drawable/ic_more_vert"
+            android:src="@drawable/ic_closed_caption" />
+
+        <ImageButton
+            android:id="@+id/playerSettingsButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_settings"
             app:tint="@android:color/white" />
 
     </LinearLayout>
@@ -72,53 +95,85 @@
         android:layout_gravity="center"
         android:background="@drawable/bg_circle_white"
         android:contentDescription="@null"
+        android:padding="14dp"
         android:src="@drawable/ic_play_arrow"
-        app:tint="#1F1F1F" />
+        app:tint="@android:color/black" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="8dp">
+        android:orientation="vertical"
+        android:background="#CC000000">
 
-        <TextView
-            android:id="@id/exo_position"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            tools:text="0:42" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="4dp">
+
+            <TextView
+                android:id="@id/exo_position"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                tools:text="0:15" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/player_time_separator"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@id/exo_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                tools:text="13:34" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/player_quality_separator"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/playerQualityText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                tools:text="720p" />
+
+            <ImageButton
+                android:id="@id/exo_fullscreen"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_fullscreen"
+                app:tint="@android:color/white" />
+
+        </LinearLayout>
 
         <androidx.media3.ui.DefaultTimeBar
             android:id="@id/exo_progress"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="4dp"
             app:played_color="@color/yt_scrubber_played"
             app:buffered_color="@color/yt_scrubber_buffered"
             app:unplayed_color="@color/yt_scrubber_background"
             app:scrubber_color="@color/yt_scrubber_played"
             app:ad_marker_color="@color/sponsorblock_segment"
             app:played_ad_marker_color="@color/sponsorblock_segment" />
-
-        <TextView
-            android:id="@id/exo_duration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            tools:text="10:00" />
-
-        <ImageButton
-            android:id="@id/exo_fullscreen"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_fullscreen" />
 
     </LinearLayout>
 

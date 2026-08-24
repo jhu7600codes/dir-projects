@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.playback
 
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -10,6 +11,7 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import okhttp3.OkHttpClient
@@ -61,7 +63,17 @@ class PlaybackService : MediaSessionService() {
                     val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
                     val audioSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                         .createMediaSource(MediaItem.fromUri(audioUrl))
-                    MergingMediaSource(videoSource, audioSource)
+                    // Going through ProgressiveMediaSource.Factory directly
+                    // (rather than defaultFactory) for the video track means
+                    // the subtitle configs on mediaItem DON'T get picked up
+                    // automatically the way DefaultMediaSourceFactory would -
+                    // that merging is DefaultMediaSourceFactory's own logic,
+                    // not something every leaf factory does. Do it by hand so
+                    // captions still work on this (very common - anything
+                    // above progressive-stream quality) playback path too.
+                    val subtitleSources = mediaItem.localConfiguration?.subtitleConfigurations.orEmpty()
+                        .map { SingleSampleMediaSource.Factory(dataSourceFactory).createMediaSource(it, C.TIME_UNSET) }
+                    MergingMediaSource(videoSource, audioSource, *subtitleSources.toTypedArray())
                 }
             }
         }

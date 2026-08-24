@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.GestureDetector
@@ -24,6 +25,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -62,8 +64,12 @@ class PlayerActivity : AppCompatActivity() {
     private var localFilePath: String? = null
 
     private var playerTitleText: TextView? = null
+    private var playerChannelText: TextView? = null
+    private var playerQualityText: TextView? = null
     private lateinit var seekGestureDetector: GestureDetector
     private var isFullscreen = false
+    private var currentMaxHeight = 0
+    private var captionsEnabled = false
 
     private val fullscreenBackCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() = setFullscreen(false)
@@ -115,31 +121,32 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     /**
-     * The controller layout's back/title/overflow row, the fullscreen
-     * button, and the double-tap-to-seek zones - there's no dedicated
-     * rewind/forward button in the real app, just double-tap (confirmed
-     * against a real device screenshot: fullscreen, controls up, and the
-     * only control on screen is the single center play/pause).
+     * The controller layout's top row (back/title-channel/captions/settings),
+     * the fullscreen button, and the double-tap-to-seek zones - there's no
+     * dedicated rewind/forward button in the real app, just double-tap
+     * (confirmed against a real device screenshot: fullscreen, controls up,
+     * and the only control on screen is the single center play/pause).
      * `playerView.findViewById` works here because PlayerView inflates its
      * controller layout synchronously as part of its own view
      * construction, which has already happened by the time
      * `setContentView`/binding.inflate returns.
+     *
+     * Settings opens a quality picker, not a share/download menu - those
+     * already have their own home in the action-chip row below the video
+     * (`actionShare`/`actionDownload`), matching the real app rather than
+     * duplicating them up here.
      */
     private fun setUpPlayerTopBarAndGestures() {
         binding.playerView.findViewById<ImageButton>(R.id.playerBackButton)?.setOnClickListener { finish() }
         playerTitleText = binding.playerView.findViewById(R.id.playerTitleText)
-        binding.playerView.findViewById<ImageButton>(R.id.playerOverflowButton)?.setOnClickListener { anchor ->
-            PopupMenu(this, anchor).apply {
-                menu.add(getString(R.string.download_video))
-                menu.add(getString(R.string.action_more))
-                setOnMenuItemClickListener { item ->
-                    when (item.title) {
-                        getString(R.string.download_video) -> startDownload()
-                        else -> viewModel.state.value.streamInfo?.url?.let { shareVideo(it) }
-                    }
-                    true
-                }
-            }.show()
+        playerChannelText = binding.playerView.findViewById(R.id.playerChannelText)
+        playerQualityText = binding.playerView.findViewById(R.id.playerQualityText)
+
+        binding.playerView.findViewById<ImageButton>(R.id.playerSettingsButton)?.setOnClickListener { anchor ->
+            showQualityMenu(anchor)
+        }
+        binding.playerView.findViewById<ImageButton>(R.id.playerCaptionsButton)?.setOnClickListener {
+            toggleCaptions()
         }
 
         binding.playerView.setFullscreenButtonClickListener { fullscreen -> setFullscreen(fullscreen) }
@@ -214,6 +221,19 @@ class PlayerActivity : AppCompatActivity() {
         binding.playerView.findViewById<ImageButton>(androidx.media3.ui.R.id.exo_fullscreen)?.setImageResource(
             if (fullscreen) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen,
         )
+
+        // The top-left icon means two different things depending on mode,
+        // same as the real app: a down-chevron that just collapses out of
+        // fullscreen, vs a back arrow that exits the screen entirely.
+        binding.playerView.findViewById<ImageButton>(R.id.playerBackButton)?.apply {
+            if (fullscreen) {
+                setImageResource(R.drawable.ic_expand_more)
+                setOnClickListener { setFullscreen(false) }
+            } else {
+                setImageResource(R.drawable.ic_arrow_back)
+                setOnClickListener { finish() }
+            }
+        }
     }
 
     private fun setImmersiveMode(immersive: Boolean) {
@@ -276,10 +296,12 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         mediaItemLoaded = true
+        currentMaxHeight = maxHeight
         player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
         binding.playerProgress.visibility = View.GONE
+        updateQualityLabel(resolveActualHeight(info, maxHeight))
 
         sponsorBlockController = SponsorBlockController(
             player = player,
@@ -298,6 +320,70 @@ class PlayerActivity : AppCompatActivity() {
         com.google.android.material.snackbar.Snackbar
             .make(binding.root, R.string.sponsor_segment_skipped, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
             .show()
+    }
+
+    private fun showQualityMenu(anchor: View) {
+        val info = viewModel.state.value.streamInfo ?: return
+        val heights = (info.videoStreams.orEmpty() + info.videoOnlyStreams.orEmpty())
+            .map { it.height }
+            .filter { it > 0 }
+            .distinct()
+            .sortedDescending()
+
+        PopupMenu(this, anchor).apply {
+            menu.add(0, 0, 0, "Auto")
+            heights.forEachIndexed { index, height -> menu.add(0, height, index + 1, "${height}p") }
+            menu.setGroupCheckable(0, true, true)
+            menu.findItem(currentMaxHeight)?.isChecked = true
+            setOnMenuItemClickListener { item -> switchQuality(item.itemId); true }
+        }.show()
+    }
+
+    /** menuItemId doubles as the target height here - 0 means "Auto" (no cap). */
+    private fun switchQuality(maxHeight: Int) {
+        val player = controller ?: return
+        val info = viewModel.state.value.streamInfo ?: return
+        val mediaItem = StreamSelector.buildMediaItem(info, maxHeight) ?: return
+
+        currentMaxHeight = maxHeight
+        val resumePosition = player.currentPosition
+        val wasPlaying = player.isPlaying
+        player.setMediaItem(mediaItem, resumePosition)
+        player.prepare()
+        if (wasPlaying) player.play()
+        updateQualityLabel(resolveActualHeight(info, maxHeight))
+    }
+
+    /** What height a given cap actually resolves to, for the "720p" label - "Auto" alone isn't useful there. */
+    private fun resolveActualHeight(info: StreamInfo, maxHeight: Int): Int {
+        StreamSelector.bestProgressive(info, maxHeight)?.let { return it.height }
+        return StreamSelector.bestVideoOnly(info, maxHeight)?.height ?: 0
+    }
+
+    private fun updateQualityLabel(height: Int) {
+        playerQualityText?.text = if (height > 0) "${height}p" else ""
+    }
+
+    /**
+     * Toggles the text track on/off via `trackSelectionParameters` rather
+     * than rebuilding the MediaItem - the subtitle configs are already
+     * attached (see `StreamSelector.subtitleConfigurations`), just not
+     * selected by default.
+     */
+    private fun toggleCaptions() {
+        val player = controller ?: return
+        val hasTextTrack = player.currentTracks.groups.any { it.type == C.TRACK_TYPE_TEXT }
+        if (!hasTextTrack) {
+            Toast.makeText(this, "No captions available for this video", Toast.LENGTH_SHORT).show()
+            return
+        }
+        captionsEnabled = !captionsEnabled
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !captionsEnabled)
+            .build()
+        binding.playerView.findViewById<ImageButton>(R.id.playerCaptionsButton)?.imageTintList = ColorStateList.valueOf(
+            resources.getColor(if (captionsEnabled) R.color.yt_red else android.R.color.white, theme),
+        )
     }
 
     private fun setupCommentsRecycler() {
@@ -464,6 +550,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun renderStreamInfo(info: StreamInfo) {
         binding.videoTitle.text = info.name
         playerTitleText?.text = info.name
+        playerChannelText?.text = info.uploaderName
         val metadataParts = listOfNotNull(
             if (info.viewCount >= 0) Formatters.viewCount(info.viewCount) else null,
             info.uploadDate?.offsetDateTime()?.let { Formatters.relativeTime(it.toEpochSecond()) }

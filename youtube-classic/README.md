@@ -54,32 +54,58 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    Library swap between dedicated outline/filled-red drawables by selection
    state, while Subscriptions is a fixed-red glyph that never changes
    color. The player's controls are a custom Media3 `PlayerControlView`
-   layout matching a real device screenshot (fullscreen, controls up, one
-   video tapped): a top bar (back / title / overflow) instead of a generic
-   transport bar, and a *single* center play/pause - no flanking
-   rewind/forward buttons (an earlier round added some off an ambiguous
-   reference image that turned out to be a different feature's mockup,
-   not the base player). Double-tapping either half of the screen does a
-   10s skip (see the `GestureDetector` in
-   `PlayerActivity.setUpPlayerTopBarAndGestures()`). The play/pause button
-   itself is a solid white circle with a dark glyph
-   (`drawable/bg_circle_white.xml`) rather than a bare icon with nothing
-   behind it - that flat-icon-on-a-dim-scrim look is what stock,
-   unstyled Media3/ExoPlayer controls look like by default, and was the
-   main reason an earlier version of this screen still read as "generic
-   ExoPlayer" rather than YouTube even after the top bar and layout were
-   already custom. Reserved ids (`@id/exo_play_pause`, `@id/exo_progress`,
-   etc.) must reference the *library's* pre-declared ids, never
-   `@+id/exo_play_pause`, or PlayerControlView's Java code can't find them
-   and the controls end up unwired and mispositioned (this was a real bug,
-   caught from a device screenshot - see git history). Tapping the
-   fullscreen button actually goes fullscreen now (rotates to landscape,
-   hides the system bars, and expands the video off its normal 16:9 box to
-   fill the screen - see `PlayerActivity.setFullscreen()`); previously the
-   button was inert since nothing had ever registered
-   `PlayerView.setFullscreenButtonClickListener`. Video descriptions and
-   comments are rendered through `HtmlCompat.fromHtml(...,
-   FROM_HTML_MODE_LEGACY)` rather than shown raw, since YouTube's innertube
+   layout matching real device screenshots pixel-for-pixel rather than a
+   generic transport bar - sampled actual pixel values off them rather than
+   eyeballing, since that's what caught the previous round still reading as
+   "generic ExoPlayer" despite an already-custom layout:
+   - No dim/scrim over the video at all - the sampled pixels showed the
+     video completely undimmed behind the controls.
+   - The top row has no background of its own and sits directly on the
+     video: the collapse/back icon and title/channel text are literally
+     solid black (again, sampled, not guessed), while only the
+     captions/settings icons on the right are white. Real YouTube accepts
+     the contrast risk that comes with a fixed black title on unpredictable
+     video content rather than adding a scrim - this matches that
+     trade-off instead of "fixing" it.
+   - The bottom info row + scrubber *does* sit on a solid black bar, unlike
+     the top - `exo_position`/`exo_duration` plus a manually-updated
+     current-quality label sit in one row above a full-width, edge-to-edge
+     `exo_progress`, with `exo_fullscreen` at the row's end.
+   - A *single* center play/pause, no flanking rewind/forward buttons (an
+     earlier round added some off an ambiguous reference image that turned
+     out to be a different feature's mockup, not the base player).
+     Double-tapping either half of the screen does a 10s skip instead (see
+     the `GestureDetector` in `PlayerActivity.setUpPlayerTopBarAndGestures()`).
+     The button itself is a solid white circle with a dark glyph
+     (`drawable/bg_circle_white.xml`) rather than a bare icon with nothing
+     behind it - that flat-icon-on-nothing look is what stock, unstyled
+     Media3/ExoPlayer controls default to, and was the concrete reason the
+     screen still read as ExoPlayer rather than YouTube.
+
+   Reserved ids (`@id/exo_play_pause`, `@id/exo_progress`, etc.) must
+   reference the *library's* pre-declared ids, never `@+id/exo_play_pause`,
+   or PlayerControlView's Java code can't find them and the controls end up
+   unwired and mispositioned (this was a real bug, caught from a device
+   screenshot - see git history). Tapping the fullscreen button actually
+   goes fullscreen now (rotates to landscape, hides the system bars, and
+   expands the video off its normal 16:9 box to fill the screen - see
+   `PlayerActivity.setFullscreen()`); previously the button was inert since
+   nothing had ever registered `PlayerView.setFullscreenButtonClickListener`.
+   The settings (gear) button opens a quality picker (`PlayerActivity.showQualityMenu()`)
+   rather than the share/download menu it opened before - those two already
+   have their own home in the action-chip row below the video, so nothing
+   was lost by moving them out of here. The captions button
+   (`PlayerActivity.toggleCaptions()`) toggles a real text track on/off via
+   `Player.trackSelectionParameters`, using subtitle URLs NewPipeExtractor
+   already exposes on `StreamInfo.subtitles` -
+   `StreamSelector.buildMediaItem()` attaches them (unselected by default)
+   to every `MediaItem` it builds, including on the merged video-only +
+   audio-only playback path, which needed its own manual
+   `SingleSampleMediaSource` merge since that path bypasses
+   `DefaultMediaSourceFactory`'s automatic subtitle handling (see
+   `PlaybackService.kt`). Video descriptions and comments are rendered
+   through `HtmlCompat.fromHtml(..., FROM_HTML_MODE_LEGACY)` rather than
+   shown raw, since YouTube's innertube
    responses embed real HTML (`<br>`, `<a href>`) in that text.
 4. **Dark mode**: `Theme.YtClassic` is `DayNight` and follows the system
    theme; `values-night/` supplies the dark palette (colors, chip

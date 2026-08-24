@@ -32,6 +32,9 @@
     <string name="subscribe">SUBSCRIBE</string>
     <string name="subscribed">SUBSCRIBED</string>
 
+    <string name="player_time_separator"> / </string>
+    <string name="player_quality_separator"> • </string>
+
     <string name="comments_header">%1$s Comments</string>
     <string name="comment_hint">Add a public comment…</string>
     <string name="comment_post">Comment</string>
