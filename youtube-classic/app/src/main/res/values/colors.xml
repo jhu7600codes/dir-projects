@@ -28,4 +28,18 @@
     <color name="sponsorblock_segment">#00D400</color>
     <color name="yt_player_background">#000000</color>
     <color name="yt_status_bar">#FFFFFF</color>
+
+    <!-- MainActivity2016's palette - the solid-red top bar era, before the
+         Sept-2016 white/bottom-nav redesign (see MainActivity2016's kdoc).
+         #DD0000 is color/red from a real YouTube v6.0.13 (2015-2016) APK's
+         compiled resources, not eyeballed off a screenshot. -->
+    <color name="yt_2016_red">#DD0000</color>
+    <color name="yt_2016_status_bar">#B71C1C</color>
+    <!-- The real tab-strip icons are ~40% opaque black when unselected
+         (sampled off the actual PNG's alpha channel) sitting on a plain
+         white strip, not a solid gray glyph - a solid gray looked wrong
+         next to the red selected color at the same strip position, so
+         this keeps the real alpha value instead of flattening it to an
+         opaque gray. -->
+    <color name="yt_2016_nav_unselected">#66000000</color>
 </resources>

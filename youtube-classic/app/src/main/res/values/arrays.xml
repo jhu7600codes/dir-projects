@@ -48,4 +48,13 @@
         <item>480p</item>
         <item>360p</item>
     </string-array>
+
+    <string-array name="ui_era_labels">
+        <item>2018-2019 (default)</item>
+        <item>2016 (experimental)</item>
+    </string-array>
+    <string-array name="ui_era_values">
+        <item>2019</item>
+        <item>2016</item>
+    </string-array>
 </resources>

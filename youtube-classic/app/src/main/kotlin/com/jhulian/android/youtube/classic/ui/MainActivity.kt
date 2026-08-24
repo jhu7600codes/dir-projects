@@ -13,6 +13,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import com.google.common.util.concurrent.ListenableFuture
@@ -53,6 +54,18 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // This Activity is still the app's actual launcher - MainActivity2016
+        // is a whole separate chrome (red top bar + tab strip instead of a
+        // bottom nav), not something this class's own layout branches into,
+        // so switching eras just means redirecting to it here before this
+        // Activity's own layout ever inflates.
+        if (PreferenceManager.getDefaultSharedPreferences(this).getString("pref_ui_era", "2019") == "2016") {
+            startActivity(Intent(this, MainActivity2016::class.java))
+            finish()
+            return
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -233,6 +246,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
         popup.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Catches switching the UI-era pref from Settings and backing out
+        // here rather than relaunching the app - onCreate()'s check alone
+        // only covers a cold start, since this Activity instance survives
+        // Settings and never re-runs onCreate() on its own. isFinishing
+        // guards against onCreate()'s own finish() call still letting this
+        // fire once more before the Activity actually goes away, which
+        // would otherwise launch a second MainActivity2016 on top.
+        if (!isFinishing && PreferenceManager.getDefaultSharedPreferences(this).getString("pref_ui_era", "2019") == "2016") {
+            startActivity(Intent(this, MainActivity2016::class.java))
+            finish()
+        }
     }
 
     override fun onDestroy() {

@@ -61,9 +61,16 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    screen with comments, all styled off 2019 Android app screenshots (white
    top bar, red accents only, square thumbnails). Icons were redrawn
    against an actual period screenshot rather than from memory - Home and
-   Library swap between dedicated outline/filled-red drawables by selection
-   state, while Subscriptions is a fixed-red glyph that never changes
-   color. The brand red itself is `#CD201F`, not a flat `#FF0000` - pulled
+   Library used to swap between an outline (unselected) and a differently-
+   shaped filled (selected) drawable, which wasn't actually how the real
+   app's tab icons work: a real APK teardown shows one plain white
+   alpha-mask PNG per tab, tinted red/gray by selection state, never a
+   different *shape*. Fixed to match - selected/unselected are the exact
+   same traced path now, just recolored, for Home/Trending (Subscriptions
+   is a fixed-red glyph that never changes color either way). `ic_share.xml`
+   was the three-connected-nodes Android share icon; the real app's
+   `ic_share.png` is the classic forward-arrow "swoosh" glyph instead. The
+   brand red itself is `#CD201F`, not a flat `#FF0000` - pulled
    directly from `color/youtube_red` in a real YouTube 14.34.54 APK's
    compiled resources (`aapt dump --values resources`, not eyeballed off a
    screenshot) - and the Subscriptions/Library tab glyphs were retraced off
@@ -188,6 +195,33 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    `mediaId` - `StreamSelector.buildMediaItem()` now sets that to the
    original watch-page URL (plus title/artwork in `mediaMetadata`) for
    exactly this, alongside the stream URL itself.
+9. **2016 UI toggle**: Settings → Appearance → UI style switches between
+   the 2018-2019 chrome above and a second one modeled on the app's
+   pre-Sept-2016 look - a solid red app bar with a tab-icon strip
+   (Home/Trending/Subscriptions/a star tab) directly under it instead of a
+   bottom nav, and no Shorts tab (Shorts didn't exist yet). Built as a
+   whole separate Activity (`ui/MainActivity2016.kt` +
+   `layout/activity_main_2016.xml`) sharing the same Fragments/ViewModels
+   as `MainActivity`, rather than one Activity branching on the setting -
+   the two chrome styles differ enough (top strip vs. bottom nav, a
+   dynamic per-tab title, no Shorts) that keeping them separate stays far
+   more readable. `MainActivity` is still the actual launcher Activity; it
+   (and `MainActivity2016`) redirect to each other in `onCreate()`/
+   `onResume()` based on the pref, so switching either direction from
+   Settings and backing out takes effect immediately without relaunching
+   the app. Every real detail (the app bar's `#DD0000` red, the tab strip
+   position, and the Home/Trending/Subscriptions/star icon shapes) came
+   from two real sources rather than a guess: a GSMArena article's
+   screenshot of this exact redesign, and a teardown of a real YouTube
+   v6.0.13 (2015-2016) APK from the Internet Archive's "YoutubePreV10"
+   collection - see `ic_2016_tab_*.xml` and `MainActivity2016`'s kdoc for
+   specifics, including a real surprise: that era's fourth tab icon
+   (`ic_tab_library.png` in that old APK) is genuinely a star, not a
+   folder or a play-box. One deliberate scope cut: the real Trending tab
+   back then also showed a row of colored category chips (Music/Gaming/
+   News/Live) under the strip - left out since there's no real
+   "trending by category" surface to back it with, rather than building
+   a decoration with nothing behind it.
 
 ## Known gaps / where to look if something's off
 

@@ -47,6 +47,14 @@ class VideoListViewModel(private val source: VideoListSource) : ViewModel() {
                     }
                     VideoListSource.Home -> loadFeed(isHome = true)
                     VideoListSource.Subscriptions -> loadFeed(isHome = false)
+                    VideoListSource.Trending -> {
+                        val page = YouTubeRepository.trending()
+                        nextPage = page.nextPage
+                        _state.value = VideoListUiState(
+                            items = page.items.map { it.toVideoUi() },
+                            canLoadMore = page.nextPage != null,
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "refresh() failed for $source", e)

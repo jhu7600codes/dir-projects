@@ -3,6 +3,7 @@
     <string name="app_name">YouTube Classic</string>
 
     <string name="tab_home">Home</string>
+    <string name="tab_trending">Trending</string>
     <string name="tab_shorts">Shorts</string>
     <string name="tab_subscriptions">Subscriptions</string>
     <string name="tab_library">Library</string>
@@ -50,6 +51,9 @@
 
     <string name="settings_title">Settings</string>
     <string name="settings_account">Account</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="pref_ui_era_title">UI style</string>
+    <string name="pref_ui_era_summary">Switch between the 2018-2019 bottom-nav look and an experimental 2016-era red-top-bar one. Restarts the app.</string>
     <string name="settings_general">General</string>
     <string name="settings_playback">Playback and downloads</string>
     <string name="settings_about">About</string>

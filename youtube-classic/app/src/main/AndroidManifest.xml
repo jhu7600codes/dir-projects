@@ -35,6 +35,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Not launcher-facing - MainActivity is still the app's real
+             entry point and redirects here itself when pref_ui_era is
+             "2016" (see MainActivity2016's kdoc). -->
+        <activity
+            android:name=".ui.MainActivity2016"
+            android:exported="false"
+            android:launchMode="singleTop" />
+
         <activity
             android:name=".ui.search.SearchActivity"
             android:exported="false"

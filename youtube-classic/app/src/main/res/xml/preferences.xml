@@ -9,6 +9,22 @@
             app:summary="@string/sign_in_prompt" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/settings_appearance">
+        <!-- Restarts into a different Activity entirely (MainActivity vs.
+             MainActivity2016) rather than one screen branching on this at
+             runtime - the two chrome styles (bottom nav vs. a red top bar
+             + tab strip) are different enough that keeping them as
+             separate Activities sharing the same Fragments is far less
+             error-prone than heavy conditional layout logic in one. -->
+        <ListPreference
+            app:key="pref_ui_era"
+            app:title="@string/pref_ui_era_title"
+            app:summary="@string/pref_ui_era_summary"
+            app:entries="@array/ui_era_labels"
+            app:entryValues="@array/ui_era_values"
+            app:defaultValue="2019" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/settings_playback">
         <SwitchPreferenceCompat
             app:key="pref_background_play"
