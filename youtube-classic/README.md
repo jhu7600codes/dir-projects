@@ -54,24 +54,25 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    Library swap between dedicated outline/filled-red drawables by selection
    state, while Subscriptions is a fixed-red glyph that never changes
    color. The player's controls are a custom Media3 `PlayerControlView`
-   layout matching a real 2019 player screenshot: a top bar (back / title /
-   overflow) instead of a generic transport bar, and a center play/pause
-   flanked by -10s/+10s buttons at a modest gap (not glued to the screen
-   edges - that was a separate, earlier bug, see below) rather than a
-   dedicated skip-to-previous/next pair. Double-tapping either half of the
-   screen does the same 10s skip as a second option (see the
-   `GestureDetector` in `PlayerActivity.setUpPlayerTopBarAndGestures()`),
-   matching the fact that real YouTube versions have shipped both at once.
-   Reserved ids (`@id/exo_play_pause`, `@id/exo_progress`, etc.) must
-   reference the *library's* pre-declared ids, never `@+id/exo_play_pause`,
-   or PlayerControlView's Java code can't find them and the controls end up
-   unwired and mispositioned (this was a real bug, caught from a device
-   screenshot - see git history) - the rewind/forward buttons are a
-   deliberate exception: they're plain app-local ids
-   (`playerRewindButton`/`playerForwardButton`), wired manually in
-   `PlayerActivity`, because Media3's auto-wired `exo_rew`/`exo_ffwd` ids
-   only exist on its *legacy* separate-play/pause controller layout, not
-   the modern combined-`exo_play_pause` one this app uses. Tapping the
+   layout matching a real device screenshot (fullscreen, controls up, one
+   video tapped): a top bar (back / title / overflow) instead of a generic
+   transport bar, and a *single* center play/pause - no flanking
+   rewind/forward buttons (an earlier round added some off an ambiguous
+   reference image that turned out to be a different feature's mockup,
+   not the base player). Double-tapping either half of the screen does a
+   10s skip (see the `GestureDetector` in
+   `PlayerActivity.setUpPlayerTopBarAndGestures()`). The play/pause button
+   itself is a solid white circle with a dark glyph
+   (`drawable/bg_circle_white.xml`) rather than a bare icon with nothing
+   behind it - that flat-icon-on-a-dim-scrim look is what stock,
+   unstyled Media3/ExoPlayer controls look like by default, and was the
+   main reason an earlier version of this screen still read as "generic
+   ExoPlayer" rather than YouTube even after the top bar and layout were
+   already custom. Reserved ids (`@id/exo_play_pause`, `@id/exo_progress`,
+   etc.) must reference the *library's* pre-declared ids, never
+   `@+id/exo_play_pause`, or PlayerControlView's Java code can't find them
+   and the controls end up unwired and mispositioned (this was a real bug,
+   caught from a device screenshot - see git history). Tapping the
    fullscreen button actually goes fullscreen now (rotates to landscape,
    hides the system bars, and expands the video off its normal 16:9 box to
    fill the screen - see `PlayerActivity.setFullscreen()`); previously the

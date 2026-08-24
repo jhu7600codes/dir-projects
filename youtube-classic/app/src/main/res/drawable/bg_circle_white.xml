@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The real player's play/pause button is a solid white circle with a
+     dark glyph, not a bare icon floating on the dim scrim - confirmed by
+     cropping a real device screenshot down to just that button (see git
+     history / PR discussion). That solid-circle chip is the single
+     biggest visual difference between this and a stock/generic ExoPlayer
+     control, which just draws the bare icon with no shape behind it. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@android:color/white" />
+</shape>

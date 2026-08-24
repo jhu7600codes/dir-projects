@@ -3,22 +3,19 @@
      app:controller_layout_id on the PlayerView in activity_player.xml.
      Reserved ids (exo_play_pause, exo_progress, exo_position, exo_duration,
      exo_fullscreen) MUST use "@id/..." here, never "@+id/..." - see the
-     kdoc this replaced in git history for why. playerRewindButton/
-     playerForwardButton are plain "@+id/..." app ids, not the library's
-     "exo_rew"/"exo_ffwd" - those two are only auto-wired on the *legacy*
-     exo_legacy_player_control_view.xml layout (the one with separate
-     exo_play/exo_pause ids); this layout uses the modern combined
-     exo_play_pause id instead, so PlayerControlView never looks for a
-     plain exo_rew/exo_ffwd here. Wired manually in
-     PlayerActivity.setUpPlayerTopBarAndGestures() instead - same as the
-     top bar's back/overflow buttons just below.
+     kdoc this replaced in git history for why.
 
-     Matches a real 2019-era player screenshot: a center play/pause
-     flanked by -10s/+10s buttons at a modest gap (not glued to the screen
-     edges - that was an earlier, unrelated bug, see git history), plus
-     the double-tap zones on either half of the screen as a second way to
-     do the same 10s skip (wired up in PlayerActivity via a
-     GestureDetector, not here). -->
+     A prior round here added -10s/+10s buttons flanking play/pause off an
+     ambiguous reference screenshot (a chapters-feature mockup that turned
+     out not to be the base player chrome). A real device screenshot of
+     the actual app - fullscreen, controls visible, single video tapped -
+     shows just ONE control: a solid white circle with a dark play/pause
+     glyph, no flanking buttons at all. That's also the fix for looking
+     like "generic ExoPlayer": stock ExoPlayer/media3-ui draws play/pause
+     as a bare icon with no shape behind it - the solid white chip
+     (bg_circle_white.xml) is the actual, real, distinctly-YouTube look.
+     10s skip is double-tap on either half of the screen only (wired up in
+     PlayerActivity via a GestureDetector, not here). -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
@@ -68,40 +65,15 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageButton
+        android:id="@id/exo_play_pause"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <ImageButton
-            android:id="@+id/playerRewindButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="28dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_fast_rewind" />
-
-        <ImageButton
-            android:id="@id/exo_play_pause"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_play_arrow" />
-
-        <ImageButton
-            android:id="@+id/playerForwardButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="28dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_fast_forward" />
-
-    </LinearLayout>
+        android:background="@drawable/bg_circle_white"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_play_arrow"
+        app:tint="#1F1F1F" />
 
     <LinearLayout
         android:layout_width="match_parent"

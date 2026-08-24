@@ -115,12 +115,15 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     /**
-     * The controller layout's back/title/overflow row and the double-tap-
-     * to-seek zones - the two things the 2019 player actually had instead
-     * of dedicated rewind/forward buttons. `playerView.findViewById` works
-     * here because PlayerView inflates its controller layout synchronously
-     * as part of its own view construction, which has already happened by
-     * the time `setContentView`/binding.inflate returns.
+     * The controller layout's back/title/overflow row, the fullscreen
+     * button, and the double-tap-to-seek zones - there's no dedicated
+     * rewind/forward button in the real app, just double-tap (confirmed
+     * against a real device screenshot: fullscreen, controls up, and the
+     * only control on screen is the single center play/pause).
+     * `playerView.findViewById` works here because PlayerView inflates its
+     * controller layout synchronously as part of its own view
+     * construction, which has already happened by the time
+     * `setContentView`/binding.inflate returns.
      */
     private fun setUpPlayerTopBarAndGestures() {
         binding.playerView.findViewById<ImageButton>(R.id.playerBackButton)?.setOnClickListener { finish() }
@@ -139,12 +142,6 @@ class PlayerActivity : AppCompatActivity() {
             }.show()
         }
 
-        binding.playerView.findViewById<ImageButton>(R.id.playerRewindButton)?.setOnClickListener {
-            controller?.seekBack()
-        }
-        binding.playerView.findViewById<ImageButton>(R.id.playerForwardButton)?.setOnClickListener {
-            controller?.seekForward()
-        }
         binding.playerView.setFullscreenButtonClickListener { fullscreen -> setFullscreen(fullscreen) }
 
         seekGestureDetector = GestureDetector(
