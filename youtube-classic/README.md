@@ -63,7 +63,15 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    against an actual period screenshot rather than from memory - Home and
    Library swap between dedicated outline/filled-red drawables by selection
    state, while Subscriptions is a fixed-red glyph that never changes
-   color. The player's controls are a custom Media3 `PlayerControlView`
+   color. The brand red itself is `#CD201F`, not a flat `#FF0000` - pulled
+   directly from `color/youtube_red` in a real YouTube 14.34.54 APK's
+   compiled resources (`aapt dump --values resources`, not eyeballed off a
+   screenshot) - and the Subscriptions/Library tab glyphs were retraced off
+   that APK's actual `ic_tab_subscriptions.png`/`ic_tab_library.png` assets:
+   Subscriptions gained the two horizontal bars above its play-box that
+   were missing before, and Library turned out to be a plain folder
+   silhouette with no play triangle in it at all, not the rounded
+   play-box glyph this app had been using. The player's controls are a custom Media3 `PlayerControlView`
    layout, iterated against several real device screenshots rather than a
    generic transport bar:
    - The top row sits directly on the video with a light gradient scrim of

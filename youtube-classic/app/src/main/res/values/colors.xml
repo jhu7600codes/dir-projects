@@ -6,8 +6,11 @@
          This is the light (default) palette; values-night/colors.xml
          overrides the tokens that actually change for dark mode - the app
          is DayNight (see themes.xml), it just defaults to this look. -->
-    <color name="yt_red">#FF0000</color>
-    <color name="yt_red_dark">#CC0000</color>
+    <!-- #CD201F, not a flat #FF0000 - confirmed against color/youtube_red in
+         a real YouTube 14.34.54 APK's compiled resources (aapt's resource
+         dump), not eyeballed off a screenshot. -->
+    <color name="yt_red">#CD201F</color>
+    <color name="yt_red_dark">#A61B1A</color>
     <color name="yt_white">#FFFFFF</color>
     <color name="yt_black">#0F0F0F</color>
     <color name="yt_text_primary">#0F0F0F</color>
