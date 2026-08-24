@@ -121,6 +121,27 @@ object Innertube {
                 if (sapisid != null) {
                     requestBuilder.header("Authorization", sapisidHash(sapisid))
                 }
+                // Google's server silently degrades an unauthenticated-looking
+                // request to logged-out content instead of erroring (real
+                // device report: browse() came back HTTP 200 with
+                // "logged_in":"0" despite the app genuinely holding a signed-in
+                // session) - there's no error to catch there, so the only way
+                // to tell "cookie capture is broken" from "hash/session is
+                // rejected server-side" apart is to see what was actually in
+                // the outgoing request. Deliberately logs presence/length only,
+                // never the cookie or hash values themselves - this is a real
+                // credential, not just debug noise.
+                fun has(name: String) = extractCookieValue(cookieHeader, name) != null
+                android.util.Log.d(
+                    TAG,
+                    "auth for $endpoint: cookieLen=${cookieHeader.length}, " +
+                        "hasSAPISID=${has("SAPISID")}, has3PAPISID=${has("__Secure-3PAPISID")}, " +
+                        "has1PAPISID=${has("__Secure-1PAPISID")}, hasSID=${has("SID")}, " +
+                        "has1PSID=${has("__Secure-1PSID")}, hasHSID=${has("HSID")}, hasSSID=${has("SSID")}, " +
+                        "sapisidResolved=${sapisid != null}, deviceTimeMs=${System.currentTimeMillis()}",
+                )
+            } else {
+                android.util.Log.d(TAG, "auth for $endpoint: no cookie header at all")
             }
 
             client.newCall(requestBuilder.build()).execute().use { response ->
