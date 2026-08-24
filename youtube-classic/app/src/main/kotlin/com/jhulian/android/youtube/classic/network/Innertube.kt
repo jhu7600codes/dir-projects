@@ -38,6 +38,21 @@ object Innertube {
     private const val BASE_URL = "https://www.youtube.com/youtubei/v1"
     private const val TAG = "Innertube"
 
+    // One real, self-consistent browser identity, reused for both the
+    // context body below and the actual outgoing headers in post(). This
+    // used to be split: buildContext() claimed browserName "Chrome"/126
+    // while both its own embedded "userAgent" field *and* the real
+    // User-Agent header in post() were a Firefox 140 string - an
+    // authenticated browse() call would come back HTTP 200 with
+    // "logged_in":"0" (confirmed on a real device: cookies present,
+    // SAPISID hash attached, still treated as signed-out) with no error to
+    // catch, which is exactly what a server-side bot/fraud check silently
+    // downgrading a self-contradictory client fingerprint looks like,
+    // rather than a hard block. Matches NewPipeExtractor's own proven
+    // OkHttpDownloader UA so there's only one browser identity in the app.
+    private const val USER_AGENT =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+
     private val client = OkHttpClient.Builder().build()
     private val jsonMedia = "application/json".toMediaType()
 
@@ -57,11 +72,11 @@ object Innertube {
                 put("gl", "US")
                 put("platform", "DESKTOP")
                 put("clientFormFactor", "UNKNOWN_FORM_FACTOR")
-                put("browserName", "Chrome")
-                put("browserVersion", "126.0.0.0")
+                put("browserName", "Firefox")
+                put("browserVersion", "140.0")
                 put("osName", "Windows")
                 put("osVersion", "10.0")
-                put("userAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0")
+                put("userAgent", "$USER_AGENT,gzip(gfe)")
                 put("originalUrl", ORIGIN)
                 put("screenPixelDensity", 1)
                 put("screenDensityFloat", 1)
@@ -112,7 +127,13 @@ object Innertube {
                 .header("Origin", ORIGIN)
                 .header("X-Origin", ORIGIN)
                 .header("X-Goog-AuthUser", "0")
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0")
+                .header("User-Agent", USER_AGENT)
+                .header("Referer", "$ORIGIN/")
+                .header("Accept", "*/*")
+                .header("Accept-Language", "en-US,en;q=0.5")
+                .header("Sec-Fetch-Dest", "empty")
+                .header("Sec-Fetch-Mode", "same-origin")
+                .header("Sec-Fetch-Site", "same-origin")
 
             if (!cookieHeader.isNullOrBlank()) {
                 val sapisid = extractCookieValue(cookieHeader, "SAPISID")

@@ -383,6 +383,37 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   itself was never hidden). Any mismatch between the current cookie and
   the last-fetched one now triggers a real refetch, covering sign-in,
   sign-out, and account switches alike.
+- **Signed-in Home/Subscriptions/Shorts still empty after the refetch fix
+  above - root-caused and fixed.** The refetch itself was firing (a real
+  device capture confirmed a fresh `browse()` call happening right on
+  cue), but the response itself came back `HTTP 200` with
+  `"logged_in":"0"` and `mainAppWebResponseContext.loggedOut: true` -
+  Google's server was treating the request as anonymous even though the
+  device genuinely held a signed-in session. Nothing throws on that path
+  (it's a normal successful response, just anonymized content), so
+  `Innertube.post()` first grew redacted auth diagnostics (presence/
+  length only of each SID-family cookie, never the values - these are
+  real credentials) to rule out a broken cookie capture; a real capture
+  showed `SAPISID`/`SID`/`HSID`/`SSID` all present and a hash correctly
+  attached, so the cookie side was fine. The actual bug was in
+  `Innertube.buildContext()`: the JSON context body declared
+  `browserName: "Chrome"`/`browserVersion: "126.0.0.0"`, but its own
+  embedded `userAgent` field - and the real outgoing `User-Agent` header
+  in `Innertube.post()` - were both a Firefox 140 string. A request
+  whose claimed client identity contradicts its own fingerprint like that
+  is exactly what server-side bot/fraud detection checks for, and
+  silently downgrading to anonymous content (200 OK, no error) rather
+  than hard-blocking is a typical response to it. Fixed by giving the
+  whole request one consistent, real browser identity (Firefox 140,
+  matching NewPipeExtractor's own proven `OkHttpDownloader` UA, so there's
+  only one browser identity anywhere in the app) and adding the standard
+  fetch-metadata headers (`Referer`, `Accept`, `Accept-Language`,
+  `Sec-Fetch-*`) a real same-origin browse call carries that this custom
+  client was missing entirely. Unverified against a live device at time
+  of writing - the diagnostic logging in `Innertube.post()` is left in
+  place either way, since a genuinely rejected session vs. a bot-flagged
+  one now look different in logcat (missing cookies vs. present-but-still-
+  anonymized).
 
 ## Building
 
