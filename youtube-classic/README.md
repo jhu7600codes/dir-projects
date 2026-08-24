@@ -360,6 +360,29 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   `Innertube.post()` and `InnertubeFeedClient`'s per-call logging (tags
   `Innertube`/`InnertubeFeedClient`) is what surfaced both of these and is
   left in place for the next time YouTube reshuffles this.
+- **Home/Subscriptions/Shorts going stale after signing back in on a tab
+  that was already open - root-caused and fixed.** Reported as "No
+  results" on both the 2016 and 2019 Home tabs after logging back in
+  (not after signing out, as first assumed - a real device report
+  corrected that). `MainActivity`/`MainActivity2016` add all of their tab
+  fragments once and switch between them with `FragmentManager.hide()`/
+  `show()`, never `replace()` - which means a fragment already on screen
+  is never recreated by a sign-in/sign-out round-trip through
+  `LoginActivity`. Both `VideoListFragment` (Home/Subscriptions) and
+  `ShortsFragment` only ever fetched from `onViewCreated()`, guarded by a
+  one-shot check (`state.items.isEmpty()` / a plain `loadedOnce` boolean)
+  - so a tab that had already loaded once, even to an empty result, never
+    fetched again for the rest of its lifetime, regardless of what
+  happened to the session in between. Fixed by tracking the cookie value
+  a tab last actually fetched with (`VideoListFragment.lastFetchedCookie`,
+  `ShortsViewModel.loadedForCookie`) and re-checking it in `onResume()`
+  (not `onHiddenChanged()` - hide()/show() never touches a fragment's
+  RESUMED state, so `onHiddenChanged()` never fires for an
+  Activity-level trip to `LoginActivity` and back; `onResume()` does,
+  since that's a real Activity pause/resume even though the fragment
+  itself was never hidden). Any mismatch between the current cookie and
+  the last-fetched one now triggers a real refetch, covering sign-in,
+  sign-out, and account switches alike.
 
 ## Building
 

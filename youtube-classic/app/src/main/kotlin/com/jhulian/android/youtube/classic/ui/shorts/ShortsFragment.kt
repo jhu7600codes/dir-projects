@@ -185,6 +185,19 @@ class ShortsFragment : Fragment() {
         controller?.pause()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Fires whenever the host Activity resumes - including returning
+        // from LoginActivity, unlike a same-Activity tab switch (hide()/
+        // show() doesn't touch this fragment's RESUMED state at all, see
+        // onHiddenChanged below) - so this is exactly where a sign-in that
+        // happened while this tab was already loaded gets picked up.
+        // loadIfNeeded() itself now only actually reloads if the cookie
+        // genuinely changed since the last call.
+        val cookie = (requireActivity().application as YtClassicApp).sessionManager.cookie
+        viewModel.loadIfNeeded(cookie)
+    }
+
     // MainActivity switches tabs via FragmentManager hide()/show(), not
     // replace() - that leaves this fragment fully RESUMED, just with its
     // view hidden, so onPause()/onResume() never fire when the user leaves

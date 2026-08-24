@@ -25,11 +25,23 @@ class ShortsViewModel : ViewModel() {
     private val _state = MutableStateFlow(ShortsUiState())
     val state: StateFlow<ShortsUiState> = _state
 
-    private var loadedOnce = false
+    private var hasLoadedEver = false
+    private var loadedForCookie: String? = null
 
+    /**
+     * "Needed" means either this is the very first call, or the cookie
+     * actually changed since the last one - not just "never loaded" -
+     * otherwise signing in from the empty/sign-in-required state this
+     * screen shows when signed out never actually reloads anything: this
+     * used to be a plain one-shot guard, so a screen that had already
+     * loaded (even to "signed out, nothing to show") stayed on that
+     * result forever, through sign-in and sign-out alike, until the
+     * Fragment itself got recreated.
+     */
     fun loadIfNeeded(cookie: String?) {
-        if (loadedOnce) return
-        loadedOnce = true
+        if (hasLoadedEver && loadedForCookie == cookie) return
+        hasLoadedEver = true
+        loadedForCookie = cookie
 
         if (cookie.isNullOrBlank()) {
             _state.value = ShortsUiState(requiresSignIn = true, hasLoaded = true)

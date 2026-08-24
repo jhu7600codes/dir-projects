@@ -28,6 +28,18 @@ class VideoListFragment : Fragment() {
     private lateinit var viewModel: VideoListViewModel
     private lateinit var adapter: VideoListAdapter
 
+    /**
+     * What `cookieProvider` returned the last time this screen actually
+     * fetched - `onResume()` compares against this and refreshes on a
+     * mismatch. Without it, Home/Subscriptions never noticed signing in
+     * (or out) while they were already showing a stale, sometimes empty,
+     * result: they only ever fetched once, in `onViewCreated()`, and
+     * these fragments are added once and hidden/shown rather than
+     * recreated on every tab switch, so that one fetch was the only one
+     * that would ever happen for the rest of the fragment's lifetime.
+     */
+    private var lastFetchedCookie: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val type = requireArguments().getString(ARG_SOURCE_TYPE)!!
@@ -76,7 +88,23 @@ class VideoListFragment : Fragment() {
             viewModel.state.collect { state -> render(state) }
         }
 
+        lastFetchedCookie = viewModel.cookieProvider?.invoke()
         if (viewModel.state.value.items.isEmpty()) {
+            viewModel.refresh()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // See lastFetchedCookie's kdoc - this is what actually catches
+        // "signed in (or out) while this tab was already showing a stale
+        // result" instead of leaving it stuck until the Fragment is
+        // recreated. Fires on returning from LoginActivity even though
+        // this fragment was never hidden, since that's an Activity-level
+        // resume, not a same-Activity tab switch.
+        val currentCookie = viewModel.cookieProvider?.invoke()
+        if (currentCookie != lastFetchedCookie) {
+            lastFetchedCookie = currentCookie
             viewModel.refresh()
         }
     }
