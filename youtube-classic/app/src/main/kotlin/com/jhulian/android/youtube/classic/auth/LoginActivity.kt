@@ -126,9 +126,19 @@ class LoginActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.paste_cookie_invalid, Toast.LENGTH_LONG).show()
             return
         }
-        (application as YtClassicApp).sessionManager.saveSession(cookie, null)
-        setResult(RESULT_OK)
-        finish()
+        // Seed CookieManager with the pasted cookies and let the same
+        // WebView flow (checkForSignedInSession, wired to onPageFinished
+        // in onCreate) pick up the account name the same way a normal
+        // WebView login does, instead of hardcoding a null name here -
+        // that hardcoded null was why Settings always showed "Signed in
+        // as you" for anyone who signed in via paste-cookie.
+        cookie.split(";")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .forEach { pair -> CookieManager.getInstance().setCookie("https://www.youtube.com", pair) }
+        CookieManager.getInstance().flush()
+        binding.loginProgress.visibility = View.VISIBLE
+        binding.webView.loadUrl("https://www.youtube.com")
     }
 
     private fun checkForSignedInSession(url: String?) {
@@ -142,10 +152,27 @@ class LoginActivity : AppCompatActivity() {
         if (!loggedIn) return
 
         // Best-effort account name for the settings screen; failure here
-        // doesn't affect whether the session is usable.
+        // doesn't affect whether the session is usable. The `#account-name`
+        // selector alone was reportedly never matching anything (Settings
+        // always fell back to "you") - it's likely only present once the
+        // avatar dropdown menu is actually open, not on the plain page.
+        // Falling back to the avatar button's aria-label/alt text (which
+        // YouTube has used consistently across redesigns as "Account menu
+        // for <name>"/"Avatar <name>") is unverified against a live page
+        // but strictly broadens what this can match rather than narrowing it.
         binding.webView.evaluateJavascript(
-            "(function(){try{var el=document.querySelector('#account-name, yt-formatted-string#account-name');" +
-                "return el ? el.textContent : '';}catch(e){return '';}})();",
+            "(function(){try{" +
+                "var el=document.querySelector('#account-name, yt-formatted-string#account-name');" +
+                "if(el&&el.textContent)return el.textContent;" +
+                "var btn=document.querySelector('#avatar-btn, button#avatar-btn, ytd-topbar-menu-button-renderer #avatar-btn');" +
+                "if(btn){" +
+                "var label=btn.getAttribute('aria-label');" +
+                "var img=btn.querySelector('img');" +
+                "if(!label&&img)label=img.getAttribute('alt');" +
+                "if(label)return label.replace(/^Account menu for\\s*/i,'').replace(/^Avatar\\s*/i,'').trim();" +
+                "}" +
+                "return '';" +
+                "}catch(e){return '';}})();",
         ) { rawResult ->
             val name = rawResult?.trim('"')?.takeIf { it.isNotBlank() && it != "null" }
             (application as YtClassicApp).sessionManager.saveSession(cookies, name)

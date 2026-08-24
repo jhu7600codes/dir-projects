@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.network
 
+import android.util.Log
 import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,6 +30,7 @@ object SponsorBlockClient {
 
     private const val BASE_URL = "https://sponsor.ajay.app/api"
     private const val HASH_PREFIX_LEN = 4
+    private const val TAG = "SponsorBlockClient"
 
     private val client = OkHttpClient.Builder().build()
 
@@ -42,8 +44,16 @@ object SponsorBlockClient {
 
             val request = Request.Builder().url(url).get().build()
             client.newCall(request).execute().use { response ->
-                if (response.code == 404) return@withContext emptyList()
-                if (!response.isSuccessful) return@withContext emptyList()
+                if (response.code == 404) {
+                    // Not an error - this just means no video sharing this
+                    // hash prefix has any submitted segments at all.
+                    Log.d(TAG, "fetchSegments($videoId): no segments for hash prefix $prefix (404)")
+                    return@withContext emptyList()
+                }
+                if (!response.isSuccessful) {
+                    Log.e(TAG, "fetchSegments($videoId) -> HTTP ${response.code}: ${response.body?.string()?.take(500)}")
+                    return@withContext emptyList()
+                }
 
                 val body = response.body?.string().orEmpty()
                 if (body.isBlank()) return@withContext emptyList()
@@ -66,6 +76,16 @@ object SponsorBlockClient {
                             ),
                         )
                     }
+                }
+                if (segments.isEmpty()) {
+                    // The hash-prefix bucket came back non-empty (some
+                    // *other* video shares this prefix) but nothing matched
+                    // this exact videoId, or every entry had no real
+                    // segments - log the raw body so a real report of
+                    // "SponsorBlock doesn't work" carries the actual answer.
+                    Log.w(TAG, "fetchSegments($videoId): prefix $prefix returned ${results.length()} entries but 0 matched. Raw: ${body.take(1000)}")
+                } else {
+                    Log.d(TAG, "fetchSegments($videoId): found ${segments.size} segment(s) - ${segments.map { it.category }}")
                 }
                 segments
             }

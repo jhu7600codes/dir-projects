@@ -55,8 +55,15 @@ class PlayerViewModel : ViewModel() {
                     if (videoId != null) {
                         val segments = runCatching {
                             SponsorBlockClient.fetchSegments(videoId, sponsorCategories)
+                        }.onFailure { e ->
+                            // This was silently swallowed into an empty list
+                            // before - if SponsorBlock "doesn't work", this
+                            // is the first thing to check logcat for.
+                            Log.e(TAG, "fetchSegments($videoId) threw", e)
                         }.getOrDefault(emptyList())
                         _state.value = _state.value.copy(sponsorSegments = segments)
+                    } else {
+                        Log.w(TAG, "SponsorBlock enabled but couldn't extract a video id from $url")
                     }
                 }
             } catch (e: Exception) {

@@ -46,7 +46,17 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    all go through NewPipeExtractor (`extractor/YouTubeRepository.kt`) - no
    API key.
 2. **Auth**: WebView cookie login (`auth/LoginActivity.kt`), persisted
-   encrypted on-device (`auth/SessionManager.kt`).
+   encrypted on-device (`auth/SessionManager.kt`). Settings previously
+   always showed "Signed in as you" - the paste-cookie sign-in path
+   (`LoginActivity.trySaveCookie()`) hardcoded a null account name instead
+   of trying to read one at all. It now seeds `CookieManager` with the
+   pasted cookies and loads youtube.com in the same WebView so it goes
+   through the same account-name scrape the normal WebView login path
+   uses, which itself now tries the avatar button's `aria-label`/alt text
+   as a fallback when the `#account-name` selector doesn't match -
+   unverified against a live page (this app doesn't touch any account
+   credential to test with), but a strict broadening of what it can match
+   rather than a narrowing.
 3. **UI**: Home/Shorts/Subscriptions/Library bottom tabs, video list, player
    screen with comments, all styled off 2019 Android app screenshots (white
    top bar, red accents only, square thumbnails). Icons were redrawn
@@ -111,7 +121,13 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    `PlaybackService.kt`). Video descriptions and comments are rendered
    through `HtmlCompat.fromHtml(..., FROM_HTML_MODE_LEGACY)` rather than
    shown raw, since YouTube's innertube
-   responses embed real HTML (`<br>`, `<a href>`) in that text.
+   responses embed real HTML (`<br>`, `<a href>`) in that text. The
+   quality label reads the height ExoPlayer is *actually* decoding
+   (`Player.Listener.onVideoSizeChanged`) rather than a guess made before
+   playback starts - that guess never accounted for the HLS branch of
+   `StreamSelector.buildMediaItem()` at all, so any video that played back
+   via an HLS manifest showed a fixed, unrelated "360p" no matter its real
+   resolution.
 4. **Dark mode**: `Theme.YtClassic` is `DayNight` and follows the system
    theme; `values-night/` supplies the dark palette (colors, chip
    backgrounds, dividers, status bar) and icon tinting is driven off a
@@ -127,7 +143,15 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
 6. **SponsorBlock**: segments fetched by SHA-256 hash-prefix (the same
    k-anonymity scheme the browser extension uses), spliced into playback via
    `playback/SponsorBlockController.kt` with both auto-skip and a manual
-   "Skip" chip, plus segment markers on the seek bar.
+   "Skip" chip, plus segment markers on the seek bar. Reported as "doesn't
+   work" without a live repro to debug against - `SponsorBlockClient` now
+   logs the HTTP status/response body on a failed lookup and a warning when
+   a hash-prefix bucket comes back with entries but none matching the
+   video, and the fetch's exception was previously swallowed silently
+   (`runCatching { }.getOrDefault(emptyList())` with no logging on
+   failure) - all real, but unverified without a live logcat capture. See
+   `PlayerViewModel`/`SponsorBlockClient` tags in logcat if this is still
+   silent next time.
 7. **Background/offline playback**: a `MediaSessionService`
    (`playback/PlaybackService.kt`) keeps ExoPlayer alive independent of the
    Activity; video-only + audio-only adaptive streams are stitched back
@@ -137,6 +161,12 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    actually survives session IPC). Downloads
    (`download/DownloadService.kt`) pull both tracks to disk and mux them
    into one playable mp4 with Android's `MediaMuxer` - no ffmpeg/native code.
+   The system media notification no longer shows previous/next-track
+   buttons - a prepared ExoPlayer reports those as available commands by
+   default even with nothing to skip to, and Media3's notification shows
+   whatever the player reports; `PlaybackService`'s `MediaSession.Callback`
+   now strips them from what's exposed to any controller (in-app controls
+   never used them either way, so this only affects that notification).
 8. **Mini player**: background playback above already kept a video going
    after leaving `PlayerActivity`, but there was no on-screen way to see or
    control it without reopening the full player - `MainActivity` now docks
@@ -153,6 +183,18 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
 
 ## Known gaps / where to look if something's off
 
+- **Channel avatars weren't loading on Home/Subscriptions/Shorts** - all
+  four of the innertube-JSON-based `VideoUi` mappers in
+  `data/model/VideoUi.kt` (`videoRenderer`, `reelItemRenderer`,
+  `lockupViewModel`, `shortsLockupViewModel`) hardcoded
+  `channelAvatarUrl = null`; only the NewPipeExtractor-based path (search/
+  trending/channel tabs) ever populated it. `videoRenderer` now reads the
+  real, stable `channelThumbnailSupportedRenderers` field; `lockupViewModel`
+  reads it via a generic `JsonWalk` search for an `avatarViewModel` node
+  (exact nesting isn't consistently documented, unlike `videoRenderer`'s).
+  Shorts items (`reelItemRenderer`/`shortsLockupViewModel`) still don't -
+  the real Shorts shelf card design doesn't show a channel avatar either,
+  so there was nothing to wire up there.
 - **Home feed** falls back to Trending when signed out (there's no public
   "recommended for you" surface to scrape); when signed in it calls
   innertube's `browse` endpoint directly (`network/InnertubeFeedClient.kt`),

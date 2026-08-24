@@ -265,7 +265,23 @@ class PlayerActivity : AppCompatActivity() {
         controllerFuture = future
         future.addListener(
             {
-                binding.playerView.player = future.get()
+                val player = future.get()
+                binding.playerView.player = player
+                // The quality label reads the height ExoPlayer is *actually*
+                // decoding, not a guess made before playback starts - that
+                // guess previously didn't account for the HLS branch in
+                // StreamSelector.buildMediaItem() at all (it only checked
+                // progressive/video-only streams), so on any video that
+                // played back via an HLS manifest the label showed whatever
+                // unrelated progressive-stream height happened to resolve
+                // (reported as a fixed, wrong "360p" regardless of actual
+                // resolution). This is correct for every path, including
+                // HLS's own adaptive quality switching mid-playback.
+                player.addListener(object : androidx.media3.common.Player.Listener {
+                    override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
+                        if (videoSize.height > 0) updateQualityLabel(videoSize.height)
+                    }
+                })
                 maybeStartPlayback()
             },
             MoreExecutors.directExecutor(),
@@ -301,7 +317,9 @@ class PlayerActivity : AppCompatActivity() {
         player.prepare()
         player.play()
         binding.playerProgress.visibility = View.GONE
-        updateQualityLabel(resolveActualHeight(info, maxHeight))
+        // The quality label itself updates from the real decoded video size
+        // (see the Player.Listener in connectToPlaybackService()), not a
+        // guess made here.
 
         sponsorBlockController = SponsorBlockController(
             player = player,
@@ -351,13 +369,13 @@ class PlayerActivity : AppCompatActivity() {
         player.setMediaItem(mediaItem, resumePosition)
         player.prepare()
         if (wasPlaying) player.play()
-        updateQualityLabel(resolveActualHeight(info, maxHeight))
-    }
-
-    /** What height a given cap actually resolves to, for the "720p" label - "Auto" alone isn't useful there. */
-    private fun resolveActualHeight(info: StreamInfo, maxHeight: Int): Int {
-        StreamSelector.bestProgressive(info, maxHeight)?.let { return it.height }
-        return StreamSelector.bestVideoOnly(info, maxHeight)?.height ?: 0
+        // The label itself updates from the real decoded video size once
+        // playback resumes at the new quality (the Player.Listener in
+        // connectToPlaybackService()) - not computed here, since that
+        // requires re-deriving exactly which branch of
+        // StreamSelector.buildMediaItem() actually got used (HLS vs.
+        // progressive vs. merged), and getting that wrong is exactly how
+        // this label ended up permanently stuck on a wrong "360p" before.
     }
 
     private fun updateQualityLabel(height: Int) {

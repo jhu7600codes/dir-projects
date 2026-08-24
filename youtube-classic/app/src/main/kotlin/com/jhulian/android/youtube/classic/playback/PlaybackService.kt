@@ -87,7 +87,34 @@ class PlaybackService : MediaSessionService() {
             .setSeekBackIncrementMs(10_000)
             .setSeekForwardIncrementMs(10_000)
             .build()
-        mediaSession = MediaSession.Builder(this, player).build()
+
+        // A prepared ExoPlayer reports seek-to-previous/seek-to-next as
+        // available player commands by default even for a single video with
+        // no queue - Media3's system media-style notification then shows
+        // big, backgroundless previous/next-track buttons for a single
+        // video that has nothing to skip to. Real YouTube's own notification
+        // doesn't have those either (just play/pause), so this removes them
+        // from what gets exposed to that notification/any other
+        // MediaController, rather than the app's own in-activity controls
+        // (a completely separate layout - see player_control_view.xml).
+        val sessionCallback = object : MediaSession.Callback {
+            override fun onConnect(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo,
+            ): MediaSession.ConnectionResult {
+                val playerCommands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
+                    .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
+                    .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                    .remove(Player.COMMAND_SEEK_TO_NEXT)
+                    .remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                    .build()
+                return MediaSession.ConnectionResult.accept(
+                    MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS,
+                    playerCommands,
+                )
+            }
+        }
+        mediaSession = MediaSession.Builder(this, player).setCallback(sessionCallback).build()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession

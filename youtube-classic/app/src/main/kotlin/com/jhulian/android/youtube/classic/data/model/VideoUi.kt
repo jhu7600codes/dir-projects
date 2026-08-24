@@ -87,6 +87,14 @@ fun videoRendererToVideoUi(renderer: JSONObject): VideoUi? {
         ?.optJSONObject("browseEndpoint")
         ?.optString("canonicalBaseUrl")
 
+    val channelAvatarUrl = renderer.optJSONObject("channelThumbnailSupportedRenderers")
+        ?.optJSONObject("channelThumbnailWithLinkRenderer")
+        ?.optJSONObject("thumbnail")
+        ?.optJSONArray("thumbnails")
+        ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it) } }
+        ?.maxByOrNull { it.optInt("height") }
+        ?.optString("url")
+
     val duration = renderer.optJSONObject("lengthText")?.textOrNull()
     val isLive = renderer.optJSONArray("badges")?.let { badges ->
         (0 until badges.length()).any { i ->
@@ -107,7 +115,7 @@ fun videoRendererToVideoUi(renderer: JSONObject): VideoUi? {
         thumbnailUrl = thumbnailUrl,
         channelName = channelName,
         channelUrl = channelUrlSuffix?.let { "https://www.youtube.com$it" },
-        channelAvatarUrl = null,
+        channelAvatarUrl = channelAvatarUrl,
         durationText = duration,
         isLive = isLive,
         metadataLine = metadata,
@@ -243,6 +251,15 @@ fun lockupViewModelToVideoUi(renderer: JSONObject): VideoUi? {
     val channelName = metadataParts.firstOrNull().orEmpty()
     val metadataLine = metadataParts.drop(1).joinToString("  •  ")
 
+    // The channel avatar lives under an `avatarViewModel` nested somewhere
+    // inside `lockupMetadataViewModel` (exact depth isn't consistently
+    // documented) - JsonWalk finds it wherever it is rather than assuming
+    // one fixed path, same reasoning as the rest of this function.
+    val channelAvatarUrl = JsonWalk.findAllObjectsWithKey(renderer, "avatarViewModel")
+        .firstOrNull()
+        ?.optJSONObject("image")
+        ?.bestSourceUrl()
+
     return VideoUi(
         videoId = videoId,
         url = "https://www.youtube.com/watch?v=$videoId",
@@ -250,7 +267,7 @@ fun lockupViewModelToVideoUi(renderer: JSONObject): VideoUi? {
         thumbnailUrl = thumbnailUrl,
         channelName = channelName,
         channelUrl = null,
-        channelAvatarUrl = null,
+        channelAvatarUrl = channelAvatarUrl,
         durationText = if (isLive) null else badgeText,
         isLive = isLive,
         metadataLine = metadataLine,
