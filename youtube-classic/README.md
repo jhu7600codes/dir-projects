@@ -260,7 +260,16 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
 - **Home feed** falls back to Trending when signed out (there's no public
   "recommended for you" surface to scrape); when signed in it calls
   innertube's `browse` endpoint directly (`network/InnertubeFeedClient.kt`),
-  which NewPipeExtractor deliberately doesn't cover.
+  which NewPipeExtractor deliberately doesn't cover. Reported blank
+  ("No results", no error) specifically right after signing out on a real
+  device - that combination means `YouTubeRepository.trending()` didn't
+  throw, it came back with a genuinely empty page, which
+  `YouTubeRepository.trending()` now logs (`Log.w`, tag
+  `YouTubeRepository`) rather than staying silent about. Unverified
+  without a live logcat capture whether that's NewPipeExtractor's
+  Trending kiosk parsing failing against a live schema change (the
+  running theme across most of this app's "empty feed" bugs) or a
+  genuinely empty kiosk.
 - **Channel tabs**: uses NewPipeExtractor's tab-based channel API
   (`ChannelInfo.tabs` + `ChannelTabInfo`). This is the API surface most
   likely to have moved between NewPipeExtractor versions - if channel

@@ -1,5 +1,6 @@
 package com.jhulian.android.youtube.classic.extractor
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.Page
@@ -33,7 +34,18 @@ object YouTubeRepository {
         val extractor = service.kioskList.getExtractorById("Trending", null)
         extractor.fetchPage()
         val page = extractor.initialPage
-        PageResult(page.items.filterIsInstance<StreamInfoItem>(), page.nextPage)
+        val items = page.items.filterIsInstance<StreamInfoItem>()
+        // Home's signed-out fallback (and MainActivity2016's Trending tab)
+        // both go through this - reported empty ("No results") with no
+        // error shown, meaning fetchPage() didn't throw, it just came back
+        // with nothing. That's either a genuine empty kiosk or (more
+        // likely, given how often YouTube reshuffles this) NewPipeExtractor
+        // silently failing to parse the current page - logging the raw
+        // item count either way beats guessing again.
+        if (items.isEmpty()) {
+            Log.w(TAG, "trending() returned 0 items (${page.items.size} raw entries before filtering, nextPage=${page.nextPage != null})")
+        }
+        PageResult(items, page.nextPage)
     }
 
     suspend fun search(query: String): PageResult<StreamInfoItem> = withContext(Dispatchers.IO) {
@@ -107,4 +119,6 @@ object YouTubeRepository {
             videos = videos,
         )
     }
+
+    private const val TAG = "YouTubeRepository"
 }
