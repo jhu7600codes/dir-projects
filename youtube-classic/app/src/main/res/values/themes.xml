@@ -29,11 +29,19 @@
 
     <style name="Widget.YtClassic.BottomNav" parent="Widget.MaterialComponents.BottomNavigationView">
         <item name="android:background">@color/yt_white</item>
-        <!-- No itemIconTint: each tab icon is its own selected/unselected
-             drawable pair (see ic_tab_home.xml etc.) rather than a single
-             glyph re-tinted by state, because the real Subscriptions icon
-             stays red in both states while the others swap gray/red - a
-             single shared tint list can't express that. -->
+        <!-- Explicitly @null, not just omitted: the parent Material style
+             already sets itemIconTint to its own default
+             (mtrl_navigation_bar_item_tint), and simply not mentioning the
+             attribute here does NOT clear that inherited value - it kept
+             silently recoloring every tab icon (selected included) the
+             whole time, which is why the icon never actually turned red
+             even though itemTextColor (explicitly set below) correctly
+             did. Each tab icon is its own selected/unselected drawable
+             pair anyway (see ic_tab_home.xml etc.), because the real
+             Subscriptions icon stays red in both states while the others
+             swap gray/red - a single shared tint list couldn't express
+             that regardless. -->
+        <item name="itemIconTint">@null</item>
         <item name="itemTextColor">@color/bottom_nav_tint</item>
         <item name="labelVisibilityMode">labeled</item>
         <item name="itemRippleColor">@android:color/transparent</item>
@@ -45,6 +53,15 @@
         <item name="android:statusBarColor">@color/yt_player_background</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
         <item name="colorAccent">@color/yt_red</item>
+    </style>
+
+    <!-- yt_2016_status_bar existed as a color resource but was never
+         actually applied to anything - MainActivity2016 was inheriting
+         Theme.YtClassic's plain white/black status bar unchanged, which
+         doesn't match a solid-red app bar at all. -->
+    <style name="Theme.YtClassic.Main2016" parent="Theme.YtClassic">
+        <item name="android:statusBarColor">@color/yt_2016_status_bar</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
     </style>
 
     <style name="YtClassic.SubscribeButton" parent="Widget.MaterialComponents.Button">

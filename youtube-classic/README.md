@@ -223,6 +223,26 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
    "trending by category" surface to back it with, rather than building
    a decoration with nothing behind it.
 
+   Building this surfaced a real, previously-unnoticed bug in
+   [MainActivity]'s own bottom nav, not just this new screen: its selected
+   tab's *icon* never actually turned red, only its label text did,
+   because `Widget.YtClassic.BottomNav`'s parent Material style
+   (`Widget.MaterialComponents.BottomNavigationView`) sets its own default
+   `itemIconTint`, and simply not mentioning that attribute in the app's
+   own style doesn't clear it - it silently kept recoloring every icon
+   regardless of the selected/unselected drawable this app was already
+   using. Fixed by setting `itemIconTint` to `@null` explicitly. The 2016
+   tab strip had its own version of "selection barely visible" for a
+   different reason: its unselected tint was a literal ~40%-black alpha
+   value traced off the real (light-only, pre-dark-mode) app, which reads
+   as near-invisible black-on-near-black once this DayNight theme is
+   actually in dark mode - swapped to the existing theme-aware
+   `yt_nav_unselected` token instead. Also gave `MainActivity2016` its own
+   theme (`Theme.YtClassic.Main2016`) so its status bar is actually the
+   dark red `yt_2016_status_bar` color that existed as a resource but was
+   never wired to anything, rather than silently inheriting the plain
+   white/black one.
+
 ## Known gaps / where to look if something's off
 
 - **Channel avatars weren't loading on Home/Subscriptions/Shorts** - all

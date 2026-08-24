@@ -123,7 +123,13 @@ class MainActivity2016 : AppCompatActivity() {
      */
     private fun updateTabTints(selectedId: Int) {
         val selectedColor = ColorStateList.valueOf(resources.getColor(R.color.yt_2016_red, theme))
-        val unselectedColor = ColorStateList.valueOf(resources.getColor(R.color.yt_2016_nav_unselected, theme))
+        // yt_nav_unselected, not the real ~40%-black-alpha value the real
+        // 2016 app used - that value came from a light-only 2015/2016 app
+        // with no dark mode to speak of, and reads as near-invisible black-
+        // on-near-black once this DayNight theme is actually in dark mode.
+        // yt_nav_unselected already has a values-night override for
+        // exactly this reason (see MainActivity's own bottom nav).
+        val unselectedColor = ColorStateList.valueOf(resources.getColor(R.color.yt_nav_unselected, theme))
         tabButtons().forEach { (id, button) ->
             button.imageTintList = if (id == selectedId) selectedColor else unselectedColor
         }

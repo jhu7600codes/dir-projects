@@ -35,11 +35,4 @@
          compiled resources, not eyeballed off a screenshot. -->
     <color name="yt_2016_red">#DD0000</color>
     <color name="yt_2016_status_bar">#B71C1C</color>
-    <!-- The real tab-strip icons are ~40% opaque black when unselected
-         (sampled off the actual PNG's alpha channel) sitting on a plain
-         white strip, not a solid gray glyph - a solid gray looked wrong
-         next to the red selected color at the same strip position, so
-         this keeps the real alpha value instead of flattening it to an
-         opaque gray. -->
-    <color name="yt_2016_nav_unselected">#66000000</color>
 </resources>
