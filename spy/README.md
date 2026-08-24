@@ -13,7 +13,7 @@ blend in. The whole interface is in Russian.
    mode below) for anyone who wants to see it before playing for real.
 2. **Раздача ролей** -- pass the phone around; each player taps to reveal
    their own card in turn. One random player gets "ШПИОН"; everyone else
-   sees the same word, drawn from a ~11,300-word pool (see Word bank below).
+   sees the same word, drawn from a ~3,200-word pool (see Word bank below).
 3. **Подсказки** -- players take turns giving a one-word hint about the
    secret word. If nobody's ready to accuse anyone yet, "Никто не догадался"
    starts a new round with hints one word longer (round 2 = two words, and
@@ -78,22 +78,28 @@ The pool isn't a fixed hand-picked list -- it's two sources merged together:
 - ~90 curated entries in `WordBank.kt` itself, grouped into seven real
   categories (cities, professions, buildings, transport, nature/leisure,
   events, institutions), always available.
-- `app/src/main/assets/words_ru.txt` -- ~11,200 general Russian nouns,
+- `app/src/main/assets/words_ru.txt` -- ~3,100 general Russian nouns,
   loaded once at startup (`WordBank.loadDictionary`) and shown under the
   generic "Слово" category, since the source list carries no category data.
   Built from [hingston/russian](https://github.com/hingston/russian)'s
-  10,000- and 100,000-most-common-Russian-words frequency lists (Leeds
-  University Russian corpus data, [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/)) --
+  10,000-most-common-Russian-words frequency list (Leeds University Russian
+  corpus data, [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/)) --
   offline, not on-device: every candidate word is run through
   [pymorphy3](https://github.com/no-plagiarism/pymorphy3), a real Russian
   morphological analyzer, and kept only if its single most likely parse is
-  a common noun in the nominative case. That one rule does the heavy
-  lifting: no adjectives, no verbs, no other part of speech, and no
-  personal names (pymorphy tags first names/surnames/patronymics with
-  dedicated grammemes, backed by a manual blocklist for the handful its
-  dictionary under-tags) or organization/brand abbreviations. The
+  *unambiguously* a common noun in the nominative case (rejecting words
+  that tie for top score with a non-noun reading, like "мертвый" = "dead
+  [person]" vs. "dead"). That rule does the heavy lifting: no adjectives,
+  no verbs, no other part of speech, and no personal names (pymorphy tags
+  first names/surnames/patronymics with dedicated grammemes, backed by a
+  manual blocklist for the handful its dictionary under-tags) or
+  organization/brand abbreviations. On top of that, words over 10
+  characters and a short list of vulgar/offensive terms are dropped, so
+  what's left reads as simple, everyday, easy-to-act-out nouns rather than
+  the bureaucratic/abstract vocabulary ("целесообразность",
+  "функциональность") that a frequency list alone still lets through. The
   generation script isn't checked in -- this is a one-time offline build
-  step, not something the app repeats -- only its ~184KB output,
+  step, not something the app repeats -- only its ~44KB output,
   `words_ru.txt`, is. A few words that are technically also common first
   names (вера/"faith", надежда/"hope", любовь/"love") were deliberately
   kept, since their everyday meaning as ordinary nouns is the dominant one.
