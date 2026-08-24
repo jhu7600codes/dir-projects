@@ -53,6 +53,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var timerJob: Job? = null
 
+    /**
+     * How many words each hint is allowed to be in the current round of
+     * [GamePhase.PLAY], before discussion has started -- 1 in the first
+     * round, 2 in the next, and so on for as long as nobody's ready to
+     * accuse anyone yet.
+     */
+    var hintRoundNumber by mutableStateOf(1)
+        private set
+
+    /** True once the big red button has been pressed and the 3-minute discussion timer is running. */
+    var discussionStarted by mutableStateOf(false)
+        private set
+
     /** Active players at the moment the current meeting was called, in voting order. */
     var voteOrder by mutableStateOf<List<Player>>(emptyList())
         private set
@@ -84,7 +97,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         wordEntry = WordBank.random()
         revealIndex = 0
-        resetTimer()
+        resetDiscussion()
         lastOutcome = null
         winner = null
         phase = GamePhase.REVEAL
@@ -98,8 +111,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun toggleTimer() {
-        if (timerRunning) pauseTimer() else startTimer()
+    /** "Никто не догадался" -- nobody's ready to accuse anyone, so hints get one word longer. */
+    fun advanceHintRound() {
+        if (!discussionStarted) hintRoundNumber += 1
+    }
+
+    /**
+     * The big red button: "I think I know who the spy is." Starts the
+     * 3-minute discussion timer, which auto-calls the meeting at zero.
+     */
+    fun startDiscussion() {
+        if (discussionStarted) return
+        discussionStarted = true
+        timerSeconds = DEFAULT_TIMER_SECONDS
+        startTimer()
     }
 
     private fun startTimer() {
@@ -124,12 +149,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         timerJob = null
     }
 
-    fun resetTimer() {
+    /** Resets the whole hint-round/discussion state back to a fresh round 1 -- called at the start of every PLAY phase. */
+    private fun resetDiscussion() {
         pauseTimer()
         timerSeconds = DEFAULT_TIMER_SECONDS
+        hintRoundNumber = 1
+        discussionStarted = false
     }
 
-    /** Manual "Объявить сходку" button, or the automatic call when the timer hits zero. */
+    /** "Голосовать досрочно" during discussion, or the automatic call when the timer hits zero. */
     fun callMeeting() {
         pauseTimer()
         voteOrder = activePlayers
@@ -171,6 +199,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             remainingActiveCount = activePlayers.size,
             totalPlayerCount = players.size,
         )
+        // ELIMINATION plays a short "thrown out" animation, then calls
+        // finishElimination() itself to move on to RESULT -- see EliminationScreen.
+        phase = GamePhase.ELIMINATION
+    }
+
+    /** Called once the elimination animation has finished playing. */
+    fun finishElimination() {
         phase = GamePhase.RESULT
     }
 
@@ -187,18 +222,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 phase = GamePhase.END
             }
             else -> {
-                resetTimer()
+                resetDiscussion()
                 phase = GamePhase.PLAY
             }
         }
     }
 
     fun newGame() {
-        pauseTimer()
+        resetDiscussion()
         players = emptyList()
         wordEntry = null
         revealIndex = 0
-        timerSeconds = DEFAULT_TIMER_SECONDS
         voteOrder = emptyList()
         voterIndex = 0
         votes = emptyMap()
