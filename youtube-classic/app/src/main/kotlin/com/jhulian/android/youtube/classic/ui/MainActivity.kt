@@ -90,6 +90,18 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             showTab(R.id.nav_home)
         }
+
+        // BottomNavigationView auto-selects its first menu item (Home) on
+        // construction, before this Activity ever runs a line of code -
+        // that item's icon (a per-item state-list drawable, see
+        // ic_tab_home.xml) never goes through an actual selection *change*
+        // to trigger the state-list-drawable-to-icon-view state push, so
+        // it renders blank until some later tab switch happens to touch
+        // it again. jumpDrawablesToCurrentState() forces every stateful
+        // drawable under this view to immediately apply its current state
+        // once, which is the standard fix for exactly this "already-
+        // selected-at-construction-time" class of blank-icon bug.
+        binding.bottomNav.jumpDrawablesToCurrentState()
     }
 
     private fun showTab(itemId: Int) {

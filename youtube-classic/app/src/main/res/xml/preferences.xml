@@ -33,6 +33,12 @@
             app:defaultValue="true" />
 
         <SwitchPreferenceCompat
+            app:key="pref_pip_enabled"
+            app:title="@string/pref_pip_title"
+            app:summary="@string/pref_pip_summary"
+            app:defaultValue="true" />
+
+        <SwitchPreferenceCompat
             app:key="pref_sponsorblock_enabled"
             app:title="@string/pref_sponsorblock_title"
             app:summary="@string/pref_sponsorblock_summary"

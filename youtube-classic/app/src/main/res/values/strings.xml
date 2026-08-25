@@ -60,6 +60,8 @@
 
     <string name="pref_background_play_title">Background play</string>
     <string name="pref_background_play_summary">Keep audio playing when you leave the app</string>
+    <string name="pref_pip_title">Picture-in-picture</string>
+    <string name="pref_pip_summary">Shrink the player to a small floating window when you leave the app while a video is playing</string>
     <string name="pref_sponsorblock_title">SponsorBlock</string>
     <string name="pref_sponsorblock_summary">Automatically skip sponsor segments, powered by the SponsorBlock community database</string>
     <string name="pref_default_quality_title">Default video quality</string>

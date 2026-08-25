@@ -472,6 +472,81 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   this, check for a `WebViewFetchException` in logcat (tag `Innertube`,
   `postAuthenticated(...)` log lines) first, since that would mean the
   `fetch()` call itself is failing rather than merely being anonymized.
+  **Confirmed fixed on a real device** - the `__Secure-*` cookie fix
+  above was the actual root cause all along; the WebView bridge and live
+  `ytcfg` config from the two entries above stay in place regardless,
+  since they're real, independently-justified fixes for the anti-abuse
+  behavior they were built for even though they turned out not to be
+  what was broken this time.
+- **Bottom nav's selected tab showing no icon at all (2019 UI) - root-
+  caused and fixed.** Reported (with a screenshot) as the selected tab's
+  icon being completely blank - not miscolored, not wrong-shaped, just
+  empty space - while every unselected tab's icon rendered fine.
+  `itemIconTint="@null"` and each tab's `state_checked` selector drawable
+  both checked out correct at the compiled-resource level (verified via
+  `aapt2 dump resources --values`/`dump xmltree` against the built APK)
+  and Material's own `NavigationBarItemView` state-propagation bytecode
+  looked structurally sound too - so this wasn't a resource or library
+  bug. The real cause: `BottomNavigationView` auto-selects its first menu
+  item (Home) the moment it's constructed, before `MainActivity.onCreate()`
+  runs a single line - that item's stateful icon drawable never goes
+  through an actual selection *change* to trigger Android's normal
+  state-push-to-drawable path, so it renders blank until some later,
+  unrelated state transition happens to touch it. This is a documented
+  Android gotcha with a standard one-line fix:
+  `binding.bottomNav.jumpDrawablesToCurrentState()`, called once right
+  after the initial tab is set up, forces every stateful drawable under
+  the view to apply its current state immediately instead of waiting for
+  a transition that, for the already-selected item, was never going to
+  come.
+- **Picture-in-picture.** Leaving the app (Home button/app switch) while a
+  video is playing now shrinks the player into a floating window instead
+  of just continuing in the background - `PlayerActivity.onUserLeaveHint()`
+  calls `enterPictureInPictureMode()` with an aspect ratio matched to the
+  actual decoded video size (clamped to the `[1:2.39, 2.39:1]` range PiP
+  requires, falling back to 16:9 outside it or if the size isn't known
+  yet). `onPictureInPictureModeChanged()` hides everything except the
+  video itself (`detailsScrollView`, the player's own control overlay)
+  since a PiP window is too small for any of that and only forwards touch
+  events for system-provided actions anyway. Gated behind a new Settings
+  toggle (`pref_pip_title`, default on) alongside the existing background-
+  play switch, and behind `PackageManager.FEATURE_PICTURE_IN_PICTURE` at
+  runtime so it's a no-op on the rare device/OS combo that reports the
+  manifest flag but doesn't actually support it.
+- **Real icon assets pulled directly from a YouTube 14.34.54 APK teardown,
+  replacing hand-traced approximations.** Earlier rounds this session
+  traced several icons (the player's share arrow, tab bar shapes) off
+  cropped screenshots or reasoned about their shape from written
+  descriptions - accurate where verified, but still a reconstruction, not
+  the real file. With the APK already on disk from that teardown work,
+  `aapt`/`aapt2 dump resources` gave real, unobfuscated resource names
+  (Google ships this app with Java-level minification but not resource
+  renaming) to look up directly: `ic_share`, `ic_tab_library`,
+  `ic_account_circle`, `ic_notifications_half_bell_grey600_24`,
+  `ic_arrow_back_black`, and the `quantum_ic_*` family (Google's shared
+  Material icon set) for close/comment/expand_more/fast_forward/
+  fast_rewind/fullscreen/fullscreen_exit/history/more_vert/pause/
+  play_arrow/playlist_add/search/send/settings/sort/watch_later/
+  cast_connected/closed_caption and both thumb_up/thumb_down states
+  (grey600 = default, googblue = liked/disliked - a real, verified color,
+  not assumed). Each real PNG was visually confirmed (composited onto a
+  solid background and upscaled for inspection) before wiring in, which
+  is what caught that `ic_tab_home`/`ic_tab_subscriptions`/
+  `ic_tab_trending`'s own real assets are blank 1x1-equivalent stubs in
+  this particular build (the actual current icons for those three live
+  under different resource names this teardown didn't turn up) - those
+  three plus Shorts (a tab that didn't exist in 2019) keep this session's
+  earlier real-screenshot-traced vectors rather than a same-named but
+  actually-unused asset. `ic_tab_library`'s real asset (a plain black
+  folder, confirmed matching the existing traced version exactly) is a
+  single fixed-color PNG rather than a selected/unselected pair, so
+  `ic_tab_library_selected.xml`/`_unselected.xml` now wrap it in a
+  `<bitmap>` with `android:tint` instead of hand-tracing two vectors.
+  `ic_download`, `ic_expand_less`, and `ic_your_videos` keep their
+  existing vectors - no clean matching real asset turned up for these
+  (the real download icon that did turn up has a circular badge baked in,
+  which would look inconsistent next to the flat `ic_share` icon it sits
+  beside in the player's toolbar).
 
 ## Building
 

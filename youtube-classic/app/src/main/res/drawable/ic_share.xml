@@ -1,9 +1,0 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp"
-    android:viewportWidth="24" android:viewportHeight="24">
-    <!-- The real app's ic_share.png (from a YouTube 14.34.54 APK teardown)
-         is the classic "swoosh" forward-arrow share glyph, not the
-         three-connected-nodes Android share icon this had before. -->
-    <path android:fillColor="@color/yt_icon"
-        android:pathData="M23,12l-9,-9v4.5c-8,0 -12,4 -13,9.5 3,-4.5 7,-6.5 13,-6.5v4.5z" />
-</vector>

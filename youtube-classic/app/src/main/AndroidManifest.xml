@@ -54,6 +54,7 @@
             android:exported="false"
             android:theme="@style/Theme.YtClassic.Player"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:supportsPictureInPicture="true"
             android:parentActivityName=".ui.MainActivity" />
 
         <activity

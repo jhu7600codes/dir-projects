@@ -1,12 +1,16 @@
 package com.jhulian.android.youtube.classic.ui.player
 
+import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
+import android.util.Rational
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -70,6 +74,7 @@ class PlayerActivity : AppCompatActivity() {
     private var isFullscreen = false
     private var currentMaxHeight = 0
     private var captionsEnabled = false
+    private var isInPip = false
 
     private val fullscreenBackCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() = setFullscreen(false)
@@ -246,6 +251,70 @@ class PlayerActivity : AppCompatActivity() {
             WindowCompat.setDecorFitsSystemWindows(window, true)
             insetsController.show(WindowInsetsCompat.Type.systemBars())
         }
+    }
+
+    private fun canUsePip(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+
+    /**
+     * PiP requires an aspect ratio between 1:2.39 and 2.39:1 - the system
+     * throws otherwise. A live video's real dimensions almost always fall
+     * well inside that (16:9, 9:16 vertical, etc.), but a not-yet-known
+     * size (0x0, before the first decoded frame) or an unusually shaped
+     * stream would crash `enterPictureInPictureMode` outright rather than
+     * just look wrong, so anything outside the safe range - or missing
+     * entirely - falls back to plain 16:9.
+     */
+    private fun safeAspectRatio(width: Int, height: Int): Rational {
+        if (width <= 0 || height <= 0) return Rational(16, 9)
+        val ratio = width.toFloat() / height.toFloat()
+        return if (ratio in 0.42f..2.39f) Rational(width, height) else Rational(16, 9)
+    }
+
+    /**
+     * Only the automatic "leave the app while playing" trigger is wired up
+     * here (no dedicated PiP button in the player UI) - this is how the
+     * real YouTube app, and most video apps, behave: press Home or switch
+     * apps mid-playback and the video follows you into a floating window
+     * instead of just stopping.
+     */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        val player = controller ?: return
+        if (!canUsePip() || !player.isPlaying) return
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        if (!prefs.getBoolean("pref_pip_enabled", true)) return
+
+        val size = player.videoSize
+        val params = PictureInPictureParams.Builder()
+            .setAspectRatio(safeAspectRatio(size.width, size.height))
+            .build()
+        try {
+            enterPictureInPictureMode(params)
+        } catch (e: IllegalStateException) {
+            // A handful of OEM skins report FEATURE_PICTURE_IN_PICTURE but
+            // still refuse to enter it in certain states - not fatal to the
+            // app, playback just continues in the foreground as normal.
+        }
+    }
+
+    /**
+     * Only the video itself should be visible in the floating PiP window -
+     * everything else (toolbar, title/description/comments, the player's
+     * own control overlay) either doesn't fit a window that small or isn't
+     * meant to be interactive there, since PiP windows only forward touch
+     * events for system-provided actions, not arbitrary app UI.
+     */
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        isInPip = isInPictureInPictureMode
+        binding.detailsScrollView.visibility = if (isInPictureInPictureMode) View.GONE else View.VISIBLE
+        // Hides the whole custom controller overlay (top bar + bottom bar
+        // + progress) as one unit - it's all one controller_layout_id merge
+        // that PlayerView shows/hides together, so there's no need to
+        // separately toggle the top row.
+        binding.playerView.useController = !isInPictureInPictureMode
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
