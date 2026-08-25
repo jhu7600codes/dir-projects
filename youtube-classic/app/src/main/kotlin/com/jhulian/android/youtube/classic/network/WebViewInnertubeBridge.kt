@@ -69,6 +69,55 @@ class WebViewInnertubeBridge(context: Context) {
         }
     }
 
+    private data class LiveConfig(val apiKey: String, val context: JSONObject, val clientVersion: String?)
+
+    private var liveConfig: LiveConfig? = null
+
+    /**
+     * Pulls the real `INNERTUBE_API_KEY`/`INNERTUBE_CONTEXT` straight out of
+     * the loaded youtube.com page's own `ytcfg` config - the exact values
+     * that page's own JS uses to make this exact same browse() call -
+     * instead of the hand-maintained constants in [Innertube]. Everything
+     * else (real browser engine, real headers, real cookies) was already
+     * ruled out on a real device: a fresh, still-valid cookie from the
+     * user's own standalone browser, on the same device/network, still came
+     * back "logged_in":"0" even through a genuine WebView fetch. A stale or
+     * subtly-wrong hardcoded key/context is the remaining unverified
+     * variable - this replaces it with the one source that can't be stale,
+     * since the page loaded it moments ago for its own use. Cached for the
+     * life of this WebView instance once found; returns null (caller falls
+     * back to the hardcoded values) if `ytcfg` isn't there for any reason.
+     */
+    private suspend fun getLiveConfig(view: WebView): LiveConfig? {
+        liveConfig?.let { return it }
+        val raw = suspendCancellableCoroutine<String?> { cont ->
+            view.evaluateJavascript(
+                "(function(){try{" +
+                    "if(typeof ytcfg==='undefined')return null;" +
+                    "return {key:ytcfg.get('INNERTUBE_API_KEY'),ctx:ytcfg.get('INNERTUBE_CONTEXT')};" +
+                    "}catch(e){return null;}})();",
+                { result -> cont.resume(result) },
+            )
+        }
+        if (raw == null || raw == "null") {
+            android.util.Log.w("WebViewInnertubeBridge", "getLiveConfig: ytcfg unavailable, falling back to hardcoded key/context")
+            return null
+        }
+        return try {
+            val obj = JSONObject(raw)
+            val key = obj.getString("key")
+            val ctx = obj.getJSONObject("ctx")
+            val clientVersion = ctx.optJSONObject("client")?.optString("clientVersion")
+            LiveConfig(key, ctx, clientVersion).also {
+                liveConfig = it
+                android.util.Log.d("WebViewInnertubeBridge", "getLiveConfig: using live ytcfg (clientVersion=$clientVersion)")
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("WebViewInnertubeBridge", "getLiveConfig: failed to parse ytcfg result", e)
+            null
+        }
+    }
+
     /**
      * Checks, from inside the WebView's already-loaded youtube.com page,
      * whether that page itself currently thinks it's signed in - `document
@@ -125,12 +174,19 @@ class WebViewInnertubeBridge(context: Context) {
     }
 
     /**
-     * POSTs [bodyJson] to `/youtubei/v1/[endpoint]` via a real `fetch()`
-     * running inside the WebView's own youtube.com page, with
-     * `credentials: 'include'` so it rides on whatever session the shared
-     * cookie jar already holds - no cookie header is passed in by hand.
-     * [authorizationHeader], if given, mirrors the `SAPISIDHASH` a real
-     * youtube.com page computes client-side before making this same call.
+     * POSTs [body] to `/youtubei/v1/[endpoint]` via a real `fetch()` running
+     * inside the WebView's own youtube.com page, with `credentials:
+     * 'include'` so it rides on whatever session the shared cookie jar
+     * already holds - no cookie header is passed in by hand.
+     * [fallbackAuthorizationHeader], if given, mirrors the `SAPISIDHASH` a
+     * real youtube.com page computes client-side before making this same
+     * call - used only when [getLiveConfig] can't supply a live one.
+     *
+     * When the page's own `ytcfg` is available, [body]'s `context` field
+     * and the request's API key are replaced with the real, live ones that
+     * page is actually using - see [getLiveConfig]'s kdoc for why. [body]
+     * is mutated in place either way (its `context` field is always the one
+     * actually sent).
      *
      * `Origin`/`Referer`/`User-Agent` are deliberately not set here even
      * though [Innertube.post]'s equivalents are - `fetch()` refuses to let
@@ -140,22 +196,30 @@ class WebViewInnertubeBridge(context: Context) {
      */
     suspend fun postJson(
         endpoint: String,
-        bodyJson: String,
-        apiKey: String,
-        clientVersion: String,
-        authorizationHeader: String?,
+        body: JSONObject,
+        fallbackApiKey: String,
+        fallbackClientVersion: String,
+        fallbackAuthorizationHeader: String?,
     ): String = withContext(Dispatchers.Main.immediate) {
         val view = ensureReady()
+        val live = getLiveConfig(view)
+        if (live != null) {
+            body.put("context", live.context)
+        }
+        val apiKey = live?.apiKey ?: fallbackApiKey
+        val clientVersion = live?.clientVersion ?: fallbackClientVersion
+        val bodyJson = body.toString()
+
         val id = nextId.incrementAndGet().toString()
-        runDiagnostic(view, "before $endpoint #$id")
+        runDiagnostic(view, "before $endpoint #$id (liveConfig=${live != null})")
         suspendCancellableCoroutine { cont ->
             pending[id] = cont
             val headersJs = buildString {
                 append("{'Content-Type':'application/json','X-YouTube-Client-Name':'1','X-YouTube-Client-Version':")
                 append(JSONObject.quote(clientVersion))
                 append(",'X-Goog-AuthUser':'0'")
-                if (authorizationHeader != null) {
-                    append(",'Authorization':").append(JSONObject.quote(authorizationHeader))
+                if (fallbackAuthorizationHeader != null) {
+                    append(",'Authorization':").append(JSONObject.quote(fallbackAuthorizationHeader))
                 }
                 append('}')
             }

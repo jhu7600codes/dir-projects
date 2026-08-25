@@ -223,7 +223,7 @@ object Innertube {
             ?: extractCookieValue(cookieHeader, "__Secure-3PAPISID")
         val authHeader = sapisid?.let { sapisidHash(it) }
         android.util.Log.d(TAG, "postAuthenticated($endpoint): via WebView bridge, sapisidResolved=${sapisid != null}")
-        val text = bridge.postJson(endpoint, body.toString(), API_KEY, CLIENT_VERSION, authHeader)
+        val text = bridge.postJson(endpoint, body, API_KEY, CLIENT_VERSION, authHeader)
         return if (text.isBlank()) JSONObject() else JSONObject(text)
     }
 }
