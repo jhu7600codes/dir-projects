@@ -61,12 +61,22 @@ object InnertubeFeedClient {
         return results
     }
 
+    // These are the specific surfaces that were coming back HTTP 200 with
+    // "logged_in":"0" no matter how closely Innertube.post()'s headers
+    // were made to match a real browser - routed through
+    // Innertube.postAuthenticated() (a real WebView's fetch()) instead of
+    // plain OkHttp when a session is actually present. See
+    // WebViewInnertubeBridge's kdoc for why.
     private suspend fun rawBrowse(browseId: String, cookieHeader: String?): JSONObject {
         val body = JSONObject().apply {
-            put("context", Innertube.buildContext())
+            put("context", if (cookieHeader.isNullOrBlank()) Innertube.buildContext() else Innertube.buildWebViewContext())
             put("browseId", browseId)
         }
-        return Innertube.post("browse", body, cookieHeader)
+        return if (cookieHeader.isNullOrBlank()) {
+            Innertube.post("browse", body, cookieHeader)
+        } else {
+            Innertube.postAuthenticated("browse", body, cookieHeader)
+        }
     }
 
     private fun extractVideos(response: JSONObject): List<VideoUi> =

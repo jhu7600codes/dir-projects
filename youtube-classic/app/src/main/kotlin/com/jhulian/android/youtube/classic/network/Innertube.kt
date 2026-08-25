@@ -53,16 +53,40 @@ object Innertube {
     private const val USER_AGENT =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
 
+    // The identity [WebViewInnertubeBridge] actually runs as - real Chrome
+    // desktop, matching a WebView's true underlying engine (Chromium)
+    // rather than pretending to be a browser it isn't, which was the whole
+    // bug the USER_AGENT/buildContext() split above existed to fix in the
+    // first place. browse() calls route through the bridge (see
+    // [postAuthenticated]) and must use this identity in their context
+    // body to match; everything else here keeps using [USER_AGENT] above.
+    const val WEBVIEW_USER_AGENT =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    private const val WEBVIEW_BROWSER_VERSION = "126.0.0.0"
+
     private val client = OkHttpClient.Builder().build()
     private val jsonMedia = "application/json".toMediaType()
+    private var webViewBridge: WebViewInnertubeBridge? = null
+
+    /** Wired up once from [com.jhulian.android.youtube.classic.YtClassicApp]. */
+    fun init(bridge: WebViewInnertubeBridge) {
+        webViewBridge = bridge
+    }
 
     // A sparse context (just clientName/clientVersion/hl/gl) is enough for
     // the simple write actions (like/subscribe/comment), but `browse` calls
     // - the ones behind Home/Subscriptions/Shorts - are reported to come
     // back content-free far more often with a minimal context than a real
     // browser's, which sends all of this. Matches the shape yt-dlp's WEB
-    // client definition sends.
-    fun buildContext(): JSONObject = JSONObject().apply {
+    // client definition sends. [browserName]/[browserVersion]/[userAgent]
+    // default to the plain-OkHttp identity ([USER_AGENT]); browse() calls
+    // pass the WebView bridge's real Chrome identity instead, since that's
+    // the actual engine issuing those requests - see [WEBVIEW_USER_AGENT].
+    fun buildContext(
+        browserName: String = "Firefox",
+        browserVersion: String = "140.0",
+        userAgent: String = "$USER_AGENT,gzip(gfe)",
+    ): JSONObject = JSONObject().apply {
         put(
             "client",
             JSONObject().apply {
@@ -72,11 +96,11 @@ object Innertube {
                 put("gl", "US")
                 put("platform", "DESKTOP")
                 put("clientFormFactor", "UNKNOWN_FORM_FACTOR")
-                put("browserName", "Firefox")
-                put("browserVersion", "140.0")
+                put("browserName", browserName)
+                put("browserVersion", browserVersion)
                 put("osName", "Windows")
                 put("osVersion", "10.0")
-                put("userAgent", "$USER_AGENT,gzip(gfe)")
+                put("userAgent", userAgent)
                 put("originalUrl", ORIGIN)
                 put("screenPixelDensity", 1)
                 put("screenDensityFloat", 1)
@@ -90,6 +114,13 @@ object Innertube {
             },
         )
     }
+
+    /** [buildContext] pre-filled with the WebView bridge's real Chrome identity. */
+    fun buildWebViewContext(): JSONObject = buildContext(
+        browserName = "Chrome",
+        browserVersion = WEBVIEW_BROWSER_VERSION,
+        userAgent = "$WEBVIEW_USER_AGENT,gzip(gfe)",
+    )
 
     /**
      * Google's SAPISIDHASH scheme: SHA1("<unix-seconds> <SAPISID> <origin>"),
@@ -174,6 +205,27 @@ object Innertube {
                 if (text.isBlank()) JSONObject() else JSONObject(text)
             }
         }
+
+    /**
+     * Like [post], but for the browse() surfaces behind Home/Subscriptions/
+     * Shorts specifically - see [WebViewInnertubeBridge]'s kdoc for why
+     * those need a real browser engine rather than a plain HTTP client.
+     * Falls back to [post] if the bridge hasn't been wired up via [init]
+     * yet, which shouldn't happen outside of a broken app startup.
+     */
+    suspend fun postAuthenticated(endpoint: String, body: JSONObject, cookieHeader: String): JSONObject {
+        val bridge = webViewBridge
+        if (bridge == null) {
+            android.util.Log.w(TAG, "postAuthenticated($endpoint): no WebView bridge wired up, falling back to plain post()")
+            return post(endpoint, body, cookieHeader)
+        }
+        val sapisid = extractCookieValue(cookieHeader, "SAPISID")
+            ?: extractCookieValue(cookieHeader, "__Secure-3PAPISID")
+        val authHeader = sapisid?.let { sapisidHash(it) }
+        android.util.Log.d(TAG, "postAuthenticated($endpoint): via WebView bridge, sapisidResolved=${sapisid != null}")
+        val text = bridge.postJson(endpoint, body.toString(), API_KEY, CLIENT_VERSION, authHeader)
+        return if (text.isBlank()) JSONObject() else JSONObject(text)
+    }
 }
 
 class InnertubeException(val httpCode: Int, val rawBody: String) :

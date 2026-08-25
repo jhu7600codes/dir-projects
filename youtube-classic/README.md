@@ -414,6 +414,35 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   place either way, since a genuinely rejected session vs. a bot-flagged
   one now look different in logcat (missing cookies vs. present-but-still-
   anonymized).
+- **Home/Subscriptions/Shorts still `"logged_in":"0"` after the header fix
+  above - the actual fix.** A real device confirmed the header-consistency
+  fix wasn't enough: cookies present, hash attached, still anonymized.
+  This matches a widely documented YouTube anti-abuse behavior well beyond
+  just this app - yt-dlp's, NewPipe's, and Invidious's own issue trackers
+  have extensive threads on it (search "poToken") - Google's signed-in web
+  endpoints increasingly expect a proof-of-origin signal that only a real
+  browser engine actually running YouTube's own page can produce, which no
+  amount of hand-crafted HTTP headers can fake, no matter how internally
+  consistent. The fix: `network/WebViewInnertubeBridge.kt` runs these
+  specific calls as a real `fetch()` executed inside an actual (offscreen,
+  long-lived) `WebView` loaded to youtube.com, instead of a plain OkHttp
+  request - a WebView *is* a real browser engine (same TLS stack, same JS
+  engine, same cookie jar `LoginActivity`'s login already populated, since
+  WebView's `CookieManager` is one shared process-wide jar), so this
+  sidesteps the whole problem rather than trying to out-guess it further.
+  `InnertubeFeedClient.rawBrowse()` now routes through
+  `Innertube.postAuthenticated()` (the bridge) whenever a session cookie is
+  present, keeping the plain OkHttp `Innertube.post()` path for
+  unauthenticated calls and the simple write actions in
+  `InnertubeActions.kt` (like/subscribe/comment), which have no confirmed
+  evidence of the same problem. The bridge is wired up once from
+  `YtClassicApp.onCreate()` and reuses one WebView/page load for every
+  subsequent call rather than one per request. Unverified against a live
+  device at time of writing - this is a bigger architectural change than
+  the header fix that preceded it, so if `logged_in` is still `"0"` after
+  this, check for a `WebViewFetchException` in logcat (tag `Innertube`,
+  `postAuthenticated(...)` log lines) first, since that would mean the
+  `fetch()` call itself is failing rather than merely being anonymized.
 
 ## Building
 

@@ -7,6 +7,8 @@ import android.os.Build
 import com.jhulian.android.youtube.classic.auth.SessionManager
 import com.jhulian.android.youtube.classic.download.DownloadsStore
 import com.jhulian.android.youtube.classic.extractor.OkHttpDownloader
+import com.jhulian.android.youtube.classic.network.Innertube
+import com.jhulian.android.youtube.classic.network.WebViewInnertubeBridge
 import org.schabi.newpipe.extractor.NewPipe
 
 /**
@@ -20,6 +22,10 @@ import org.schabi.newpipe.extractor.NewPipe
  * 2. [SessionManager] loads whatever cookie session was captured by the
  *    WebView login flow, so like/dislike/subscribe/comment calls have it
  *    available immediately.
+ * 3. [Innertube.init] wires up the [WebViewInnertubeBridge] that
+ *    Home/Subscriptions/Shorts route their browse() calls through - see
+ *    that class's kdoc for why they need a real WebView rather than a
+ *    plain HTTP client.
  */
 class YtClassicApp : Application() {
 
@@ -31,6 +37,7 @@ class YtClassicApp : Application() {
 
         NewPipe.init(OkHttpDownloader.instance)
         sessionManager = SessionManager(this)
+        Innertube.init(WebViewInnertubeBridge(this))
         DownloadsStore.init(this)
 
         createNotificationChannels()
