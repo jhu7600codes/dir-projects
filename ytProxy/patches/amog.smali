@@ -142,16 +142,16 @@
     return p1
 
     :cond_0
-    # ytProxy patch: real device confirmed this returns 0 for any Lattn
-    # ordinal not in either switch table below, and a caller passing that
-    # straight to Resources.getDrawable crashes with
-    # Resources$NotFoundException instead of getting a missing/wrong icon.
-    # zur (a subclass) and ftq (delegates here for anything not in its own
-    # small map) both fall through to this same path, so this one edit
-    # covers all three. Falls back to one of this class's own already-
-    # valid ids rather than 0.
-    const v0, 0x7f0805b6
-
+    # ytProxy: reverted - a made-up nonzero fallback here (and in
+    # afff/adon/ftn) made a WRONG icon appear at nearly every one of the
+    # 108 Laltp call sites across the app once the version-spoofed client
+    # started reaching Lattn values this 2019 switch table never covered
+    # (~264 of 285 possible values) - most call sites already treat 0 as
+    # "no icon" by design (e.g. ImageView.setImageResource(0) is a no-op)
+    # and were fine before this patch. Restored original 0-returning
+    # behavior; the real crash risk is handled at the few call sites that
+    # feed this straight into Resources.getDrawable without a 0-check
+    # (see kel.smali), not here.
     return v0
 
     nop

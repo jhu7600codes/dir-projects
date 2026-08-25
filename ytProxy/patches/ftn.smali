@@ -2742,14 +2742,11 @@
     return p1
 
     :cond_0
-    # ytProxy patch: real device confirmed this EnumMap-backed lookup
-    # returns 0 for any Lattn key not present in the map, and a caller
-    # passing that straight to Resources.getDrawable crashes with
-    # Resources$NotFoundException instead of getting a missing/wrong
-    # icon. Falls back to a known-valid drawable id from elsewhere in the
-    # app (resource ids are global, not scoped to the defining class)
-    # rather than 0.
-    const p1, 0x7f0805b6
+    # ytProxy: reverted, see amog.smali - restored original 0-returning
+    # behavior instead of a made-up nonzero fallback (was causing a wrong
+    # icon to appear at nearly every Laltp call site, not just the rare
+    # crash case).
+    const/4 p1, 0x0
 
     return p1
 .end method

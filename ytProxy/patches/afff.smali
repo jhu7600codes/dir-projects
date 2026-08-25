@@ -38,15 +38,16 @@
 
     if-eq p1, v1, :cond_0
 
-    # ytProxy patch: real device confirmed this class returns 0 for any
-    # Lattn ordinal it doesn't specifically recognize (both branches
-    # below), and a caller passing that straight to Resources.getDrawable
-    # crashes with Resources$NotFoundException instead of getting a
-    # missing/wrong icon. Fall back to one of this class's own already-
-    # valid ids rather than 0.
-    const p1, 0x7f08047c
-
-    return p1
+    # ytProxy: reverted - see afff/amog/adon/ftn note in kel.smali's
+    # neighborhood / README. Returning a made-up nonzero id here for the
+    # ~264 of 285 Lattn values this class was never wired to recognize
+    # made a WRONG icon appear at nearly every one of the 108 call sites
+    # across the app (most of which already treat 0 as "no icon, don't
+    # draw one" and were perfectly fine with it) - this is the "+ glyph
+    # showing up everywhere" bug. Restored original 0-returning behavior;
+    # the actual crash risk is handled at the few call sites that don't
+    # already tolerate 0 (see kel.smali), not here.
+    return v0
 
     :cond_0
     const p1, 0x7f08047c
@@ -59,7 +60,5 @@
     return p1
 
     :cond_2
-    const p1, 0x7f08047c
-
-    return p1
+    return v0
 .end method

@@ -194,3 +194,70 @@ still byte-identical to the original after these edits too.
 **Not yet confirmed on a real device whether this actually stops the
 crash** - only that the patches compile, graft cleanly, and the signed
 APK verifies.
+
+## Third round: the v3 fix traded a crash for a UI-wide "+ glyph" bug
+
+v3 (the fix above) stopped the crash, but the real device then showed a
+generic "+"-looking icon in place of many real icons app-wide, and the
+Home tab/search results stopped rendering real content. No crash, no
+fresh logcat available - screenshots only, so the diagnosis had to come
+from static analysis instead of a stack trace this time.
+
+**Root cause**: `Lattn` (`smali/attn.smali`) is a 285-value enum. The four
+`Laltp` implementations' switch tables/`EnumMap`s only ever covered a
+curated subset actually used by v14.34.54's own UI in 2019 - `amog`, for
+example, handles 21 of the 285 values. Every one of the other ~264 was
+*always* meant to fall through to "no local icon" (return 0), and the
+rest of the app already expects that: a quick survey of all 108 call
+sites of `Laltp;->a(Lattn;)I` found the overwhelming majority feed the
+result straight into `ImageView.setImageResource(int)`, which is a
+documented no-op/clears-the-image on `0` - by design, not a bug to work
+around.
+
+Patching all four `Laltp` implementations to return one fixed nonzero
+fallback id (`0x7f0805b6`) instead of 0, in the v3 round, broke that
+existing contract everywhere at once: instead of quietly showing no icon
+(the original, correct behavior for an icon type this old client's art
+never shipped), every miss across the whole app - now common, since the
+version-spoofed client reaches real 2020s-era server responses using far
+more of the 285-value icon vocabulary than 2019's UI ever wired up -
+showed the *same* wrong icon. That's the "+ glyph everywhere."
+
+**Fix**: reverted all four `Laltp` implementations
+(`afff`/`amog`/`adon`/`ftn`) back to returning `0` for an unrecognized
+`Lattn` - their original, correct behavior. Patched the actual crash risk
+at the call-site level instead, narrowly:
+
+- Surveyed all 108 call sites for which ones feed the lookup result
+  directly into something that throws on `0` (`Resources.getDrawable(I)`)
+  rather than tolerating it (`setImageResource(I)`, or a call site with
+  its own pre-existing `if-lez`/`if-eqz` guard already - `kni.smali` and
+  `kmc.smali` already guarded themselves this way and needed no patch).
+- Found 5 real call sites across `kel.smali` (done in the v3 round),
+  `frf.smali`, `lbi.smali`, and `fqv.smali` with no such guard - patched
+  each to skip straight to that method's own existing "no icon" path
+  (jumping to a label that already clears/skips the icon) when the lookup
+  returns 0, instead of calling `getDrawable(0)`.
+- Two call sites in `xan.smali` feed the `Drawable` into
+  `setBounds`/`setCompoundDrawablesRelative` unconditionally with no
+  null-safe path to jump to - skipping isn't an option there without
+  restructuring more of the method, so those two (and only those two)
+  keep a nonzero fallback substitution (`0x7f0805b6`, confirmed valid)
+  right before the `getDrawable` call. Two call sites getting an
+  occasionally-wrong icon is a very different, much smaller blast radius
+  than all 108 getting one.
+
+Same graft process as before, confirmed `sha256sum`-identical
+`resources.arsc`/`AndroidManifest.xml`, `aapt dump badging` still shows
+`versionName='14.34.54'`, and the `19.51.01` spoof string is still
+present in the rebuilt dex.
+
+**Whether this actually fixes the empty Home tab/search results is still
+open** - that symptom might be unrelated to icons entirely (e.g. normal
+signed-out empty-state UI, or a separate old-client/new-response-schema
+mismatch in the feed-parsing code, the kind of risk flagged from the
+start in this project's plan). Needs a fresh real-device test, and this
+time a plain `logcat -d` even if nothing crashes - the v3 symptoms showed
+up with no crash at all, so filtering for `FATAL EXCEPTION` alone won't
+catch whatever's suppressing Home/search content if it's a caught
+exception or empty response rather than a crash.
