@@ -261,3 +261,124 @@ time a plain `logcat -d` even if nothing crashes - the v3 symptoms showed
 up with no crash at all, so filtering for `FATAL EXCEPTION` alone won't
 catch whatever's suppressing Home/search content if it's a caught
 exception or empty response rather than a crash.
+
+## Fourth round, real evidence: the version spoof hits a wall it can't get past
+
+Real device testing (typed search, not just voice search - see below)
+confirmed: Home stayed on the signed-out empty state and Search never
+attached an adapter to its results list, for over a minute, with *zero*
+logged network activity, exceptions, or parse errors of any kind. Not a
+crash - a silent stall. Root cause, reasoned from that evidence together
+with the very first known-bad manifest-edit attempt: **the client-version
+value is what the server uses to decide the response *shape*, not just
+whether to accept the request at all.** Once the outgoing `cver` claims to
+be new enough to clear the gate (`19.51.01`), the server sends back
+modern-shaped Home/Search responses that v14.34.54's 2019 renderer has no
+code to parse - silently, since there's no code path to even notice
+something's wrong. This is exactly the risk flagged from this project's
+original plan ("if UI still breaks the same way as the manifest-edit
+attempt... a different approach would be needed") - confirmed real,
+not hypothetical.
+
+(One dead end investigated and ruled out along the way, for the record:
+the very first "channel ramble" search hang was actually caused by an
+unrelated pre-existing bug - `W/FragmentActivity: Activity result no
+fragment exists for who: ...` - triggered by an accidental mic/voice-
+search press; 2019-era support-library `onActivityResult` routing doesn't
+survive a modern Android's stricter fragment lifecycle. Retesting with a
+typed search reproduced the *same* empty-Home/blank-Search symptom with
+no voice search involved, which is what pointed at the real, deeper
+schema-mismatch cause above.)
+
+There's no bytecode patch for "the old renderer doesn't have code to
+read a response shape it's never seen" - the fix has to come from
+starting on a base whose own renderer is closer to what today's backend
+actually sends.
+
+## Fifth round: rebasing onto v15.46.34
+
+Switched the base APK from v14.34.54 to v15.46.34 (2021) - newer, so its
+renderer has had a few more years of schema evolution baked in, but still
+carrying the pre-modernization UI this project is about. Real Google-
+signed APK, confirmed via `apksigner verify --print-certs` (matches
+Google's real signing cert, not a repackaged/tampered copy) and `aapt
+dump badging` (`versionCode='1516099008' versionName='15.46.34'`).
+
+Same tracing method as v14, different obfuscated names (this build's
+class-name mapping is unrelated to v14.34.54's):
+
+- The network client-info map (`cplatform`/`c`/`cver`/`cos`/`cosver`/
+  `csdk`/`cbr`/`cbrver`/`cbrand`/`cmodel`) is built by `Lajrs`'s
+  constructor (`smali/ajrs.smali`), found via the same `"cver"` string
+  search as before.
+- `Lajrs;-><init>` has exactly one call site,
+  `Lajqw;->b(Lajsa;Landroid/content/Context;)Lajrs;` (`smali_classes2/
+  ajqw.smali`) - same single-call-site pattern as v14's `Lagsz`.
+- The version-string argument flowing into it comes from
+  `Lacam;->a(Landroid/content/Context;)Ljava/lang/String;` - this
+  build's analog of v14's `Lynv;->b` (same `pref_override_build_version_name`
+  override -> `PackageInfo.versionName` fallback shape).
+- **Difference from v14**: `Lacam;->a` has **16 call sites**, not one -
+  it's a general-purpose version accessor used by the About screen, the
+  update-nag activity, WebView fallback, etc. Patching it directly would
+  reintroduce exactly the "changes the app's whole self-identity, not
+  just what's sent over the wire" problem this project exists to avoid.
+
+**The patch** (`patches/v15/ajqw.smali`): instead of touching `Lacam;->a`,
+override the version string right where it's about to flow into
+`Lajrs;-><init>`, in `Lajqw;->b` - after its own null-check call, before
+the constructor call:
+
+```smali
+const-string p1, "19.51.01"
+
+invoke-direct {v2, v1, p1, v0, p0}, Lajrs;-><init>(Ljava/lang/String;Ljava/lang/String;Lajrq;Lajrr;)V
+```
+
+`Lacam;->a` itself is untouched, so the other 15 call sites (About
+screen, update nag, etc.) still see the real `15.46.34`. Same 19.51.01
+target as v14's spoof, since that's already confirmed (from the v14
+testing) to actually clear the server's version gate as of now - no
+need to re-guess a value.
+
+### A real apktool multidex bug this rebase surfaced
+
+`patches/rebuild.py`'s dex-graft list was hardcoded to `classes.dex`
+through `classes4.dex`, matching v14.34.54's 4-dex layout. v15.46.34
+rebuilds into **5** dex files. The hardcoded list silently kept the
+*original* `classes5.dex` instead of the rebuilt one - and `sha256sum`
+showed the original and rebuilt `classes5.dex` are NOT identical (apktool
+redistributed some classes across dex boundaries during the rebuild, even
+though only one class was actually edited), meaning that old script would
+have shipped a real class/dex mismatch. Fixed to auto-detect every
+`classes*.dex` present in the rebuild output instead of assuming a fixed
+count - a real bug this rebase caught, not just a v15-specific tweak.
+
+### Also stripped x86/x86_64 native libraries
+
+v15.46.34 as downloaded bundles all 4 ABIs (`arm64-v8a`, `armeabi-v7a`,
+`x86`, `x86_64`) at ~99MB; a real arm64 phone only needs the first two.
+Stripped the other two from the zip before signing (~64.5MB after) -
+confirmed via `aapt dump badging` showing `native-code: 'arm64-v8a'
+'armeabi-v7a'` on the final signed APK, and the app's own manifest-
+reported version/signature otherwise unaffected.
+
+**Not yet confirmed on a real device whether v15.46.34's renderer
+actually tolerates the response shape that comes back at `cver:
+19.51.01` any better than v14.34.54's did** - that's the real open
+question this rebase exists to test.
+
+## Ad-block: next up
+
+Requested repeatedly, deferred until the core version-spoof is confirmed
+working on *some* base. Real RVX (ReVanced Extended) patches are
+fingerprint-matched against the exact bytecode of whichever recent
+version(s) RVX currently supports, not v15.46.34's multi-years-older
+bytecode - `revanced-patcher` skips a patch when its fingerprint doesn't
+match rather than crashing the run, so the plan is to actually attempt
+the real RVX patch bundle against this APK and see what applies vs. gets
+skipped (real tool output, not assumed), then hand-write the equivalent
+ad-block patches for whatever doesn't - same static-analysis approach
+already used for the version spoof and icon fixes. Real ad-related
+classes already located via `adPlacements`/`AdBreak`/`companionAd`/etc.
+string searches (~19 candidate classes) as a starting point.
