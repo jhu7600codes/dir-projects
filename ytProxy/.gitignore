@@ -1,6 +1,7 @@
 # Copyrighted binary and regeneratable build output - never commit these.
 *.apk
 *.apk.idsig
+*.part
 apktool.jar
 *.keystore
 v14_decoded/
