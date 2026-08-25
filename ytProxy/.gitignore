@@ -6,4 +6,7 @@ apktool.jar
 *.keystore
 v14_decoded/
 verify_extract/
+verify2/
+new_dex_extract/
+orig_dex_extract/
 dist/

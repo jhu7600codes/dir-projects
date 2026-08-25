@@ -70,15 +70,38 @@ sees the real v14.34.54 identity.
 
 ## Build steps (reproducible)
 
+**Do not sign whatever `apktool b` outputs directly** - see "the resource-
+rebuild trap" below. Graft its dex into an untouched copy of the original
+APK first:
+
 ```
 java -jar apktool.jar d -f -o v14_decoded youtube_14.34.54.apk
 # apply the smali edit above to v14_decoded/smali/ynv.smali
-java -jar apktool.jar b v14_decoded -o v14_patched_unsigned.apk
-zipalign -f -p 4 v14_patched_unsigned.apk v14_patched_aligned.apk
+java -jar apktool.jar b v14_decoded -o v14_rebuilt.apk
+python3 patches/rebuild.py youtube_14.34.54.apk v14_rebuilt.apk v14_grafted_unsigned.apk
+zipalign -f -p 4 v14_grafted_unsigned.apk v14_grafted_aligned.apk
 apksigner sign --ks debug.keystore --ks-pass pass:android \
   --ks-key-alias ytproxy --key-pass pass:android \
-  --out v14_patched.apk v14_patched_aligned.apk
+  --out v14_patched.apk v14_grafted_aligned.apk
 ```
+
+### The resource-rebuild trap
+
+First attempt signed `apktool b`'s output directly (only the smali was
+touched, so this seemed safe) - it crashed on launch with
+`Resources$NotFoundException: Resource ID #0x0` while building an options
+menu icon. `apktool b` has **no flag to skip rebuilding resources** (`-r`/
+`--no-res` only exists for `apktool d`, decoding) - it always fully repacks
+`resources.arsc` from the decoded XML sources, and that repack corrupted a
+resource ID reference somewhere despite the change itself being
+smali-only. `patches/rebuild.py` sidesteps this entirely: it takes only the
+rebuilt `classes*.dex` files out of `apktool b`'s output and grafts them
+into a fresh copy of the *original* APK's zip via Python's `zipfile`
+(command-line `zip -X` was tried first for this and is **also unsafe** here -
+it warned `Local Entry CRC does not match CD`, likely from not
+understanding the APK Signing Block layout when updating entries in place).
+Confirmed via `sha256sum`: `resources.arsc` and `AndroidManifest.xml` in the
+grafted output are byte-identical to the original APK's.
 
 `apktool.jar` (from https://github.com/iBotPeaches/Apktool), `debug.keystore`,
 and all APK artifacts are intentionally **not committed** - Google's compiled
@@ -92,15 +115,26 @@ the real one first, or use a separate work profile/user.
 
 ## Status / open questions
 
-- Manifest confirmed untouched, patch confirmed present in the rebuilt dex
+- Manifest and resources confirmed byte-identical to the original (only the
+  four `classes*.dex` differ), patch confirmed present in the rebuilt dex
   (`strings classes.dex | grep 19.51.01`), signature verifies cleanly.
-- **Not yet tested on a real device.** Whether `cver: 19.51.01` actually gets
-  past whatever gate blocks `14.34.54`, and whether the *response schema* the
-  server sends back at that reported version is something v14.34.54's old
-  renderer can actually parse, can only be answered by installing this and
-  trying Home/search/watch for real.
+- The launch crash from the first (unsafe) build is fixed by the graft
+  approach above. **Not yet confirmed whether `cver: 19.51.01` actually gets
+  past whatever gate blocks `14.34.54`**, or whether the server's response
+  schema at that reported version is something v14.34.54's old renderer can
+  parse - both need the app to actually run signed-out through Home/search/
+  watch to know.
 - Video *playback* is a separate concern even if browsing works - YouTube's
   stream-URL signature cipher changes constantly, and this app's own
   bundled decipher logic may be stale regardless of what version it claims.
   Not investigated yet; only relevant once metadata/browsing is confirmed
   working.
+- **Not a microG/GmsCore issue** - worth recording since it was the first
+  suspicion when the app crashed: the actual crash (`Resources$NotFoundException`
+  building a menu icon) had nothing to do with Google Play Services/microG at
+  all, it was the apktool resource-rebuild bug above. No GmsCore/signature-
+  spoofing patch has been applied (or shown to be needed) at this point.
+- Ad-blocking (ReVanced/Vanced-style) requested as a follow-up, once the
+  version patch itself is confirmed working end to end - not attempted yet,
+  to keep each change independently testable rather than stacking untested
+  patches.
