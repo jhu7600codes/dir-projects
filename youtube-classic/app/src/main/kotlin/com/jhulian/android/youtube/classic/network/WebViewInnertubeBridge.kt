@@ -62,6 +62,11 @@ class WebViewInnertubeBridge(context: Context) {
         fun onError(id: String, message: String) {
             pending.remove(id)?.resumeWithException(WebViewFetchException(message))
         }
+
+        @JavascriptInterface
+        fun onDiagnostic(message: String) {
+            android.util.Log.d("WebViewInnertubeBridge", "page diagnostic: $message")
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled", "RestrictedApi")
@@ -86,6 +91,24 @@ class WebViewInnertubeBridge(context: Context) {
             addJavascriptInterface(Bridge(), "YtClassicBridge")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(v: WebView, url: String?) {
+                    // The decisive question when a browse() call still comes
+                    // back "logged_in":"0" through this real-browser path:
+                    // does *this exact WebView*, loading the real
+                    // youtube.com homepage (not our own POST), see itself
+                    // as signed in at all? If not, the session/cookie
+                    // itself is the problem, not how the browse() request
+                    // is built - narrows the search space in one shot
+                    // instead of another guess-and-ship round. Redacted:
+                    // booleans and a length, never cookie content.
+                    v.evaluateJavascript(
+                        "(function(){try{" +
+                            "var avatar=!!document.querySelector('#avatar-btn, ytd-topbar-menu-button-renderer #avatar-btn');" +
+                            "var signIn=!!document.querySelector('a[href*=\"ServiceLogin\"], tp-yt-paper-button#sign-in-button');" +
+                            "var initialDataLoggedIn=(typeof ytInitialData!=='undefined')?JSON.stringify(ytInitialData).indexOf('\"logged_in\":\"1\"')!==-1:'ytInitialData undefined';" +
+                            "YtClassicBridge.onDiagnostic('avatarBtnPresent='+avatar+' signInLinkPresent='+signIn+' initialDataLoggedIn1='+initialDataLoggedIn+' cookieLen='+document.cookie.length+' hasSAPISIDInJs='+(document.cookie.indexOf('SAPISID=')!==-1));" +
+                            "}catch(e){YtClassicBridge.onDiagnostic('error: '+String(e));}})();",
+                        null,
+                    )
                     deferred.complete(view)
                 }
             }
