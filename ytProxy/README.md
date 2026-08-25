@@ -479,6 +479,62 @@ project's actual approach, not a patch to maintain. **Not yet known
 whether this fixes the 400, reproduces the old black-text/blank-UI
 failure, or both/neither** - real device result pending.
 
+Real device result: crash-looped on every launch before ever reaching
+Home/Search - the same crash class as v14's `Laltp`/`Lattn` bug
+(`Resources$NotFoundException: Resource ID #0x0` via `Context.getDrawable`,
+this time in v15's own equivalent lookup code, unidentified obfuscated
+names so far). Never got far enough to find out whether the 400 itself
+was fixed. This confirmed the manifest edit is strictly worse than the
+narrow patch (which at least loads to a stable, if broken, screen) - but
+turned out to be the wrong conclusion to stop on, see below.
+
+## Sixth round: real community evidence changes the diagnosis
+
+User found and shared a live r/oldyoutubelayout thread doing exactly
+this. Two things in it matter:
+
+- **Nobody in that thread reports a `[400]`.** Reported problems are
+  "rendering issues" and "it crashes after that" - i.e. the
+  `Laltp`/`Lattn`-class bug already fixed once for v14, not a hard
+  server rejection. If people actively doing this right now don't hit a
+  400, a 400 isn't inherent to spoofing an old version - something about
+  *this project's specific technique* was probably causing it.
+- **Their technique is a single, consistent manifest edit** ("get an apk
+  editor, look for the section that says version name and change it") -
+  installed version and network-claimed version become the *same* value
+  from one source. This project's patch (`Lajqw;->b`, all four rounds so
+  far) deliberately created a *mismatch*: real install stays whatever the
+  base APK's manifest says, network claims something else entirely. A
+  device-integrity/attestation check plausibly flags exactly that kind
+  of inconsistency (app the server can see is installed as X, every
+  request claims Y) in a way it would never flag a single, internally
+  consistent value - which would explain why three wildly different
+  spoofed values (`19.51.01`, `20.14.43`, `21.33.324`) all produced an
+  *identical* 400: the specific value was never the variable, the
+  mismatch was.
+
+Community-recommended value for this exact tradeoff: `20.01.01` over
+`19.51.01` ("more functional", per the thread) - used here instead of
+another guess.
+
+**The fix**: reverted `Lajqw;->b` back to stock (no override - `p1`
+flows through unmodified from `Lacam;->a`, i.e. whatever the manifest
+says) and set `versionName: 20.01.01` in `apktool.yml` (`versionCode`
+restored to the real `1516099008` - the thread's technique only
+mentions changing the name, not the code). One source of truth again,
+matching the community's actual working technique instead of this
+project's own more "surgical"-seeming but apparently wrong approach.
+`v15_patched_v5.apk` - confirmed via `aapt dump badging`
+(`versionName='20.01.01'`) and confirmed zero leftover hardcoded version
+strings anywhere in the rebuilt dex.
+
+**Expectation, not yet confirmed**: this should at least get past the
+400 the way the community's reports do. Rendering issues/crashes are
+still expected (their own reports say so) - the plan for those is to
+apply the same real fix already built for v14's version of this bug
+(trace v15's own icon/lookup class, patch narrowly) rather than the
+community's apparent approach of just tolerating it.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed

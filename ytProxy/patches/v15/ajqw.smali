@@ -164,14 +164,18 @@
 
     invoke-static {p0, v3}, Lasof;->l(Ljava/lang/Object;I)V
 
-    # ytProxy patch: override only the version string fed into the network
-    # client-info map (Lajrs's "cver"/"cbrver" fields), leaving Lacam;->a
-    # (this app's own general-purpose version accessor, used by ~16 other
-    # call sites incl. the About screen and update-nag UI) completely
-    # untouched, so the app's own self-identity still reads real 15.46.34
-    # everywhere except what's actually sent over the wire.
-    const-string p1, "21.33.324"
-
+    # ytProxy: reverted. Three different override values here (19.51.01,
+    # 20.14.43, 21.33.324) all produced an identical hard [400] on a real
+    # device - real r/oldyoutubelayout community reports of this exact
+    # technique never mention a 400, only rendering issues/crashes (the
+    # Laltp-style icon-lookup bug class, already fixed once for v14). The
+    # difference: their technique is a single, consistent manifest edit
+    # (installed version == claimed network version everywhere), not this
+    # patch's deliberate mismatch (real install stays 15.46.34, network
+    # claims something else) - a real device-integrity/attestation check
+    # plausibly flags exactly that kind of inconsistency. p1 here now
+    # flows through unmodified from Lacam;->a, i.e. whatever the manifest
+    # says - see apktool.yml versionInfo for the actual spoofed value.
     invoke-direct {v2, v1, p1, v0, p0}, Lajrs;-><init>(Ljava/lang/String;Ljava/lang/String;Lajrq;Lajrr;)V
 
     return-object v2
