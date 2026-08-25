@@ -414,6 +414,35 @@ app/src/main/kotlin/com/jhulian/android/youtube/classic/
   place either way, since a genuinely rejected session vs. a bot-flagged
   one now look different in logcat (missing cookies vs. present-but-still-
   anonymized).
+- **Home/Subscriptions/Shorts `"logged_in":"0"` via paste-cookie - the
+  actual root cause, finally.** After ruling out headers, browser-engine
+  authenticity, the API key/context (see the two entries above and below),
+  and even device/network/session-freshness on a real device (a fresh
+  cookie from the user's own currently-signed-in browser, same device,
+  same network, still failed identically), the real diagnostic signal was
+  hiding in plain sight in `Innertube.post()`'s own auth logging the whole
+  time: every single capture showed `has3PAPISID=false`,
+  `has1PAPISID=false`, `has1PSID=false` - none of the modern `__Secure-`
+  prefixed cookies were ever actually present, only the legacy
+  `SID`/`HSID`/`SSID`/`SAPISID` ones, even when the source browser's cookie
+  manager confirmed they existed and were included in what got pasted in.
+  Root cause: `LoginActivity.trySaveCookie()` fed each pasted `name=value`
+  pair straight into `CookieManager.setCookie()` with no attributes - which
+  is all a raw `Cookie:` *request* header ever carries, since attributes
+  only ever live on a `Set-Cookie` *response* header. But WebView's cookie
+  store (built on Chromium) enforces the actual `__Secure-`/`__Host-`
+  cookie-prefix rule from the cookie spec: a cookie whose name starts with
+  `__Secure-` is rejected outright unless the `Secure` attribute is present
+  on that exact `setCookie()` call. Every `__Secure-*` cookie pasted in was
+  silently failing to store, which meant paste-cookie logins were never
+  holding a complete modern session - just the legacy cookies YouTube's
+  current web client leans on less than it used to, which is exactly what
+  the `WebViewInnertubeBridge` diagnostics kept confirming: a real page,
+  with real headers, with a real cookie, still couldn't get anything but
+  the anonymous "Sign in" state, because it was never actually holding a
+  full session to begin with. Fixed by appending `; Secure` to any
+  `__Secure-`/`__Host-` prefixed cookie before handing it to
+  `setCookie()`. Unverified against a live device at time of writing.
 - **Home/Subscriptions/Shorts still `"logged_in":"0"` after the header fix
   above - the actual fix.** A real device confirmed the header-consistency
   fix wasn't enough: cookies present, hash attached, still anonymized.

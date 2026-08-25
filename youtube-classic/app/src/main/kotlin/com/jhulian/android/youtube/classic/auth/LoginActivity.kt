@@ -135,7 +135,31 @@ class LoginActivity : AppCompatActivity() {
         cookie.split(";")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .forEach { pair -> CookieManager.getInstance().setCookie("https://www.youtube.com", pair) }
+            .forEach { pair ->
+                val name = pair.substringBefore("=")
+                // Real device evidence: every browse() auth log showed
+                // __Secure-3PAPISID/__Secure-1PAPISID/__Secure-1PSID as
+                // absent no matter what was pasted, even when Cookie-Editor
+                // confirmed they were present in the source browser and
+                // exported correctly. Root cause - a raw "Cookie:" request
+                // header is always bare "name=value" pairs (attributes only
+                // ever live on a Set-Cookie *response* header), but
+                // Chromium's cookie store (which WebView's CookieManager is
+                // built on) enforces the __Secure- prefix rule: such a
+                // cookie is rejected outright unless the Secure attribute
+                // is present on this exact setCookie() call. Every
+                // __Secure-/__Host- pasted cookie was silently failing to
+                // store, which meant this app was never actually holding a
+                // complete modern session - just the legacy SID/HSID/SSID/
+                // SAPISID cookies YouTube's current web client leans on
+                // less than it used to.
+                val attributed = if (name.startsWith("__Secure-") || name.startsWith("__Host-")) {
+                    "$pair; Secure"
+                } else {
+                    pair
+                }
+                CookieManager.getInstance().setCookie("https://www.youtube.com", attributed)
+            }
         CookieManager.getInstance().flush()
         binding.loginProgress.visibility = View.VISIBLE
         binding.webView.loadUrl("https://www.youtube.com")
