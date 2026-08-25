@@ -455,6 +455,30 @@ the time of this test, not a stale multi-year-old community reference
 point. Bumped the spoof to that value (`v15_patched_v4.apk`, same single
 line in `patches/v15/ajqw.smali`, everything else identical to v3).
 
+### Real device: `21.33.324` also 400'd - one deliberate risky test
+
+`21.33.324` (a genuinely current, well-sourced version) hit the same
+`[400]` as the two prior guesses. Three different generations of version
+string (`19.51.01`, `20.14.43`, `21.33.324`) all producing the *identical*
+failure is real evidence the outgoing version string isn't the actual
+variable the server is rejecting on here - if it were a "too old"
+threshold, different values should behave differently.
+
+At the user's explicit request, against this project's own standing
+advice, tested one thing that isn't part of the narrow-patch approach:
+editing `versionCode`/`versionName` directly in `apktool.yml` (both
+bumped to match `21.33.324`/`2133324000`) - i.e. the app's *entire*
+self-identity claiming to be a modern version everywhere, not just what's
+sent over the network. This is the same class of edit already known
+unstable from the very first attempt that motivated this whole project
+(black text/blank UI) - flagged clearly to the user as such before
+building it. Built via a full `apktool b` (no dex-graft this time, since
+the whole point was letting the manifest rebuild) - `v15_manifest_test_signed.apk`,
+not saved under `patches/` since it's a one-off test outside this
+project's actual approach, not a patch to maintain. **Not yet known
+whether this fixes the 400, reproduces the old black-text/blank-UI
+failure, or both/neither** - real device result pending.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
