@@ -368,6 +368,42 @@ actually tolerates the response shape that comes back at `cver:
 19.51.01` any better than v14.34.54's did** - that's the real open
 question this rebase exists to test.
 
+### `19.51.01` is stale - real device hit a hard 400, not a schema mismatch
+
+Real-device result on the v15.46.34 + `cver: 19.51.01` build: an outright
+`There was a problem with the server [400]` on Home, not the silent
+empty-content stall v14.34.54 hit. Different failure mode - a 400 is the
+server rejecting the request outright, not accepting it and returning
+data the client can't parse. Likely explanation: `19.51.01` is a
+years-old, widely publicized "oldest version that still works" reference
+point, and the actual minimum has almost certainly moved since - external
+corroboration (web search, Aug 2026): even ReVanced, an actively
+maintained project whose whole job is tracking this, describes
+repatching every 3-6 weeks as Google moves the minimum-version goalpost,
+and was itself hitting the same "[400]" error on stale patches as of this
+month. This is a moving target industry-wide, not something specific to
+this project's patch.
+
+Bumped the spoofed value to `20.14.43` (`patches/v15/ajqw.smali`) as a
+best-effort current guess - sourced from web search results about
+ReVanced's current target version, from marketing/SEO sites rather than
+ReVanced's own repository (unreachable directly in this environment - see
+below), so treat this specific string as a guess worth testing, not a
+verified fact. Everything else about the patch (single call site in
+`Lajqw;->b`, `Lacam;->a` and its 15 other callers untouched, resources
+byte-identical) is unchanged from the `19.51.01` build.
+
+**Environment constraint hit while investigating real RVX tooling**: this
+session's network policy allows `git clone`/`fetch` of public GitHub
+repos but blocks direct HTTPS access to `github.com` itself, which is
+where compiled release assets (`revanced-cli.jar`, `patches.rvp`) are
+hosted - so pulling ReVanced's actual current supported-version list (or
+running its real patcher) directly isn't possible here. Building from
+source is possible in principle but pulls in its own external Maven/
+JitPack dependencies of unknown reachability, for uncertain payoff given
+RVX's patches are fingerprint-matched to its current target version's
+bytecode, not v15.46.34's.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
