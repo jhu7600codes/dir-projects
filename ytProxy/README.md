@@ -138,3 +138,59 @@ the real one first, or use a separate work profile/user.
   version patch itself is confirmed working end to end - not attempted yet,
   to keep each change independently testable rather than stacking untested
   patches.
+
+## Second crash, on a real device: icon lookup returning 0
+
+The v2 build (resource-rebuild fix above) still crashed identically -
+**confirming the resource-rebuild theory was wrong for this particular
+crash** (resources are byte-for-byte the original in both builds, same
+crash either way). Real, useful signal from that: the app *did* reach the
+server successfully first (real Shorts content rendered briefly on a
+second launch) before crashing - the version patch itself works.
+
+Traced the real cause in smali: `Lkel;->a(Landroid/view/MenuItem;)V`
+(building an options-menu item's icon) calls `Laltp;->a(Lattn;)I` - an
+icon-style lookup, `Lattn` being an enum describing which menu item this
+is - and passes the result straight to `Resources.getDrawable(I)`. For at
+least one `Lattn` value the *current* server now sends, that lookup
+returns `0` (no local mapping), and `getDrawable(0)` throws
+`Resources$NotFoundException` instead of degrading gracefully - a live
+instance of the exact "old client's local mapping doesn't have an entry
+the new server response needs" problem, this time actually observed
+instead of theoretical.
+
+`Laltp` is a plain interface (`smali_classes2/altp.smali`) with **108
+call sites** across the app (`grep -rl "Laltp;->a(Lattn;)I" smali*`) - a
+core, general-purpose icon resolver, not something specific to one menu.
+Patching every caller wasn't practical or necessary; patching the actual
+lookup implementations once is. Found 6 classes implementing `Laltp`:
+
+- `afff`/`amog`: static `if`-chain / `switch` tables of known `Lattn` ->
+  drawable-id mappings, falling through to `return 0` for anything else.
+- `adon`/`ftn`: `EnumMap`-backed (populated at runtime, likely from
+  server-pushed theme/config data), same `return 0` fallback when a key
+  isn't present.
+- `zur`: a subclass of `amog` with a few extra cases, `invoke-super`-ing
+  into `amog` for everything else - fixing `amog` covers this one too.
+- `ftq`: delegates to a nested `Laltp` instance (whichever concrete class
+  is wired to its `d` field) for anything not in its own small
+  theme-attribute map - fixing the delegate covers this one too.
+
+So only 4 files needed an actual edit (`afff`, `amog`, `adon`, `ftn`,
+saved in `patches/`) - replaced each `return 0` fallback with one of that
+same class's own already-valid drawable ids instead (resource ids are
+global to the app, not scoped to whichever class happens to reference
+them, so borrowing one across classes is safe). Wrong icon in a rare
+case beats a crash. Also patched `Lkel;->a(Landroid/view/MenuItem;)V`
+itself (`patches/kel.smali`) to skip overriding the `ImageView`'s icon
+entirely when the lookup returns 0, rather than relying only on the
+lookup-side fix - belt and suspenders, since `kel` was the one call site
+actually observed crashing.
+
+Same graft process as before (`apktool b` -> `patches/rebuild.py` against
+the original APK) - confirmed via `sha256sum` that `resources.arsc` is
+still byte-identical to the original after these edits too.
+
+**Not yet confirmed on a real device whether this actually stops the
+crash** - only that the patches compile, graft cleanly, and the signed
+APK verifies.
