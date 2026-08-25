@@ -535,6 +535,43 @@ apply the same real fix already built for v14's version of this bug
 (trace v15's own icon/lookup class, patch narrowly) rather than the
 community's apparent approach of just tolerating it.
 
+Real device result on `v15_patched_v5.apk`: crashed again, identical
+signature to the manifest-versionCode test (`mjl.p` -> `Context.getDrawable`
+-> `Resources$NotFoundException: Resource ID #0x0`, every single launch).
+Confirms this is a stable, traceable bug tied to the app believing it's
+a newer version generally (any sufficiently-bumped manifest value
+triggers it) - not sensitive to exactly which value, and not something
+that happened with the smali-only builds (which never touched the
+manifest).
+
+## Seventh round: fixed the actual icon crash (v15's Laltp equivalent)
+
+Traced the same way as v14's bug: `mjl.p(Z)V` (`smali_classes3/mjl.smali`)
+builds the bottom pivot-tab-bar's icons. Its icon lookups go through
+`Lftt` (`smali_classes3/ftt.smali`, ~4700 lines, mostly one giant
+`EnumMap<Lavyy, Integer>` of known icon mappings) via the shared
+`Lapbe` interface - v15's exact equivalent of v14's `Laltp`/`Lattn`.
+`Lftt;->a(Lavyy;)I` returns `0` for any `Lavyy` not in its map (2021-era
+UI never needed a mapping for it), same as v14's fallback-to-0 design.
+
+Unlike v14, the fix here does **not** touch `Lftt` itself - `mjl.p` is a
+single ~700-line method with **four** `Context.getDrawable(I)` calls, all
+fed directly by `Lftt`/`Lapbe` lookups with no existing 0-check, so the
+fix is entirely call-site guards in `mjl.p` (`patches/v15/mjl.smali`):
+two guard a `StateListDrawable`'s selected/default state (skip adding
+that state on a 0 id, matching Android's own "unspecified state just
+isn't drawn" behavior - no separate safe-fallback path needed since a
+`StateListDrawable` already tolerates missing states), the other two
+guard a single icon each (pass `null` instead of crashing, letting the
+surrounding tab/badge view construction proceed iconless). Confirmed via
+a full `apktool b` (manifest change already in play) that all four edits
+compile.
+
+Shipped together with the `20.01.01` manifest edit in the same build
+(`v15_patched_v6.apk`) - not yet isolated from each other on a real
+device. **Not yet known whether this actually stops the crash, or
+whether the 400 is gone once it does** - real device result pending.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
