@@ -404,6 +404,41 @@ JitPack dependencies of unknown reachability, for uncertain payoff given
 RVX's patches are fingerprint-matched to its current target version's
 bytecode, not v15.46.34's.
 
+## Server-side update blocker (the actual ReVanced-equivalent mechanism)
+
+Requested explicitly, distinct from the version spoof: block whatever
+lets Google remotely flip an already-installed app's UI/behavior without
+an app update, so the app's own baked-in code stays authoritative even
+against a modern backend that might otherwise gradually roll a redesign
+out via server-side experiment flags rather than only via new app
+releases.
+
+Traced via the same string-search method as everything else in this
+project - `grep -rl "Phenotype"` turned up Google's real Phenotype/
+GServices remote-config client library bundled in the app
+(`com/google/android/libraries/phenotype/...`), plus `Lutr`
+("PhenotypeFlagCommitter", confirmed via its own log tag string) - the
+class whose job is fetching a flag snapshot from the server and writing
+it into the app's live `SharedPreferences`-backed config. Its actual
+commit logic (`a(Lust;)V`) is an abstract stub in the base class (just
+throws - meant to be overridden); exactly one subclass overrides it:
+`Lwip` (`smali_classes4/wip.smali`), which does the real work - writing
+each flag key/value pair plus two sync tokens (`__phenotype_server_token`/
+`__phenotype_snapshot_token`) via `Landroid/content/SharedPreferences$Editor`.
+
+**The patch** (`patches/v15/wip.smali`): replaced `Lwip;->a(Lust;)V`'s
+entire body with a no-op (`return-void`). The app still fetches snapshots
+from the server exactly as before (harmless network chatter, unchanged) -
+it just never applies them. Every experiment-gated code path in the app
+keeps using whatever's already compiled in/previously cached, instead of
+whatever bucket a fresh server push would otherwise switch it into. Same
+single-override-class pattern as everything else patched in this
+project - one narrow choke point, not 30+ scattered call sites.
+
+Shipped together with the `20.14.43` version-spoof patch in the same
+build (`v15_patched_v3.apk`) - both together, not yet isolated against
+each other on a real device.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
