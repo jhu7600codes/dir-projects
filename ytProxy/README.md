@@ -439,6 +439,22 @@ Shipped together with the `20.14.43` version-spoof patch in the same
 build (`v15_patched_v3.apk`) - both together, not yet isolated against
 each other on a real device.
 
+### `20.14.43` also hit a real 400 - bumped to today's actual latest release
+
+Real device result on v3 (`20.14.43` + Phenotype blocker): same `[400]`
+error as `19.51.01`. Confirms the guess from marketing-site search
+results was still stale, not that the Phenotype patch broke anything (no
+way to isolate that from one combined test, but a 400 at the network
+layer, before any UI code runs, isn't something a SharedPreferences-write
+no-op could plausibly cause).
+
+Re-searched with a tighter query and got a real, non-SEO-farm source
+this time (TechSpot, a legitimate download-tracking site): actual latest
+YouTube release is **`21.33.324`** as of August 20, 2026 - days old at
+the time of this test, not a stale multi-year-old community reference
+point. Bumped the spoof to that value (`v15_patched_v4.apk`, same single
+line in `patches/v15/ajqw.smali`, everything else identical to v3).
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed

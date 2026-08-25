@@ -170,7 +170,7 @@
     # call sites incl. the About screen and update-nag UI) completely
     # untouched, so the app's own self-identity still reads real 15.46.34
     # everywhere except what's actually sent over the wire.
-    const-string p1, "20.14.43"
+    const-string p1, "21.33.324"
 
     invoke-direct {v2, v1, p1, v0, p0}, Lajrs;-><init>(Ljava/lang/String;Ljava/lang/String;Lajrq;Lajrr;)V
 
