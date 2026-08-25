@@ -69,6 +69,30 @@ class WebViewInnertubeBridge(context: Context) {
         }
     }
 
+    /**
+     * Checks, from inside the WebView's already-loaded youtube.com page,
+     * whether that page itself currently thinks it's signed in - `document
+     * .cookie` reflects the live cookie jar at whatever moment this runs,
+     * not a snapshot frozen at page load, so no reload is needed to get a
+     * reading against a cookie captured after this WebView first loaded
+     * (which is exactly what happened the first time this shipped: the
+     * bridge's one-time page-load diagnostic had already fired, and been
+     * cleared by `logcat -c`, before a since-refreshed cookie was ever
+     * tested against it). [label] tags which call site this reading came
+     * from. Redacted: booleans and a length, never cookie content.
+     */
+    private fun runDiagnostic(view: WebView, label: String) {
+        view.evaluateJavascript(
+            "(function(){try{" +
+                "var avatar=!!document.querySelector('#avatar-btn, ytd-topbar-menu-button-renderer #avatar-btn');" +
+                "var signIn=!!document.querySelector('a[href*=\"ServiceLogin\"], tp-yt-paper-button#sign-in-button');" +
+                "var initialDataLoggedIn=(typeof ytInitialData!=='undefined')?JSON.stringify(ytInitialData).indexOf('\"logged_in\":\"1\"')!==-1:'ytInitialData undefined';" +
+                "YtClassicBridge.onDiagnostic(" + JSONObject.quote(label) + "+': avatarBtnPresent='+avatar+' signInLinkPresent='+signIn+' initialDataLoggedIn1='+initialDataLoggedIn+' cookieLen='+document.cookie.length+' hasSAPISIDInJs='+(document.cookie.indexOf('SAPISID=')!==-1));" +
+                "}catch(e){YtClassicBridge.onDiagnostic(" + JSONObject.quote(label) + "+': error: '+String(e));}})();",
+            null,
+        )
+    }
+
     @SuppressLint("SetJavaScriptEnabled", "RestrictedApi")
     private suspend fun ensureReady(): WebView {
         loadDeferred?.let { return it.await() }
@@ -91,24 +115,7 @@ class WebViewInnertubeBridge(context: Context) {
             addJavascriptInterface(Bridge(), "YtClassicBridge")
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(v: WebView, url: String?) {
-                    // The decisive question when a browse() call still comes
-                    // back "logged_in":"0" through this real-browser path:
-                    // does *this exact WebView*, loading the real
-                    // youtube.com homepage (not our own POST), see itself
-                    // as signed in at all? If not, the session/cookie
-                    // itself is the problem, not how the browse() request
-                    // is built - narrows the search space in one shot
-                    // instead of another guess-and-ship round. Redacted:
-                    // booleans and a length, never cookie content.
-                    v.evaluateJavascript(
-                        "(function(){try{" +
-                            "var avatar=!!document.querySelector('#avatar-btn, ytd-topbar-menu-button-renderer #avatar-btn');" +
-                            "var signIn=!!document.querySelector('a[href*=\"ServiceLogin\"], tp-yt-paper-button#sign-in-button');" +
-                            "var initialDataLoggedIn=(typeof ytInitialData!=='undefined')?JSON.stringify(ytInitialData).indexOf('\"logged_in\":\"1\"')!==-1:'ytInitialData undefined';" +
-                            "YtClassicBridge.onDiagnostic('avatarBtnPresent='+avatar+' signInLinkPresent='+signIn+' initialDataLoggedIn1='+initialDataLoggedIn+' cookieLen='+document.cookie.length+' hasSAPISIDInJs='+(document.cookie.indexOf('SAPISID=')!==-1));" +
-                            "}catch(e){YtClassicBridge.onDiagnostic('error: '+String(e));}})();",
-                        null,
-                    )
+                    runDiagnostic(v, "onLoad")
                     deferred.complete(view)
                 }
             }
@@ -140,6 +147,7 @@ class WebViewInnertubeBridge(context: Context) {
     ): String = withContext(Dispatchers.Main.immediate) {
         val view = ensureReady()
         val id = nextId.incrementAndGet().toString()
+        runDiagnostic(view, "before $endpoint #$id")
         suspendCancellableCoroutine { cont ->
             pending[id] = cont
             val headersJs = buildString {
