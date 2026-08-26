@@ -572,6 +572,28 @@ Shipped together with the `20.01.01` manifest edit in the same build
 device. **Not yet known whether this actually stops the crash, or
 whether the 400 is gone once it does** - real device result pending.
 
+Real device result: the original `Resources$NotFoundException` crash is
+confirmed gone (progress - the icon fix worked) but exposed a **new**
+crash at one of the same call sites: `NullPointerException: Attempt to
+invoke virtual method 'java.lang.Class java.lang.Object.getClass()' on a
+null object reference`, via `Preconditions.checkNotNull` inside
+`PivotTabsBar.c()`'s downstream `mie`/`mit` construction. Root cause:
+two of the four patched call sites passed `null` instead of a real
+Drawable on a miss, and this particular downstream code path requires a
+non-null Drawable - passing null just moved the crash one step later
+rather than avoiding it. Same lesson as v14's `xan.smali` sites: not
+every crash-risk call site can be fixed by skipping/nulling, some
+downstream code enforces non-null and needs a real fallback icon
+instead.
+
+**Fix**: changed both `null`-fallback branches in `mjl.smali` to fetch a
+known-valid icon (`0x7f0806fa`, one of `Lftt`'s own already-mapped ids)
+instead of passing `null` - confirmed the build compiles (proving the id
+is real) via a full `apktool b`. `v15_patched_v7.apk` - same `20.01.01`
+manifest edit, same signature/native-code checks as before. **Not yet
+confirmed whether this stops the crash for good, or whether the 400 is
+gone once it does.**
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed

@@ -2304,8 +2304,12 @@
 
     move-result-object v2
 
-    # ytProxy patch: same Lftt/Lapbe unmapped-icon (0) crash as above -
-    # pass a null icon instead of crashing on getDrawable(0).
+    # ytProxy patch: same Lftt/Lapbe unmapped-icon (0) crash as above.
+    # Real device confirmed passing null here just moves the crash one
+    # step later - PivotTabsBar.c()'s downstream mie/mit construction
+    # has its own Preconditions.checkNotNull on this Drawable. Fall back
+    # to one of Lftt's own already-valid ids instead of null (resource
+    # ids are global, not scoped to the class that references them).
     .line 42
     if-eqz v1, :cond_ytproxy_null_icon_a
 
@@ -2316,7 +2320,11 @@
     goto :cond_ytproxy_icon_done_a
 
     :cond_ytproxy_null_icon_a
-    const/4 v10, 0x0
+    const v1, 0x7f0806fa
+
+    invoke-virtual {v2, v1}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
+
+    move-result-object v10
 
     :cond_ytproxy_icon_done_a
 
@@ -2411,8 +2419,11 @@
 
     move-result-object v6
 
-    # ytProxy patch: same Lftt/Lapbe unmapped-icon (0) crash as above -
-    # pass a null icon instead of crashing on getDrawable(0).
+    # ytProxy patch: same Lftt/Lapbe unmapped-icon (0) crash as above,
+    # same downstream Lmie construction as the site above this one -
+    # real device confirmed it requires a non-null Drawable
+    # (Preconditions.checkNotNull), so fall back to a real icon instead
+    # of null.
     .line 21
     if-eqz v3, :cond_ytproxy_null_icon_b
 
@@ -2423,7 +2434,11 @@
     goto :cond_ytproxy_icon_done_b
 
     :cond_ytproxy_null_icon_b
-    const/4 v13, 0x0
+    const v3, 0x7f0806fa
+
+    invoke-virtual {v6, v3}, Landroid/content/Context;->getDrawable(I)Landroid/graphics/drawable/Drawable;
+
+    move-result-object v13
 
     :cond_ytproxy_icon_done_b
 
