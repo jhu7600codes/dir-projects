@@ -674,6 +674,23 @@ native-code checks as every build. **Not yet confirmed this clears the
 update screen for good, or what (if anything) still blocks Search's
 silent no-render.**
 
+## Tenth round: versionName reverted to 19.51.01, versionCode stays bumped
+
+User reports `20.01.01` is now also getting flagged in the wild
+("on the death bed"), with `19.51.01` reportedly still working - moving
+targets, consistent with the "Google keeps shifting this" pattern
+already seen (RVX's own 3-6 week repatch cycle, the earlier `19.51.01`
+-> `20.14.43` -> `21.33.324` chase). Since `versionName`/`cver` and
+`versionCode` are confirmed-independent checks (separate gates,
+separate code paths - see ninth round), swapping the string back
+doesn't touch or need to touch the integer: `versionName` reverted to
+`19.51.01` in `apktool.yml`, `versionCode` stays at `2133324000` (that's
+what actually clears the local `min_app_version`/blacklist gate,
+unrelated to which version string is used). `v15_patched_v11.apk` -
+confirmed via `aapt dump badging` showing `versionCode='2133324000'
+versionName='19.51.01'`, same signature/native-code checks as every
+build.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
