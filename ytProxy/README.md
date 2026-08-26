@@ -807,6 +807,58 @@ build to see if the tint fix alone resolves it, or fresh real-device
 evidence to trace the actual call site. Black-text bug on the You page
 not yet investigated.
 
+## v17 RVX base: real launch crash found and fixed (not icons/tint at all)
+
+First on-device test of the icon-only build (`v17_icons_only_signed.apk`,
+pure zip-level PNG swap, zero resources.arsc touch) reported "crashing" -
+app opens, shows something for a split second, closes. Two rounds of
+logcat capture needed: the first (screenshot-based on-device viewer, no
+buffer clear) had already scrolled the real event out by the time it was
+exported - no `FATAL EXCEPTION`, no tombstone, no `Displayed` line for
+the app anywhere in it. Second capture (`logcat -c` then reproduce then
+`logcat -d -b all`, real root shell via Termux, not adb) caught it:
+
+```
+E YouTube : Failed to fetch kids onboarding status, finishing the App.
+```
+
+Not a Java crash at all - the app's own code (`rzc.smali`) deliberately
+calls `finishAffinity()` on itself when an account-status check
+(`Lytt;->t()Z`) comes back false, closing the whole app a split second
+after launch. Real evidence for *why* it comes back false, from the same
+logcat: `GoogleAuthUtil` throwing `SecurityException: Access denied,
+missing google package permission or GET_ACCOUNTS` repeatedly right
+before the finish call. Confirmed via the user this isn't an unsigned-in
+or family-link situation - they're signed into a real, non-supervised
+Google account in microG. Root cause of the SecurityException itself
+(some microG account-access gate rejecting this specific package under
+its own signature) not fully pinned down, and not chased further, since
+the fix doesn't depend on knowing why the query fails.
+
+Two call sites in `Lrzc` both gate on the same `Lytt;->t()Z` result
+before potentially reaching `finishAffinity()`. Patched both: instead of
+branching on the real (here, always-false) result, unconditionally
+`goto` the success path, bypassing every route to `finishAffinity()` in
+this class. Matches the real outcome for any non-supervised account on a
+working setup anyway - this class only exists to gate supervised/kids
+accounts through onboarding, which was never the actual code path we
+need working.
+
+**Rebuild note**: this was the project's first full `apktool b` rebuild
+of the v17 base (previous v17 test build used the zip-graft trick to
+dodge a resources.arsc rebuild entirely). Needed here because both the
+tint fix and this crash fix live in different halves of a resource-table-
+plus-dex change. Verified it didn't repeat the old v14 resource-ID
+corruption before shipping: dumped every resource ID (21,566 entries)
+from both the original APK and the rebuild via `aapt2 dump resources`
+and diffed name-to-ID mappings directly - zero mismatches, the only
+difference was apktool marking every entry `PUBLIC` on rebuild (a
+cosmetic annotation, not a runtime-affecting ID reassignment).
+
+**Status**: icon transplant + tint fix + this crash fix all shipped
+together in `v17_full_signed.apk`, not yet confirmed working on device.
+Black-text bug on the You page still not investigated.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
