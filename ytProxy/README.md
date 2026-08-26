@@ -645,6 +645,35 @@ signature/native-code checks as before. **Not yet confirmed whether
 this actually clears both crash sites, or whether the search-results
 silent-failure (separate issue) persists once it does.**
 
+## Ninth round: the update-nag screen wasn't crashing, it was correct
+
+Real device result on v9: no more crash - but the update-nag screen now
+shows *consistently* on every launch instead of intermittently (it had
+been getting killed by the crash before it could render). Traced why:
+`dyw.smali` has a version gate completely separate from the `cver`
+string spoof - it reads the **raw installed `versionCode` integer**
+directly via `Lacam;->b(Context)` (real `PackageManager` read, not
+anything patched), compares it against a remote-config `min_app_version`
+threshold and a `blacklisted_app_versions` list, and routes to
+`NewVersionAvailableActivity` if the real versionCode is too low or
+blacklisted. Every build so far had `versionCode` left at the real
+`1516099008` (v15.46.34's actual code) on the theory that "the community
+technique only changes versionName" - but this specific gate checks
+that exact field, directly, so it was always going to fail regardless
+of what the outgoing `cver` string claimed.
+
+**Fix**: bumped `versionCode` to `2133324000` in `apktool.yml`
+(matching the same test value used once before) while leaving
+`versionName` at the community-verified `20.01.01` - the two fields are
+independent inputs to different checks (`cver`/`versionName` for the
+network-facing gate and rendering-schema risk, `versionCode` for this
+local/remote-config threshold), so there's no reason they need to match
+each other's numbering. `v15_patched_v10.apk` - confirmed via `aapt
+dump badging` showing both values as intended, same signature/
+native-code checks as every build. **Not yet confirmed this clears the
+update screen for good, or what (if anything) still blocks Search's
+silent no-render.**
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
