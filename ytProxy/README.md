@@ -691,6 +691,32 @@ confirmed via `aapt dump badging` showing `versionCode='2133324000'
 versionName='19.51.01'`, same signature/native-code checks as every
 build.
 
+## Eleventh round: v11 still shows the update screen - added real diagnostics instead of guessing again
+
+User reports v11 hits the identical update screen despite the bumped
+`versionCode`. Rather than guess a fifth version/versionCode
+combination blind, added a diagnostic-only log (`patches/v15/dyw.smali`,
+`Log.w("ytProxyDebug", ...)`) right at the gate in `dyw.smali` that
+prints the real values feeding it: the actual `versionCode` `Lacam;->b`
+reads, the `min_app_version` threshold fetched from `Labzp`, and the raw
+`blacklisted_app_versions` string - purely additive, doesn't change any
+behavior, confirmed via `apktool b` that it compiles cleanly.
+
+Real candidate explanation worth testing for: `Labzp` (the accessor for
+both `min_app_version` and `blacklisted_app_versions`) looks like a
+GServices/remote-config-style key-value store - if it's backed by the
+same Phenotype system `patches/v15/wip.smali` blocks from ever
+committing, both keys would only ever read their coded-in defaults
+(`0` and `""`), which by the gate's own logic (`versionCode < 0` is
+never true; an empty blacklist string never blocks anything) should
+mean this gate *shouldn't* fire at all - meaning either `Labzp` is a
+different, unblocked config source with an already-cached non-default
+value from a previous session, or something else in this chain isn't
+what it appears to be. The log line resolves this with real numbers
+instead of more guessing. `v15_patched_v12.apk` - same manifest/
+signature/native-code checks as v11, `Log.w` line confirmed compiling.
+**Waiting on real device logcat filtered to `ytProxyDebug`.**
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
