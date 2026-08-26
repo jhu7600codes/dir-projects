@@ -717,6 +717,96 @@ instead of more guessing. `v15_patched_v12.apk` - same manifest/
 signature/native-code checks as v11, `Log.w` line confirmed compiling.
 **Waiting on real device logcat filtered to `ytProxyDebug`.**
 
+## v17 RVX base: pivot bar - tint restore + icon transplant
+
+Pivoted to a real, already-working RVX (ReVanced Extended) v17.33.35 base
+(`app.rvx.android.youtube`) the user already runs day-to-day - real
+playback/search/notifications/home feed all confirmed via real device
+screenshots, narrowing the actual work to three reported cosmetic bugs:
+missing bottom-nav icons, black/illegible text on the You page, and
+general "Cairo" redesign UI mismatch versus the old look.
+
+**Icon-asset comparison (v15 vs v17), byte-for-byte, not assumed:**
+`sha256sum` on every real tab icon (`yt_fill_home_black_24`,
+`yt_outline_home_black_24`, and the same pair for library/subscriptions/
+youtube_shorts) came back identical between v15.46.34 and v17.33.35 at
+xxxhdpi. Google never redrew these specific glyphs across that span -
+the Cairo redesign changed layout/behavior around the pivot bar, not the
+icon art itself. So "transplant the icons from v15" is a no-op for
+Home/Library/Subscriptions - nothing to copy, v17 already ships the same
+files.
+
+**Traced `Lfwu`/`Labwn` (the icon `EnumMap` resolver) line-by-line** and
+found the earlier "Cairo EnumMap gap" theory from the v14/v15 icon-crash
+rounds doesn't hold here: both its fill map (`b`) and outline map (`a`)
+have fully valid, non-zero resource IDs for all four tabs (Home/Library/
+Subscriptions/Shorts, `jp`/`jv`/`jt`/`bp` in `Lajft`). `Lfwu;->b(Lajft;Z)I`
+can't return 0 for these. The real consumer that turns a resolved ID into
+a rendered `Drawable` for the bottom bar specifically is still
+undetermined - `Labwn;->a(` has 100+ call sites app-wide, and guessing
+which one feeds `PivotBar` without a concrete target would be exactly
+the kind of blind patch this project avoids. Deferred until there's a
+real screenshot/logcat of the still-broken state to trace from.
+
+**Real tint bug found and fixed** (`patches/v17/styles.xml.patch`):
+traced the pivot bar's per-tab tint through `Ljtc;->d(...)` ->
+`PivotBar;->a(II)Landroid/content/res/ColorStateList;` -> `Ltbd;->a(...)`
+back to its real source - two style entries, `tab_content_color`
+(unselected) and `tab_highlight_color` (selected), both read via
+`TypedArray.getColor(index, default=0)`. In both real shipped Cairo-era
+styles (`PivotBar.Dark`, `PivotBar.Default`), these two entries are set
+to the *identical* color - genuine Google/RVX behavior (Cairo
+differentiates selected/unselected via the fill-vs-outline icon swap
+plus a background pill, not tint), not a decode artifact. v15 never had
+this attr wired up at all (it built tabs in code, not via this style
+system), so there's no literal old value to transplant - instead pointed
+`tab_content_color` at the real `?ytIconInactive` theme attr already
+defined for exactly this purpose, restoring the classic dim-unselected/
+full-color-selected distinction. Stored as a diff, not a full-file copy
+like the v15 smali patches - `styles.xml` is an 8670-line shared resource
+table, and copying it whole for a 2-line change would pull in Google's
+unrelated real style definitions for no reason.
+
+Went looking for the actual Cairo "pill behind the selected tab" at the
+resource level too, since the user wanted the old flat look back. Diffed
+every pivot-related public resource name new in v17 vs v15 (31 entries).
+One candidate looked promising - a `GradientDrawable` ring built in
+`jtc.smali` sized via `new_content_badge_stroke_width` - but traced its
+real name and activation path before touching it and it's the unread-
+content notification ring (new videos on a subscription), not a Cairo-
+only visual; left untouched. Everything else new is either Shorts-player
+right-rail button dimens (`reel_*_pivot_*`, unrelated to the bottom bar)
+or bar-layout dimens with no v15 equivalent to restore. If the pill is
+real, it isn't resource-driven anywhere findable - likely computed in
+code - which is out of scope for the resource-only transplant the user
+chose over a full old-PivotBar-code transplant (explicitly higher-risk,
+declined for now).
+
+**Shorts icon: user-drawn, real transplant.** User hand-drew a v15-style
+Shorts glyph (ibis Paint, 768x768, solid black, real transparency
+confirmed via alpha-channel bbox check) after learning the actual
+built-in RVX Shorts icon works the same as the others. Cropped to its
+real bounding box, scaled to all 5 densities using the same measured
+ratio as the rest of the set (glyph ~67% canvas width / ~75% height,
+centered), verified visually via light-bg and dark-tinted preview
+composites before shipping. Because `Lfwu` already points `bp`
+(Shorts) at the real `yt_fill_youtube_shorts_black_24` /
+`yt_outline_youtube_shorts_black_24` resource IDs, dropping the new art
+in under those exact filenames needed **no smali patch at all** - pure
+resource replacement, both fill and outline slots (kept identical since
+the restored tint asymmetry now carries the selected/unselected
+distinction on its own). Source files kept under `patches/v17/assets/`
+and committed directly - unlike everything else in `patches/`, this is
+the user's own original artwork, not extracted Google content, so no
+copyright concern applies.
+
+**Status**: tint fix + icon transplant both applied in the decoded tree,
+not yet rebuilt/signed/tested on device. Missing-icon root cause (the
+real Drawable consumer, not `Lfwu` itself) still open, pending either a
+build to see if the tint fix alone resolves it, or fresh real-device
+evidence to trace the actual call site. Black-text bug on the You page
+not yet investigated.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
