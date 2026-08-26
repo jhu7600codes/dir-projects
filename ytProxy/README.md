@@ -613,6 +613,38 @@ once rendering/playback are solid rather than mid-crash-fixing.
 **Still not known whether the crash loop is now actually over, or
 whether more call sites remain** - real device result pending.
 
+## Eighth round: real progress - v8 played actual video, then a genuinely different bug
+
+Real device result on v8: **no crash** on launch this time - old-style
+search filter chips (All/Shorts/Unwatched/Watched/etc.) rendered
+correctly, and Shorts played real video with real captions. First build
+in the whole v15 effort to get this far. Search itself loaded but never
+rendered results (empty list, spinner stuck) - a silent failure, not a
+crash, matching the exact "no adapter attached" symptom from the very
+first search investigation months earlier in this project.
+
+Then a genuinely new crash surfaced, unrelated to icons or Phenotype:
+`NullPointerException: Map.get() on a null object reference`, hit from
+two completely different places - a background Cronet network thread,
+and (on the next relaunch) `NewVersionAvailableActivity.onCreate`
+itself crashing while trying to show the "update your app" screen.
+Traced both to the same shared method, `agke.h(...)` (called by every
+public method on `Lagke`, a GEL/client-analytics event logger) - it
+calls `.get()` directly on `Lagkj;->g:Ljava/util/Map` (an event-
+throttle timestamp map) with no null check on the map itself, even
+though the surrounding code already handles the lookup's *result*
+being null a few lines later. Unrelated to the Phenotype-commit
+blocker or any icon lookup - this is client-side analytics/telemetry
+plumbing, a different subsystem entirely.
+
+**Fix** (`patches/v15/agke.smali`): guard the map itself, not just its
+result - if `Lagkj;->g` is null, treat the lookup as "no prior-sent
+timestamp" (matching what the existing code already does for a null
+*result*) instead of crashing. `v15_patched_v9.apk` - same manifest/
+signature/native-code checks as before. **Not yet confirmed whether
+this actually clears both crash sites, or whether the search-results
+silent-failure (separate issue) persists once it does.**
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
