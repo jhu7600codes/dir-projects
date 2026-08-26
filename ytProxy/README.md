@@ -594,6 +594,25 @@ manifest edit, same signature/native-code checks as before. **Not yet
 confirmed whether this stops the crash for good, or whether the 400 is
 gone once it does.**
 
+Real device result: v7 crashed again - a *different* call site this
+time (`lyb.c` -> `Resources.getDrawable`, building the options menu,
+not the bottom tab bar), same `Lapbe;->a(Lavyy;)I` -> `getDrawable(0)`
+pattern. Confirms this bug (same as v14's `Laltp`) isn't confined to one
+spot - it's scattered across however many places in the app build icons
+from this lookup, same as v14 needed several rounds across `kel`/`frf`/
+`lbi`/`fqv`/`xan` before it stopped.
+
+Fixed `lyb.smali` the same generic way (skip to `null` via
+`ImageView.setImageDrawable(null)`, a documented safe no-op - not the
+`PivotTabsBar` case, which needs a real fallback). Deliberately generic,
+not per-icon-correct - per-tab real icons (real candidates already
+found via `aapt2 dump resources`: `ic_tab_home`/`yt_fill_home_black_24`/
+etc. at `0x7f08052c`/`0x7f080a14`/...) are a deferred cosmetic pass,
+once rendering/playback are solid rather than mid-crash-fixing.
+`v15_patched_v8.apk` - same manifest/signature/native-code checks.
+**Still not known whether the crash loop is now actually over, or
+whether more call sites remain** - real device result pending.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
