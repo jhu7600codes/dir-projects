@@ -937,6 +937,42 @@ identifying and adding the specific missing protobuf field definitions
 to v15's own message classes by diffing them against v17's equivalent
 classes (case 2).
 
+## First real diagnostic result: wrong assumption caught by evidence
+
+First real logcat attempt (screenshot-based on-device viewer, no buffer
+clear beforehand) was pure Termux noise - app was never actually opened
+between clearing and capture. Second attempt (`logcat -c`, open app,
+`logcat -d -b all`) captured a real 15-minute session (Home load, real
+video playback, normal background reclaim at the end - not a crash) but
+had **zero `ytProxyDebug` lines** despite all 6 instrumented
+`UrlRequest.Callback` subclasses supposedly logging on every network
+read. Confirmed via `zipfile`/`grep` on the actual shipped
+`v15_diag_signed.apk`'s dex files that the diagnostic string really was
+present and compiled in - ruling out a build/install mistake and leaving
+only one real conclusion: none of those 6 classes are what handles the
+real InnerTube API traffic.
+
+This directly disproved a guess made earlier in the same round: two
+`BidirectionalStream$Callback` subclasses (`Lbdfp`, `Lbezi`) were found
+during the same search but dismissed as "likely live chat/streaming,
+not the standard request/response API calls" without actually verifying
+that assumption. Given the 6 verified-wrong `UrlRequest.Callback`
+classes, `BidirectionalStream` (Cronet's HTTP/2 streaming API) became
+the obvious real candidate - large, likely high-traffic apps like real
+YouTube plausibly use HTTP/2 bidirectional streaming for their main API
+surface rather than simple one-shot `UrlRequest`s. Instrumented both
+(`patches/v15/bdfp.smali`, `bezi.smali`) the same way. Also caught a 7th
+`UrlRequest.Callback` subclass (`patches/v15/rgo.smali`, in
+`smali_classes4`) that a narrower first-pass search missed entirely - a
+broader `.super` sweep across every smali directory found it. `Lbdfp`
+has substantial real method bodies (900+ lines in), `Lbezi`/`Lbezo` are
+thin passthrough decorators - `Lbdfp` is the strongest real candidate
+for the actual InnerTube handler at this point, but that's still an
+inference, not confirmed - waiting on the next real capture.
+
+**Status**: `v15_diag2_signed.apk` shipped with all 9 real Cronet
+callback subclasses now instrumented, not yet tested.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
