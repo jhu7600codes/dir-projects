@@ -859,6 +859,84 @@ cosmetic annotation, not a runtime-affecting ID reassignment).
 together in `v17_full_signed.apk`, not yet confirmed working on device.
 Black-text bug on the You page still not investigated.
 
+## Major pivot: back to v15, aiming for a real protobuf response translator
+
+v17 RVX progress recap first: the icon-only test build crashed (traced to
+a real account-status gate, `rzc.smali`, fixed - see the round above);
+the follow-up full-rebuild test with icon+tint+crash-fix all together
+launched clean, loaded real content, but only the You tab showed an
+icon (the rest still blank) and the app can't see the user's real
+ReVanced-microG account (traced to a signing-certificate mismatch - our
+debug-keystore-signed test builds aren't in whatever trust list microG's
+account authenticator checks, unlike the user's own normally-signed
+working build). Both still open.
+
+User proposed a bigger idea mid-session: instead of continuing to patch
+around each individual v17/Cairo incompatibility, build an in-app
+request/response translator that reshapes whatever the server sends
+today into the shape v15's own (2021-era) parser already understands -
+restoring the real old locally-baked UI code path directly, rather than
+fighting a newer app's redesign one bug at a time. Chose this over
+continuing the (closer to done) v17 track, understanding it's a much
+larger, multi-session reverse-engineering effort with real risk of not
+fully working even after the investment.
+
+**The load-bearing question this whole approach hinges on**: does the
+server actually reshape its wire-format response by declared client
+version, or does everyone above the hard version-gate get the same
+modern schema and old clients simply lack field definitions for the
+newer parts? These have different fixes - a live translator only makes
+sense for the first case; the second just needs v15's own decompiled
+protobuf classes extended with the missing fields (using v17's already-
+correct, already-decompiled classes as the reference for what those
+fields should contain). Real evidence needed either way, gathered
+without any external MITM tool per the user's standing preference for
+an in-app mechanism.
+
+v15 uses Cronet (Google's own network stack), not OkHttp - no
+`OkHttpClient$Builder` references anywhere in its smali. Found the real
+low-level response readers by searching for direct subclasses of
+`Lorg/chromium/net/UrlRequest$Callback;` implementing `onReadCompleted`:
+six real candidates (`Labmu`, `Lablw`, `Lbccm`, `Lbtg`, `Lbezv`, `Lbezo`
+- plus two unrelated `BidirectionalStream$Callback` subclasses, likely
+live-chat/streaming, not the standard request/response API calls).
+Rather than reverse-engineer all six by hand to guess which one handles
+the real InnerTube API calls, added an identical purely-additive
+diagnostic log to `onReadCompleted` in all six (`patches/v15/abmu.smali`,
+`ablw.smali`, `bccm.smali`, `btg.smali`, `bezv.smali`, `bezo.smali`) -
+each logs its own class name, the real request URL (via
+`UrlResponseInfo;->getUrl()`), and the buffer position, tagged
+`ytProxyDebug`. One real Home-feed load and a filtered logcat will show
+definitively which class is the actual API response handler and what
+URL/size it's seeing - the answer needed before writing a single byte
+of translator logic.
+
+Discovered along the way: `patches/rebuild.py`'s dex-only-graft approach
+(written specifically to dodge a resources.arsc corruption risk hit
+early in the v14 era) turned out to no longer be what's actually
+producing v15 builds - `v15_rebuilt_v12.apk` (the last known-good
+shipped build) already carries the spoofed version identity
+(`2133324000`/`19.51.01`) baked into its manifest, which the graft
+script's own design explicitly never touches (keeps
+AndroidManifest.xml/resources.arsc byte-identical to the pristine
+original). Confirmed by rebuilding this round via plain `apktool b`
+directly (no graft) and finding it already produces the correct spoofed
+identity, matching v12's size almost exactly. Verified this full
+resource rebuild doesn't repeat the old corruption risk the same way
+already validated for v17: diffed all 16,967 real resource IDs between
+the pristine original v15.46.34 APK and the rebuild via
+`aapt2 dump resources` - zero mismatches. Going forward, v15 builds use
+plain `apktool b` like v17 does, not `rebuild.py`'s graft trick - the
+script stays in the repo as a documented fallback if a future resource
+rebuild does reintroduce that corruption.
+
+**Status**: `v15_diag_signed.apk` shipped, not yet tested. Once the real
+response-handler class and its actual received bytes are known, next
+step is either building the OkHttp/Cronet-side translator (case 1) or
+identifying and adding the specific missing protobuf field definitions
+to v15's own message classes by diffing them against v17's equivalent
+classes (case 2).
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
