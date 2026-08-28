@@ -203,6 +203,67 @@
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_0
     .catchall {:try_start_0 .. :try_end_0} :catchall_0
 
+    # ytProxy diagnostic: dump the real raw /browse response body to the
+    # app's own private data dir (readable via root) for real analysis -
+    # answers whether the server reshapes wire format by version or
+    # sends one schema to everyone. Purely additive - v7 still flows
+    # unchanged into the real b(...) call below.
+    #
+    # This whole file (abmu.smali/Labmu) was relocated from smali/
+    # (classes.dex) to this dex (smali_classes4) specifically to make
+    # this patch possible - classes.dex is sitting exactly at some
+    # 65536-entry table limit and could not accept even one new type or
+    # method reference, breaking an unrelated pre-existing method
+    # (Lzqg;->values(), then Lznc;->values() once the first attempt
+    # shifted table ordering) as collateral on two separate attempts.
+    # Android's multidex classloading doesn't care which physical dex a
+    # class lives in, so moving Labmu here is safe.
+    invoke-virtual {p1}, Lorg/chromium/net/UrlResponseInfo;->getUrl()Ljava/lang/String;
+
+    move-result-object v3
+
+    const-string v4, "/youtubei/v1/browse"
+
+    invoke-virtual {v3, v4}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+
+    move-result v3
+
+    if-eqz v3, :cond_ytproxy_dump_skip
+
+    :try_start_ytproxy_dump
+    new-instance v3, Ljava/io/FileOutputStream;
+
+    const-string v4, "/data/data/com.google.android.youtube/ytproxy_dump_browse.bin"
+
+    invoke-direct {v3, v4}, Ljava/io/FileOutputStream;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual {v3, v7}, Ljava/io/FileOutputStream;->write([B)V
+
+    invoke-virtual {v3}, Ljava/io/FileOutputStream;->close()V
+
+    const-string v3, "ytProxyDebug"
+
+    const-string v4, "ytProxy: dumped /browse response to ytproxy_dump_browse.bin"
+
+    invoke-static {v3, v4}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
+
+    goto :goto_ytproxy_dump_done
+    :try_end_ytproxy_dump
+    .catch Ljava/lang/Exception; {:try_start_ytproxy_dump .. :try_end_ytproxy_dump} :catch_ytproxy_dump
+
+    :catch_ytproxy_dump
+    move-exception v3
+
+    const-string v4, "ytProxyDebug"
+
+    invoke-virtual {v3}, Ljava/lang/Exception;->toString()Ljava/lang/String;
+
+    move-result-object v3
+
+    invoke-static {v4, v3}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
+
+    :goto_ytproxy_dump_done
+    :cond_ytproxy_dump_skip
     iget-object v1, p0, Labmu;->i:Ljava/util/ArrayDeque;
 
     .line 11
@@ -450,41 +511,6 @@
 
 .method public final onReadCompleted(Lorg/chromium/net/UrlRequest;Lorg/chromium/net/UrlResponseInfo;Ljava/nio/ByteBuffer;)V
     .locals 5
-
-    # ytProxy diagnostic: identify which real endpoint this Cronet
-    # callback handles, to find the InnerTube API response reader among
-    # several candidates. Purely additive - does not touch p1/p2/p3.
-    const-string v0, "ytProxyDebug"
-
-    new-instance v1, Ljava/lang/StringBuilder;
-
-    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
-
-    const-string v2, "ytProxy: onReadCompleted class=Labmu; url="
-
-    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {p2}, Lorg/chromium/net/UrlResponseInfo;->getUrl()Ljava/lang/String;
-
-    move-result-object v2
-
-    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    const-string v2, " bufPos="
-
-    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {p3}, Ljava/nio/ByteBuffer;->position()I
-
-    move-result v2
-
-    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-
-    move-result-object v1
-
-    invoke-static {v0, v1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
 
     iget-object p2, p0, Labmu;->c:Labnw;
 

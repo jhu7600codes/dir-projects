@@ -973,6 +973,60 @@ inference, not confirmed - waiting on the next real capture.
 **Status**: `v15_diag2_signed.apk` shipped with all 9 real Cronet
 callback subclasses now instrumented, not yet tested.
 
+## Found the real handler, then hit (and solved) a real dex table limit
+
+Real logcat evidence (finally captured correctly - two earlier attempts
+either missed opening the app entirely or cleared the buffer without
+actually reproducing) confirmed `Labmu` is the genuine InnerTube API
+response handler: fires on `/youtubei/v1/browse`, `/reel/reel_item_watch`,
+`/log_event`, `/history/get_history_paused_state`, `/feedback`. `Lbezo`
+logs the identical URL/buffer-position pairs every time - confirmed it's
+a pure passthrough decorator wrapping `Labmu`, not a separate handler.
+`Lablw` turned out to be the thumbnail-image loader (`i.ytimg.com`
+only). `Lrgo`/`Lbezo` together handle real video segment streaming
+(`googlevideo.com/videoplayback`) - explains why Shorts/playback felt
+solid the whole time despite the metadata-parsing mystery: separate
+pipeline, never broken.
+
+Traced `Labmu`'s method `a(...)` to the exact line where the fully
+assembled raw response body becomes a plain `byte[]` (`Labkm;->f()[B`),
+right before it gets wrapped and handed to the rest of the app. Patched
+a dump of that raw byte array to the app's own private data dir
+(readable via root, no special permission needed) whenever the request
+URL contains `/youtubei/v1/browse` - the actual ground truth needed to
+answer the load-bearing question this whole pivot depends on.
+
+**Hit a real Android dex limit getting there**: `classes.dex` (where
+`abmu.smali` happened to live) turned out to be sitting exactly at some
+internal 65536-entry table boundary (type_ids or method_ids, most
+tables in dex format share this 64K cap) - three separate attempts,
+each smaller than the last (inline `FileOutputStream` calls directly ->
+a new external helper class -> a new method appended to an existing
+class already in that dex) all failed identically, each time breaking a
+different, entirely unrelated pre-existing enum's `values()` method as
+collateral (`Lzqg`, then `Lznc`) purely because *something* tipped the
+shared table over, and whichever method the writer happened to be
+serializing at that instant took the blame. Confirmed via `aapt2 dump
+badging`/dex string search after each attempt that the failure was real
+dex-writer breakage, not a build-script issue.
+
+Real fix: relocated `abmu.smali`'s entire class definition from
+`smali/` (classes.dex) to `smali_classes4/` (confirmed to have real
+headroom - the `rgo.smali` diagnostic addition compiled there cleanly
+earlier this same investigation). Android's multidex classloading
+resolves classes app-wide regardless of which physical dex file they
+live in, so this is safe - only the *building* of new type/method table
+entries needed room, and classes4.dex had it. Verified with the same
+resource-ID diff check as every other round: zero mismatches against
+the pristine original's 16,967 real resource IDs.
+
+**Status**: `v15_dump_signed.apk` shipped, dump not yet retrieved. Once
+pulled (`su -c cat .../ytproxy_dump_browse.bin`), the raw bytes get
+inspected directly (protobuf wire format is self-describing enough to
+walk field numbers/wire types even without the exact `.proto` schema)
+to finally answer whether the server reshapes its response by client
+version or sends one modern schema to everyone.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
