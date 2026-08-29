@@ -1027,6 +1027,86 @@ walk field numbers/wire types even without the exact `.proto` schema)
 to finally answer whether the server reshapes its response by client
 version or sends one modern schema to everyone.
 
+## Real login blocker: bringing in a real Vanced build to register the account
+
+The `/browse` dump came back genuinely useful but content-empty: real,
+correctly-captured bytes, `logged_in: 0`, `browse_id: FEsubscriptions`,
+body text literally "Sign in to see updates from your favorite YouTube
+channels". Not a bug - this v15 test install has no Google account
+attached at all, and its own sign-in flow is presumably as broken as
+everything else about its 2021-era compatibility with today's auth
+stack. Plan: sign in through a real, working Vanced build instead (its
+login flow works, and Vanced/microG's whole design point is registering
+a real Google account at the OS AccountManager level) so the same
+already-authenticated account becomes visible to the patched v15 build
+too, without v15 needing its own working login UI at all.
+
+Exact version 15.46.34 was never a real Vanced release - checked via
+`WebSearch`, confirmed the closest real archived release is 15.43.32
+(verified real via APKMirror). Close enough for this purpose: the goal
+is only a working login vehicle to register the account with microG,
+not a long-term daily driver, though it's a genuine bonus that Vanced's
+own patches bake in working SponsorBlock and ad-block for free.
+
+Downloaded the real `.apkm` (a split-APK bundle - base + arch splits +
+70+ language splits) via a user-supplied direct Cloudflare R2 link
+(APKMirror itself blocks this environment's `WebFetch`/`curl` with a
+Cloudflare bot-challenge). Verified real before touching anything:
+`info.json`'s declared version/package matched, `aapt2 dump badging`
+confirmed `com.vanced.android.youtube` (the real nonroot package name,
+confirming this is the microG-dependent variant, not the root/Xposed
+one), and `apksigner verify` confirmed a real, intact signature.
+
+**Applied the exact same proven fix as stock v15**: bumped
+`apktool.yml`'s `versionCode`/`versionName` on `base.apk` to the same
+values already validated against the real server
+(`2133324000`/`19.51.01`) - no smali investigation needed, since the
+whole reason this fix works is that apps read their own version via
+`PackageManager` rather than hardcoding it, so making the manifest
+consistent is sufficient regardless of which specific app it is.
+
+**Hit a chain of real, unrelated apktool/aapt resource-decode quirks**
+getting `base.apk` to rebuild at all (none caused by the version edit
+itself - this old 2020-era APK's resource table apparently predates
+some assumption apktool/aapt2 8.5.2 makes):
+1. aapt2 rejected several `values-mdpi/mipmaps.xml`/`values/animators.xml`
+   entries - apktool's own `APKTOOL_DUMMY_*` placeholder mechanism
+   (filling gaps in the resource ID table) uses a literal `false` as
+   filler regardless of type, which aapt2 accepts for value types but
+   rejects for reference-only types (mipmap, animator, drawable, xml,
+   font, raw, layout, anim). Fixed by replacing `>false<` with the
+   generically-valid `>@null<` across every affected dummy file (left
+   `bools.xml` alone - `false` is a genuinely valid bool there).
+2. Tried legacy aapt1 as a workaround before finding fix 1 - traded one
+   error for a worse one (aapt1 can't parse the `$`-prefixed synthetic
+   filenames apktool itself generates for extracted animated-vector
+   states, e.g. `$validated_text_area_background_dark__0.xml`) -
+   confirmed aapt2 (with fix 1 applied) was the right path, not aapt1.
+3. `mipmap-xxhdpi` vs `mipmap-xxhdpi-v4` (and every other density)
+   held fully duplicate launcher icon sets - this app's minSdk (21) is
+   above the "v4" qualifier's threshold, making the two folders
+   equivalent, and having both trips aapt's duplicate-file check.
+   Confirmed byte-for-byte redundant before deleting the plain-named
+   folders, keeping the -v4 (adaptive icon) versions.
+4. Same plain-vs-`-v4` split also produced a handful of genuine
+   cross-format collisions (`subscribe_mark.webp` in the plain folder,
+   `subscribe_mark.png` in `-v4` - same logical resource, different
+   file extension, same collision class as #3 but caught by basename
+   rather than exact filename).
+
+Verified the same way as every prior round: diffed all 21,515 real
+resource IDs between the original `base.apk` and the patched rebuild
+via `aapt2 dump resources` - zero mismatches, confirming none of the
+cosmetic cleanup (icon dedup, dummy-value fixes) touched anything real.
+
+Re-signed `base.apk` plus the `arm64_v8a` native-code split and the
+`en` language split (dropped every other split - x86/x86_64 arches
+irrelevant on this arm64 device, and 70+ other languages unnecessary)
+with the project's existing debug keystore, so all three install
+together as one coherent split set under one certificate.
+
+**Status**: patched Vanced 15.43.32 set delivered, not yet tested.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
