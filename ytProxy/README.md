@@ -1107,6 +1107,59 @@ together as one coherent split set under one certificate.
 
 **Status**: patched Vanced 15.43.32 set delivered, not yet tested.
 
+## Install-mechanics round: split-consistency and a real regression, both fixed
+
+Getting the patched Vanced set actually installed via `pm` session
+commands surfaced two more real, evidence-driven fixes:
+
+**Split versionCode consistency.** First real `install-commit` attempt
+failed with `INSTALL_FAILED_INVALID_APK: version code 1515701696
+inconsistent with 2133324000` - the version bump had only been applied
+to `base.apk`'s `apktool.yml`, not to the `arm64_v8a`/`en` splits' own
+manifests. Android requires every split of one install to declare the
+identical `versionCode`. Decoded both splits, bumped their
+`apktool.yml` to match - the `en` split took the edit cleanly, but the
+`arm64_v8a` split's apktool decode mode ("only framework resources")
+doesn't re-inject `apktool.yml`'s version into the rebuilt manifest on
+its own, confirmed by checking the raw `AndroidManifest.xml` text
+directly - had to patch that file's `versionCode="..."` string in
+place instead of relying on the normal apktool.yml mechanism.
+
+**A real regression from over-fixing.** Second attempt installed
+cleanly but crashed on every launch with `IllegalStateException: You
+need to use a Theme.AppCompat theme (or descendant) with this
+activity`. Confirmed via the user testing the completely unpatched
+original `.apkm` that this is real and specific to the patch, not a
+pre-existing Vanced/device issue. Traced `Theme.YouTube.Launcher`
+(the crashing activity's real declared theme)'s full parent chain by
+hand - fully intact, all real named styles down to
+`Theme.AppCompat.DayNight.NoActionBar`, no dummy placeholders involved.
+Tried reverting the `styles.xml` dummy-value fix from the earlier
+resource-decode round entirely - confirmed that fix genuinely is
+required (reverting it broke the build outright with real errors), so
+not simply an unnecessary side effect.
+
+Real suspect instead: the earlier version bump used the exact same
+`versionCode`/`versionName` pair as stock v15, without checking whether
+Vanced actually needs that specific `versionCode` value at all. That
+inflated versionCode (representing a 2024/2025-era release) existed
+specifically to clear *stock v15's own* local `dyw.smali` update gate -
+a mechanism that's part of v15.46.34's compiled code, not necessarily
+present or requiring the same threshold in Vanced's own (different)
+compile. Matches the exact "old app doesn't expect this version"
+pattern that's recurred throughout this whole project - an app taking
+an internal code path (here, apparently a newer/incompatible theme
+resolution) it was never actually built to support. Since the
+network-side fix (dodging the server's `[400]` wall) only needs
+`versionName` (what typically becomes the outgoing `cver`), reverted
+`versionCode` back to Vanced's real original value
+(`1515701696`) across all three files while keeping `versionName`
+spoofed to `19.51.01` - a single-variable, well-motivated test rather
+than another blind guess.
+
+**Status**: `vanced_patched_set3` (base + arm64 + en, versionCode
+reverted/versionName still spoofed) shipped, not yet tested.
+
 ## Ad-block: next up
 
 Requested repeatedly, deferred until the core version-spoof is confirmed
