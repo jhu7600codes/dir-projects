@@ -81,7 +81,7 @@ java -jar apktool.jar b v14_decoded -o v14_rebuilt.apk
 python3 patches/rebuild.py youtube_14.34.54.apk v14_rebuilt.apk v14_grafted_unsigned.apk
 zipalign -f -p 4 v14_grafted_unsigned.apk v14_grafted_aligned.apk
 apksigner sign --ks debug.keystore --ks-pass pass:android \
-  --ks-key-alias translyte --key-pass pass:android \
+  --ks-key-alias ytproxy --key-pass pass:android \
   --out v14_patched.apk v14_grafted_aligned.apk
 ```
 
@@ -1159,6 +1159,56 @@ than another blind guess.
 
 **Status**: `vanced_patched_set3` (base + arm64 + en, versionCode
 reverted/versionName still spoofed) shipped, not yet tested.
+
+**Both single-variable tests came back negative - version fields
+cleared entirely.** `vanced_patched_set3` (versionCode reverted only)
+crashed identically on real-device test - fresh logcat confirmed the
+exact same `IllegalStateException`, ruling out `versionCode`
+specifically. Reverted `versionName` too (both fields now 100% back to
+Vanced's real originals, `1515701696`/`15.43.32`) and shipped as
+`vanced_patched.apkm` - **also crashed identically**, confirmed via a
+third fresh logcat (`vanced_crash3.txt`, same `WatchWhileActivity`
+`IllegalStateException` signature). Version spoofing is not the cause
+of this crash at all; the remaining suspects are the resource-level
+apktool/aapt2 fixes from the earlier decode round.
+
+**Root cause found: the `styles.xml` dummy-value fix was scoped too
+broadly.** Ran the same `aapt2 dump resources` diff verification used
+for the v17 rebuild, but for Vanced specifically (never confirmed done
+for this build before). Diffed the patched `base.apk` against a fresh
+`apktool d` of the pristine, untouched original `.apkm`'s `base.apk`.
+Found real corruption: 150 genuine (non-`APKTOOL_DUMMY`) `false` values
+in `res/values/styles.xml` had been flipped to `@null`, including 4
+occurrences of the real framework attr `0x010102cd` = `android:
+windowActionBar`, plus its AppCompat-namespaced counterpart across every
+`NoActionBar`-style theme in the file (confirmed directly: e.g. line
+1704's `<item name="windowActionBar">false</item>` was silently
+converted). This is precisely the attribute `AppCompatDelegateImpl`
+checks for at runtime before throwing `"You need to use a Theme.AppCompat
+theme"` - the earlier "convert `APKTOOL_DUMMY_*` placeholder values from
+`false` to `@null`" fix had evidently been applied as a blanket
+find/replace across the whole file rather than scoped to lines actually
+containing `APKTOOL_DUMMY`, silently clobbering 150 unrelated real
+values in the same pass. Every other affected file (`attrs.xml`,
+`dimens.xml`, `colors.xml`, etc.) had zero genuine `false` values outside
+their dummy placeholders, so the same blanket fix was harmless there -
+`styles.xml` was the only file with real casualties.
+
+Fix: rebuilt `styles.xml` from a fresh decode of the pristine original,
+re-applied the `false`->`@null` conversion scoped strictly to lines
+containing `APKTOOL_DUMMY` (539 of them - confirmed still necessary,
+`apktool b` still requires it). Verified clean: same line count (7154),
+same dummy-entry count (539) as the pristine original, and a fresh
+`aapt2 dump resources` diff against the original apkm now shows zero
+unexpected differences - only the expected dummy conversions and the
+already-known, already-verified duplicate-folder path change from the
+earlier mipmap/drawable dedup round. Rebuilt, re-signed with the same
+key, packaged as `vanced_signed_set5` / `vanced_fixed.apkm`.
+
+**Status**: `vanced_fixed.apkm` shipped, not yet tested. If this clears
+the crash, the root cause was this scoping bug alone - not anything
+about version spoofing at all, which turned out to be a red herring
+both times it was tested.
 
 ## Ad-block: next up
 
