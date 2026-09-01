@@ -1,0 +1,34 @@
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ PivotBar.Dark / PivotBar.Default (bottom nav tab bar) @@
+     <style name="PivotBar.Dark" parent="@style/PivotBar">
+         <item name="dotColorTheme">dark</item>
+         <item name="dotStrokeColor">@color/yt_black1</item>
+         <item name="pivotBackground">@color/yt_black1</item>
+         <item name="pivotBorderColor">@color/yt_separator_dark</item>
+         <item name="selectedTextColor">@color/yt_white1</item>
+-        <item name="tab_content_color">@color/yt_white1</item>
+-        <item name="tab_highlight_color">@color/yt_white1</item>
++        <!-- translyte: restore pre-Cairo old-UI convention (dim unselected,
++             full-color selected) instead of stock Cairo's identical tint
++             on both states. tab_content_color = unselected tab icon tint,
++             tab_highlight_color = selected tab icon tint. -->
++        <item name="tab_content_color">?ytIconInactive</item>
++        <item name="tab_highlight_color">@color/yt_white1</item>
+     </style>
+     <style name="PivotBar.Dark.DarkerPalette" parent="@style/PivotBar.Dark">
+         <item name="dotStrokeColor">@color/yt_black3</item>
+         <item name="pivotBackground">@color/yt_black3</item>
+     </style>
+     <style name="PivotBar.Default" parent="@style/PivotBar">
+         <item name="dotColorTheme">light</item>
+         <item name="dotStrokeColor">?ytBrandBackgroundSolid</item>
+         <item name="pivotBackground">?ytBrandBackgroundSolid</item>
+         <item name="pivotBorderColor">?ytSeparator</item>
+         <item name="selectedTextColor">?ytTextPrimary</item>
+-        <item name="tab_content_color">?ytTextPrimary</item>
+-        <item name="tab_highlight_color">?ytTextPrimary</item>
++        <!-- translyte: same restoration as PivotBar.Dark above -->
++        <item name="tab_content_color">?ytIconInactive</item>
++        <item name="tab_highlight_color">?ytTextPrimary</item>
+     </style>
