@@ -20,7 +20,7 @@ in `main.c` is safe on both -- but phat is what v1 targets.
   ffmpeg decode + SDL2 present, audio-clock-synced.
 - **Controls**: D-Pad to move the selection, X to select/confirm, Circle to
   stop playback and return to the list, Start to refresh the list, Select
-  to enter/change the server address via the Vita's on-screen keyboard.
+  to enter/change the server address via the app's own on-screen keyboard.
 
 This intentionally mirrors this project's *own* Android history: the
 Android app started with a simple "wait for the whole thing, then play it"
@@ -40,15 +40,17 @@ tops out differently for different parts of this codebase:
 | `sabr.c` (SABR wire-format + clock parsing) | **Host unit tests** (`test/sabr_test.c`, 17+ assertions) *and* cross-compiles clean for the Vita target |
 | `scrape.c` (video list extraction) | **Host unit tests** (`test/scrape_test.c`) against a fixture built from yt2009's actual `videoCell()` template shape, *and* cross-compiles clean |
 | `fetch.c` (fetch-loop orchestration) | Its pure termination logic (`fetch_should_continue`) has **host unit tests** (`test/fetch_test.c`); the full fetch loop (network I/O) cross-compiles clean but isn't host-testable |
-| `http.c`, `player.c`, `main.c`, `ime.c` | **Cross-compile clean** for the real `arm-vita-eabi-gcc`/VitaSDK target, full app links and packages into a real, well-formed `.vpk` -- but **not run on real hardware or an emulator**, so runtime behavior (does it actually decode/play/render correctly on a Vita) is unverified |
+| `http.c`, `player.c`, `main.c`, `keyboard.c` | **Cross-compile clean** for the real `arm-vita-eabi-gcc`/VitaSDK target, full app links and packages into a real, well-formed `.vpk` -- but **not run on real hardware or an emulator**, so runtime behavior (does it actually decode/play/render correctly on a Vita) is unverified |
 
-`ime.c` (the in-app on-screen-keyboard config prompt) carries the most
-uncertainty of anything in this codebase: it follows VitaSDK's documented
-`ime_dialog` sample pattern (the dialog draws as its own system overlay,
-so it needs no `sceCommonDialogUpdate()` render-target compositing call
-the way `sceMsgDialog` would), but that pattern couldn't be confirmed
-against real hardware here. If server-address entry doesn't work right,
-this is the first place to look.
+An earlier version of the server-address prompt used the Vita's *system*
+on-screen keyboard (`SceImeDialog`). That turned out to need GXM
+render-target compositing that this app's SDL2 renderer doesn't expose,
+and it hung on real hardware -- so `keyboard.c` replaces it with a
+self-drawn widget instead, built from the exact same SDL2/SDL2_ttf draw
+calls the video list already uses (`SDL_RenderFillRect` + `TTF_Render*`),
+not a system dialog. That removes the specific thing that broke, though
+like the rest of this table it's still only confirmed by "compiles and
+links clean," not a hardware run.
 
 Run the host tests:
 
@@ -92,11 +94,12 @@ Produces `build/maytube-vita.vpk`. Install it the usual homebrew way
 
 Nothing to copy onto the memory card by hand -- the font is bundled
 inside the vpk (see below), and on first launch (or whenever there's no
-saved server address) the app itself pops the Vita's on-screen keyboard
-to ask for one, e.g. `http://192.168.1.20:3000` (the same address the
-Android app's Settings screen asks for). It's saved to
-`ux0:data/maytube/config.txt` afterwards, and Select re-opens the same
-prompt any time to change it.
+saved server address) the app itself switches to its own on-screen
+keyboard screen to ask for one, e.g. `http://192.168.1.20:3000` (the same
+address the Android app's Settings screen asks for): D-Pad to move over
+the key grid, Cross to type a character, Circle to backspace, Square to
+clear, Start to confirm. It's saved to `ux0:data/maytube/config.txt`
+afterwards, and Select re-opens the same screen any time to change it.
 
 ## Fonts
 
@@ -122,9 +125,9 @@ explicitly permits this kind of redistribution/embedding.
 - **No search, no history/login, no channel pages, no comments.** Just a
   flat `/videos` list, a server-address prompt, and a player. All of
   these are reasonable v2 candidates.
-- **On-screen keyboard text entry is ASCII-only** (`ime.c`'s UTF-8<->UTF-16
-  conversion is a straight byte widen/narrow, not a real UTF-8 decoder) --
-  fine for a server URL, not for arbitrary text.
+- **On-screen keyboard covers lowercase letters, digits, and `.`/`:`/`-`/`/`
+  only** -- enough for a server URL, not general text entry (no
+  uppercase, no space, no symbol shift).
 - **No fetch cancellation.** Once you press X on a video, the buffering
   step runs to completion (or fails) before you get control back.
 - **One video buffered at a time** -- `video.mp4`/`audio.mp4` under
@@ -142,7 +145,7 @@ src/
   scrape.c/.h   /videos page -> video id + title list
   fetch.c/.h    fetch-loop orchestration (buffer-then-play)
   player.c/.h   ffmpeg decode + SDL2 present, audio-clock A/V sync
-  ime.c/.h      on-screen-keyboard prompt (server address entry)
+  keyboard.c/.h self-drawn on-screen keyboard (server address entry)
   main.c        SDL2 app: input, state machine, rendering
 assets/font.ttf bundled DejaVu Sans, embedded into the vpk at build time
 test/           host-runnable unit tests for the pure logic modules

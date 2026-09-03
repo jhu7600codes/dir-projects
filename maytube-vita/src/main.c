@@ -27,7 +27,7 @@
 #include "scrape.h"
 #include "fetch.h"
 #include "player.h"
-#include "ime.h"
+#include "keyboard.h"
 
 #define SCREEN_W 960
 #define SCREEN_H 544
@@ -50,7 +50,8 @@ typedef enum {
     STATE_LIST,
     STATE_FETCHING,
     STATE_PLAYING,
-    STATE_ERROR
+    STATE_ERROR,
+    STATE_CONFIG
 } app_state;
 
 typedef struct {
@@ -66,12 +67,13 @@ typedef struct {
     long fetched_ms;
     long total_ms;
     int stop_requested;
+    keyboard_state kb;
 } app;
 
 /* The server address -- the same thing the Android app's Settings screen
-   asks for -- is entered in-app via the Vita's on-screen keyboard (see
-   configure_server() below) and persisted here, one line, so it doesn't
-   have to be re-typed on every launch. */
+   asks for -- is entered in-app via the self-drawn on-screen keyboard
+   (see keyboard.c and STATE_CONFIG's handling below) and persisted here,
+   one line, so it doesn't have to be re-typed on every launch. */
 static int load_config(char *base_url, size_t cap) {
     FILE *f = fopen(CONFIG_PATH, "r");
     if (!f) return -1;
@@ -126,37 +128,31 @@ static void refresh_video_list(app *a) {
     a->state = STATE_LIST;
 }
 
-static void render_status(app *a, const char *line1, const char *line2);
+/* Switches to the on-screen keyboard screen to enter/edit the server
+   address -- the in-app replacement for hand-editing config.txt over
+   FTP. Unlike a system dialog this doesn't block: STATE_CONFIG's own
+   input/render handling below runs it one keypress and one frame at a
+   time through the normal main loop, the same way every other screen in
+   this app works. */
+static void enter_config_state(app *a) {
+    keyboard_init(&a->kb, a->base_url[0] ? a->base_url : "http://");
+    a->state = STATE_CONFIG;
+}
 
-/* Pops the Vita's on-screen keyboard to enter/edit the server address,
-   persists it, and re-scrapes -- the in-app replacement for hand-editing
-   config.txt over FTP. Draws its own "waiting" frame first since
-   ime_prompt_text() blocks. A cancelled prompt with no address configured
-   yet just re-prompts; cancelling an edit of an already-working address
-   leaves it alone. */
-static void configure_server(app *a) {
-    render_status(a, "Waiting for the on-screen keyboard...", NULL);
-
-    char entered[sizeof(a->base_url)];
-    int rc = ime_prompt_text("Server address (http://ip:port)", a->base_url, entered, sizeof(entered));
-
-    /* Draining here, not inside ime_prompt_text(), matches ime.h's
-       documented contract: button presses queued while the overlay had
-       input focus shouldn't leak into the app's own state machine once
-       it regains control. */
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) { }
-
-    if (rc == 0 && entered[0]) {
-        strncpy(a->base_url, entered, sizeof(a->base_url) - 1);
+/* Called once STATE_CONFIG's keyboard reports CONFIRMED or CANCELLED.
+   An empty confirm is treated as if nothing were entered. A cancelled
+   edit of an already-working address just keeps it; cancelling with
+   nothing configured yet re-opens the keyboard rather than dead-ending. */
+static void finish_config_state(app *a, keyboard_result result) {
+    if (result == KEYBOARD_CONFIRMED && a->kb.text[0]) {
+        strncpy(a->base_url, a->kb.text, sizeof(a->base_url) - 1);
         a->base_url[sizeof(a->base_url) - 1] = '\0';
         save_config(a->base_url);
-        render_status(a, "Loading...", NULL);
-        refresh_video_list(a);
+        refresh_video_list(a); /* sets STATE_LIST or STATE_ERROR itself */
     } else if (a->base_url[0]) {
-        a->state = STATE_LIST; /* cancelled an edit; keep the working address */
+        a->state = STATE_LIST;
     } else {
-        set_error(a, "No server address set. Press Select to try again.");
+        enter_config_state(a);
     }
 }
 
@@ -285,7 +281,7 @@ int main(int argc, char *argv[]) {
     } else if (load_config(a.base_url, sizeof(a.base_url)) == 0) {
         refresh_video_list(&a);
     } else {
-        configure_server(&a); /* first launch: no server address saved yet */
+        enter_config_state(&a); /* first launch: no server address saved yet */
     }
 
     int running = 1;
@@ -322,7 +318,7 @@ int main(int argc, char *argv[]) {
                         render_status(&a, "Refreshing...", NULL);
                         refresh_video_list(&a);
                     } else if (e.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {
-                        configure_server(&a); /* Select: change server address */
+                        enter_config_state(&a); /* Select: change server address */
                     }
                     break;
                 case STATE_ERROR:
@@ -330,9 +326,14 @@ int main(int argc, char *argv[]) {
                         render_status(&a, "Loading...", NULL);
                         refresh_video_list(&a);
                     } else if (e.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {
-                        configure_server(&a);
+                        enter_config_state(&a);
                     }
                     break;
+                case STATE_CONFIG: {
+                    keyboard_result kr = keyboard_handle_button(&a.kb, e.cbutton.button);
+                    if (kr != KEYBOARD_EDITING) finish_config_state(&a, kr);
+                    break;
+                }
                 default:
                     break;
                 }
@@ -341,6 +342,9 @@ int main(int argc, char *argv[]) {
 
         if (a.state == STATE_LIST) render_list(&a);
         else if (a.state == STATE_ERROR) render_status(&a, "Error", a.error_msg);
+        else if (a.state == STATE_CONFIG) {
+            keyboard_render(&a.kb, renderer, a.font, "Server address (http://ip:port)");
+        }
 
         SDL_Delay(16);
     }

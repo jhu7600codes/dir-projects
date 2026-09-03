@@ -33,7 +33,7 @@ add_executable(maytube-vita
   src/scrape.c
   src/fetch.c
   src/player.c
-  src/ime.c
+  src/keyboard.c
 )
 
 target_link_libraries(maytube-vita
@@ -46,9 +46,6 @@ target_link_libraries(maytube-vita
   PkgConfig::AVUTIL
   PkgConfig::MPG123
   PkgConfig::CURL
-  # ime.c's SceImeDialog calls (the in-app on-screen-keyboard config
-  # prompt) live in the common-dialog stub, not a separate ime_dialog one.
-  SceCommonDialog_stub
 )
 
 vita_create_self(maytube-vita.self maytube-vita)
