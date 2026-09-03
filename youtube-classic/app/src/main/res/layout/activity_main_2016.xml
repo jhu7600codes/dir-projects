@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The pre-Sept-2016 chrome: a solid red app bar and a tab-icon strip
+     directly under it, instead of a white bar + bottom nav - see
+     MainActivity2016's kdoc for the real screenshots/APK teardown this
+     came from. -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/yt_background"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar2016"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/yt_2016_red"
+        app:contentInsetStart="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/toolbarTitle2016"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Trending" />
+
+            <ImageButton
+                android:id="@+id/actionSearch2016"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_search"
+                app:tint="@android:color/white"
+                android:contentDescription="@string/action_search" />
+
+            <ImageButton
+                android:id="@+id/actionOverflow2016"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                app:tint="@android:color/white"
+                android:contentDescription="@string/action_more" />
+
+        </LinearLayout>
+    </com.google.android.material.appbar.MaterialToolbar>
+
+    <LinearLayout
+        android:id="@+id/tabStrip2016"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="@color/yt_surface">
+
+        <ImageButton
+            android:id="@+id/navHome2016"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/ic_2016_tab_home"
+            android:contentDescription="@string/tab_home" />
+
+        <ImageButton
+            android:id="@+id/navTrending2016"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/ic_2016_tab_trending"
+            android:contentDescription="@string/tab_trending" />
+
+        <ImageButton
+            android:id="@+id/navSubscriptions2016"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/ic_2016_tab_subscriptions"
+            android:contentDescription="@string/tab_subscriptions" />
+
+        <ImageButton
+            android:id="@+id/navLibrary2016"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/ic_2016_tab_library"
+            android:contentDescription="@string/tab_library" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/yt_divider" />
+
+    <FrameLayout
+        android:id="@+id/fragmentContainer2016"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

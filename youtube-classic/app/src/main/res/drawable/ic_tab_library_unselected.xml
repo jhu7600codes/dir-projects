@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same real asset as ic_tab_library_selected.xml, just gray - see that
+     file for where the asset itself came from. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/asset_tab_library"
+    android:tint="@color/yt_nav_unselected" />

@@ -1,0 +1,150 @@
+package com.jhulian.android.youtube.classic.playback
+
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.MergingMediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.SingleSampleMediaSource
+import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
+import okhttp3.OkHttpClient
+
+/**
+ * Keeps a single ExoPlayer + MediaSession alive independent of any Activity,
+ * so playback (audio, or video backgrounded to audio-only) survives the
+ * player screen closing, matches system media controls/notification, and
+ * keeps going for downloaded files exactly the same way it does for a
+ * live stream URL - offline playback is just "the same player, pointed at
+ * a file:// Uri instead of an https:// one" (see download/DownloadService.kt
+ * for where those files come from).
+ *
+ * YouTube serves most non-live streams as *separate* video-only and
+ * audio-only adaptive tracks rather than one progressive file or an HLS
+ * manifest, so a plain [MediaItem] URI isn't enough to play them back in
+ * sync. [PlayerActivity][com.jhulian.android.youtube.classic.ui.player.PlayerActivity] stashes
+ * the paired audio URL in the MediaItem's session-safe
+ * `requestMetadata.extras` (the one part of a MediaItem guaranteed to
+ * survive the MediaController IPC boundary), and the custom
+ * [MediaSource.Factory] below reassembles it into a synced
+ * [MergingMediaSource] on this side, where the real ExoPlayer lives.
+ */
+@UnstableApi
+class PlaybackService : MediaSessionService() {
+
+    private var mediaSession: MediaSession? = null
+
+    override fun onCreate() {
+        super.onCreate()
+
+        val dataSourceFactory = DefaultDataSource.Factory(
+            this,
+            OkHttpDataSource.Factory(OkHttpClient.Builder().build()),
+        )
+        val defaultFactory = DefaultMediaSourceFactory(dataSourceFactory)
+
+        // MediaSource.Factory has several other abstract members
+        // (setDrmSessionManagerProvider, setLoadErrorHandlingPolicy,
+        // getSupportedTypes) that aren't relevant here - delegate the whole
+        // interface to the default factory and only override the one method
+        // that needs the video-only/audio-only merge logic.
+        val mediaSourceFactory = object : MediaSource.Factory by defaultFactory {
+            override fun createMediaSource(mediaItem: MediaItem): MediaSource {
+                val audioUrl = mediaItem.requestMetadata.extras?.getString(EXTRA_AUDIO_URL)
+                return if (audioUrl.isNullOrBlank()) {
+                    defaultFactory.createMediaSource(mediaItem)
+                } else {
+                    val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
+                    val audioSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                        .createMediaSource(MediaItem.fromUri(audioUrl))
+                    // Going through ProgressiveMediaSource.Factory directly
+                    // (rather than defaultFactory) for the video track means
+                    // the subtitle configs on mediaItem DON'T get picked up
+                    // automatically the way DefaultMediaSourceFactory would -
+                    // that merging is DefaultMediaSourceFactory's own logic,
+                    // not something every leaf factory does. Do it by hand so
+                    // captions still work on this (very common - anything
+                    // above progressive-stream quality) playback path too.
+                    val subtitleSources = mediaItem.localConfiguration?.subtitleConfigurations.orEmpty()
+                        .map { SingleSampleMediaSource.Factory(dataSourceFactory).createMediaSource(it, C.TIME_UNSET) }
+                    MergingMediaSource(videoSource, audioSource, *subtitleSources.toTypedArray())
+                }
+            }
+        }
+
+        val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(mediaSourceFactory)
+            // Media3 doesn't expose seek-increment XML attrs on PlayerView
+            // in this version - the rewind/forward buttons in
+            // player_control_view.xml call Player.seekBack()/seekForward(),
+            // and these are what those actually seek by.
+            .setSeekBackIncrementMs(10_000)
+            .setSeekForwardIncrementMs(10_000)
+            .build()
+
+        // A prepared ExoPlayer reports seek-to-previous/seek-to-next as
+        // available player commands by default even for a single video with
+        // no queue - Media3's system media-style notification then shows
+        // big, backgroundless previous/next-track buttons for a single
+        // video that has nothing to skip to. Real YouTube's own notification
+        // doesn't have those either (just play/pause), so this removes them
+        // from what gets exposed to that notification/any other
+        // MediaController, rather than the app's own in-activity controls
+        // (a completely separate layout - see player_control_view.xml).
+        val sessionCallback = object : MediaSession.Callback {
+            override fun onConnect(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo,
+            ): MediaSession.ConnectionResult {
+                val playerCommands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
+                    .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
+                    .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                    .remove(Player.COMMAND_SEEK_TO_NEXT)
+                    .remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                    .build()
+                return MediaSession.ConnectionResult.accept(
+                    MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS,
+                    playerCommands,
+                )
+            }
+        }
+        mediaSession = MediaSession.Builder(this, player).setCallback(sessionCallback).build()
+    }
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
+
+    override fun onTaskRemoved(rootIntent: android.content.Intent?) {
+        val session = mediaSession ?: return
+        if (!session.player.isPlaying) {
+            stopSelfIfNotPlaying(session.player)
+        }
+    }
+
+    private fun stopSelfIfNotPlaying(player: Player) {
+        if (!player.isPlaying) {
+            player.release()
+            mediaSession?.release()
+            mediaSession = null
+            stopSelf()
+        }
+    }
+
+    override fun onDestroy() {
+        mediaSession?.run {
+            player.release()
+            release()
+            mediaSession = null
+        }
+        super.onDestroy()
+    }
+
+    companion object {
+        const val EXTRA_AUDIO_URL = "audio_url"
+    }
+}

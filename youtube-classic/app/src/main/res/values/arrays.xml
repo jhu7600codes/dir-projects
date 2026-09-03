@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SponsorBlock category ids match the public API's `category` field
+         exactly - see network/SponsorBlockClient.kt. -->
+    <string-array name="sponsorblock_category_labels">
+        <item>Sponsor</item>
+        <item>Unpaid/self promotion</item>
+        <item>Interaction reminder</item>
+        <item>Intro/intermission</item>
+        <item>Endcards/credits</item>
+        <item>Filler tangent</item>
+    </string-array>
+    <string-array name="sponsorblock_category_values">
+        <item>sponsor</item>
+        <item>selfpromo</item>
+        <item>interaction</item>
+        <item>intro</item>
+        <item>outro</item>
+        <item>filler</item>
+    </string-array>
+
+    <string-array name="quality_labels">
+        <item>Auto</item>
+        <item>1080p</item>
+        <item>720p</item>
+        <item>480p</item>
+        <item>360p</item>
+        <item>240p</item>
+    </string-array>
+    <string-array name="quality_values">
+        <item>auto</item>
+        <item>1080p</item>
+        <item>720p</item>
+        <item>480p</item>
+        <item>360p</item>
+        <item>240p</item>
+    </string-array>
+
+    <string-array name="download_quality_labels">
+        <item>1080p</item>
+        <item>720p</item>
+        <item>480p</item>
+        <item>360p</item>
+    </string-array>
+    <string-array name="download_quality_values">
+        <item>1080p</item>
+        <item>720p</item>
+        <item>480p</item>
+        <item>360p</item>
+    </string-array>
+
+    <string-array name="ui_era_labels">
+        <item>2018-2019 (default)</item>
+        <item>2016 (experimental)</item>
+    </string-array>
+    <string-array name="ui_era_values">
+        <item>2019</item>
+        <item>2016</item>
+    </string-array>
+</resources>

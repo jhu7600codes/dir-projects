@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <!-- The real Subscriptions tab icon is a small red "play box" glyph that
+         stays red regardless of selection state - unlike Home/Trending/
+         Library it never switches to gray, so it's a single fixed-color
+         drawable rather than participating in bottom_nav_tint. Shape
+         (box + play triangle + two bars above it) traced off the actual
+         ic_tab_subscriptions.png asset from a real YouTube 14.34.54 APK
+         teardown, not a guess. -->
+    <path
+        android:fillColor="@color/yt_red"
+        android:fillType="evenOdd"
+        android:pathData="M7,1h10v2h-10z M6,3.5h12v2h-12z M3,6h18v12H3z M10,9l6,3 -6,3z" />
+</vector>

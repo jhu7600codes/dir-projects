@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/settings_account">
+        <Preference
+            app:key="pref_account"
+            app:title="@string/sign_in"
+            app:summary="@string/sign_in_prompt" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_appearance">
+        <!-- Restarts into a different Activity entirely (MainActivity vs.
+             MainActivity2016) rather than one screen branching on this at
+             runtime - the two chrome styles (bottom nav vs. a red top bar
+             + tab strip) are different enough that keeping them as
+             separate Activities sharing the same Fragments is far less
+             error-prone than heavy conditional layout logic in one. -->
+        <ListPreference
+            app:key="pref_ui_era"
+            app:title="@string/pref_ui_era_title"
+            app:summary="@string/pref_ui_era_summary"
+            app:entries="@array/ui_era_labels"
+            app:entryValues="@array/ui_era_values"
+            app:defaultValue="2019" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_playback">
+        <SwitchPreferenceCompat
+            app:key="pref_background_play"
+            app:title="@string/pref_background_play_title"
+            app:summary="@string/pref_background_play_summary"
+            app:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            app:key="pref_pip_enabled"
+            app:title="@string/pref_pip_title"
+            app:summary="@string/pref_pip_summary"
+            app:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            app:key="pref_sponsorblock_enabled"
+            app:title="@string/pref_sponsorblock_title"
+            app:summary="@string/pref_sponsorblock_summary"
+            app:defaultValue="true" />
+
+        <ListPreference
+            app:key="pref_sponsorblock_categories"
+            app:title="Skip categories"
+            app:entries="@array/sponsorblock_category_labels"
+            app:entryValues="@array/sponsorblock_category_values"
+            app:defaultValue="sponsor"
+            app:dependency="pref_sponsorblock_enabled" />
+
+        <SwitchPreferenceCompat
+            app:key="pref_sponsorblock_auto_skip"
+            app:title="Auto-skip"
+            app:summary="Skip automatically instead of showing a Skip button"
+            app:defaultValue="true"
+            app:dependency="pref_sponsorblock_enabled" />
+
+        <ListPreference
+            app:key="pref_default_quality"
+            app:title="@string/pref_default_quality_title"
+            app:entries="@array/quality_labels"
+            app:entryValues="@array/quality_values"
+            app:defaultValue="auto" />
+
+        <ListPreference
+            app:key="pref_download_quality"
+            app:title="@string/pref_download_quality_title"
+            app:entries="@array/download_quality_labels"
+            app:entryValues="@array/download_quality_values"
+            app:defaultValue="720p" />
+
+        <SwitchPreferenceCompat
+            app:key="pref_wifi_only_downloads"
+            app:title="@string/pref_wifi_only_downloads_title"
+            app:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_general">
+        <Preference
+            app:key="pref_clear_watch_history"
+            app:title="Clear watch history" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_about">
+        <Preference
+            app:key="pref_version"
+            app:title="@string/app_name"
+            app:summary="An unofficial, from-scratch YouTube client built on NewPipe Extractor. Not affiliated with Google or YouTube." />
+    </PreferenceCategory>
+
+</PreferenceScreen>
