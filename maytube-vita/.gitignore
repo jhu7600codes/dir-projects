@@ -1,0 +1,6 @@
+build/
+*.o
+*.velf
+*.self
+*.vpk
+!release/maytube-vita.vpk

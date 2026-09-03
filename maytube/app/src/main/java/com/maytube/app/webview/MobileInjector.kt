@@ -822,6 +822,83 @@ object MobileInjector {
             max-width: 100vw !important;
         }
 
+        /* Tablet/wide-viewport optimization: requested directly. Everything
+           above this point assumes a phone-width viewport (~320-420px) --
+           reasonable given that's most real usage, but stretches badly on
+           a tablet: a single video-cell per row becomes one enormous card
+           with a small thumbnail lost in a sea of whitespace, and
+           #baseDiv's own text content runs to absurd line lengths edge to
+           edge. Plain min-width media queries (real viewport width, not
+           device sniffing) -- the same mechanism every #baseDiv-width fix
+           above already relies on, just adding an upper bound too instead
+           of only a lower one. Deliberately doesn't touch the watch page's
+           player/#watch-this-vid sizing -- restoring yt2009's original
+           float-based two-column watch layout (player left, channel info/
+           related videos/comments right, all originally nested inside
+           #watch-other-vids per watch.html) at wide widths is a real
+           further improvement, but not one this pass verified is safe
+           without a device to check it against; #baseDiv's own cap below
+           already stops the player from being edge-to-edge full-bleed on
+           a large tablet even without it. */
+        @media (min-width: 700px) {
+            #baseDiv {
+                max-width: 900px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+        }
+        @media (min-width: 1000px) {
+            #baseDiv {
+                max-width: 1100px !important;
+            }
+        }
+
+        /* Grid-style video/channel/playlist listings (homepage recommended,
+           /videos, channel grids) vs. search results: both use the exact
+           same .video-cell markup (back/yt2009templates.js's searchVideo()
+           and videoCell()/recommended_videoCell() alike), but search
+           results were never a grid even on the original desktop site --
+           searchVideo() lays each result out as a horizontal thumb+
+           description list row. yt2009's own `grid-view` class (always an
+           ancestor of the grid kind, never present around search results)
+           is what actually distinguishes them, so scoping to
+           `.grid-view .video-cell` is what keeps this from also turning
+           search results into a broken 2-up grid of horizontal list rows.
+           inline-block + an explicit width/margin on the *cell itself*,
+           not flexbox/grid on its parent: that parent varies by listing
+           (.clearL, #browse-video-data, #yt2009-recommended-cells-container,
+           ...) and an inline-block card doesn't need to know or care what
+           actually contains it, unlike a flex/grid container property
+           which only ever affects its own direct children. */
+        @media (min-width: 700px) and (max-width: 999px) {
+            .grid-view .video-cell, .grid-view .channel-cell, .grid-view .playlist-cell,
+            .grid-view .movie-cell, .grid-view .show-cell, .grid-view .trailer-cell {
+                display: inline-block !important;
+                width: 47% !important;
+                margin-right: 6% !important;
+                vertical-align: top !important;
+            }
+            .grid-view .video-cell:nth-child(2n), .grid-view .channel-cell:nth-child(2n),
+            .grid-view .playlist-cell:nth-child(2n), .grid-view .movie-cell:nth-child(2n),
+            .grid-view .show-cell:nth-child(2n), .grid-view .trailer-cell:nth-child(2n) {
+                margin-right: 0 !important;
+            }
+        }
+        @media (min-width: 1000px) {
+            .grid-view .video-cell, .grid-view .channel-cell, .grid-view .playlist-cell,
+            .grid-view .movie-cell, .grid-view .show-cell, .grid-view .trailer-cell {
+                display: inline-block !important;
+                width: 30% !important;
+                margin-right: 5% !important;
+                vertical-align: top !important;
+            }
+            .grid-view .video-cell:nth-child(3n), .grid-view .channel-cell:nth-child(3n),
+            .grid-view .playlist-cell:nth-child(3n), .grid-view .movie-cell:nth-child(3n),
+            .grid-view .show-cell:nth-child(3n), .grid-view .trailer-cell:nth-child(3n) {
+                margin-right: 0 !important;
+            }
+        }
+
         /* dark mode: yt2009 itself has no dark theme, and hand-overriding
            colors on a site this old (mostly inline styles, decades of
            accumulated CSS) isn't remotely tractable. Instead: invert the

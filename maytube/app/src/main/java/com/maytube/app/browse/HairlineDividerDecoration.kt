@@ -3,6 +3,7 @@ package com.maytube.app.browse
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.maytube.app.R
 
@@ -10,7 +11,10 @@ import com.maytube.app.R
 class HairlineDividerDecoration(context: android.content.Context) : RecyclerView.ItemDecoration() {
 
     private val paint = Paint().apply {
-        color = context.getColor(R.color.holo_divider)
+        // Context.getColor(int) itself needs API 23; ContextCompat.getColor
+        // is the AndroidX shim that works all the way down to this app's
+        // real minSdk (21).
+        color = ContextCompat.getColor(context, R.color.holo_divider)
         strokeWidth = context.resources.displayMetrics.density
     }
 
