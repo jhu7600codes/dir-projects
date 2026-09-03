@@ -119,7 +119,11 @@ static void set_error(app *a, const char *msg) {
 static void refresh_video_list(app *a) {
     int n = scrape_videos_page(a->base_url, a->videos, MAX_VIDEOS);
     if (n < 0) {
-        set_error(a, "Could not reach the server. Press Select to change the address, or X to retry.");
+        char msg[256];
+        snprintf(msg, sizeof(msg),
+                 "Could not reach the server (%s). Press Select to change the address, or X to retry.",
+                 http_last_error());
+        set_error(a, msg);
         return;
     }
     a->video_count = n;
@@ -271,13 +275,22 @@ int main(int argc, char *argv[]) {
         SDL_GameControllerOpen(0);
     }
 
-    http_init();
+    int net_ok = (http_init() == 0);
 
     if (!a.font) {
         /* Shouldn't happen -- font.ttf ships bundled inside the vpk (see
            FONT_PATH's comment) -- but if the read somehow fails, say so
            rather than silently rendering no text at all. */
         set_error(&a, "Could not load the bundled font. Try reinstalling the app.");
+    } else if (!net_ok) {
+        /* Distinct from "could not reach the server": this means the
+           network stack itself never came up (sceNet/sceNetCtl bring-up
+           failed), so no request was even attempted yet -- previously
+           silently ignored here, which meant a real init failure just
+           looked identical to a bad server address. */
+        char msg[256];
+        snprintf(msg, sizeof(msg), "Could not start networking (%s).", http_last_error());
+        set_error(&a, msg);
     } else if (load_config(a.base_url, sizeof(a.base_url)) == 0) {
         refresh_video_list(&a);
     } else {

@@ -109,6 +109,27 @@ font.ttf)` and loaded at `app0:font.ttf`. DejaVu ships under the
 Bitstream Vera license (`assets/DejaVuSans-LICENSE.txt`), which
 explicitly permits this kind of redistribution/embedding.
 
+## LiveArea assets
+
+`sce_sys/` holds the app icon, LiveArea background, and boot splash
+(`icon0.png`, `livearea/contents/bg.png`/`startup.png`/`template.xml`),
+bundled the same way as the font via `vita_create_vpk`'s `FILE` clauses.
+Simple original artwork made for this project -- see `sce_sys/README.md`.
+Without these the OS falls back to its own generic placeholder icon and
+an empty LiveArea tile, which is what earlier builds shipped with.
+
+## Diagnosing "could not reach the server"
+
+`http.c` now records *why* the last request failed (`http_last_error()`)
+and the on-screen error includes it -- a curl error string (e.g. "Failed
+to connect", "Could not resolve host", "Timeout was reached") or, on
+Vita, which network bring-up step failed if the stack itself never came
+up at all. That's a real improvement over the old plain "could not reach
+the server" (which gave no way to tell a bad address apart from Wi-Fi
+being off apart from an actual bug), but it's still unconfirmed against
+real hardware -- if this still fails, the specific message it now shows
+is exactly what's needed to track down further.
+
 ## Known limitations
 
 - **Buffer-then-play, not live streaming.** The whole video downloads

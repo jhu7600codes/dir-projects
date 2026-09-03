@@ -56,4 +56,11 @@ vita_create_vpk(maytube-vita.vpk ${VITA_TITLEID} maytube-vita.self
   # per-user file copy -- lands at app0:font.ttf, read by main.c's
   # FONT_PATH. See assets/DejaVuSans-LICENSE.txt for its license.
   FILE assets/font.ttf font.ttf
+  # LiveArea assets (app icon + home-screen banner + boot splash) --
+  # without these the OS shows its own generic placeholder icon and a
+  # blank LiveArea tile. Simple original artwork, see sce_sys/README.md.
+  FILE sce_sys/icon0.png sce_sys/icon0.png
+  FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
+  FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
+  FILE sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
 )

@@ -29,4 +29,14 @@ int http_get(const char *url, const char *cookie_header, http_response *resp);
 
 void http_response_free(http_response *resp);
 
+/* Human-readable detail for the most recent http_init()/http_get()
+   failure on this thread (curl's own error string, or -- Vita only --
+   which network bring-up step failed and with what code). Only
+   meaningful right after one of those returned non-zero; not reset on
+   success, so don't treat a non-empty result as proof the *last* call
+   failed. Exists so a UI can show more than a generic "couldn't reach
+   the server" when something's actually wrong with the network stack
+   itself, not just this one request. */
+const char *http_last_error(void);
+
 #endif

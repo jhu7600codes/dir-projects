@@ -5,6 +5,12 @@
 #include <string.h>
 #include <stdio.h>
 
+static char g_last_error[160] = "";
+
+const char *http_last_error(void) {
+    return g_last_error;
+}
+
 #ifdef __vita__
 #include <psp2/sysmodule.h>
 #include <psp2/net/net.h>
@@ -13,21 +19,39 @@
 /* curl on Vita rides sceNet directly -- unlike a desktop libcurl, nothing
    brings the net stack up for it automatically, so this has to happen
    once before the first request or every curl_easy_perform() just fails.
-   Static, not malloc'd: this lives for the whole process, same as
-   curl_global_init()'s own state. */
-static char net_pool[256 * 1024];
+   1MB, not the 256KB this used to reserve: matches VitaSDK's own
+   net_http sample's pool size -- 256KB was an arbitrary guess and could
+   plausibly run a real app short on socket-buffer memory under it. */
+static char net_pool[1024 * 1024];
 static int net_ready = 0;
 
 static int vita_net_init(void) {
     if (net_ready) return 0;
-    if (sceSysmoduleLoadModule(SCE_SYSMODULE_NET) < 0) return -1;
+
+    /* sceSysmoduleLoadModule returns SCE_SYSMODULE_LOADED (0) for
+       "already loaded" -- that's success, not an error, so the plain
+       rc < 0 check below already treats it correctly. */
+    int rc = sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+    if (rc < 0) {
+        snprintf(g_last_error, sizeof(g_last_error), "network module load failed (0x%08x)", (unsigned)rc);
+        return -1;
+    }
 
     SceNetInitParam init_param;
     init_param.memory = net_pool;
     init_param.size = sizeof(net_pool);
     init_param.flags = 0;
-    if (sceNetInit(&init_param) < 0) return -1;
-    if (sceNetCtlInit() < 0) return -1;
+    rc = sceNetInit(&init_param);
+    if (rc < 0) {
+        snprintf(g_last_error, sizeof(g_last_error), "sceNetInit failed (0x%08x)", (unsigned)rc);
+        return -1;
+    }
+
+    rc = sceNetCtlInit();
+    if (rc < 0) {
+        snprintf(g_last_error, sizeof(g_last_error), "sceNetCtlInit failed (0x%08x)", (unsigned)rc);
+        return -1;
+    }
 
     net_ready = 1;
     return 0;
@@ -108,7 +132,10 @@ int http_get(const char *url, const char *cookie_header, http_response *resp) {
     resp->x_part_count = -1;
 
     CURL *curl = curl_easy_init();
-    if (!curl) return -1;
+    if (!curl) {
+        snprintf(g_last_error, sizeof(g_last_error), "curl_easy_init failed");
+        return -1;
+    }
 
     struct curl_slist *headers = NULL;
     if (cookie_header && cookie_header[0]) {
@@ -135,7 +162,16 @@ int http_get(const char *url, const char *cookie_header, http_response *resp) {
         resp->status = code;
         resp->data = buf.data;
         resp->size = buf.size;
+        /* Not a transport failure -- http_get still returns 0 -- but
+           worth recording anyway: a caller that turns a bad status into
+           its own -1 (scrape.c does, for anything outside 2xx) can still
+           surface *why* via http_last_error() instead of the stale
+           message from whatever failed before it. */
+        if (code < 200 || code >= 300) {
+            snprintf(g_last_error, sizeof(g_last_error), "HTTP %ld", code);
+        }
     } else {
+        snprintf(g_last_error, sizeof(g_last_error), "%s", curl_easy_strerror(rc));
         free(buf.data);
     }
 
