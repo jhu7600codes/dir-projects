@@ -19,7 +19,8 @@ in `main.c` is safe on both -- but phat is what v1 targets.
   progress bar while it downloads, then plays the two finished files with
   ffmpeg decode + SDL2 present, audio-clock-synced.
 - **Controls**: D-Pad to move the selection, X to select/confirm, Circle to
-  stop playback and return to the list, Start to refresh the list.
+  stop playback and return to the list, Start to refresh the list, Select
+  to enter/change the server address via the Vita's on-screen keyboard.
 
 This intentionally mirrors this project's *own* Android history: the
 Android app started with a simple "wait for the whole thing, then play it"
@@ -39,7 +40,15 @@ tops out differently for different parts of this codebase:
 | `sabr.c` (SABR wire-format + clock parsing) | **Host unit tests** (`test/sabr_test.c`, 17+ assertions) *and* cross-compiles clean for the Vita target |
 | `scrape.c` (video list extraction) | **Host unit tests** (`test/scrape_test.c`) against a fixture built from yt2009's actual `videoCell()` template shape, *and* cross-compiles clean |
 | `fetch.c` (fetch-loop orchestration) | Its pure termination logic (`fetch_should_continue`) has **host unit tests** (`test/fetch_test.c`); the full fetch loop (network I/O) cross-compiles clean but isn't host-testable |
-| `http.c`, `player.c`, `main.c` | **Cross-compile clean** for the real `arm-vita-eabi-gcc`/VitaSDK target, full app links and packages into a real, well-formed `.vpk` -- but **not run on real hardware or an emulator**, so runtime behavior (does it actually decode/play/render correctly on a Vita) is unverified |
+| `http.c`, `player.c`, `main.c`, `ime.c` | **Cross-compile clean** for the real `arm-vita-eabi-gcc`/VitaSDK target, full app links and packages into a real, well-formed `.vpk` -- but **not run on real hardware or an emulator**, so runtime behavior (does it actually decode/play/render correctly on a Vita) is unverified |
+
+`ime.c` (the in-app on-screen-keyboard config prompt) carries the most
+uncertainty of anything in this codebase: it follows VitaSDK's documented
+`ime_dialog` sample pattern (the dialog draws as its own system overlay,
+so it needs no `sceCommonDialogUpdate()` render-target compositing call
+the way `sceMsgDialog` would), but that pattern couldn't be confirmed
+against real hardware here. If server-address entry doesn't work right,
+this is the first place to look.
 
 Run the host tests:
 
@@ -81,17 +90,21 @@ Produces `build/maytube-vita.vpk`. Install it the usual homebrew way
 
 ## Setting up on the Vita
 
-v1 has no on-screen keyboard or in-app settings UI (see "Known
-limitations"), so two files need to be dropped onto the memory card by
-hand before first launch, both under `ux0:data/maytube/`:
+Nothing to copy onto the memory card by hand -- the font is bundled
+inside the vpk (see below), and on first launch (or whenever there's no
+saved server address) the app itself pops the Vita's on-screen keyboard
+to ask for one, e.g. `http://192.168.1.20:3000` (the same address the
+Android app's Settings screen asks for). It's saved to
+`ux0:data/maytube/config.txt` afterwards, and Select re-opens the same
+prompt any time to change it.
 
-- **`config.txt`** -- one line, your server's address, e.g.
-  `http://192.168.1.20:3000` (the same address the Android app's Settings
-  screen asks for).
-- **`font.ttf`** -- any TTF font file, used to render the video list and
-  status text. Not bundled here due to font licensing; bring your own
-  (e.g. a copy of DejaVu Sans, or any other freely redistributable TTF you
-  have on hand).
+## Fonts
+
+`assets/font.ttf` is a bundled copy of DejaVu Sans, embedded into the vpk
+itself via `CMakeLists.txt`'s `vita_create_vpk(... FILE assets/font.ttf
+font.ttf)` and loaded at `app0:font.ttf`. DejaVu ships under the
+Bitstream Vera license (`assets/DejaVuSans-LICENSE.txt`), which
+explicitly permits this kind of redistribution/embedding.
 
 ## Known limitations
 
@@ -106,9 +119,12 @@ hand before first launch, both under `ux0:data/maytube/`:
 - **Serial fragment fetches**, not the Android client's concurrency-3
   fetch loop -- correctness over throughput, since nothing here could be
   verified against a real device's actual network conditions.
-- **No on-screen keyboard / in-app settings, no search, no history/login,
-  no channel pages, no comments.** Just a flat `/videos` list and a
-  player. All of these are reasonable v2 candidates.
+- **No search, no history/login, no channel pages, no comments.** Just a
+  flat `/videos` list, a server-address prompt, and a player. All of
+  these are reasonable v2 candidates.
+- **On-screen keyboard text entry is ASCII-only** (`ime.c`'s UTF-8<->UTF-16
+  conversion is a straight byte widen/narrow, not a real UTF-8 decoder) --
+  fine for a server URL, not for arbitrary text.
 - **No fetch cancellation.** Once you press X on a video, the buffering
   step runs to completion (or fails) before you get control back.
 - **One video buffered at a time** -- `video.mp4`/`audio.mp4` under
@@ -126,7 +142,9 @@ src/
   scrape.c/.h   /videos page -> video id + title list
   fetch.c/.h    fetch-loop orchestration (buffer-then-play)
   player.c/.h   ffmpeg decode + SDL2 present, audio-clock A/V sync
+  ime.c/.h      on-screen-keyboard prompt (server address entry)
   main.c        SDL2 app: input, state machine, rendering
+assets/font.ttf bundled DejaVu Sans, embedded into the vpk at build time
 test/           host-runnable unit tests for the pure logic modules
 CMakeLists.txt  full cross-compile + .self/.vpk packaging
 ```

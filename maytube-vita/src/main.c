@@ -20,12 +20,14 @@
 
 #ifdef __vita__
 #include <psp2/power.h>
+#include <psp2/io/stat.h>
 #endif
 
 #include "http.h"
 #include "scrape.h"
 #include "fetch.h"
 #include "player.h"
+#include "ime.h"
 
 #define SCREEN_W 960
 #define SCREEN_H 544
@@ -33,10 +35,16 @@
 #define ROW_HEIGHT 36
 #define VISIBLE_ROWS 12
 
+#define DATA_DIR    "ux0:data/maytube"
 #define CONFIG_PATH "ux0:data/maytube/config.txt"
 #define VIDEO_PATH  "ux0:data/maytube/video.mp4"
 #define AUDIO_PATH  "ux0:data/maytube/audio.mp4"
-#define FONT_PATH   "ux0:data/maytube/font.ttf"
+/* Bundled into the vpk itself (assets/font.ttf, DejaVu Sans -- Bitstream
+   Vera license, redistribution/embedding explicitly permitted, see
+   assets/DejaVuSans-LICENSE.txt) via CMakeLists.txt's vita_create_vpk
+   FILE clause, so it lands under the app's own read-only app0: bundle --
+   no manual per-user setup needed, unlike CONFIG_PATH above. */
+#define FONT_PATH   "app0:font.ttf"
 
 typedef enum {
     STATE_LIST,
@@ -60,10 +68,10 @@ typedef struct {
     int stop_requested;
 } app;
 
-/* v1 has no on-screen keyboard (see README), so the server address comes
-   from a plain text file the user drops onto the memory card themselves
-   -- one line, e.g. "http://192.168.1.20:3000" -- the same address the
-   Android app's Settings screen would otherwise ask for. */
+/* The server address -- the same thing the Android app's Settings screen
+   asks for -- is entered in-app via the Vita's on-screen keyboard (see
+   configure_server() below) and persisted here, one line, so it doesn't
+   have to be re-typed on every launch. */
 static int load_config(char *base_url, size_t cap) {
     FILE *f = fopen(CONFIG_PATH, "r");
     if (!f) return -1;
@@ -74,6 +82,17 @@ static int load_config(char *base_url, size_t cap) {
         base_url[--len] = '\0';
     }
     return len > 0 ? 0 : -1;
+}
+
+static void save_config(const char *base_url) {
+#ifdef __vita__
+    sceIoMkdir(DATA_DIR, 0777); /* ignore the error if it already exists */
+#endif
+    FILE *f = fopen(CONFIG_PATH, "w");
+    if (!f) return;
+    fputs(base_url, f);
+    fputc('\n', f);
+    fclose(f);
 }
 
 static void draw_text(app *a, const char *text, int x, int y, SDL_Color color) {
@@ -98,13 +117,47 @@ static void set_error(app *a, const char *msg) {
 static void refresh_video_list(app *a) {
     int n = scrape_videos_page(a->base_url, a->videos, MAX_VIDEOS);
     if (n < 0) {
-        set_error(a, "Could not reach the server. Check config.txt and the network, then press X to retry.");
+        set_error(a, "Could not reach the server. Press Select to change the address, or X to retry.");
         return;
     }
     a->video_count = n;
     a->selected = 0;
     a->scroll_offset = 0;
     a->state = STATE_LIST;
+}
+
+static void render_status(app *a, const char *line1, const char *line2);
+
+/* Pops the Vita's on-screen keyboard to enter/edit the server address,
+   persists it, and re-scrapes -- the in-app replacement for hand-editing
+   config.txt over FTP. Draws its own "waiting" frame first since
+   ime_prompt_text() blocks. A cancelled prompt with no address configured
+   yet just re-prompts; cancelling an edit of an already-working address
+   leaves it alone. */
+static void configure_server(app *a) {
+    render_status(a, "Waiting for the on-screen keyboard...", NULL);
+
+    char entered[sizeof(a->base_url)];
+    int rc = ime_prompt_text("Server address (http://ip:port)", a->base_url, entered, sizeof(entered));
+
+    /* Draining here, not inside ime_prompt_text(), matches ime.h's
+       documented contract: button presses queued while the overlay had
+       input focus shouldn't leak into the app's own state machine once
+       it regains control. */
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) { }
+
+    if (rc == 0 && entered[0]) {
+        strncpy(a->base_url, entered, sizeof(a->base_url) - 1);
+        a->base_url[sizeof(a->base_url) - 1] = '\0';
+        save_config(a->base_url);
+        render_status(a, "Loading...", NULL);
+        refresh_video_list(a);
+    } else if (a->base_url[0]) {
+        a->state = STATE_LIST; /* cancelled an edit; keep the working address */
+    } else {
+        set_error(a, "No server address set. Press Select to try again.");
+    }
 }
 
 static void render_list(app *a) {
@@ -134,7 +187,7 @@ static void render_list(app *a) {
         y += ROW_HEIGHT;
     }
 
-    draw_text(a, "D-Pad: navigate   X: play   Start: refresh list", 20, SCREEN_H - 28, dim);
+    draw_text(a, "D-Pad: navigate   X: play   Start: refresh   Select: server address", 20, SCREEN_H - 28, dim);
     SDL_RenderPresent(a->renderer);
 }
 
@@ -225,11 +278,14 @@ int main(int argc, char *argv[]) {
     http_init();
 
     if (!a.font) {
-        set_error(&a, "font.ttf missing -- copy a TTF font to " FONT_PATH " and restart.");
-    } else if (load_config(a.base_url, sizeof(a.base_url)) != 0) {
-        set_error(&a, "config.txt missing -- create " CONFIG_PATH " with your server's http://ip:port on line 1.");
-    } else {
+        /* Shouldn't happen -- font.ttf ships bundled inside the vpk (see
+           FONT_PATH's comment) -- but if the read somehow fails, say so
+           rather than silently rendering no text at all. */
+        set_error(&a, "Could not load the bundled font. Try reinstalling the app.");
+    } else if (load_config(a.base_url, sizeof(a.base_url)) == 0) {
         refresh_video_list(&a);
+    } else {
+        configure_server(&a); /* first launch: no server address saved yet */
     }
 
     int running = 1;
@@ -265,15 +321,16 @@ int main(int argc, char *argv[]) {
                     } else if (e.cbutton.button == SDL_CONTROLLER_BUTTON_START) {
                         render_status(&a, "Refreshing...", NULL);
                         refresh_video_list(&a);
+                    } else if (e.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {
+                        configure_server(&a); /* Select: change server address */
                     }
                     break;
                 case STATE_ERROR:
                     if (e.cbutton.button == SDL_CONTROLLER_BUTTON_A) {
-                        if (load_config(a.base_url, sizeof(a.base_url)) != 0) {
-                            set_error(&a, "config.txt still missing -- create " CONFIG_PATH " and press X.");
-                        } else {
-                            refresh_video_list(&a);
-                        }
+                        render_status(&a, "Loading...", NULL);
+                        refresh_video_list(&a);
+                    } else if (e.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {
+                        configure_server(&a);
                     }
                     break;
                 default:
