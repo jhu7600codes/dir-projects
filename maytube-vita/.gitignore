@@ -3,3 +3,4 @@ build/
 *.velf
 *.self
 *.vpk
+!release/maytube-vita.vpk

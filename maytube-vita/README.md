@@ -57,6 +57,13 @@ better than that without a Vita or a working emulator to run it on. If
 something in `player.c` or `main.c` doesn't work right on real hardware,
 that's the most likely place.
 
+## Prebuilt
+
+[`release/maytube-vita.vpk`](release/maytube-vita.vpk) is checked into
+this repo, built from this exact source by the CMake steps below. Same
+caveat as everywhere else in this README: it compiles and packages
+clean, but hasn't been run on real hardware or an emulator.
+
 ## Building
 
 Requires [VitaSDK](https://vitasdk.org/) (`vdpm` packages: `sdl2`,
