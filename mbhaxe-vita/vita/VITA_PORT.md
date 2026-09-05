@@ -1,10 +1,14 @@
 # MBHaxe → PS Vita: porting notes
 
-Status: **scaffolding only, unbuilt**. Nothing in here has been compiled —
-there's no vitasdk toolchain or Haxe/HashLink install in the environment this
-was written in. This is the real plan and the actual blockers, written so you
-can pick it up on your own machine and hit vitasdk problems, not "figure out
-where to start" problems.
+Status: **the toolchain and runtime layer are real and verified; rendering
+is unstarted.** A vitasdk cross toolchain was built from source, `libhl`
+(HashLink's runtime) was ported and actually links clean for
+`arm-vita-eabi`, and a full Haxe → hlc-C → native-ELF → `.vpk` pipeline was
+run end to end producing a real, installable package (see "hello world"
+below — it's a toolchain smoke test, not the game). The Haxe/game-logic
+layer compiles unmodified. What's genuinely still unstarted is rendering
+(vitaGL) and audio — see the numbered sections below, now ordered by what's
+actually still open rather than by pure guesswork.
 
 Base: `mbu-port` branch of RandomityGuy/MBHaxe (Marble Blast Ultra), vendored
 1:1 into `mbhaxe-vita/` one level up from this file.
@@ -67,23 +71,29 @@ nothing else changed):
 
 ## What actually needs porting, in rough order of how much it blocks a booting game
 
-### 1. HashLink runtime (`libhl`) — hard blocker
+### 1. HashLink runtime (`libhl`) — DONE, verified
 
-Needs a vitasdk build. RandomityGuy already maintains
-[a hashlink fork](https://github.com/RandomityGuy/hashlink) with platform
-compat branches (there's a `uwp-compat` branch used for the UWP build in
-CI) — a `vita-compat` branch following that same pattern is the template to
-copy, not a from-scratch job. Concretely it means:
-- A CMake toolchain path for vitasdk (`arm-vita-eabi-gcc`), `BUILD_TESTING`
-  and `WITH_SQLITE` off like the other minimal builds already do.
-- HashLink's GC assumes it can reserve address space and pin threads the way
-  desktop OSes allow; needs checking against vitasdk's newlib + the Vita's
-  actual usable RAM (see "memory budget" below) — likely needs the GC's
-  page/chunk sizing turned down.
-- `sys.thread` support needs vitasdk's pthread shim (vitasdk has one; needs
-  verifying it covers what `libhl` uses — mutexes/semaphores/condvars).
+Ported and compiles + links clean for `arm-vita-eabi`. The source lives at
+`vita/hashlink/` in this repo (vendored from RandomityGuy's hashlink fork,
+which is what MBHaxe actually builds against) — see
+`vita/hashlink/NOTICE.md` for the exact file-by-file diff, all of it gated
+behind `#ifdef HL_VITA` so no other platform's codepath changed. In short:
+newlib has no `<uchar.h>`/`mmap`/`termios`/`fork`/`readlink`, and a few
+socket/pthread entry points aren't implemented — each has either an
+existing platform carve-out in hashlink's own code to extend (it already
+special-cases `HL_IOS`/`HL_MAC`/`HL_CONSOLE`/`HL_TVOS` for most of these) or
+a small newlib-native equivalent (`memalign` instead of `mmap`, etc).
 
-### 2. Rendering — hard blocker
+This was verified for real, not just "it should work": built a from-source
+vitasdk toolchain, compiled a trivial Haxe program through `hlc`, linked it
+against this ported `libhl.a`, and packaged the result into an installable
+`.vpk` with vita-toolchain's own tools (`vita-elf-create` →
+`vita-make-fself` → `vita-mksfoex` → `vita-pack-vpk`). See
+`vita/hello-test/` to reproduce this yourself, and "toolchain gotchas"
+below for two real bugs hit along the way (not code problems — build
+environment ones) worth knowing about before you rebuild vitasdk yourself.
+
+### 2. Rendering — the actual remaining hard blocker
 
 Heaps renders through `h3d` which on the `hl`/native target goes through an
 OpenGL (desktop) context via `hlsdl`. The Vita's actual GPU API is
@@ -170,33 +180,79 @@ front touchscreen could reuse pieces of it if physical buttons ever feel
 insufficient (they probably won't — this is a marble-rolling platformer,
 not something touch-first).
 
+## Toolchain gotchas (hit and fixed while verifying the above — read before rebuilding vitasdk from source)
+
+If you're building vitasdk from [vitasdk/buildscripts](https://github.com/vitasdk/buildscripts)
+yourself rather than using a prebuilt release, two things bit us that cost
+real time to diagnose:
+
+1. **Locale**: a bare-minimum container/CI image with `LANG=`/`LC_ALL=`
+   unset (POSIX locale) fails partway through extracting the GCC source
+   tarball with `Pathname can't be converted from UTF-8 to current locale`
+   — GCC's own source tree has a handful of non-ASCII filenames (i18n
+   testsuite files) that CMake's `libarchive`-based `tar` can't place
+   without a UTF-8 locale. Fix: `export LC_ALL=C.utf8` (or any installed
+   UTF-8 locale — check `locale -a`) before running the build.
+2. **`gcc-final-target-libs` doesn't build by default.** buildscripts'
+   `BuildGccFinal.cmake` deliberately builds gcc in two steps — `all-gcc`
+   first (the compiler driver + `cc1`, before newlib exists to give it
+   headers), then a *separate* `gcc-final-target-libs` step (`libgcc.a`,
+   `crti.o`, `crtbegin.o`/`crtend.o`, `libstdc++`, `libgomp`) once newlib
+   and pthread-embedded are installed. That second step is marked
+   `EXCLUDE_FROM_MAIN` and nothing in the default `all` target depends on
+   it, so a plain `cmake --build .` finishes with exit 0 and a compiler
+   that *runs* but can't link anything (`cc1`/`cc1plus` get built as
+   0-byte files if a build is interrupted mid-link, which then falsely
+   look "up to date" to `make` on a resume — delete them and re-link if you
+   see `posix_spawnp: No such file or directory` executing `cc1`). Fix:
+   after the main build finishes, explicitly run
+   `cmake --build . --target gcc-final-target-libs`.
+3. Separately (not a vitasdk bug): this vitasdk build's own `<limits.h>`
+   (the one GCC bundles in `lib/gcc/arm-vita-eabi/<ver>/include/`) doesn't
+   `#include_next` newlib's real one, so `PATH_MAX` isn't visible through
+   plain `#include <limits.h>` — worked around in `hashlink/src/std/sys.c`
+   by including `<sys/syslimits.h>` directly under `HL_VITA` rather than
+   trying to fix the toolchain itself.
+
 ## Build layout in this repo
 
-- `../compile-vita.hxml` — Haxe→C generation step, `-D vita`, mirrors
-  `compile-linux.hxml`. Produces `vita/native/marblegame.c` (gitignored,
-  generated, not checked in — same treatment as `native/` on other
-  platforms per the existing `.gitignore`).
+- `vita/hashlink/` — the ported HashLink runtime (`libhl`), builds clean
+  for `arm-vita-eabi` today. See `vita/hashlink/NOTICE.md`.
+- `vita/hello-test/` — the toolchain smoke test: a trivial Haxe program
+  proving the whole Haxe→hlc→libhl→`.vpk` pipeline. Actually built and
+  packaged successfully; see its README to reproduce.
+- `../compile-vita.hxml` — Haxe→C generation step for the real game,
+  `-D vita`, mirrors `compile-linux.hxml`. Produces
+  `vita/native/marblegame.c` (gitignored, generated, not checked in — same
+  treatment as `native/` on other platforms per the existing `.gitignore`).
+  This step alone was run and produces all 953 expected `.c` files with no
+  errors — the Haxe/game-logic layer needs nothing further.
 - `vita/stubs/datachannel.c` — no-op native module replacing
-  `datachannel.hdll`, see above.
-- `vita/CMakeLists.txt` — unverified starting point for the vitasdk build:
-  compiles `marblegame.c` + `hlc_main.c` + the datachannel stub, links
-  against the static libs a real Vita build would need, and packages
-  `data/` into the VPK. Expect to need to fix library names/paths once
-  you're actually building against a real vitasdk + ported-hashlink tree.
+  `datachannel.hdll` so multiplayer's absence doesn't block linking the
+  real game; see the networking section above.
+- `vita/CMakeLists.txt` — starting point for linking the *real game*
+  (`marblegame.c`, not the hello-test): still unverified past the
+  dependency list, since it needs vitaGL/hlsdl (section 2, unstarted) to
+  produce anything worth running. `vita/hello-test/README.md`'s manual
+  command sequence is the proven-working reference for the link step
+  itself; this file's job once rendering exists is doing that same
+  sequence, plus vitaGL/SDL2/the data folder, as a build system instead of
+  by hand.
 
 ## Suggested order of attack
 
-1. Get `RandomityGuy/hashlink` building for vitasdk as a static lib (a
-   `vita-compat` branch mirroring `uwp-compat`'s approach) — nothing else
-   can be tested until `libhl` links.
+1. ~~Get HashLink's runtime building for vitasdk as a static lib.~~ Done —
+   see `vita/hashlink/`.
 2. Get `hlsdl` linking against vitaGL + the vitasdk SDL2 port, and get a
    blank window/GL context up on real hardware. This is the point where
    you'll learn whether Heaps' shaders survive vitaGL/vitashark unmodified.
+   This is the actual next step and the biggest remaining unknown in the
+   whole port.
 3. Swap in the `datachannel` stub and `ui`-stub (if needed), get
    `compile-vita.hxml`'s generated `marblegame.c` through the vitasdk
    compiler — expect missing-symbol errors that map onto whichever of
    `fmt`/`uv`/`ssl` turn out to still be required; port or stub each as it
-   comes up.
+   comes up the same way `libhl` was, file by file.
 4. First boot: expect a black screen or crash in resource loading before
    rendering — get `data/` loading and a single interior rendering before
    worrying about gameplay correctness.

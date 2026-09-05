@@ -17,7 +17,12 @@ RandomityGuy and MBHaxe contributors.
 - Added `compile-vita.hxml` (mirrors `compile-linux.hxml`, targets `-D vita`).
 - Added `vita/` — build scaffolding and porting notes for the native Vita
   target, since none of this exists in upstream MBHaxe yet. See
-  `vita/VITA_PORT.md` for the full technical plan and current status.
+  `vita/VITA_PORT.md` for the full technical plan and current status,
+  which now includes a real, verified port of HashLink's runtime
+  (`vita/hashlink/`, see its own `NOTICE.md`) and a working toolchain
+  smoke-test `.vpk` (`vita/hello-test/`) — not the game itself yet, but a
+  real cross-compiled, packaged, installable Vita binary produced end to
+  end from this repo's Haxe source.
 
 Everything else in this directory is untouched upstream source, kept as-is
 so the diff against upstream stays small and mergeable.

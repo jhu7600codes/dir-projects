@@ -1,0 +1,4 @@
+-cp .
+-D vita
+-hl native/hello.c
+--main Main
