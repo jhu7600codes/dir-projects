@@ -1,0 +1,130 @@
+package src;
+
+import haxe.io.BytesInput;
+import haxe.zip.Reader;
+import hxd.res.Image;
+import haxe.Json;
+import src.Mission;
+import src.Http;
+import src.ResourceLoader;
+import src.Console;
+import src.MarbleGame;
+
+class Marbleland {
+	public static var ultraMissions:Array<Mission> = [];
+	public static var missions:Map<Int, Mission> = [];
+
+	static final marblelandUrl = 'https://marbleland.vaniverse.io';
+
+	public static function init() {
+		Http.get('${marblelandUrl}/api/level/list', (b) -> {
+			parseMissionList(b.toString());
+			Console.log('Loaded ultra customs: ${ultraMissions.length}');
+			// Load the marbleland level from JS
+			#if js
+			var urlParams = new js.html.URLSearchParams(js.Browser.window.location.search);
+			var playParam = urlParams.get("play");
+			if (playParam != null) {
+				var intParam = Std.parseInt(playParam);
+				if (intParam != null) {
+					var mission = missions.get(intParam);
+					if (mission != null) {
+						MarbleGame.instance.playMission(mission);
+					}
+				}
+			}
+			#end
+		}, (e) -> {
+			Console.log('Error getting custom list from marbleland.');
+		});
+	}
+
+	static function parseMissionList(s:String) {
+		var claJson:Array<Dynamic> = Json.parse(s);
+
+		for (missionData in claJson) {
+			// filter
+			if (missionData.datablockCompatibility != 'mbw'
+				&& missionData.datablockCompatibility != 'mbg'
+				&& missionData.datablockCompatibility != "mbu")
+				continue;
+			// if (!['gold', 'platinum', 'ultra', 'platinumquest'].contains(missionData.modification))
+			// 	continue;
+			if (missionData.gameMode != null && !(missionData.gameMode == 'null' || missionData.gameMode.toLowerCase() == 'hunt'))
+				continue;
+
+			var isMultiplayer = missionData.gameType == 'multi';
+			if (isMultiplayer && (missionData.gameMode == null || missionData.gameMode.toLowerCase() != 'hunt'))
+				continue;
+
+			if (missionData.gameMode == "hunt")
+				missionData.gameMode = "scrum";
+
+			var mission = new Mission();
+			mission.id = missionData.id;
+			mission.path = 'missions/' + missionData.baseName;
+			#if (hl && !android)
+			mission.path = 'data/' + mission.path;
+			#end
+			mission.path = mission.path.toLowerCase();
+			mission.title = missionData.name;
+			mission.artist = missionData.artist != null ? missionData.artist : "Unknown Author";
+			mission.description = missionData.desc != null ? missionData.desc : "";
+			mission.qualifyTime = (missionData.qualifyingTime != null && missionData.qualifyingTime != 0) ? missionData.qualifyingTime / 1000 : Math.POSITIVE_INFINITY;
+			mission.goldTime = missionData.goldTime != null ? missionData.goldTime / 1000 : 0;
+			if (missionData.modification == 'platinumquest')
+				missionData.modification = 'platinum'; // play PQ levels compatible with web pls
+			mission.game = missionData.modification;
+			if (missionData.modification == 'platinum')
+				mission.goldTime = missionData.platinumTime != null ? missionData.platinumTime / 1000 : mission.goldTime;
+			mission.ultimateTime = missionData.ultimateTime != null ? missionData.ultimateTime / 1000 : 0;
+			mission.hasEgg = missionData.hasEgg;
+			mission.isClaMission = true;
+			mission.customSource = "Marbleland";
+			mission.gameMode = missionData.gameMode;
+
+			var game = missionData.modification;
+			if (isMultiplayer) {
+				game = 'multiplayer';
+			}
+
+			switch (game) {
+				case 'ultra':
+					ultraMissions.push(mission);
+			}
+
+			missions.set(mission.id, mission);
+		}
+
+		// sort according to name
+		ultraMissions.sort((x, y) -> x.title > y.title ? 1 : (x.title < y.title ? -1 : 0));
+		for (i in 0...ultraMissions.length - 1) {
+			@:privateAccess ultraMissions[i].next = ultraMissions[i + 1];
+			ultraMissions[i].index = i;
+		}
+		@:privateAccess ultraMissions[ultraMissions.length - 1].next = ultraMissions[0];
+		ultraMissions[ultraMissions.length - 1].index = ultraMissions.length - 1;
+	}
+
+	public static function getMissionImage(id:Int, cb:Image->Void) {
+		return Http.get('${marblelandUrl}/api/level/${id}/image?width=258&height=194', (imageBytes) -> {
+			var res = new Image(new hxd.fs.BytesFileSystem.BytesFileEntry('${id}.png', imageBytes));
+			cb(res);
+		}, (e) -> {
+			cb(null);
+		});
+	}
+
+	public static function download(id:Int, cb:Array<haxe.zip.Entry>->Void) {
+		Http.get('${marblelandUrl}/api/level/${id}/zip?assuming=none', (zipData -> {
+			var reader = new Reader(new BytesInput(zipData));
+			var entries:Array<haxe.zip.Entry> = null;
+			try {
+				entries = [for (x in reader.read()) x];
+			} catch (e) {}
+			cb(entries);
+		}), (e) -> {
+			cb(null);
+		});
+	}
+}

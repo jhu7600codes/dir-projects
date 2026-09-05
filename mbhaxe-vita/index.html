@@ -1,0 +1,80 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Marble Blast Ultra Haxe Port</title>
+    <link rel="shortcut icon" href="./data/icon.png" id="favicon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="manifest" href="/data/manifest.json">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+        }
+
+        canvas#webgl {
+            width: 100%;
+            height: 100%;
+        }
+
+        #pointercontainer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #fullscreen-enforcer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 69420;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: 'Marker Felt';
+            font-size: 24px;
+            text-align: center;
+            flex-direction: column;
+        }
+
+        #enter-fullscreen {
+            position: absolute;
+            display: block;
+            left: 0px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+            width: 50px;
+            padding: 5px;
+            background: #00000031;
+            border-bottom-right-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+            pointer-events: none !important;
+        }
+    </style>
+    <canvas id="webgl"></canvas>
+</head>
+
+<body>
+    <div id="fullscreen-enforcer" class="hidden">
+        Tap to enter fullscreen<br><span style="opacity: 0.5; font-size: 18px;">(recommended for touch devices)</span>
+    </div>
+    <div id="enter-fullscreen" class="hidden"></div>
+    <div id="pointercontainer" tabindex="0"></div>
+    <script type="text/javascript" src="marblegame.js"></script>
+</body>
+
+</html>

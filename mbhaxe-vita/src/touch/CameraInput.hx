@@ -1,0 +1,207 @@
+package touch;
+
+import hxd.res.DefaultFont;
+import h2d.Text;
+import gui.GuiGraphics;
+import h3d.Vector;
+import gui.GuiControl;
+import src.MarbleGame;
+import src.Settings;
+import touch.TouchInput.TouchEventState;
+import src.Util;
+
+class CameraInput {
+	var identifier:Int = -1;
+
+	public var enabled = false;
+	public var pressed = false;
+
+	var added = false;
+
+	var collider:GuiGraphics;
+
+	static inline var DELTA_BUFFER_SIZE = 3;
+
+	var deltaBufferX:Array<Float> = [];
+	var deltaBufferY:Array<Float> = [];
+
+	public function new() {
+		var width = MarbleGame.canvas.scene2d.width;
+		var height = MarbleGame.canvas.scene2d.height;
+
+		var g = new h2d.Graphics();
+		// g.beginFill(0xFF00FF, 0.5);
+		// g.drawRect(0, 0, width, height);
+		// g.endFill();
+		var gcollider = h2d.col.Bounds.fromValues(0, 0, width, height);
+		var interactive = new h2d.Interactive(width, height, g, gcollider);
+
+		this.collider = new GuiGraphics(g);
+		this.collider.position = new Vector(0, 0);
+		this.collider.extent = new Vector(width, height);
+		this.collider.horizSizing = Width;
+		this.collider.vertSizing = Height;
+
+		pressed = false;
+
+		var prevMouse = new Vector(0, 0);
+		interactive.onPush = (e) -> {
+			e.propagate = true;
+
+			if (!enabled)
+				return;
+
+			if (pressed)
+				return;
+
+			var scene2d = interactive.getScene();
+			if (e.relX < scene2d.width / 2) {
+				if (Settings.touchSettings.dynamicJoystick) {
+					// Move that joystick over our finger
+					MarbleGame.instance.touchInput.movementInput.moveToFinger(e);
+				}
+				return;
+			}
+
+			pressed = true;
+			this.identifier = e.touchId;
+			prevMouse.x = e.relX;
+			prevMouse.y = e.relY;
+			deltaBufferX.resize(0);
+			deltaBufferY.resize(0);
+		}
+
+		interactive.onMove = (e) -> {
+			e.propagate = true;
+			if (!enabled)
+				return;
+
+			if (this.identifier != e.touchId)
+				return;
+
+			if (pressed) {
+				var curPos = new Vector(e.relX, e.relY);
+				var delta = curPos.sub(prevMouse);
+				var scaleFactor = 1.0;
+				#if js
+				scaleFactor = js.Browser.window.devicePixelRatio / Settings.zoomRatio;
+				#end
+				var jumpcam = MarbleGame.instance.touchInput.jumpButton.pressed
+					|| MarbleGame.instance.touchInput.powerupButton.pressed
+					|| MarbleGame.instance.touchInput.blastbutton.pressed;
+				if (jumpcam) {
+					scaleFactor /= Settings.touchSettings.buttonJoystickMultiplier;
+				}
+
+				var inpX = delta.x / scaleFactor;
+				var inpY = delta.y / scaleFactor;
+
+				if (jumpcam) {
+					if (Math.abs(inpX) < 1.3)
+						inpX = 0;
+					if (Math.abs(inpY) < 1.3)
+						inpY = 0;
+				}
+
+				deltaBufferX.push(inpX);
+				deltaBufferY.push(inpY);
+				if (deltaBufferX.length > DELTA_BUFFER_SIZE)
+					deltaBufferX.shift();
+				if (deltaBufferY.length > DELTA_BUFFER_SIZE)
+					deltaBufferY.shift();
+
+				var smoothX = 0.0;
+				for (v in deltaBufferX)
+					smoothX += v;
+				smoothX /= deltaBufferX.length;
+
+				var smoothY = 0.0;
+				for (v in deltaBufferY)
+					smoothY += v;
+				smoothY /= deltaBufferY.length;
+
+				var dt = MarbleGame.instance.world.timeState.dt;
+
+				MarbleGame.instance.world.marble.camera.orbit(applyNonlinearScale((smoothX / dt) * (1 / 60.0)) * (1 / 60.0) * 35,
+					applyNonlinearScale((smoothY / dt) * (1 / 60.0)) * (1 / 60.0) * 35, true);
+
+				if (inpX != 0)
+					prevMouse.x = e.relX;
+				if (inpY != 0)
+					prevMouse.y = e.relY;
+			}
+		}
+
+		interactive.onRelease = (e) -> {
+			e.propagate = true;
+			if (!enabled)
+				return;
+
+			if (this.identifier != e.touchId)
+				return;
+
+			pressed = false;
+			this.identifier = -1;
+			deltaBufferX.resize(0);
+			deltaBufferY.resize(0);
+		}
+	}
+
+	function applyNonlinearScale(value:Float) {
+		var clamped = Util.clamp(value, -Settings.touchSettings.cameraSwipeExtent, Settings.touchSettings.cameraSwipeExtent);
+		return Math.abs(clamped) < 3 ? Math.pow(Math.abs(clamped / 2), 2.7) * (clamped >= 0 ? 1 : -1) : clamped;
+	}
+
+	// public function update(touchState:TouchEventState, joycam:Bool) {
+	// 	if (!enabled)
+	// 		return;
+	// 	if (!doing) {
+	// 		// Check for touches on the right half of the screen
+	// 		for (touch in touchState.changedTouches) {
+	// 			if (touch.position.x >= Settings.optionsSettings.screenWidth / 2 && touch.state == Pressed) {
+	// 				identifier = touch.identifier;
+	// 				doing = true;
+	// 			}
+	// 		}
+	// 	}
+	// 	if (doing) {
+	// 		// Get our identifier
+	// 		for (touch in touchState.changedTouches) {
+	// 			if (touch.identifier == this.identifier) {
+	// 				switch (touch.state) {
+	// 					case Release:
+	// 						doing = false;
+	// 						return;
+	// 					case Move:
+	// 						var scaleFactor = 1.0;
+	// 						#if js
+	// 						scaleFactor = js.Browser.window.devicePixelRatio / Settings.zoomRatio;
+	// 						#end
+	// 						if (joycam) {
+	// 							scaleFactor /= 2.5;
+	// 						}
+	// 						MarbleGame.instance.world.marble.camera.orbit(touch.deltaPosition.x / scaleFactor, touch.deltaPosition.y / scaleFactor, true);
+	// 						return;
+	// 					case _:
+	// 						return;
+	// 				}
+	// 			}
+	// 		}
+	// 		doing = false;
+	// 	}
+	// }
+
+	public function dispose() {
+		this.collider.dispose();
+	}
+
+	public function add(parentGui:GuiControl) {
+		parentGui.addChild(this.collider);
+		added = true;
+	}
+
+	public function remove(parentGui:GuiControl) {
+		parentGui.removeChild(this.collider);
+		added = false;
+	}
+}

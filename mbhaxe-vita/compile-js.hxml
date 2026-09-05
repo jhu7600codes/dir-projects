@@ -1,0 +1,16 @@
+-cp src
+-lib colyseus-websocket
+-lib datachannel
+-lib heaps
+-lib stb_ogg_sound
+-lib zip
+--js marblegame.js
+-D windowSize=1280x720
+-D js-es=6
+-D keep-inline-positions
+-D highDPI
+-D flow_border
+-D analyzer-optimize
+--dce full
+--main Main
+-debug
