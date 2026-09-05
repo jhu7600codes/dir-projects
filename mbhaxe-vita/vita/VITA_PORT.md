@@ -1,14 +1,19 @@
 # MBHaxe → PS Vita: porting notes
 
-Status: **the toolchain and runtime layer are real and verified; rendering
-is unstarted.** A vitasdk cross toolchain was built from source, `libhl`
-(HashLink's runtime) was ported and actually links clean for
-`arm-vita-eabi`, and a full Haxe → hlc-C → native-ELF → `.vpk` pipeline was
-run end to end producing a real, installable package (see "hello world"
-below — it's a toolchain smoke test, not the game). The Haxe/game-logic
-layer compiles unmodified. What's genuinely still unstarted is rendering
-(vitaGL) and audio — see the numbered sections below, now ordered by what's
-actually still open rather than by pure guesswork.
+Status: **the actual game (`marblegame.c`, not a toy) compiles and links
+clean into a native `arm-vita-eabi` ELF, against every native module it
+needs.** A vitasdk cross toolchain was built from source; `libhl`
+(HashLink's runtime), `hlsdl`+vitaGL (rendering), `hlopenal` (audio, over a
+real Vita OpenAL backend), and `fmt` (image/audio codecs) all compile
+clean, most with zero source changes; networking (`datachannel`/`uv`/`ssl`)
+is stubbed out rather than ported. The full Haxe → hlc-C →
+`marblegame.elf` pipeline has been run end to end in-session, and a
+separate trivial "hello world" was carried all the way through packaging
+into a real, installable `.vpk` proving that half of the pipeline too (see
+below). **What hasn't been verified: whether the real game actually runs
+on hardware** — there's no Vita in this environment, so linking clean is
+as far as this got. That's the next thing to check, not a "does it
+compile" question anymore.
 
 Base: `mbu-port` branch of RandomityGuy/MBHaxe (Marble Blast Ultra), vendored
 1:1 into `mbhaxe-vita/` one level up from this file.
@@ -93,70 +98,81 @@ against this ported `libhl.a`, and packaged the result into an installable
 below for two real bugs hit along the way (not code problems — build
 environment ones) worth knowing about before you rebuild vitasdk yourself.
 
-### 2. Rendering — the actual remaining hard blocker
+### 2. Rendering — compiles and links against the real game; unverified on hardware
 
 Heaps renders through `h3d` which on the `hl`/native target goes through an
 OpenGL (desktop) context via `hlsdl`. The Vita's actual GPU API is
-**sceGxm**, a low-level, very un-OpenGL-like API. Writing an sceGxm backend
-for Heaps directly is a large project (shader translation, the whole
-render-target/fragment-program model is different).
+**sceGxm**, a low-level, very un-OpenGL-like API — the realistic path every
+Vita homebrew OpenGL port takes, and the one used here, is **vitaGL**
+(https://github.com/Rinnegatamante/vitaGL, built from source in-session
+along with its own deps — vitaShaRK for runtime GLSL→sceGxm shader
+compilation, math-neon, SceShaccCgExt — plus a vitasdk SDL2 build patched
+with vitaGL's video backend, `libsdl-org/SDL` release-2.32.8 +
+[vitasdk/packages' `sdl2_vitagl` patch](https://github.com/vitasdk/packages/blob/master/sdl2_vitagl/vitagl-backend.patch)).
+All of that plus `hlsdl` (`libs/sdl/{sdl,gl}.c`, see
+`vita/hashlink/NOTICE.md` for the `gl.c` diff) **compile and link clean
+against the actual game** (`marblegame.c`, from `compile-vita.hxml`, not
+just the hello-test) — confirmed by producing a fully linked
+`marblegame.elf` in-session with zero undefined symbols. **What's not yet
+verified: whether it runs.** No Vita hardware in this environment to test
+against, and vitaGL only implements a subset of desktop GL (see
+`vita/hashlink/NOTICE.md` for exactly which entry points are missing and
+now `hl_error()` instead of link-failing) — whether Heaps' actual shader
+and render-pass usage stays inside that subset in practice is the real
+open question this doesn't answer. This is genuinely the next thing to
+check, on real hardware, once you have a `.vpk` per "Build layout" below.
 
-The realistic path every Vita homebrew OpenGL port takes: **vitaGL**
-(https://github.com/Rinnegatamante/vitaGL) — an OpenGL ES-ish shim over
-sceGxm, paired with `vitashark`/`vitaShaRK` for runtime GLSL→sceGxm shader
-compilation. `hlsdl`'s SDL2 window/GL-context creation would need a Vita
-branch that talks to vitaGL's context setup instead of SDL2's normal GL
-path (or use the vitasdk SDL2 port, which some vitaGL-based ports already
-pair together). This is the single biggest unknown in the whole port —
-Heaps' shader output (`src/shaders`, `hxsl`-generated) needs to actually
-run correctly through vitaGL/vitashark, and that's untested here.
+### 3. Audio — done, verified against the real game
 
-### 3. Networking (multiplayer) — soft blocker, stubbed out
+`hlopenal` (`libs/openal/openal.c`) needed **zero changes** — it compiles
+clean as-is against a real Vita OpenAL backend: kcat/openal-soft 1.19.1
+patched with [isage's vita backend](https://github.com/isage/openal-soft)
+(`openal-soft-1.19.1-vita-1.patch`, implements OpenAL over `sceAudio`
+directly, not a hlopenal-level shim). Links clean into `marblegame.elf`
+alongside everything else.
 
-`datachannel` (WebRTC via libdatachannel) is used unconditionally by
-`Main.hx`/`net/Net.hx`/`net/ClientConnection.hx` — it's not behind any
-`#if`, on any platform (even the mobile ports link a real WebRTC stack).
-Porting libdatachannel (+ usrsctp, libjuice, mbedTLS/OpenSSL, plog) to
-vitasdk is its own multi-week project, and not worth blocking a
-single-player-first build on.
+### 4. Image/audio codecs (`fmt.hdll`) — done, verified against the real game
 
-Rather than editing `Net.hx`/`Main.hx`/`ClientConnection.hx` (which would
-make this vendor copy diverge from upstream in a way that's annoying to
-keep in sync), **`vita/stubs/datachannel.c`** implements the exact same
-HashLink primitive ABI hxDatachannel exposes, as no-ops: `RTC.init()`
-"succeeds" (so nothing crashes at startup), but `create_peer_connection`
-always hands back a null handle and nothing ever calls back into Haxe
-(no `onOpen`/`onDataChannel`/etc.), so a host/join attempt just does
-nothing rather than segfaulting. **Multiplayer will not work** on this
-build until someone either ports libdatachannel or writes a real Vita
-transport (ad-hoc Wi-Fi/LAN sockets over `sceNet` would be a far smaller
-project than full WebRTC, if LAN-only play is an acceptable v2 goal).
+`libs/fmt/{fmt,dxt,mikkt,sha1}.c` also needed **zero changes** — compiles
+clean against standard vitasdk builds of zlib 1.3.2, libpng 1.6.58 (with
+vitasdk's ARM NEON patch), libjpeg-turbo 3.2.0, libogg 1.3.6, and libvorbis
+1.3.7, all built from source in-session using the same recipes
+[vitasdk/packages](https://github.com/vitasdk/packages) uses. `minimp3`
+and `mikktspace` (bundled single-header libs `fmt.c` needs) are vendored
+into `vita/hashlink/include/`.
 
-Colyseus (`colyseus-websocket`, used for matchmaking/lobby presumably) has
-the same problem in spirit — a `sceNet`-backed WebSocket implementation
-would be needed; not investigated yet.
+### 5. Networking (multiplayer) — soft blocker, stubbed out, links clean
 
-### 4. Audio — needs investigation
+Three native modules are networking-only and all genuinely out of reach
+without porting a large external stack (libdatachannel/WebRTC, libuv,
+mbedTLS) — each is stubbed instead, implementing its real HL primitive ABI
+as harmless no-ops (nothing crashes; connects/handshakes/reads just always
+fail or never complete) rather than editing the Haxe source that calls
+them:
+- **`vita/stubs/datachannel.c`** — WebRTC (`datachannel.hdll`). Used
+  unconditionally by `Main.hx`/`net/Net.hx`/`net/ClientConnection.hx`, not
+  behind any `#if` on any platform (even the mobile ports link a real
+  WebRTC stack). `RTC.init()` "succeeds", but `create_peer_connection`
+  always hands back a null handle and nothing ever calls back into Haxe.
+- **`vita/stubs/uv.c`** — libuv (`uv.hdll`). Only reachable here through
+  `hl.uv.Fs` (asset hot-reload — already disabled, see
+  `ResourceLoader.hx`'s `LIVE_UPDATE = false`) and whatever TCP path
+  colyseus-websocket might reach for.
+- **`vita/stubs/ssl.c`** — mbedTLS (`ssl.hdll`). Only reachable through
+  whatever TLS colyseus-websocket/matchmaking might want.
 
-MBHaxe uses `hlopenal` (OpenAL) via HashLink. OpenAL doesn't have a
-straightforward vitasdk port as of writing. Options, not yet evaluated:
-- Write a minimal Vita `hlopenal`-compatible backend on top of `sceAudio`/
-  `sceAudioOut` (Vita's native audio output) exposing just the subset of
-  OpenAL entry points `hlopenal`'s HL primitives actually call.
-- Check whether any existing homebrew project has already done an
-  OpenAL-on-Vita shim (worth a search before writing one from scratch).
+**Multiplayer will not work** on this build. Getting it working would mean
+either porting libdatachannel (its own multi-week project) or writing a
+real Vita transport (ad-hoc Wi-Fi/LAN sockets over `sceNet` would be a far
+smaller project than full WebRTC, if LAN-only play is an acceptable v2
+goal) and swapping the stub back out — same for `uv`/`ssl` if colyseus
+ends up needed for anything real.
 
-### 5. Other native deps — likely fine via vitasdk's package manager (vdpm)
+### 6. `ui.hdll` (native dialogs) — done, used as-is
 
-`zlib`, `libpng`, `libjpeg-turbo`, `libogg`, `libvorbis`, `mbedtls` (for
-`ssl.hdll`) all have existing vitasdk-pacman (`vdpm`) packages. `fmt.hdll`
-and `ui.hdll` (native file dialogs) need checking — `ui.hdll` almost
-certainly isn't meaningful on Vita (no native OS dialogs) and should
-probably become a no-op stub the same way `datachannel` did, rather than
-ported. `libuv` is used for hashlink's `sys.thread`/socket plumbing —
-unclear yet if that's optional on a build with WebRTC/websockets stubbed
-out, or if HashLink itself needs it regardless; needs checking against
-what `libhl`'s own build actually requires.
+`libs/ui/ui_stub.c` is hashlink's own pre-existing no-op stub for platforms
+without native dialogs (Windows has a real `ui_win.c`; everyone else
+already gets this). Used unmodified, no Vita-specific work needed.
 
 ## Memory budget
 
@@ -216,45 +232,52 @@ real time to diagnose:
 
 ## Build layout in this repo
 
-- `vita/hashlink/` — the ported HashLink runtime (`libhl`), builds clean
-  for `arm-vita-eabi` today. See `vita/hashlink/NOTICE.md`.
+- `vita/hashlink/` — the ported HashLink runtime (`libhl`) plus the native
+  modules (`libs/sdl`, `libs/openal`, `libs/fmt`, `libs/ui`), all building
+  and linking clean for `arm-vita-eabi`. See `vita/hashlink/NOTICE.md` for
+  the file-by-file diff.
 - `vita/hello-test/` — the toolchain smoke test: a trivial Haxe program
-  proving the whole Haxe→hlc→libhl→`.vpk` pipeline. Actually built and
-  packaged successfully; see its README to reproduce.
+  proving the whole Haxe→hlc→libhl→`.vpk` pipeline in isolation. Actually
+  built and packaged successfully; see its README to reproduce.
+- `vita/BUILD.md` — **the real, proven build recipe for the actual game**
+  (not the hello-test): every dependency (vitaGL + its own deps, SDL2+
+  vitaGL patch, openal-soft+Vita patch, zlib/libpng/libjpeg-turbo/libogg/
+  libvorbis) in the order they need building, then compiling and linking
+  `marblegame.c` itself. This produced a fully linked `marblegame.elf` and
+  a packaged `marblegame.vpk` in-session — this file is the reference for
+  redoing that, exactly as it was actually done, not a guess.
 - `../compile-vita.hxml` — Haxe→C generation step for the real game,
   `-D vita`, mirrors `compile-linux.hxml`. Produces
   `vita/native/marblegame.c` (gitignored, generated, not checked in — same
   treatment as `native/` on other platforms per the existing `.gitignore`).
-  This step alone was run and produces all 953 expected `.c` files with no
-  errors — the Haxe/game-logic layer needs nothing further.
-- `vita/stubs/datachannel.c` — no-op native module replacing
-  `datachannel.hdll` so multiplayer's absence doesn't block linking the
-  real game; see the networking section above.
-- `vita/CMakeLists.txt` — starting point for linking the *real game*
-  (`marblegame.c`, not the hello-test): still unverified past the
-  dependency list, since it needs vitaGL/hlsdl (section 2, unstarted) to
-  produce anything worth running. `vita/hello-test/README.md`'s manual
-  command sequence is the proven-working reference for the link step
-  itself; this file's job once rendering exists is doing that same
-  sequence, plus vitaGL/SDL2/the data folder, as a build system instead of
-  by hand.
+  Ran clean in-session: all 953 expected `.c` files, no errors, ~4.5
+  minutes for the native compile.
+- `vita/stubs/{datachannel,uv,ssl}.c` — no-op native modules replacing the
+  three networking-dependent hdlls, see the networking section above.
+- `vita/CMakeLists.txt` — an earlier, still-unverified sketch of a real
+  build system for this; `vita/BUILD.md`'s manual sequence is what's
+  actually been run and works. Turning that into this file (or a Makefile)
+  is worth doing before iterating further by hand, but wasn't done here.
 
 ## Suggested order of attack
 
-1. ~~Get HashLink's runtime building for vitasdk as a static lib.~~ Done —
-   see `vita/hashlink/`.
-2. Get `hlsdl` linking against vitaGL + the vitasdk SDL2 port, and get a
-   blank window/GL context up on real hardware. This is the point where
-   you'll learn whether Heaps' shaders survive vitaGL/vitashark unmodified.
-   This is the actual next step and the biggest remaining unknown in the
-   whole port.
-3. Swap in the `datachannel` stub and `ui`-stub (if needed), get
-   `compile-vita.hxml`'s generated `marblegame.c` through the vitasdk
-   compiler — expect missing-symbol errors that map onto whichever of
-   `fmt`/`uv`/`ssl` turn out to still be required; port or stub each as it
-   comes up the same way `libhl` was, file by file.
-4. First boot: expect a black screen or crash in resource loading before
-   rendering — get `data/` loading and a single interior rendering before
-   worrying about gameplay correctness.
+1. ~~Get HashLink's runtime + native modules building for vitasdk.~~ Done —
+   `vita/hashlink/`, and the actual game links clean against all of it,
+   see `vita/BUILD.md`.
+2. **Install the built `.vpk` on real hardware and see what happens.**
+   This is the actual next step now — everything up to this point is
+   "does it compile and link," and the real unknowns (does vitaGL's subset
+   of GL cover what Heaps actually draws with, does the GC's `memalign`-
+   based allocator behave under the Vita's real memory pressure, does
+   audio actually come out of the speakers) only show up at runtime, which
+   nothing in this environment could test.
+3. Whatever the first crash/hang/black-screen turns out to be, work it
+   like the compile errors were worked throughout this port: find the
+   specific call site, check whether it's a vitaGL gap (extend the
+   `VGL_NOT_SUPPORTED` list or find a workaround), a memory issue (check
+   the "memory budget" section), or something more basic (a missing
+   `data/` file, a wrong working directory).
+4. Once a single interior renders: worry about gameplay correctness,
+   input mapping (see "Controls"), and performance.
 5. Only after single-player is solid: decide whether multiplayer is worth
    a `sceNet`-based transport, given libdatachannel itself is out of reach.
