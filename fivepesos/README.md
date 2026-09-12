@@ -32,11 +32,13 @@ was the web builder's own branding, not part of the app). Flip an Argentine
 - **CR2032** -- not currency, a coin *cell battery* (right shape, fun
   addition). Selecting it unfolds a brand sub-picker right underneath it in
   Settings (`data/CoinBrand`, `Cr2032Brands` in `data/CoinModels.kt`) --
-  KTS, Energizer, GP, Panasonic, Duracell, Maxell, Toshiba, Kodak, each
-  with a small preview. (Auchan, Komus, Gigacell, and Opticell -- all
-  popular in Russia -- were asked for too, but every Russian retail site
-  carrying them blocked fetching: auchan.ru/.ua, ozon.ru, 4pda.to, and
-  poisk.im all returned 401/403 or a redirect loop.)
+  KTS, Energizer, GP, Auchan, Komus, Kosmos, Opticell, Gigacell, PKCELL,
+  Panasonic, Duracell, Maxell, Toshiba, Kodak, each with a small preview.
+  The Russian brands (Auchan, Komus, Kosmos, Opticell, Gigacell) were
+  unreachable by fetching (every retail site carrying them -- auchan.ru/
+  .ua, ozon.ru, 4pda.to, poisk.im -- blocked the request with a 401/403
+  or a redirect loop) until the user supplied their own product photos
+  to crop from directly.
   Heads is the "+" terminal, cut from a real photo per brand. KTS is the
   only one with a real photographed "-" back too (it has a distinctive
   dimpled texture); the others share one procedurally-rendered "blank

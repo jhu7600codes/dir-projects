@@ -81,6 +81,42 @@ val Cr2032Brands: List<CoinBrand> = listOf(
         tailsRes = R.drawable.coin_cr2032_blank_tails,
     ),
     CoinBrand(
+        id = "auchan",
+        displayName = "Auchan",
+        headsRes = R.drawable.coin_cr2032_auchan_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "komus",
+        displayName = "Komus",
+        headsRes = R.drawable.coin_cr2032_komus_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "kosmos",
+        displayName = "Kosmos",
+        headsRes = R.drawable.coin_cr2032_kosmos_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "opticell",
+        displayName = "Opticell",
+        headsRes = R.drawable.coin_cr2032_opticell_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "gigacell",
+        displayName = "Gigacell",
+        headsRes = R.drawable.coin_cr2032_gigacell_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "pkcell",
+        displayName = "PKCELL",
+        headsRes = R.drawable.coin_cr2032_pkcell_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
         id = "panasonic",
         displayName = "Panasonic",
         headsRes = R.drawable.coin_cr2032_panasonic_heads,
