@@ -45,6 +45,55 @@ data class CoinSkin(
     val art: CoinArt,
 )
 
+/**
+ * One manufacturer's take on a CR2032 -- the "CR2032" skin isn't a single
+ * fixed photo, it's this whole list, picked from a sub-picker under it in
+ * Settings once it's selected. [tailsRes] is shared (`coin_cr2032_blank_tails`)
+ * for every brand except KTS: a real, brand-specific photo of the blank
+ * negative face wasn't available for the others, so they use one plain
+ * "blank metal" render instead of pretending to be a specific photo --
+ * true to how featureless these backs actually are in real life.
+ */
+data class CoinBrand(
+    val id: String,
+    val displayName: String,
+    @DrawableRes val headsRes: Int,
+    @DrawableRes val tailsRes: Int,
+)
+
+val Cr2032Brands: List<CoinBrand> = listOf(
+    CoinBrand(
+        id = "kts",
+        displayName = "KTS",
+        headsRes = R.drawable.coin_cr2032_kts_heads,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
+    ),
+    CoinBrand(
+        id = "panasonic",
+        displayName = "Panasonic",
+        headsRes = R.drawable.coin_cr2032_panasonic_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "duracell",
+        displayName = "Duracell",
+        headsRes = R.drawable.coin_cr2032_duracell_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "maxell",
+        displayName = "Maxell",
+        headsRes = R.drawable.coin_cr2032_maxell_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "toshiba",
+        displayName = "Toshiba",
+        headsRes = R.drawable.coin_cr2032_toshiba_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+)
+
 val BuiltInSkins: List<CoinSkin> = listOf(
     CoinSkin(
         id = "pesos5",
@@ -63,11 +112,14 @@ val BuiltInSkins: List<CoinSkin> = listOf(
         ),
     ),
     CoinSkin(
-        id = "kts2032",
-        displayName = "KTS CR2032",
+        // .art here is only the default/placeholder (the first brand) --
+        // CoinViewModel overwrites it each state update to whichever
+        // CoinBrand is currently selected. See CoinViewModel.kt.
+        id = "cr2032",
+        displayName = "CR2032",
         art = CoinArt.Photo(
-            headsRes = R.drawable.coin_kts2032_heads,
-            tailsRes = R.drawable.coin_kts2032_tails,
+            headsRes = Cr2032Brands.first().headsRes,
+            tailsRes = Cr2032Brands.first().tailsRes,
         ),
     ),
     CoinSkin(

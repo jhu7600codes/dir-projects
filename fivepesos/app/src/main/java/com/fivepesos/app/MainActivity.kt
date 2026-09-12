@@ -70,6 +70,7 @@ private fun FivePesosApp(viewModel: CoinViewModel = viewModel()) {
         onCloseSettings = { viewModel.toggleSettings(false) },
         onSpinForeverChange = viewModel::setSpinForever,
         onSelectSkin = viewModel::selectSkin,
+        onSelectCr2032Brand = viewModel::selectCr2032Brand,
         onPickHeads = { pickHeads.launch(arrayOf("image/*")) },
         onPickTails = { pickTails.launch(arrayOf("image/*")) },
         onOpenGoogleImport = { viewModel.toggleGoogleImport(true) },

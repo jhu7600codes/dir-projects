@@ -1,27 +1,35 @@
 package com.fivepesos.app.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fivepesos.app.data.CoinBrand
 import com.fivepesos.app.ui.theme.MetroAccent
 import com.fivepesos.app.ui.theme.MetroBackground
 import com.fivepesos.app.ui.theme.MetroSecondaryText
+import com.fivepesos.app.ui.theme.MetroSurface
 import com.fivepesos.app.viewmodel.CoinUiState
 
 /**
@@ -39,6 +47,7 @@ fun SettingsScreen(
     onClose: () -> Unit,
     onSpinForeverChange: (Boolean) -> Unit,
     onSelectSkin: (String) -> Unit,
+    onSelectCr2032Brand: (String) -> Unit,
     onPickHeads: () -> Unit,
     onPickTails: () -> Unit,
     onOpenGoogleImport: () -> Unit,
@@ -76,6 +85,17 @@ fun SettingsScreen(
                 selected = skin.id == state.selectedSkin.id,
                 onClick = { onSelectSkin(skin.id) },
             )
+            // "extra options": once CR2032 is the active skin, its brand
+            // list unfolds right under it -- tapping it again re-selects
+            // it (a no-op) rather than hiding the list, so the previews
+            // stay reachable without a separate expand/collapse control.
+            if (skin.id == "cr2032" && skin.id == state.selectedSkin.id) {
+                MetroBrandPicker(
+                    brands = state.cr2032Brands,
+                    selectedBrandId = state.selectedCr2032Brand.id,
+                    onSelectBrand = onSelectCr2032Brand,
+                )
+            }
         }
 
         Spacer(Modifier.height(40.dp))
@@ -152,6 +172,53 @@ private fun MetroChoiceItem(label: String, selected: Boolean, onClick: () -> Uni
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp),
     )
+}
+
+/** The "extra options" brand sub-picker for the CR2032 skin -- a small
+ * square photo preview plus name per brand, indented under the CR2032
+ * row it belongs to. Squares, not circles, for the same reason as the
+ * rest of this screen: Metro is a tile grid, not an avatar list. */
+@Composable
+private fun MetroBrandPicker(
+    brands: List<CoinBrand>,
+    selectedBrandId: String,
+    onSelectBrand: (String) -> Unit,
+) {
+    Column(modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 8.dp)) {
+        brands.forEach { brand ->
+            MetroBrandItem(
+                brand = brand,
+                selected = brand.id == selectedBrandId,
+                onClick = { onSelectBrand(brand.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetroBrandItem(brand: CoinBrand, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+    ) {
+        Image(
+            painter = painterResource(id = brand.headsRes),
+            contentDescription = null,
+            modifier = Modifier
+                .size(34.dp)
+                .background(MetroSurface),
+        )
+        Spacer(Modifier.width(14.dp))
+        Text(
+            text = brand.displayName.lowercase(),
+            color = if (selected) MetroAccent else Color.White,
+            fontSize = 17.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+        )
+    }
 }
 
 /** A one-line action, not a state -- styled entirely in accent color so
