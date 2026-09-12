@@ -39,13 +39,13 @@ was the web builder's own branding, not part of the app). Flip an Argentine
   .ua, ozon.ru, 4pda.to, poisk.im -- blocked the request with a 401/403
   or a redirect loop) until the user supplied their own product photos
   to crop from directly.
-  Heads is the "+" terminal, cut from a real photo per brand. KTS is the
-  only one with a real photographed "-" back too (it has a distinctive
-  dimpled texture); the others share one procedurally-rendered "blank
-  brushed metal" back (`coin_cr2032_blank_tails.png`) since a clean
-  brand-specific back photo wasn't available for them -- true to how
-  featureless a CR2032 negative face actually looks, rather than
-  pretending it's a specific brand's photo.
+  Heads is the "+" terminal, cut from a real photo per brand. Every
+  brand shares KTS's real photographed "-" back
+  (`coin_cr2032_kts_tails.png`, its distinctive dimpled texture) --
+  the negative face is an unbranded steel disc stamped from the same
+  handful of case molds across manufacturers, so one real photo
+  stands in for all of them rather than needing a back photo per
+  brand.
 - **Gold Star** -- a procedurally drawn coin (a gradient disc, rim rings, a
   symbol and a caption -- `ui/components/CoinFaceView.kt#EngravedCoinFace`)
   rather than a bundled photo, since no source art was provided for it.

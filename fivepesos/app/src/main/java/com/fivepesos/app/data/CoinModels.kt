@@ -48,11 +48,11 @@ data class CoinSkin(
 /**
  * One manufacturer's take on a CR2032 -- the "CR2032" skin isn't a single
  * fixed photo, it's this whole list, picked from a sub-picker under it in
- * Settings once it's selected. [tailsRes] is shared (`coin_cr2032_blank_tails`)
- * for every brand except KTS: a real, brand-specific photo of the blank
- * negative face wasn't available for the others, so they use one plain
- * "blank metal" render instead of pretending to be a specific photo --
- * true to how featureless these backs actually are in real life.
+ * Settings once it's selected. Every brand shares KTS's real photographed
+ * "-" back (`coin_cr2032_kts_tails`): the negative face is an unbranded
+ * dimpled steel disc stamped from the same handful of case molds across
+ * manufacturers, so one real photo of it stands in for all of them,
+ * rather than needing (or faking) a separate back photo per brand.
  */
 data class CoinBrand(
     val id: String,
@@ -72,79 +72,79 @@ val Cr2032Brands: List<CoinBrand> = listOf(
         id = "energizer",
         displayName = "Energizer",
         headsRes = R.drawable.coin_cr2032_energizer_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "gp",
         displayName = "GP",
         headsRes = R.drawable.coin_cr2032_gp_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "auchan",
         displayName = "Auchan",
         headsRes = R.drawable.coin_cr2032_auchan_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "komus",
         displayName = "Komus",
         headsRes = R.drawable.coin_cr2032_komus_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "kosmos",
         displayName = "Kosmos",
         headsRes = R.drawable.coin_cr2032_kosmos_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "opticell",
         displayName = "Opticell",
         headsRes = R.drawable.coin_cr2032_opticell_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "gigacell",
         displayName = "Gigacell",
         headsRes = R.drawable.coin_cr2032_gigacell_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "pkcell",
         displayName = "PKCELL",
         headsRes = R.drawable.coin_cr2032_pkcell_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "panasonic",
         displayName = "Panasonic",
         headsRes = R.drawable.coin_cr2032_panasonic_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "duracell",
         displayName = "Duracell",
         headsRes = R.drawable.coin_cr2032_duracell_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "maxell",
         displayName = "Maxell",
         headsRes = R.drawable.coin_cr2032_maxell_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "toshiba",
         displayName = "Toshiba",
         headsRes = R.drawable.coin_cr2032_toshiba_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
         id = "kodak",
         displayName = "Kodak",
         headsRes = R.drawable.coin_cr2032_kodak_heads,
-        tailsRes = R.drawable.coin_cr2032_blank_tails,
+        tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
 )
 
