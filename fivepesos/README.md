@@ -27,8 +27,11 @@ was the web builder's own branding, not part of the app). Flip an Argentine
 
 ## Coin skins
 
-- **5 Pesos** (default) and **2014 Ruble** -- real coins, cut from the
-  provided product photos into transparent PNGs (`res/drawable/`).
+- **5 Pesos** (default), **2014 Ruble**, and **KTS CR2032** -- real coins
+  (well, the CR2032 is a coin *cell battery*, not currency, but it's the
+  right shape and it's a fun one), cut from product photos into
+  transparent PNGs (`res/drawable/`). Heads is the "+" terminal, tails is
+  the dimpled "-" face.
 - **Gold Star** -- a procedurally drawn coin (a gradient disc, rim rings, a
   symbol and a caption -- `ui/components/CoinFaceView.kt#EngravedCoinFace`)
   rather than a bundled photo, since no source art was provided for it.

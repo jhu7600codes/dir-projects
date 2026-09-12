@@ -63,6 +63,14 @@ val BuiltInSkins: List<CoinSkin> = listOf(
         ),
     ),
     CoinSkin(
+        id = "kts2032",
+        displayName = "KTS CR2032",
+        art = CoinArt.Photo(
+            headsRes = R.drawable.coin_kts2032_heads,
+            tailsRes = R.drawable.coin_kts2032_tails,
+        ),
+    ),
+    CoinSkin(
         id = "goldstar",
         displayName = "Gold Star",
         art = CoinArt.Engraved(
