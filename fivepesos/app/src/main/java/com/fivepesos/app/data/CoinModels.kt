@@ -69,6 +69,18 @@ val Cr2032Brands: List<CoinBrand> = listOf(
         tailsRes = R.drawable.coin_cr2032_kts_tails,
     ),
     CoinBrand(
+        id = "energizer",
+        displayName = "Energizer",
+        headsRes = R.drawable.coin_cr2032_energizer_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "gp",
+        displayName = "GP",
+        headsRes = R.drawable.coin_cr2032_gp_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
         id = "panasonic",
         displayName = "Panasonic",
         headsRes = R.drawable.coin_cr2032_panasonic_heads,
@@ -90,6 +102,12 @@ val Cr2032Brands: List<CoinBrand> = listOf(
         id = "toshiba",
         displayName = "Toshiba",
         headsRes = R.drawable.coin_cr2032_toshiba_heads,
+        tailsRes = R.drawable.coin_cr2032_blank_tails,
+    ),
+    CoinBrand(
+        id = "kodak",
+        displayName = "Kodak",
+        headsRes = R.drawable.coin_cr2032_kodak_heads,
         tailsRes = R.drawable.coin_cr2032_blank_tails,
     ),
 )
