@@ -1,6 +1,6 @@
 __id__ = "backgram"
 __name__ = "Backgram"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "@jhu7600"
 __min_version__ = "12.1.1"
 __description__ = (
@@ -17,28 +17,23 @@ from ui.bulletin import BulletinHelper
 from hook_utils import find_class
 
 # ---------------------------------------------------------------------------
-# What this plugin is doing, and why it is shaped this way.
-#
 # "Rich messages" (TL_iv.RichMessage, constructor 0xbaf39d8b) are a protocol
 # feature: the server only sends them to clients that declare a high enough
 # MTProto layer. The declared layer travels from Java into native tgnet via
 #   ConnectionsManager.init(version, layer, apiId, ...)  ->  native_init(...)
-# so it is reachable from a hook, even though the handshake itself is native.
 #
-# The client-side risk is NOT the layer number. It is that a newer layer makes
-# the server send constructors this build has no class for. Comparing a 12.5.1
-# build against layer 229 shows the schema is overwhelmingly additive - only a
-# handful of already-known types changed their wire id:
+# The catch, found the hard way in 0.1.0: init() is not called from some late
+# startup path that a plugin can get ahead of. It is called from the
+# ConnectionsManager *constructor*, which runs the first time anything touches
+# getInstance(account) - long before the plugin engine loads us. So hooking
+# init() alone attaches a hook that will never fire again this process.
 #
-#   connectedBot, messageMediaPoll, reactionsNotifySettings,
-#   storyItem, stories.editStory, stories.sendStory
-#
-# Everything else that is "new" is genuinely new types, which simply fail to
-# deserialize rather than corrupting anything that already worked.
-#
-# Stage 1 therefore does not try to render anything. It raises the layer and
-# counts what actually arrives, so the next stage can be built on measurements
-# instead of assumptions.
+# 0.2.0 therefore does two things: it says out loud whether the hook fired
+# (instead of leaving "nothing unknown seen" ambiguous), and it offers to call
+# init() again itself, rebuilding the arguments the constructor built, with the
+# layer swapped. That second part is genuinely risky - re-entering native_init
+# on a live connection is not something the app ever does - so it sits behind
+# its own switch, off by default.
 # ---------------------------------------------------------------------------
 
 TARGET_LAYER = 229
@@ -57,10 +52,41 @@ CHANGED_CONSTRUCTORS = {
 
 RICH_MESSAGE_CONSTRUCTOR = 0xBAF39D8B
 
+PROBE_TARGETS = (
+    "org.telegram.tgnet.TLRPC$Message",
+    "org.telegram.tgnet.TLRPC$MessageMedia",
+    "org.telegram.tgnet.TLRPC$MessageEntity",
+    "org.telegram.tgnet.TLRPC$RichText",
+    "org.telegram.tgnet.TLRPC$PageBlock",
+    "org.telegram.tgnet.TLRPC$Update",
+)
+
 
 def _u32(value):
     """TL constructor ids are unsigned; Java hands them over as signed ints."""
     return value & 0xFFFFFFFF
+
+
+def _java_class(name):
+    """find_class gives back a class proxy; the reflection API wants java.lang.Class.
+
+    Which of the two spellings works depends on the host's binding, so try both
+    and let the caller treat a None as "not reachable".
+    """
+    try:
+        found = find_class(name)
+    except Exception:
+        return None
+    if found is None:
+        return None
+    for accessor in (lambda: found.getClass(), lambda: found):
+        try:
+            candidate = accessor()
+            candidate.getDeclaredMethods()
+            return candidate
+        except Exception:
+            continue
+    return None
 
 
 class _LayerHook(MethodHook):
@@ -71,6 +97,7 @@ class _LayerHook(MethodHook):
 
     def before_hooked_method(self, param):
         try:
+            self.plugin.init_fires += 1
             if not self.plugin.layer_enabled:
                 return
             args = param.args
@@ -81,6 +108,7 @@ class _LayerHook(MethodHook):
                 return
             self.plugin.original_layer = int(original)
             args[1] = TARGET_LAYER
+            self.plugin.init_rewrites += 1
             self.plugin.log(
                 "layer raised %s -> %s" % (self.plugin.original_layer, TARGET_LAYER)
             )
@@ -96,13 +124,13 @@ class _DeserializeHook(MethodHook):
 
     def after_hooked_method(self, param):
         try:
+            self.plugin.deserialize_calls += 1
             if param.getResult() is not None:
                 return
             args = param.args
             if len(args) < 2:
                 return
-            constructor = _u32(int(args[1]))
-            self.plugin.note_unknown(constructor)
+            self.plugin.note_unknown(_u32(int(args[1])))
         except Exception:
             pass
 
@@ -113,18 +141,28 @@ class BackgramPlugin(BasePlugin):
         super().__init__()
         self.layer_enabled = False
         self.original_layer = None
+        self.build_layer = None
         self.unknown_counts = {}
         self.rich_seen = 0
+        self.init_fires = 0
+        self.init_rewrites = 0
+        self.deserialize_calls = 0
+        self.probes_attached = 0
+        self.errors = []
         self._hooks = []
 
     # -- lifecycle ---------------------------------------------------------
 
     def on_plugin_load(self):
         self.layer_enabled = self.get_setting("force_layer", False)
-        if not self.layer_enabled:
-            self.log("loaded; layer override is off")
-            return
-        self._install_hooks()
+        self.build_layer = self._read_build_layer()
+        # The probe is read-only, so it runs regardless of the layer switch.
+        # Without it, "nothing unknown seen" cannot be told apart from
+        # "nothing was ever watching".
+        self._install_probe()
+        self._install_layer_hook()
+        if self.layer_enabled and self.get_setting("reinit", False):
+            self._reinit_accounts()
 
     def on_plugin_unload(self):
         for ref in self._hooks:
@@ -134,60 +172,158 @@ class BackgramPlugin(BasePlugin):
                 pass
         self._hooks = []
 
+    def _fail(self, what):
+        message = "%s: %s" % (what, traceback.format_exc(limit=1).strip().split("\n")[-1])
+        self.errors.append(message)
+        self.log(what + "\n" + traceback.format_exc())
+
     # -- hook installation -------------------------------------------------
 
-    def _install_hooks(self):
+    def _read_build_layer(self):
+        """TLRPC.LAYER is inlined into callers, but the field itself survives."""
         try:
-            cm = find_class("org.telegram.tgnet.ConnectionsManager")
-            if cm is None:
-                self.log("ConnectionsManager not found; nothing hooked")
-                return
-
-            init_method = None
-            for method in cm.getClass().getDeclaredMethods():
-                if method.getName() != "init":
-                    continue
-                types = method.getParameterTypes()
-                # init(version, layer, apiId, ...) - three leading ints
-                if len(types) >= 3 and all(t.getName() == "int" for t in types[:3]):
-                    init_method = method
-                    break
-
-            if init_method is None:
-                self.log("ConnectionsManager.init(int,int,int,...) not found")
-                return
-
-            self._hooks.append(self.hook_method(init_method, _LayerHook(self)))
-            self.log("hooked ConnectionsManager.init; layer override armed")
-            self._install_deserialize_probe()
+            cls = _java_class("org.telegram.tgnet.TLRPC")
+            if cls is None:
+                return None
+            field = cls.getDeclaredField("LAYER")
+            field.setAccessible(True)
+            return int(field.getInt(None))
         except Exception:
-            self.log("hook install failed:\n" + traceback.format_exc())
+            self._fail("could not read TLRPC.LAYER")
+            return None
 
-    def _install_deserialize_probe(self):
-        """Watch the TLObject factories that return null on unknown ids."""
-        targets = (
-            "org.telegram.tgnet.TLRPC$Message",
-            "org.telegram.tgnet.TLRPC$MessageMedia",
-            "org.telegram.tgnet.TLRPC$MessageEntity",
-            "org.telegram.tgnet.TLRPC$RichText",
-            "org.telegram.tgnet.TLRPC$PageBlock",
-            "org.telegram.tgnet.TLRPC$Update",
-        )
-        method_name = "TLdeserialize"
-        for class_name in targets:
+    def _find_init(self, cls):
+        for method in cls.getDeclaredMethods():
+            if method.getName() != "init":
+                continue
+            types = method.getParameterTypes()
+            # init(version, layer, apiId, ...) - three leading ints
+            if len(types) >= 3 and all(t.getName() == "int" for t in types[:3]):
+                return method
+        return None
+
+    def _install_layer_hook(self):
+        try:
+            cls = _java_class("org.telegram.tgnet.ConnectionsManager")
+            if cls is None:
+                self.errors.append("ConnectionsManager not reachable")
+                return
+            method = self._find_init(cls)
+            if method is None:
+                self.errors.append("ConnectionsManager.init(int,int,int,...) not found")
+                return
+            self._hooks.append(self.hook_method(method, _LayerHook(self)))
+        except Exception:
+            self._fail("layer hook install failed")
+
+    def _install_probe(self):
+        for class_name in PROBE_TARGETS:
             try:
-                cls = find_class(class_name)
+                cls = _java_class(class_name)
                 if cls is None:
                     continue
-                for method in cls.getClass().getDeclaredMethods():
-                    if method.getName() == method_name:
+                for method in cls.getDeclaredMethods():
+                    if method.getName() == "TLdeserialize":
                         self._hooks.append(
                             self.hook_method(method, _DeserializeHook(self))
                         )
+                        self.probes_attached += 1
                         break
             except Exception:
                 # A probe that cannot attach is not worth failing the plugin for.
                 continue
+
+    # -- re-init -----------------------------------------------------------
+
+    def _reinit_accounts(self):
+        """Call init() again ourselves, since the constructor's call is long gone.
+
+        Every argument here is rebuilt the way ConnectionsManager's constructor
+        builds it, so the only thing that differs is the layer.
+        """
+        try:
+            loader = find_class("org.telegram.messenger.ApplicationLoader")
+            build_vars = find_class("org.telegram.messenger.BuildVars")
+            locale = find_class("org.telegram.messenger.LocaleController")
+            utils = find_class("org.telegram.messenger.AndroidUtilities")
+            file_log = find_class("org.telegram.messenger.FileLog")
+            build = find_class("android.os.Build")
+            version = find_class("android.os.Build$VERSION")
+            timezone = find_class("java.util.TimeZone")
+            java_file = find_class("java.io.File")
+            if None in (loader, build_vars, locale, utils, file_log):
+                self.errors.append("re-init: a required class was not reachable")
+                return
+
+            zone = timezone.getDefault()
+            tz_offset = (zone.getRawOffset() + zone.getDSTSavings()) // 1000
+            device_model = str(build.MANUFACTURER) + str(build.MODEL)
+            app_version = "%s (%s)" % (
+                build_vars.BUILD_VERSION_STRING, build_vars.BUILD_VERSION
+            )
+            system_version = "SDK %s" % version.SDK_INT
+            lang_code = str(locale.getLocaleStringIso639()).lower()
+            system_lang = str(locale.getSystemLocaleStringIso639()).lower() or "en"
+            fingerprint = utils.getCertificateSHA256Fingerprint()
+
+            user_config_cls = find_class("org.telegram.messenger.UserConfig")
+            connections = find_class("org.telegram.tgnet.ConnectionsManager")
+            done = 0
+            for account in range(self._account_count()):
+                try:
+                    # Check the account is real *before* touching
+                    # ConnectionsManager.getInstance, because that call is what
+                    # constructs one - and constructing one runs init() again.
+                    user_config = user_config_cls.getInstance(account)
+                    if user_config is None or not user_config.isClientActivated():
+                        continue
+                    cm = connections.getInstance(account)
+                    if cm is None:
+                        continue
+                    config = loader.getFilesDirFixed()
+                    if account != 0:
+                        config = java_file(config, "account%d" % account)
+                        config.mkdirs()
+                    # init() is public, so call it directly rather than through
+                    # reflection - the binding then picks the right overload and
+                    # widens the user id to a long for us.
+                    cm.init(
+                        build_vars.BUILD_VERSION,
+                        TARGET_LAYER,
+                        build_vars.APP_ID,
+                        device_model,
+                        system_version,
+                        app_version,
+                        lang_code,
+                        system_lang,
+                        str(config),
+                        file_log.getNetworkLogPath(),
+                        self._reg_id(cm),
+                        fingerprint,
+                        tz_offset,
+                        user_config.getClientUserId(),
+                        cm.isPushConnectionEnabled(),
+                    )
+                    done += 1
+                except Exception:
+                    self._fail("re-init failed for account %d" % account)
+            self.log("re-init applied to %d account(s)" % done)
+        except Exception:
+            self._fail("re-init failed")
+
+    def _account_count(self):
+        try:
+            return int(find_class("org.telegram.messenger.UserConfig").MAX_ACCOUNT_COUNT)
+        except Exception:
+            return 4
+
+    def _reg_id(self, cm):
+        try:
+            method = cm.getClass().getDeclaredMethod("getRegId")
+            method.setAccessible(True)
+            return method.invoke(cm)
+        except Exception:
+            return None
 
     # -- diagnostics -------------------------------------------------------
 
@@ -204,17 +340,37 @@ class BackgramPlugin(BasePlugin):
             )
 
     def _report(self):
-        if not self.unknown_counts and not self.rich_seen:
-            return "nothing unknown seen yet"
-        lines = []
-        if self.original_layer is not None:
-            lines.append("layer: %s -> %s" % (self.original_layer, TARGET_LAYER))
-        if self.rich_seen:
-            lines.append("rich messages seen: %s" % self.rich_seen)
-        ranked = sorted(self.unknown_counts.items(), key=lambda kv: -kv[1])
-        for constructor, count in ranked[:10]:
-            label = CHANGED_CONSTRUCTORS.get(constructor, "unknown")
-            lines.append("0x%08x  x%-4s %s" % (constructor, count, label))
+        lines = [
+            "build layer: %s" % (self.build_layer if self.build_layer else "unknown"),
+            "probes attached: %d/%d" % (self.probes_attached, len(PROBE_TARGETS)),
+            "deserialize calls seen: %d" % self.deserialize_calls,
+            "init hook fired: %d (rewrote %d)" % (self.init_fires, self.init_rewrites),
+            "rich messages seen: %d" % self.rich_seen,
+        ]
+
+        if self.probes_attached == 0:
+            lines.append("")
+            lines.append("-> nothing is watching; hooking itself is broken.")
+        elif self.deserialize_calls == 0:
+            lines.append("")
+            lines.append("-> probes attached but never ran; wrong classes.")
+        elif self.init_fires == 0:
+            lines.append("")
+            lines.append(
+                "-> init() never ran after load, so the layer is untouched. "
+                "Turn on 'Re-init connections' and restart."
+            )
+
+        if self.unknown_counts:
+            lines.append("")
+            ranked = sorted(self.unknown_counts.items(), key=lambda kv: -kv[1])
+            for constructor, count in ranked[:10]:
+                label = CHANGED_CONSTRUCTORS.get(constructor, "unknown")
+                lines.append("0x%08x  x%-4s %s" % (constructor, count, label))
+
+        for message in self.errors[:4]:
+            lines.append("! " + message)
+
         return "\n".join(lines)
 
     # -- settings ----------------------------------------------------------
@@ -232,10 +388,23 @@ class BackgramPlugin(BasePlugin):
                     "Polls and stories may mis-render while this is on."
                 ),
                 icon="msg_sendfile",
-                on_change=self._on_layer_toggled,
+                on_change=self._on_setting_changed,
             ),
-            Divider(text="This build declares layer %s by default."
-                    % (self.original_layer if self.original_layer is not None else "?")),
+            Switch(
+                key="reinit",
+                text="Re-init connections",
+                default=False,
+                subtext=(
+                    "The app sets its layer before plugins load, so the hook alone "
+                    "arrives too late. This re-runs the setup with the new layer. "
+                    "It is the risky part - if the app misbehaves, turn this off "
+                    "first."
+                ),
+                icon="msg_retry",
+                on_change=self._on_setting_changed,
+            ),
+            Divider(text="This build ships layer %s."
+                    % (self.build_layer if self.build_layer else "?")),
 
             Header(text="Diagnostics"),
             Text(
@@ -252,8 +421,8 @@ class BackgramPlugin(BasePlugin):
             ),
         ]
 
-    def _on_layer_toggled(self, value):
-        self.layer_enabled = bool(value)
+    def _on_setting_changed(self, value):
+        self.layer_enabled = self.get_setting("force_layer", False)
         BulletinHelper.show_info("Restart the app to apply")
 
     def _show_report(self, _view=None):

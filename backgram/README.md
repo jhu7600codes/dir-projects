@@ -37,6 +37,28 @@ That is ~1.8% of the shared types. Everything else new to layer 229 is a
 genuinely new type, which fails to deserialize rather than corrupting something
 that already worked.
 
+## The ordering problem (found in 0.1.0)
+
+0.1.0 hooked `ConnectionsManager.init` and reported "nothing unknown seen yet",
+which turned out to mean the hook never fired at all.
+
+`init()` is not called from a late startup path a plugin can get ahead of. It is
+called from the **`ConnectionsManager` constructor** (`ConnectionsManager.java:224`),
+which runs the first time anything touches `getInstance(account)` — well before
+the plugin engine loads. So the hook attaches to a method that will not be called
+again this process.
+
+0.2.0 handles that two ways:
+
+- the diagnostics now say whether the hook fired, so "nothing unknown" can no
+  longer be confused with "nothing was watching";
+- a second switch, **Re-init connections**, calls `init()` again from the plugin,
+  rebuilding every argument the constructor built, with the layer swapped.
+
+That second part is the risky one — re-entering `native_init` on a live
+connection is not something the app ever does — so it is off by default and
+separate from the layer switch.
+
 ## Stage 1 — what is in here now
 
 Stage 1 deliberately renders nothing. It:
@@ -55,7 +77,8 @@ Everything is behind a switch that is **off** by default.
 
 1. Install `backgram.plugin` (share the file into the app and tap it, or drop it
    in the plugins folder).
-2. Settings → Plugins → Backgram → turn on **Declare layer 229**.
+2. Settings → Plugins → Backgram → turn on **Declare layer 229** *and*
+   **Re-init connections**.
 3. Restart the app fully.
 4. Use it normally for a while — open channels that post formatted content.
 5. Come back to the plugin settings and tap **Show what the server is sending**.
@@ -70,8 +93,9 @@ restart; nothing is written to the account.
   Stage 2 is worth writing.
 - it never appears, but lots of other unknown constructors do → the layer bump
   works and rich messages are gated on something else; the target changes.
-- nothing unknown at all → the hook did not take, and the hook is what needs
-  fixing first.
+- nothing unknown at all → read the counters above it. `init hook fired: 0` means
+  the layer was never touched; `probes attached: 0/6` means hooking itself is
+  broken and nothing else in the readout means anything.
 
 ## Stage 2 — not written yet, on purpose
 
