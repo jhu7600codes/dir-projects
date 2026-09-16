@@ -1,0 +1,260 @@
+__id__ = "backgram"
+__name__ = "Backgram"
+__version__ = "0.1.0"
+__author__ = "@jhu7600"
+__min_version__ = "12.1.1"
+__description__ = (
+    "Backports newer Telegram protocol features into older exteraGram/AyuGram builds.\n"
+    "Stage 1: raises the declared MTProto layer and reports what the server starts sending.\n\n"
+    "Бэкпортит новые возможности протокола Telegram в старые сборки exteraGram/AyuGram."
+)
+
+import traceback
+
+from base_plugin import BasePlugin, HookResult, HookStrategy, MethodHook
+from ui.settings import Divider, Header, Switch, Text
+from ui.bulletin import BulletinHelper
+from hook_utils import find_class
+
+# ---------------------------------------------------------------------------
+# What this plugin is doing, and why it is shaped this way.
+#
+# "Rich messages" (TL_iv.RichMessage, constructor 0xbaf39d8b) are a protocol
+# feature: the server only sends them to clients that declare a high enough
+# MTProto layer. The declared layer travels from Java into native tgnet via
+#   ConnectionsManager.init(version, layer, apiId, ...)  ->  native_init(...)
+# so it is reachable from a hook, even though the handshake itself is native.
+#
+# The client-side risk is NOT the layer number. It is that a newer layer makes
+# the server send constructors this build has no class for. Comparing a 12.5.1
+# build against layer 229 shows the schema is overwhelmingly additive - only a
+# handful of already-known types changed their wire id:
+#
+#   connectedBot, messageMediaPoll, reactionsNotifySettings,
+#   storyItem, stories.editStory, stories.sendStory
+#
+# Everything else that is "new" is genuinely new types, which simply fail to
+# deserialize rather than corrupting anything that already worked.
+#
+# Stage 1 therefore does not try to render anything. It raises the layer and
+# counts what actually arrives, so the next stage can be built on measurements
+# instead of assumptions.
+# ---------------------------------------------------------------------------
+
+TARGET_LAYER = 229
+
+# Types whose wire id changed between a 12.5.x build and layer 229. If these
+# start arriving, the old class will mis-read the stream, so they are worth
+# calling out separately from merely-unknown constructors.
+CHANGED_CONSTRUCTORS = {
+    0x033ED001: "connectedBot",
+    0x773F4E66: "messageMediaPoll",
+    0x71E4EA58: "reactionsNotifySettings",
+    0x16A4B93C: "storyItem",
+    0x2C63A72B: "stories.editStory",
+    0x8F9E6898: "stories.sendStory",
+}
+
+RICH_MESSAGE_CONSTRUCTOR = 0xBAF39D8B
+
+
+def _u32(value):
+    """TL constructor ids are unsigned; Java hands them over as signed ints."""
+    return value & 0xFFFFFFFF
+
+
+class _LayerHook(MethodHook):
+    """Rewrites the layer argument on its way into native tgnet."""
+
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+    def before_hooked_method(self, param):
+        try:
+            if not self.plugin.layer_enabled:
+                return
+            args = param.args
+            if len(args) < 3:
+                return
+            original = args[1]
+            if original is None or int(original) >= TARGET_LAYER:
+                return
+            self.plugin.original_layer = int(original)
+            args[1] = TARGET_LAYER
+            self.plugin.log(
+                "layer raised %s -> %s" % (self.plugin.original_layer, TARGET_LAYER)
+            )
+        except Exception:
+            self.plugin.log("layer hook failed:\n" + traceback.format_exc())
+
+
+class _DeserializeHook(MethodHook):
+    """Counts constructors the running build cannot deserialize."""
+
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+    def after_hooked_method(self, param):
+        try:
+            if param.getResult() is not None:
+                return
+            args = param.args
+            if len(args) < 2:
+                return
+            constructor = _u32(int(args[1]))
+            self.plugin.note_unknown(constructor)
+        except Exception:
+            pass
+
+
+class BackgramPlugin(BasePlugin):
+
+    def __init__(self):
+        super().__init__()
+        self.layer_enabled = False
+        self.original_layer = None
+        self.unknown_counts = {}
+        self.rich_seen = 0
+        self._hooks = []
+
+    # -- lifecycle ---------------------------------------------------------
+
+    def on_plugin_load(self):
+        self.layer_enabled = self.get_setting("force_layer", False)
+        if not self.layer_enabled:
+            self.log("loaded; layer override is off")
+            return
+        self._install_hooks()
+
+    def on_plugin_unload(self):
+        for ref in self._hooks:
+            try:
+                self.unhook_method(ref)
+            except Exception:
+                pass
+        self._hooks = []
+
+    # -- hook installation -------------------------------------------------
+
+    def _install_hooks(self):
+        try:
+            cm = find_class("org.telegram.tgnet.ConnectionsManager")
+            if cm is None:
+                self.log("ConnectionsManager not found; nothing hooked")
+                return
+
+            init_method = None
+            for method in cm.getClass().getDeclaredMethods():
+                if method.getName() != "init":
+                    continue
+                types = method.getParameterTypes()
+                # init(version, layer, apiId, ...) - three leading ints
+                if len(types) >= 3 and all(t.getName() == "int" for t in types[:3]):
+                    init_method = method
+                    break
+
+            if init_method is None:
+                self.log("ConnectionsManager.init(int,int,int,...) not found")
+                return
+
+            self._hooks.append(self.hook_method(init_method, _LayerHook(self)))
+            self.log("hooked ConnectionsManager.init; layer override armed")
+            self._install_deserialize_probe()
+        except Exception:
+            self.log("hook install failed:\n" + traceback.format_exc())
+
+    def _install_deserialize_probe(self):
+        """Watch the TLObject factories that return null on unknown ids."""
+        targets = (
+            "org.telegram.tgnet.TLRPC$Message",
+            "org.telegram.tgnet.TLRPC$MessageMedia",
+            "org.telegram.tgnet.TLRPC$MessageEntity",
+            "org.telegram.tgnet.TLRPC$RichText",
+            "org.telegram.tgnet.TLRPC$PageBlock",
+            "org.telegram.tgnet.TLRPC$Update",
+        )
+        method_name = "TLdeserialize"
+        for class_name in targets:
+            try:
+                cls = find_class(class_name)
+                if cls is None:
+                    continue
+                for method in cls.getClass().getDeclaredMethods():
+                    if method.getName() == method_name:
+                        self._hooks.append(
+                            self.hook_method(method, _DeserializeHook(self))
+                        )
+                        break
+            except Exception:
+                # A probe that cannot attach is not worth failing the plugin for.
+                continue
+
+    # -- diagnostics -------------------------------------------------------
+
+    def note_unknown(self, constructor):
+        if constructor == RICH_MESSAGE_CONSTRUCTOR:
+            self.rich_seen += 1
+            self.log("rich message constructor observed (0x%08x)" % constructor)
+            return
+        self.unknown_counts[constructor] = self.unknown_counts.get(constructor, 0) + 1
+        if constructor in CHANGED_CONSTRUCTORS:
+            self.log(
+                "changed-wire-format type arrived: %s (0x%08x)"
+                % (CHANGED_CONSTRUCTORS[constructor], constructor)
+            )
+
+    def _report(self):
+        if not self.unknown_counts and not self.rich_seen:
+            return "nothing unknown seen yet"
+        lines = []
+        if self.original_layer is not None:
+            lines.append("layer: %s -> %s" % (self.original_layer, TARGET_LAYER))
+        if self.rich_seen:
+            lines.append("rich messages seen: %s" % self.rich_seen)
+        ranked = sorted(self.unknown_counts.items(), key=lambda kv: -kv[1])
+        for constructor, count in ranked[:10]:
+            label = CHANGED_CONSTRUCTORS.get(constructor, "unknown")
+            lines.append("0x%08x  x%-4s %s" % (constructor, count, label))
+        return "\n".join(lines)
+
+    # -- settings ----------------------------------------------------------
+
+    def create_settings(self):
+        return [
+            Header(text="Protocol"),
+            Switch(
+                key="force_layer",
+                text="Declare layer %s" % TARGET_LAYER,
+                default=False,
+                subtext=(
+                    "Tells the server this client speaks a newer protocol, which is "
+                    "what makes it send rich messages at all. Requires a restart. "
+                    "Polls and stories may mis-render while this is on."
+                ),
+                icon="msg_sendfile",
+                on_change=self._on_layer_toggled,
+            ),
+            Divider(text="This build declares layer %s by default."
+                    % (self.original_layer if self.original_layer is not None else "?")),
+
+            Header(text="Diagnostics"),
+            Text(
+                text="Show what the server is sending",
+                icon="msg_info",
+                on_click=self._show_report,
+            ),
+            Divider(
+                text=(
+                    "Stage 1 only measures. Once this shows rich messages arriving, "
+                    "the decoder is worth building - your app already ships the "
+                    "instant-view renderer they are made of."
+                )
+            ),
+        ]
+
+    def _on_layer_toggled(self, value):
+        self.layer_enabled = bool(value)
+        BulletinHelper.show_info("Restart the app to apply")
+
+    def _show_report(self, _view=None):
+        BulletinHelper.show_info(self._report())
