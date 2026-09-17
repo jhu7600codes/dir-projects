@@ -1,6 +1,6 @@
 __id__ = "backgram"
 __name__ = "Backgram"
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __author__ = "@jhu7600"
 __min_version__ = "12.1.1"
 __description__ = (
@@ -193,15 +193,20 @@ class BackgramPlugin(BasePlugin):
         self._hooks = []
 
     def _fail(self, what):
-        # A Java exception's text carries its whole stack trace, so the last
-        # line of format_exc is a frame, not the reason. The first line of
-        # format_exception_only is the reason.
+        # A Java exception's text carries its whole stack trace, so keep only
+        # the first line - the reason. The full trace still goes to the log.
         try:
-            reason = traceback.format_exception_only(*sys.exc_info()[:2])[0].strip()
+            reason = traceback.format_exception_only(*sys.exc_info()[:2])[0]
+            reason = reason.strip().split("\n")[0]
         except Exception:
             reason = "unknown"
-        self.errors.append("%s: %s" % (what, reason))
+        self._note_error("%s: %s" % (what, reason))
         self.log(what + "\n" + traceback.format_exc())
+
+    def _note_error(self, message):
+        """Keep one copy of each. The same failure per account is one fact."""
+        if message not in self.errors:
+            self.errors.append(message)
 
     # -- hook installation -------------------------------------------------
 
@@ -237,11 +242,11 @@ class BackgramPlugin(BasePlugin):
         try:
             cls = _java_class("org.telegram.tgnet.ConnectionsManager")
             if cls is None:
-                self.errors.append("ConnectionsManager not reachable")
+                self._note_error("ConnectionsManager not reachable")
                 return
             method = self._find_init(cls)
             if method is None:
-                self.errors.append("ConnectionsManager.init(int,int,int,...) not found")
+                self._note_error("ConnectionsManager.init(int,int,int,...) not found")
                 return
             self._hooks.append(self.hook_method(method, _LayerHook(self)))
         except Exception:
@@ -279,28 +284,24 @@ class BackgramPlugin(BasePlugin):
         """
         try:
             cls = _java_class("org.telegram.tgnet.ConnectionsManager")
-            if cls is None:
-                self.errors.append("re-init: ConnectionsManager not reachable")
+            proxy = find_class("org.telegram.tgnet.ConnectionsManager")
+            if cls is None or proxy is None:
+                self._note_error("re-init: ConnectionsManager not reachable")
                 return
-
-            ctor = None
-            for candidate in cls.getDeclaredConstructors():
-                types = candidate.getParameterTypes()
-                if len(types) == 1 and types[0].getName() == "int":
-                    ctor = candidate
-                    break
-            if ctor is None:
-                self.errors.append("re-init: ConnectionsManager(int) not found")
-                return
-            ctor.setAccessible(True)
 
             done = 0
             for account in self._live_accounts(cls):
                 try:
-                    ctor.newInstance(account)
+                    # Call the constructor through the class proxy rather than
+                    # reflectively. Reflection takes Object..., and the binding
+                    # boxes a Python int as java.lang.Long, which will not match
+                    # an int parameter; a direct call knows the parameter type
+                    # and converts.
+                    proxy(account)
                     done += 1
                 except Exception:
-                    self._fail("re-init failed for account %d" % account)
+                    # Not per-account: the same reason four times is one fact.
+                    self._fail("re-init failed")
             self.log("re-init applied to %d account(s)" % done)
         except Exception:
             self._fail("re-init failed")
