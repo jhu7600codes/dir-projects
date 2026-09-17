@@ -1,6 +1,6 @@
 __id__ = "backgram"
 __name__ = "Backgram"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "@jhu7600"
 __min_version__ = "12.1.1"
 __description__ = (
@@ -86,6 +86,22 @@ def _java_class(name):
             return candidate
         except Exception:
             continue
+    return None
+
+
+def _method(cls, name, argc):
+    """Match by name and arity rather than exact parameter classes.
+
+    getMethod(name, Class...) needs the parameter types spelled right, and a
+    near miss returns nothing at all; arity is enough to pick these out.
+    """
+    try:
+        for method in cls.getMethods():
+            if method.getName() == name and len(method.getParameterTypes()) == argc:
+                method.setAccessible(True)
+                return method
+    except Exception:
+        pass
     return None
 
 
@@ -340,8 +356,11 @@ class BackgramPlugin(BasePlugin):
             )
 
     def _report(self):
+        # TLRPC.LAYER is static final, so R8 inlines it and drops the field.
+        # When that happens the only honest source is the value the hook saw.
+        layer = self.build_layer or self.original_layer
         lines = [
-            "build layer: %s" % (self.build_layer if self.build_layer else "unknown"),
+            "build layer: %s" % (layer if layer else "stripped by R8"),
             "probes attached: %d/%d" % (self.probes_attached, len(PROBE_TARGETS)),
             "deserialize calls seen: %d" % self.deserialize_calls,
             "init hook fired: %d (rewrote %d)" % (self.init_fires, self.init_rewrites),
@@ -404,13 +423,17 @@ class BackgramPlugin(BasePlugin):
                 on_change=self._on_setting_changed,
             ),
             Divider(text="This build ships layer %s."
-                    % (self.build_layer if self.build_layer else "?")),
+                    % (self.build_layer or self.original_layer or "?")),
 
             Header(text="Diagnostics"),
+            # The counters go in the divider rather than only in a bulletin: a
+            # bulletin shows two lines and then gives up, which made 0.2.0's
+            # readout unreadable on a phone. Re-opening this screen refreshes it.
+            Divider(text=self._report()),
             Text(
-                text="Show what the server is sending",
-                icon="msg_info",
-                on_click=self._show_report,
+                text="Copy report",
+                icon="msg_copy",
+                on_click=self._copy_report,
             ),
             Divider(
                 text=(
@@ -425,5 +448,33 @@ class BackgramPlugin(BasePlugin):
         self.layer_enabled = self.get_setting("force_layer", False)
         BulletinHelper.show_info("Restart the app to apply")
 
-    def _show_report(self, _view=None):
-        BulletinHelper.show_info(self._report())
+    def _copy_report(self, _view=None):
+        text = self._report()
+        if self._to_clipboard(text):
+            BulletinHelper.show_info("Report copied")
+        else:
+            # Better a truncated bulletin than nothing at all.
+            BulletinHelper.show_info(text)
+
+    def _to_clipboard(self, text):
+        try:
+            context = find_class("org.telegram.messenger.ApplicationLoader").applicationContext
+            clipboard = context.getSystemService("clipboard")
+            if clipboard is None:
+                return False
+            clip_data_cls = _java_class("android.content.ClipData")
+            manager_cls = _java_class("android.content.ClipboardManager")
+            if clip_data_cls is None or manager_cls is None:
+                return False
+            new_plain_text = _method(clip_data_cls, "newPlainText", 2)
+            set_clip = _method(manager_cls, "setPrimaryClip", 1)
+            if new_plain_text is None or set_clip is None:
+                return False
+            clip = new_plain_text.invoke(None, "Backgram", text)
+            # Invoke reflectively: getSystemService is typed as Object, so the
+            # binding will not find setPrimaryClip on it directly.
+            set_clip.invoke(clipboard, clip)
+            return True
+        except Exception:
+            self._fail("clipboard copy failed")
+            return False
