@@ -1,6 +1,6 @@
 __id__ = "backgram"
 __name__ = "Backgram"
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "@jhu7600"
 __min_version__ = "12.1.1"
 __description__ = (
@@ -9,6 +9,7 @@ __description__ = (
     "Бэкпортит новые возможности протокола Telegram в старые сборки exteraGram/AyuGram."
 )
 
+import sys
 import traceback
 
 from base_plugin import BasePlugin, HookResult, HookStrategy, MethodHook
@@ -28,12 +29,15 @@ from hook_utils import find_class
 # getInstance(account) - long before the plugin engine loads us. So hooking
 # init() alone attaches a hook that will never fire again this process.
 #
-# 0.2.0 therefore does two things: it says out loud whether the hook fired
-# (instead of leaving "nothing unknown seen" ambiguous), and it offers to call
-# init() again itself, rebuilding the arguments the constructor built, with the
-# layer swapped. That second part is genuinely risky - re-entering native_init
-# on a live connection is not something the app ever does - so it sits behind
-# its own switch, off by default.
+# So the plugin makes init() run again. Not by rebuilding its fifteen arguments
+# - that does not survive R8, which inlines BuildVars.APP_ID and friends into
+# their callers and then deletes the fields, and renames AndroidUtilities'
+# helpers out from under any lookup by name. Instead it constructs a throwaway
+# ConnectionsManager, whose constructor assembles those arguments with the app's
+# own code and calls init(), where the layer hook is already waiting.
+#
+# Re-entering native_init on a live connection is not something the app ever
+# does, so that sits behind its own switch, off by default.
 # ---------------------------------------------------------------------------
 
 TARGET_LAYER = 229
@@ -189,14 +193,26 @@ class BackgramPlugin(BasePlugin):
         self._hooks = []
 
     def _fail(self, what):
-        message = "%s: %s" % (what, traceback.format_exc(limit=1).strip().split("\n")[-1])
-        self.errors.append(message)
+        # A Java exception's text carries its whole stack trace, so the last
+        # line of format_exc is a frame, not the reason. The first line of
+        # format_exception_only is the reason.
+        try:
+            reason = traceback.format_exception_only(*sys.exc_info()[:2])[0].strip()
+        except Exception:
+            reason = "unknown"
+        self.errors.append("%s: %s" % (what, reason))
         self.log(what + "\n" + traceback.format_exc())
 
     # -- hook installation -------------------------------------------------
 
     def _read_build_layer(self):
-        """TLRPC.LAYER is inlined into callers, but the field itself survives."""
+        """Read TLRPC.LAYER if R8 left the field behind.
+
+        It usually has not: the field is static final, so every reader gets the
+        constant inlined and the field itself is dropped. That is expected, not
+        a fault, so this stays out of the error list - the hook reports the real
+        layer anyway once it fires.
+        """
         try:
             cls = _java_class("org.telegram.tgnet.TLRPC")
             if cls is None:
@@ -205,7 +221,6 @@ class BackgramPlugin(BasePlugin):
             field.setAccessible(True)
             return int(field.getInt(None))
         except Exception:
-            self._fail("could not read TLRPC.LAYER")
             return None
 
     def _find_init(self, cls):
@@ -252,74 +267,37 @@ class BackgramPlugin(BasePlugin):
     # -- re-init -----------------------------------------------------------
 
     def _reinit_accounts(self):
-        """Call init() again ourselves, since the constructor's call is long gone.
+        """Re-run init() by constructing a throwaway ConnectionsManager.
 
-        Every argument here is rebuilt the way ConnectionsManager's constructor
-        builds it, so the only thing that differs is the layer.
+        Rebuilding init()'s fifteen arguments by hand does not survive
+        minification - BuildVars.APP_ID and friends are inlined constants whose
+        fields R8 deletes, and AndroidUtilities' helpers get renamed. The
+        constructor assembles all of them using the app's own code, then calls
+        init(), where the layer hook is already waiting. So construct one and
+        throw it away: the Java object is not the point, the native_init call
+        it makes on the way is. The real singleton in Instance[] is untouched.
         """
         try:
-            loader = find_class("org.telegram.messenger.ApplicationLoader")
-            build_vars = find_class("org.telegram.messenger.BuildVars")
-            locale = find_class("org.telegram.messenger.LocaleController")
-            utils = find_class("org.telegram.messenger.AndroidUtilities")
-            file_log = find_class("org.telegram.messenger.FileLog")
-            build = find_class("android.os.Build")
-            version = find_class("android.os.Build$VERSION")
-            timezone = find_class("java.util.TimeZone")
-            java_file = find_class("java.io.File")
-            if None in (loader, build_vars, locale, utils, file_log):
-                self.errors.append("re-init: a required class was not reachable")
+            cls = _java_class("org.telegram.tgnet.ConnectionsManager")
+            if cls is None:
+                self.errors.append("re-init: ConnectionsManager not reachable")
                 return
 
-            zone = timezone.getDefault()
-            tz_offset = (zone.getRawOffset() + zone.getDSTSavings()) // 1000
-            device_model = str(build.MANUFACTURER) + str(build.MODEL)
-            app_version = "%s (%s)" % (
-                build_vars.BUILD_VERSION_STRING, build_vars.BUILD_VERSION
-            )
-            system_version = "SDK %s" % version.SDK_INT
-            lang_code = str(locale.getLocaleStringIso639()).lower()
-            system_lang = str(locale.getSystemLocaleStringIso639()).lower() or "en"
-            fingerprint = utils.getCertificateSHA256Fingerprint()
+            ctor = None
+            for candidate in cls.getDeclaredConstructors():
+                types = candidate.getParameterTypes()
+                if len(types) == 1 and types[0].getName() == "int":
+                    ctor = candidate
+                    break
+            if ctor is None:
+                self.errors.append("re-init: ConnectionsManager(int) not found")
+                return
+            ctor.setAccessible(True)
 
-            user_config_cls = find_class("org.telegram.messenger.UserConfig")
-            connections = find_class("org.telegram.tgnet.ConnectionsManager")
             done = 0
-            for account in range(self._account_count()):
+            for account in self._live_accounts(cls):
                 try:
-                    # Check the account is real *before* touching
-                    # ConnectionsManager.getInstance, because that call is what
-                    # constructs one - and constructing one runs init() again.
-                    user_config = user_config_cls.getInstance(account)
-                    if user_config is None or not user_config.isClientActivated():
-                        continue
-                    cm = connections.getInstance(account)
-                    if cm is None:
-                        continue
-                    config = loader.getFilesDirFixed()
-                    if account != 0:
-                        config = java_file(config, "account%d" % account)
-                        config.mkdirs()
-                    # init() is public, so call it directly rather than through
-                    # reflection - the binding then picks the right overload and
-                    # widens the user id to a long for us.
-                    cm.init(
-                        build_vars.BUILD_VERSION,
-                        TARGET_LAYER,
-                        build_vars.APP_ID,
-                        device_model,
-                        system_version,
-                        app_version,
-                        lang_code,
-                        system_lang,
-                        str(config),
-                        file_log.getNetworkLogPath(),
-                        self._reg_id(cm),
-                        fingerprint,
-                        tz_offset,
-                        user_config.getClientUserId(),
-                        cm.isPushConnectionEnabled(),
-                    )
+                    ctor.newInstance(account)
                     done += 1
                 except Exception:
                     self._fail("re-init failed for account %d" % account)
@@ -327,19 +305,32 @@ class BackgramPlugin(BasePlugin):
         except Exception:
             self._fail("re-init failed")
 
-    def _account_count(self):
-        try:
-            return int(find_class("org.telegram.messenger.UserConfig").MAX_ACCOUNT_COUNT)
-        except Exception:
-            return 4
+    def _live_accounts(self, cls):
+        """Accounts that already have a ConnectionsManager, found by field type.
 
-    def _reg_id(self, cm):
+        Every name here would be renamed by R8, so the private Instance[] array
+        is located by its type instead: a static array of ConnectionsManager.
+        An entry being non-null means that account's native slot was inited,
+        which is exactly the set worth re-initing.
+        """
         try:
-            method = cm.getClass().getDeclaredMethod("getRegId")
-            method.setAccessible(True)
-            return method.invoke(cm)
+            for field in cls.getDeclaredFields():
+                field_type = field.getType()
+                if not field_type.isArray():
+                    continue
+                if field_type.getComponentType().getName() != cls.getName():
+                    continue
+                field.setAccessible(True)
+                instances = field.get(None)
+                if instances is None:
+                    break
+                found = [i for i in range(len(instances)) if instances[i] is not None]
+                if found:
+                    return found
+                break
         except Exception:
-            return None
+            self._fail("could not locate the account array")
+        return [0]
 
     # -- diagnostics -------------------------------------------------------
 
@@ -375,10 +366,18 @@ class BackgramPlugin(BasePlugin):
             lines.append("-> probes attached but never ran; wrong classes.")
         elif self.init_fires == 0:
             lines.append("")
-            lines.append(
-                "-> init() never ran after load, so the layer is untouched. "
-                "Turn on 'Re-init connections' and restart."
-            )
+            if self.get_setting("reinit", False):
+                lines.append(
+                    "-> re-init ran but never reached init(); see the error below."
+                )
+            else:
+                lines.append(
+                    "-> init() never ran after load, so the layer is untouched. "
+                    "Turn on 'Re-init connections' and restart."
+                )
+        elif self.init_rewrites == 0:
+            lines.append("")
+            lines.append("-> init() ran but the layer was already >= %d." % TARGET_LAYER)
 
         if self.unknown_counts:
             lines.append("")

@@ -52,12 +52,28 @@ again this process.
 
 - the diagnostics now say whether the hook fired, so "nothing unknown" can no
   longer be confused with "nothing was watching";
-- a second switch, **Re-init connections**, calls `init()` again from the plugin,
-  rebuilding every argument the constructor built, with the layer swapped.
+- a second switch, **Re-init connections**, makes `init()` run again.
 
-That second part is the risky one — re-entering `native_init` on a live
-connection is not something the app ever does — so it is off by default and
-separate from the layer switch.
+0.2.0's version of that second part rebuilt `init()`'s fifteen arguments by
+hand, and did not survive contact with a real build. The app is R8-minified:
+`BuildVars.APP_ID`, `BUILD_VERSION` and `TLRPC.LAYER` are `static final`, so
+they are inlined into their callers and the fields deleted, and helpers like
+`AndroidUtilities.getCertificateSHA256Fingerprint` are renamed out from under
+any lookup by name.
+
+0.4.0 stops naming things. It constructs a **throwaway `ConnectionsManager`**:
+its constructor assembles all fifteen arguments using the app's own code and
+calls `init()`, where the layer hook is already waiting. The Java object is
+discarded — the `native_init` call it makes on the way is the point, and the
+real singleton is untouched. The only names involved are `init` (verified
+present) and the constructor, which minification does not rename.
+
+Which accounts to re-init is worked out the same way: the private
+`ConnectionsManager[] Instance` array is located by its *type* rather than its
+name, and a non-null entry means that account's native slot was initialised.
+
+Re-entering `native_init` on a live connection is not something the app ever
+does, so this is off by default and separate from the layer switch.
 
 ## Stage 1 — what is in here now
 
