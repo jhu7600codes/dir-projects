@@ -30,6 +30,9 @@ func _ready() -> void:
 
 func load_settings() -> void:
 	if not FileAccess.file_exists(PATH):
+		# first launch: phones start on low quality
+		if OS.has_feature("mobile"):
+			data.quality = 0
 		return
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
 	if parsed is Dictionary:

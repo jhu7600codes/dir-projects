@@ -82,7 +82,7 @@ static func _cyl(parent: Node3D, top: float, bottom: float, h: float, pos: Vecto
 	cm.top_radius = top
 	cm.bottom_radius = bottom
 	cm.height = h
-	cm.radial_segments = 20
+	cm.radial_segments = 12
 	cm.rings = 1
 	mi.mesh = cm
 	mi.material_override = mat

@@ -35,15 +35,40 @@ func _ready() -> void:
 
 
 func _placeholder() -> void:
-	var mat := Mats.get_mat("locker")
-	_mesh(Vector3(0.9, 2.1, 0.62), Vector3(0, 1.05, -0.04), mat, self)
+	_mesh(Vector3(0.9, 2.1, 0.62), Vector3(0, 1.05, -0.04), Mats.get_mat("locker"), self)
 	_door = Node3D.new()
 	_door.position = Vector3(-0.43, 0, 0.3)
 	add_child(_door)
-	_mesh(Vector3(0.86, 2.0, 0.04), Vector3(0.43, 1.05, 0.0), mat, _door)
-	# vent slits
+	var mi := MeshInstance3D.new()
+	mi.mesh = _door_mesh()
+	_door.add_child(mi)
+
+
+## the door + its vent slits as one shared mesh (2 surfaces), built once for all lockers
+static var _shared_door: ArrayMesh = null
+
+
+static func _door_mesh() -> ArrayMesh:
+	if _shared_door:
+		return _shared_door
+	var mesh := ArrayMesh.new()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var door := BoxMesh.new()
+	door.size = Vector3(0.86, 2.0, 0.04)
+	st.append_from(door, 0, Transform3D(Basis(), Vector3(0.43, 1.05, 0.0)))
+	st.commit(mesh)
+	mesh.surface_set_material(0, Mats.get_mat("locker"))
+	st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var slit := BoxMesh.new()
+	slit.size = Vector3(0.5, 0.025, 0.02)
 	for i in 5:
-		_mesh(Vector3(0.5, 0.025, 0.02), Vector3(0.43, 1.55 + i * 0.06, 0.025), Mats.get_mat("dark"), _door)
+		st.append_from(slit, 0, Transform3D(Basis(), Vector3(0.43, 1.55 + i * 0.06, 0.025)))
+	st.commit(mesh)
+	mesh.surface_set_material(1, Mats.get_mat("dark"))
+	_shared_door = mesh
+	return mesh
 
 
 func _mesh(size: Vector3, pos: Vector3, mat: Material, parent: Node3D) -> void:

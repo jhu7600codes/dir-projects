@@ -30,6 +30,8 @@ static func plant(kind: String, variant: int) -> Node3D:
 		var sm := SphereMesh.new()
 		sm.radius = 0.2
 		sm.height = 0.36
+		sm.radial_segments = 12
+		sm.rings = 6
 		core.mesh = sm
 		core.material_override = _mat("leaf_dark", Color(0.08, 0.22, 0.09), 1.0)
 		core.position.y = 0.52
@@ -142,6 +144,8 @@ static func office_chair(seat_h: float) -> Node3D:
 		var sm := SphereMesh.new()
 		sm.radius = 0.035
 		sm.height = 0.07
+		sm.radial_segments = 6
+		sm.rings = 3
 		wheel.mesh = sm
 		wheel.material_override = black
 		wheel.position = Vector3(0, 0.035, 0.29)
@@ -254,7 +258,7 @@ static func _cyl(parent: Node3D, top: float, bottom: float, h: float, pos: Vecto
 	cm.top_radius = top
 	cm.bottom_radius = bottom
 	cm.height = h
-	cm.radial_segments = 24
+	cm.radial_segments = 12
 	cm.rings = 1
 	mi.mesh = cm
 	mi.material_override = mat

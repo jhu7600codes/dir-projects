@@ -44,6 +44,49 @@ func setup(num: int, seed_value: int) -> void:
 	add_child(_body)
 	build()
 	_add_back_seal()
+	_merge_static()
+
+
+## performance: after building, every static mesh in the room (walls, floor, ceiling,
+## furniture, plants) is merged into one mesh per material, so a room costs a handful
+## of draw calls instead of a hundred. moving / interactive things are left alone.
+func _merge_static() -> void:
+	var groups := {}  # material -> SurfaceTool
+	var to_free: Array[Node] = []
+	_collect_static(self, Transform3D.IDENTITY, groups, to_free)
+	for n in to_free:
+		n.get_parent().remove_child(n)
+		n.free()
+	for mat in groups:
+		var mi := MeshInstance3D.new()
+		mi.mesh = (groups[mat] as SurfaceTool).commit()
+		mi.material_override = mat
+		add_child(mi)
+
+
+func _collect_static(node: Node, xf: Transform3D, groups: Dictionary, to_free: Array[Node]) -> void:
+	for c in node.get_children():
+		# these move, get picked up or are interactive: keep them as they are
+		if c is Door or c is Locker or c is Drawer or c is Pickup or c is ExitDoor or c is ShopStand or c is Label3D or c is Light3D or c is StaticBody3D or c is Area3D:
+			continue
+		if not c is Node3D:
+			continue
+		var cxf: Transform3D = xf * (c as Node3D).transform
+		if c is MeshInstance3D:
+			var mi := c as MeshInstance3D
+			if mi.get_child_count() == 0 and mi.mesh != null:
+				if mi.visible and mi.material_override != null:
+					var mat := mi.material_override
+					if not groups.has(mat):
+						var st := SurfaceTool.new()
+						st.begin(Mesh.PRIMITIVE_TRIANGLES)
+						groups[mat] = st
+					(groups[mat] as SurfaceTool).append_from(mi.mesh, 0, cxf)
+					to_free.append(mi)
+				elif not mi.visible:
+					to_free.append(mi)  # invisible collision helpers don't need a mesh
+				continue
+		_collect_static(c, cxf, groups, to_free)
 
 
 ## override: build geometry, call set_exit(), fill path_local
@@ -182,8 +225,8 @@ func shell(x0: float, x1: float, length: float, height: float, exit_side: String
 		"right":
 			set_exit(Vector3(x0, 0, exit_offset), -PI / 2)
 	# a light grid
-	var lx := maxi(1, int(w / 4.0))
-	var lz := maxi(1, int(length / 4.5))
+	var lx := maxi(1, int(w / 5.0))
+	var lz := maxi(1, int(length / 5.5))
 	for i in lx:
 		for j in lz:
 			ceiling_light(Vector3(x0 + w * (i + 0.5) / lx, height, length * (j + 0.5) / lz))
@@ -214,9 +257,23 @@ func ceiling_light(pos: Vector3) -> void:
 	box(Vector3(1.26, 0.03, 0.66), pos - Vector3(0, 0.01, 0), Mats.get_mat("frame"), false)
 	if broken:
 		return
-	# a soft downward spot for the floor + a weak fill so walls and ceiling aren't black.
-	# the light sits under the panel, not inside the room, so the ceiling doesn't blow out
 	var energy := lerpf(1.0, 0.45, darkness)
+	if int(Settings.data.quality) < 2:
+		# low / medium: one cheap light per fixture, a bit under the panel so the
+		# ceiling doesn't blow out
+		var o := OmniLight3D.new()
+		o.position = pos - Vector3(0, 0.75, 0)
+		o.omni_range = 6.5
+		o.omni_attenuation = 1.3
+		o.light_energy = energy * 1.1
+		o.light_specular = 0.2
+		o.light_color = Color(1.0, 0.97, 0.9)
+		_fade_far(o)
+		add_child(o)
+		if rng.randf() < 0.06 + darkness * 0.25:
+			_flicker.append(o)
+		return
+	# high: a soft downward spot for the floor + a weak fill for the walls
 	var s := SpotLight3D.new()
 	s.position = pos - Vector3(0, 0.06, 0)
 	s.rotation.x = -PI / 2
@@ -234,11 +291,20 @@ func ceiling_light(pos: Vector3) -> void:
 	f.light_energy = energy * 0.35
 	f.light_specular = 0.0
 	f.light_color = Color(1.0, 0.97, 0.9)
+	_fade_far(s)
+	_fade_far(f)
 	add_child(f)
 	if rng.randf() < 0.06 + darkness * 0.25:
 		_flicker.append(s)
 		_flicker.append(f)
 
+
+
+## lights far away from the camera switch off, they're hidden by fog anyway
+func _fade_far(l: Light3D) -> void:
+	l.distance_fade_enabled = true
+	l.distance_fade_begin = 24.0
+	l.distance_fade_length = 6.0
 
 
 func add_locker(pos: Vector3, yaw: float) -> Locker:

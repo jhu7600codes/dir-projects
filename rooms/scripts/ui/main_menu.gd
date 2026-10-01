@@ -47,6 +47,7 @@ var _flicker := 0.0
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Prewarm.run()
 	_make_backdrop()
 	var vig := ColorRect.new()
 	vig.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -97,11 +98,13 @@ func _make_backdrop() -> void:
 	var box := SubViewportContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.stretch = true
+	# low quality (phones): render the background at half resolution
+	box.stretch_shrink = 2 if int(Settings.data.quality) == 0 else 1
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(box)
 	var vp := SubViewport.new()
 	vp.own_world_3d = true
-	vp.msaa_3d = Viewport.MSAA_2X
+	vp.msaa_3d = Viewport.MSAA_DISABLED if int(Settings.data.quality) == 0 else Viewport.MSAA_2X
 	box.add_child(vp)
 	_env = Environment.new()
 	_env.background_mode = Environment.BG_COLOR
