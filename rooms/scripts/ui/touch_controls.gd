@@ -21,7 +21,7 @@ var _toggled := {}
 func _ready() -> void:
 	layer = 20
 	_pad = Control.new()
-	_pad.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_pad.draw.connect(_draw_pad)
 	add_child(_pad)

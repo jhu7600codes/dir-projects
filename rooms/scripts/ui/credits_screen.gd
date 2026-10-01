@@ -43,7 +43,7 @@ static func check_all() -> void:
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	UIKit.full_screen_bg(self, Color(0, 0, 0, 0.9))
 	var p := UIKit.panel(Vector2(620, 0))
 	UIKit.centered(self, p)

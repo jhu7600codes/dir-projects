@@ -20,7 +20,7 @@ static func panel(min_size := Vector2(420, 0)) -> PanelContainer:
 
 static func centered(parent: Control, child: Control) -> CenterContainer:
 	var c := CenterContainer.new()
-	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	parent.add_child(c)
 	c.add_child(child)
 	return c
@@ -94,6 +94,6 @@ static func vbox(sep := 10) -> VBoxContainer:
 static func full_screen_bg(parent: Control, color := Color(0, 0, 0, 0.75)) -> ColorRect:
 	var c := ColorRect.new()
 	c.color = color
-	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	parent.add_child(c)
 	return c

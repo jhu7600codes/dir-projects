@@ -6,7 +6,7 @@ signal closed
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	UIKit.full_screen_bg(self, Color(0, 0, 0, 0.8))
 	var p := UIKit.panel(Vector2(520, 0))
 	UIKit.centered(self, p)

@@ -6,12 +6,13 @@ extends Node3D
 
 const REST := Vector3(0.21, -0.2, -0.4)
 const LAYER := 2
-## classic roblox "bright yellow" skin
-const SKIN := Color(0.96, 0.8, 0.19)
+const SKIN := Color(0.87, 0.69, 0.55)
+const SHIRT := Color(0.93, 0.94, 0.95)
+const CUFF := Color(0.72, 0.8, 0.9)
 ## where the hand grabs each item (viewmodel space) and where the arm goes off screen
 const GRIP := {
-	"flashlight": [Vector3(0.0, -0.01, 0.115), Vector3(0.09, -0.15, 0.6)],
-	"shakelight": [Vector3(0.0, -0.01, 0.115), Vector3(0.09, -0.15, 0.6)],
+	"flashlight": [Vector3(0.0, -0.01, 0.115), Vector3(0.06, -0.09, 0.6)],
+	"shakelight": [Vector3(0.0, -0.01, 0.115), Vector3(0.06, -0.09, 0.6)],
 	"bandage": [Vector3(0.01, -0.07, 0.03), Vector3(0.1, -0.3, 0.45)],
 	"vitamins": [Vector3(0.01, -0.06, 0.03), Vector3(0.1, -0.3, 0.45)],
 }
@@ -21,7 +22,7 @@ var _models := {}
 var _shown := ""
 var _sway := Vector2.ZERO
 var _kick := 0.0
-var _arm: MeshInstance3D
+var _arm: Node3D
 
 
 func _ready() -> void:
@@ -41,19 +42,16 @@ func _ready() -> void:
 		_set_layer(m)
 		add_child(m)
 		_models[item] = m
-	# the arm: a roblox arm is a plain block, the "hand" is just its end
-	_arm = MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(0.075, 0.075, 0.5)
-	_arm.mesh = bm
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = SKIN
-	mat.roughness = 0.65
-	_arm.material_override = mat
-	_arm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# the arm: blocky like a roblox arm. skin colored hand, white office shirt sleeve
+	# with a pale blue cuff. local +z runs from the hand back along the arm.
+	_arm = Node3D.new()
 	_arm.visible = false
-	_arm.layers = LAYER
 	add_child(_arm)
+	_arm_part(Vector3(0.068, 0.068, 0.075), Vector3(0, 0, 0.0375), SKIN, 0.7)
+	_arm_part(Vector3(0.086, 0.086, 0.03), Vector3(0, 0, 0.09), CUFF, 0.85)
+	_arm_part(Vector3(0.083, 0.083, 0.5), Vector3(0, 0, 0.35), SHIRT, 0.9)
+	# a little cuff button
+	_arm_part(Vector3(0.012, 0.012, 0.012), Vector3(0.044, 0.0, 0.09), Color(0.92, 0.92, 0.9), 0.4)
 
 
 func _set_no_shadows(n: Node) -> void:
@@ -105,7 +103,20 @@ func _place_arm(item: String) -> void:
 	var grip: Vector3 = GRIP[item][0]
 	var back: Vector3 = GRIP[item][1]
 	var dir := (back - grip).normalized()
-	var length: float = (_arm.mesh as BoxMesh).size.z
-	# box's +z runs from the hand back along the arm
 	var basis := Basis.looking_at(-dir, Vector3.UP)
-	_arm.transform = Transform3D(basis.rotated(dir, 0.2), grip + dir * (length / 2.0 - 0.03))
+	_arm.transform = Transform3D(basis.rotated(dir, 0.2), grip - dir * 0.03)
+
+
+func _arm_part(size: Vector3, pos: Vector3, color: Color, rough: float) -> void:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = size
+	mi.mesh = bm
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = rough
+	mi.material_override = mat
+	mi.position = pos
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.layers = LAYER
+	_arm.add_child(mi)

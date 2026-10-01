@@ -16,7 +16,7 @@ func setup(kind: String, cause := "") -> void:
 	layer = 45
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
 	UIKit.full_screen_bg(root, Color(0, 0, 0, 0.0))
 	var bg: ColorRect = root.get_child(0)

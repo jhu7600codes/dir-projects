@@ -43,7 +43,7 @@ var _sub_tw: Tween
 func _ready() -> void:
 	layer = 10
 	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
@@ -125,7 +125,7 @@ func _shader(code: String) -> Shader:
 func _rect(parent: Control, c: Color) -> ColorRect:
 	var r := ColorRect.new()
 	r.color = c
-	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(r)
 	return r

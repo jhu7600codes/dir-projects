@@ -46,6 +46,7 @@ a first person horror game in an endless office. open doors, walk through genera
 - **saving**: the run saves on every door (and when you quit or switch apps). the title screen then shows "continue (a-xxx)". same rooms, same items, same health. dying or escaping clears it.
 - **100 starter gold** for new saves (older saves get it once too).
 - **doors style camera**: step bob, a lean when strafing / turning, wider fov when sprinting, a dip when landing. items show in your hand.
+- **title screen** with a live foggy hallway behind the menu, and **the worker's journal**: 8 handwritten pages of backstory that unlock as your best door gets further (a-050, a-100, a-150, a-200, a-500, a-1000).
 - **achievements** (saved in `user://save.json`) with popups, **settings** (volume, sensitivity, fov, quality, touch layout), **credits** screen.
 - **admin panel**: tick it on the title screen. noclip, god mode, speed, jumping, sliding, infinite stamina, spawn any entity, open the next door, jump to any door. nothing is saved in admin runs.
 

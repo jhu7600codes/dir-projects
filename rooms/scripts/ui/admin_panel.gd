@@ -11,7 +11,7 @@ func _ready() -> void:
 	layer = 41
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_root)
 	var p := UIKit.panel(Vector2(360, 0))
 	p.position = Vector2(16, 60)
