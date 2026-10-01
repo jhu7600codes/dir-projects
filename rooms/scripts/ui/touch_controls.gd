@@ -42,10 +42,8 @@ func _layout() -> void:
 		["use", "interact", Vector2(bx, by), 58.0 * s, false],
 		["run", "sprint", Vector2(bx + side * 140 * s, by + 30 * s), 42.0 * s, true],
 		["duck", "crouch", Vector2(bx + side * 30 * s, by - 140 * s), 40.0 * s, true],
-		["light", "flashlight", Vector2(bx + side * 130 * s, by - 100 * s), 36.0 * s, false],
-		["shake", "slot_shakelight", Vector2(bx + side * 230 * s, by - 40 * s), 32.0 * s, false],
-		["heal", "use_bandage", Vector2(bx + side * 230 * s, by - 130 * s), 30.0 * s, false],
-		["vit", "use_vitamins", Vector2(bx + side * 150 * s, by - 200 * s), 30.0 * s, false],
+		["item", "use_item", Vector2(bx + side * 130 * s, by - 100 * s), 40.0 * s, false],
+		["swap", "item_next", Vector2(bx + side * 235 * s, by - 50 * s), 32.0 * s, false],
 		["||", "pause", Vector2(vs.x / 2 + 150, 34), 26.0, false],
 	]
 	if Game.admin:

@@ -36,7 +36,7 @@ func add(item: String, amount := 1) -> void:
 			p.notify("got a flashlight")
 		"shakelight":
 			has_shakelight = true
-			p.notify("got a shakelight - spam interact to charge it")
+			p.notify("got a shakelight - press 2, then spam left click to charge it" if not Settings.use_touch() else "got a shakelight - swap to it, then spam item to charge it")
 	if item != "gold":
 		Game.play_ui("pickup")
 	changed.emit()

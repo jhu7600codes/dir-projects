@@ -168,15 +168,21 @@ func _process(_delta: float) -> void:
 	_stamina.visible = player.stamina < 99.0 or player.sprinting
 	var inv := player.inventory
 	var parts := []
-	if inv.has_flashlight:
-		parts.append("[1] flashlight %d%%" % int(inv.battery) + (" <" if player.lights.equipped == "flashlight" else ""))
-	if inv.has_shakelight:
-		parts.append("[2] shakelight %d%%" % int(inv.shake_charge) + (" <" if player.lights.equipped == "shakelight" else ""))
+	var names := {
+		"flashlight": "flashlight %d%%" % int(inv.battery) if inv.has_flashlight else "",
+		"shakelight": "shakelight %d%%" % int(inv.shake_charge) if inv.has_shakelight else "",
+		"bandage": "bandages %d" % inv.bandages,
+		"vitamins": "vitamins %d" % inv.vitamins,
+	}
+	for i in Player.ITEMS.size():
+		var item: String = Player.ITEMS[i]
+		if names[item] == "":
+			continue
+		var t: String = names[item] if Settings.use_touch() else "[%d] %s" % [i + 1, names[item]]
+		parts.append(("> " + t + " <") if player.selected == item else t)
 	parts.append("batteries %d" % inv.batteries)
-	parts.append("[h] bandages %d" % inv.bandages)
-	parts.append("[v] vitamins %d" % inv.vitamins)
 	parts.append("gold %d" % int(Save.data.gold))
-	_items.text = "   ".join(parts)
+	_items.text = "   ".join(parts) + ("" if Settings.use_touch() else "      lmb - use")
 	_update_star()
 
 

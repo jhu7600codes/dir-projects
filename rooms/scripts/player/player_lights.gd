@@ -1,7 +1,7 @@
 class_name PlayerLights
 extends Node3D
 ## the flashlight (batteries, toggle with f) and the shakelight (green, dim, can't be
-## turned off, drains fast, charged by spamming interact, loud while charging).
+## turned off, drains fast, charged by spamming left click (use item), loud while charging).
 ## lives on the player's camera.
 
 const FLASH_DRAIN := 100.0 / 240.0   # a full battery lasts 4 minutes

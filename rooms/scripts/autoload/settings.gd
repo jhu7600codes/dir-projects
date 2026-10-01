@@ -108,11 +108,14 @@ func _setup_input() -> void:
 	_add("crouch", [_key(KEY_C), _key(KEY_CTRL), _btn(JOY_BUTTON_B)])
 	_add("jump", [_key(KEY_SPACE), _btn(JOY_BUTTON_A)])
 	_add("interact", [_key(KEY_E), _btn(JOY_BUTTON_X)])
-	_add("flashlight", [_key(KEY_F), _btn(JOY_BUTTON_Y)])
-	_add("slot_flashlight", [_key(KEY_1)])
-	_add("slot_shakelight", [_key(KEY_2), _btn(JOY_BUTTON_DPAD_UP)])
-	_add("use_bandage", [_key(KEY_H), _key(KEY_3), _btn(JOY_BUTTON_DPAD_LEFT)])
-	_add("use_vitamins", [_key(KEY_V), _key(KEY_4), _btn(JOY_BUTTON_DPAD_RIGHT)])
+	# every item is used with left click; 1-4 or the scroll wheel picks which one you hold
+	_add("use_item", [_mouse(MOUSE_BUTTON_LEFT), _btn(JOY_BUTTON_Y), _btn(JOY_BUTTON_RIGHT_SHOULDER)])
+	_add("slot_1", [_key(KEY_1)])
+	_add("slot_2", [_key(KEY_2)])
+	_add("slot_3", [_key(KEY_3)])
+	_add("slot_4", [_key(KEY_4)])
+	_add("item_next", [_mouse(MOUSE_BUTTON_WHEEL_DOWN), _btn(JOY_BUTTON_DPAD_RIGHT)])
+	_add("item_prev", [_mouse(MOUSE_BUTTON_WHEEL_UP), _btn(JOY_BUTTON_DPAD_LEFT)])
 	_add("pause", [_key(KEY_ESCAPE), _key(KEY_P), _btn(JOY_BUTTON_START)])
 	_add("admin_panel", [_key(KEY_F1), _key(KEY_QUOTELEFT), _btn(JOY_BUTTON_BACK)])
 
@@ -127,6 +130,12 @@ func _add(action: String, events: Array) -> void:
 func _key(k: Key) -> InputEventKey:
 	var e := InputEventKey.new()
 	e.physical_keycode = k
+	return e
+
+
+func _mouse(b: MouseButton) -> InputEventMouseButton:
+	var e := InputEventMouseButton.new()
+	e.button_index = b
 	return e
 
 

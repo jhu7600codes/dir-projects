@@ -24,6 +24,9 @@ var hidden := false
 var crouching := false
 var sprinting := false
 var current_locker: Locker = null
+## the hotbar: the item in your hand is used with left click
+const ITEMS := ["flashlight", "shakelight", "bandage", "vitamins"]
+var selected := "flashlight"
 var hud: Node = null  # set by the game scene
 
 var inventory: Inventory
@@ -115,20 +118,26 @@ func notify(text: String) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if dead:
 		return
+	# taps on a phone also send a fake left click, those must not use items
+	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look(event.relative * LOOK_SPEED)
 	elif event.is_action_pressed("interact"):
 		_on_interact()
-	elif event.is_action_pressed("flashlight") and not hidden:
-		lights.toggle_flashlight()
-	elif event.is_action_pressed("slot_flashlight"):
-		lights.equip("flashlight")
-	elif event.is_action_pressed("slot_shakelight"):
-		lights.equip("shakelight")
-	elif event.is_action_pressed("use_bandage"):
-		use_bandage()
-	elif event.is_action_pressed("use_vitamins"):
-		use_vitamins()
+	elif event.is_action_pressed("use_item"):
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not Settings.use_touch() and event is InputEventMouseButton:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED  # first click just grabs the mouse again
+		else:
+			use_item()
+	elif event.is_action_pressed("item_next"):
+		cycle_item(1)
+	elif event.is_action_pressed("item_prev"):
+		cycle_item(-1)
+	else:
+		for i in ITEMS.size():
+			if event.is_action_pressed("slot_%d" % (i + 1)):
+				select_item(ITEMS[i])
 
 
 func _look(rel: Vector2) -> void:
@@ -267,8 +276,6 @@ func _on_interact() -> void:
 		exit_locker()
 	elif _target and _target.hold_time <= 0.0:
 		_target.interact(self)
-	elif _target == null:
-		lights.shake()
 
 
 func press_interact() -> void:
@@ -353,6 +360,58 @@ func take_damage(amount: float, cause: String) -> void:
 
 func heal(amount: float) -> void:
 	health = minf(100.0, health + amount)
+
+
+func owns(item: String) -> bool:
+	match item:
+		"flashlight":
+			return inventory.has_flashlight
+		"shakelight":
+			return inventory.has_shakelight
+		"bandage":
+			return inventory.bandages > 0
+		"vitamins":
+			return inventory.vitamins > 0
+	return false
+
+
+func select_item(item: String) -> void:
+	if not owns(item):
+		notify("you don't have " + ("any " if item in ["bandage", "vitamins"] else "a ") + item + ("s" if item == "bandage" else ""))
+		return
+	selected = item
+	# lights only shine while you hold them
+	lights.equip(item if item in ["flashlight", "shakelight"] else "none")
+	if hud:
+		hud.notify(item)
+
+
+func cycle_item(dir: int) -> void:
+	var i := ITEMS.find(selected)
+	for k in ITEMS.size():
+		i = wrapi(i + dir, 0, ITEMS.size())
+		if owns(ITEMS[i]):
+			select_item(ITEMS[i])
+			return
+
+
+## left click: use whatever is in your hand
+func use_item() -> void:
+	if dead or _busy:
+		return
+	match selected:
+		"flashlight":
+			if not hidden:
+				lights.toggle_flashlight()
+		"shakelight":
+			lights.shake()
+		"bandage":
+			use_bandage()
+		"vitamins":
+			use_vitamins()
+	# used the last one: go back to something you still have
+	if not owns(selected):
+		cycle_item(-1)
 
 
 func use_bandage() -> void:

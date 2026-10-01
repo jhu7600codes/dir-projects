@@ -97,7 +97,7 @@ func _apply_darkness(n: int) -> void:
 func _on_door_changed(n: int) -> void:
 	_apply_darkness(n)
 	if n == 30 and player.inventory.has_flashlight and not player.lights.flashlight_on:
-		hud.notify("it's getting darker. " + ("tap light" if Settings.use_touch() else "press f") + " for your flashlight")
+		hud.notify("it's getting darker. " + ("tap item" if Settings.use_touch() else "left click") + " for your flashlight")
 
 
 func _process(delta: float) -> void:
