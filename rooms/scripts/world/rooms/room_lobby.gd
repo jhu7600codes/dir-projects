@@ -20,7 +20,7 @@ func build() -> void:
 	sun.rotation.x = -PI / 2
 	sun.spot_angle = 60.0
 	sun.spot_range = 8.0
-	sun.light_energy = 3.0
+	sun.light_energy = 1.8
 	sun.light_color = Color(0.9, 0.95, 1.0)
 	sun.shadow_enabled = true
 	add_child(sun)

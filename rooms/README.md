@@ -43,6 +43,9 @@ a first person horror game in an endless office. open doors, walk through genera
   - **a-60b** shows up once at a-505, bounces back and forth with boss music until you get through 20 more doors. you're forced to sprint at double speed, a star marks where it is. (in rooms: revisited it's after a-1005, but our game ends at a-1000, so it's moved. change `AT_DOOR` in `a60b.gd`.)
   - **glitch** failsafe puts you back in the current room if a room fails to generate or you fall out of the world.
 - **items**: flashlight + batteries, shakelight, gold, bandages, vitamins. drawers in desks hold gold. shops at a-000 and a-150. gold is saved between runs.
+- **saving**: the run saves on every door (and when you quit or switch apps). the title screen then shows "continue (a-xxx)". same rooms, same items, same health. dying or escaping clears it.
+- **100 starter gold** for new saves (older saves get it once too).
+- **doors style camera**: step bob, a lean when strafing / turning, wider fov when sprinting, a dip when landing. items show in your hand.
 - **achievements** (saved in `user://save.json`) with popups, **settings** (volume, sensitivity, fov, quality, touch layout), **credits** screen.
 - **admin panel**: tick it on the title screen. noclip, god mode, speed, jumping, sliding, infinite stamina, spawn any entity, open the next door, jump to any door. nothing is saved in admin runs.
 
@@ -78,4 +81,5 @@ project -> export. presets for linux, windows and android are included (you need
 ```
 godot --headless --path . res://tests/smoke_test.tscn
 ```
-opens 45 doors, spawns every entity, visits the special rooms, checks that a locker saves you from a-60, that a-60 kills you in the open and that a-90 only hurts you when you press something.
+also `res://tests/save_test.tscn` (saving / continuing, starter gold, the locker exit fix).
+the smoke test opens 45 doors, spawns every entity, visits the special rooms, checks that a locker saves you from a-60, that a-60 kills you in the open and that a-90 only hurts you when you press something.

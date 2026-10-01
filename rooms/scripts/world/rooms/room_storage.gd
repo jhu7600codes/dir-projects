@@ -15,11 +15,11 @@ func build() -> void:
 	# upside down tables on the right, stacked on the left
 	for i in 2:
 		var t := Node3D.new()
-		t.position = Vector3(-3.0, 0.8, 2.5 + i * 2.5)
+		t.position = Vector3(-3.0, Props.TABLE_H, 2.5 + i * 2.5)
 		t.rotation.z = PI
 		add_child(t)
 		box(Vector3(1.4, 0.05, 0.8), Vector3(0, 0.0, 0), Mats.get_mat("wood"), false, 0.0, t)
-		box(Vector3(1.4, 0.8, 0.8), Vector3(-3.0, 0.4, 2.5 + i * 2.5), Mats.get_mat("wood"), true).visible = false
+		box(Vector3(1.4, Props.TABLE_H, 0.8), Vector3(-3.0, Props.TABLE_H / 2, 2.5 + i * 2.5), Mats.get_mat("wood"), true).visible = false
 	var near_exit := rng.randf() < 0.5
 	var lz := length - 0.45 if near_exit else 0.45
 	add_locker(Vector3(-w / 2 + 1.2, 0, lz), PI if near_exit else 0.0)

@@ -33,6 +33,7 @@ var inventory: Inventory
 var lights: PlayerLights
 var head: Node3D
 var camera: Camera3D
+var viewmodel: Viewmodel
 
 var _ray: RayCast3D
 var _shape: CollisionShape3D
@@ -45,6 +46,12 @@ var _slide_t := 0.0
 var _hold_t := 0.0          # holding interact on a hold_time target
 var _busy := false          # locker animation
 var _target: Interactable = null
+# camera feel (head bob, strafe tilt, sprint fov, landing dip), doors style
+var _bob_t := 0.0
+var _turn_roll := 0.0
+var _land_dip := 0.0
+var _was_on_floor := true
+var _time := 0.0
 
 
 func _ready() -> void:
@@ -71,6 +78,9 @@ func _ready() -> void:
 	lights = PlayerLights.new()
 	lights.inventory = inventory
 	camera.add_child(lights)
+	viewmodel = Viewmodel.new()
+	viewmodel.player = self
+	camera.add_child(viewmodel)
 	_ray = RayCast3D.new()
 	_ray.target_position = Vector3(0, 0, -2.6)
 	_ray.collision_mask = 1 | 4
@@ -81,7 +91,6 @@ func _ready() -> void:
 	_steps.bus = "SFX"
 	_steps.volume_db = -8.0
 	add_child(_steps)
-	Settings.changed.connect(func(): camera.fov = float(Settings.data.fov))
 
 
 # ---- input helpers (a-90 / a-90b read these too) ---------------------------
@@ -147,6 +156,8 @@ func _look(rel: Vector2) -> void:
 		head.rotation.y = clampf(head.rotation.y - rel.x * s, -0.5, 0.5)
 	else:
 		rotate_y(-rel.x * s)
+		_turn_roll = clampf(_turn_roll - rel.x * s * 0.08, -0.03, 0.03)
+		viewmodel.add_sway(rel / LOOK_SPEED)
 	head.rotation.x = clampf(head.rotation.x - rel.y * s, -1.45, 1.45)
 
 
@@ -160,6 +171,35 @@ func _process(delta: float) -> void:
 		_look(Game.touch_look * LOOK_SPEED * 1.3)
 		Game.touch_look = Vector2.ZERO
 	_update_target(delta)
+	_update_camera(delta)
+
+
+## the small things that make the camera feel alive: a step bob that follows your
+## footsteps, a slight lean when strafing or turning, wider fov when sprinting,
+## a dip when landing and a little breathing sway when standing still
+func _update_camera(delta: float) -> void:
+	_time += delta
+	var speed := Vector2(velocity.x, velocity.z).length()
+	var on_floor := is_on_floor()
+	var walking := speed > 0.5 and on_floor and not hidden and not _busy
+	var target := Vector3.ZERO
+	if walking:
+		_bob_t += speed * delta * PI / (2.2 if sprinting else 1.6)
+		var amp := clampf(speed / WALK, 0.0, 1.6) * (0.5 if crouching else 1.0)
+		target = Vector3(sin(_bob_t) * 0.022 * amp, -absf(cos(_bob_t)) * 0.045 * amp, 0)
+	else:
+		target.y = sin(_time * 1.5) * 0.006
+	if on_floor and not _was_on_floor:
+		_land_dip = 0.09
+	_was_on_floor = on_floor
+	_land_dip = move_toward(_land_dip, 0.0, delta * 0.45)
+	target.y -= _land_dip
+	camera.position = camera.position.lerp(target, minf(1.0, 12.0 * delta))
+	var strafe := move_input().x if not hidden else 0.0
+	_turn_roll = move_toward(_turn_roll, 0.0, delta * 0.12)
+	camera.rotation.z = lerpf(camera.rotation.z, -strafe * 0.022 + _turn_roll, minf(1.0, 7.0 * delta))
+	var fov := float(Settings.data.fov) + (7.0 if sprinting and walking else 0.0)
+	camera.fov = lerpf(camera.fov, fov, minf(1.0, 6.0 * delta))
 
 
 # ---- movement ----------------------------------------------------------------
@@ -323,6 +363,11 @@ func exit_locker() -> void:
 		current_locker = null
 		hidden = false
 		_busy = false
+		# the peek turn inside the locker is on the head; move it onto the body, otherwise
+		# walking forward would go sideways from where you're looking
+		rotate_y(head.rotation.y)
+		head.rotation.y = 0.0
+		velocity = Vector3.ZERO
 		_shape.set_deferred("disabled", false))
 
 
@@ -337,6 +382,7 @@ func teleport(t: Transform3D) -> void:
 	_busy = false
 	_shape.set_deferred("disabled", false)
 	global_transform = t
+	head.rotation.y = 0.0
 	velocity = Vector3.ZERO
 
 
@@ -399,6 +445,7 @@ func cycle_item(dir: int) -> void:
 func use_item() -> void:
 	if dead or _busy:
 		return
+	viewmodel.kick(0.4 if selected == "flashlight" else 1.0)
 	match selected:
 		"flashlight":
 			if not hidden:

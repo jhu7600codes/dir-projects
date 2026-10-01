@@ -10,9 +10,9 @@ func build() -> void:
 	Props.counter(self, Vector3(w / 2 - 0.35, 0, length * 0.5), PI / 2, 4.0)
 	Props.fridge(self, Vector3(w / 2 - 0.4, 0, 1.0), -PI / 2)
 	var c := Vector3(-1.0, 0, length * 0.6)
-	Props.table(self, c, 0.0, Vector3(1.2, 0.76, 1.2))
+	Props.table(self, c, 0.0, Vector3(1.2, Props.TABLE_H, 1.2))
 	for i in 3:
 		var a := TAU * i / 3.0
 		Props.chair(self, c + Vector3(cos(a), 0, sin(a)) * 1.0, -a, true)
-	scatter_loot([Vector3(w / 2 - 0.35, 0.95, length * 0.4), c + Vector3(0, 0.78, 0)])
+	scatter_loot([Vector3(w / 2 - 0.35, Props.COUNTER_H + 0.02, length * 0.4), c + Vector3(0, Props.TABLE_H + 0.02, 0)])
 	make_path([Vector3(0.6, 0, length * 0.4), Vector3(-1.5, 0, length - 1.2)])

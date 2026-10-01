@@ -14,20 +14,21 @@ func _ready() -> void:
 	add_child(body)
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = Vector3(1.4, 0.78, 0.7)
+	sh.size = Vector3(1.4, Props.TABLE_H, 0.7)
 	cs.shape = sh
-	cs.position = Vector3(0, 0.39, 0)
+	cs.position = Vector3(0, Props.TABLE_H / 2, 0)
 	body.add_child(cs)
 	var m := Assets.model("desk")
 	if m:
 		add_child(m)
 	else:
-		_mesh(Vector3(1.4, 0.05, 0.7), Vector3(0, 0.76, 0), Mats.get_mat("wood"))
-		_mesh(Vector3(0.05, 0.74, 0.66), Vector3(-0.66, 0.37, 0), Mats.get_mat("wood"))
-		_mesh(Vector3(0.45, 0.74, 0.66), Vector3(0.45, 0.37, 0), Mats.get_mat("wood"))
-	_drawer = _mesh(Vector3(0.4, 0.18, 0.6), Vector3(0.45, 0.6, 0.04), Mats.get_mat("plastic"))
+		var h := Props.TABLE_H
+		_mesh(Vector3(1.4, 0.05, 0.7), Vector3(0, h - 0.025, 0), Mats.get_mat("wood"))
+		_mesh(Vector3(0.05, h - 0.05, 0.66), Vector3(-0.66, (h - 0.05) / 2, 0), Mats.get_mat("wood"))
+		_mesh(Vector3(0.45, h - 0.05, 0.66), Vector3(0.45, (h - 0.05) / 2, 0), Mats.get_mat("wood"))
+	_drawer = _mesh(Vector3(0.4, 0.2, 0.6), Vector3(0.45, Props.TABLE_H - 0.2, 0.04), Mats.get_mat("plastic"))
 	var it := Interactable.make(Vector3(0.6, 0.4, 0.4), "open drawer")
-	it.position = Vector3(0.45, 0.6, 0.4)
+	it.position = Vector3(0.45, Props.TABLE_H - 0.2, 0.4)
 	it.used.connect(_open.bind(it))
 	add_child(it)
 

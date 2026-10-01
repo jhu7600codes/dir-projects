@@ -17,63 +17,57 @@
   "wall": {
    "path": "res://assets/local/textures/wall.png",
    "placeholder": {
-    "kind": "noise",
-    "color": "#e9e7e1",
-    "color2": "#d4d1c8",
-    "scale": 0.05
+    "kind": "wallpaper",
+    "color": "#ecebe5",
+    "color2": "#d6d3c9"
    }
   },
   "carpet_red": {
    "path": "res://assets/local/textures/carpet_red.png",
    "placeholder": {
-    "kind": "noise",
-    "color": "#7a1b1b",
-    "color2": "#561010",
-    "scale": 0.3
+    "kind": "carpet",
+    "color": "#8a1f1f",
+    "color2": "#4e0d0d"
    }
   },
   "carpet_blue": {
    "path": "res://assets/local/textures/carpet_blue.png",
    "placeholder": {
-    "kind": "noise",
-    "color": "#25365e",
-    "color2": "#18223f",
-    "scale": 0.3
+    "kind": "carpet",
+    "color": "#2b3e6b",
+    "color2": "#141d38"
    }
   },
   "ceiling": {
    "path": "res://assets/local/textures/ceiling.png",
    "placeholder": {
-    "kind": "grid",
-    "color": "#e4e4e0",
-    "color2": "#a9a9a4"
+    "kind": "tiles",
+    "color": "#ecece8",
+    "color2": "#c9c9c3"
    }
   },
   "door": {
    "path": "res://assets/local/textures/door.png",
    "placeholder": {
-    "kind": "noise",
-    "color": "#8a5a34",
-    "color2": "#6b4325",
-    "scale": 0.02
+    "kind": "wood",
+    "color": "#9a6a40",
+    "color2": "#6a4225"
    }
   },
   "wood": {
    "path": "res://assets/local/textures/wood.png",
    "placeholder": {
-    "kind": "noise",
-    "color": "#9b6b43",
-    "color2": "#7a5131",
-    "scale": 0.03
+    "kind": "wood",
+    "color": "#a8774c",
+    "color2": "#7a5131"
    }
   },
   "locker": {
    "path": "res://assets/local/textures/locker.png",
    "placeholder": {
-    "kind": "noise",
-    "color": "#8b9097",
-    "color2": "#767b82",
-    "scale": 0.1
+    "kind": "metal",
+    "color": "#8f949b",
+    "color2": "#6d7279"
    }
   },
   "a60_face_1": {
@@ -237,6 +231,14 @@
    "placeholder": {
     "kind": "star",
     "color": "#ffffff"
+   }
+  },
+  "trim": {
+   "path": "res://assets/local/textures/trim.png",
+   "placeholder": {
+    "kind": "wood",
+    "color": "#ddd8cc",
+    "color2": "#c4bdae"
    }
   }
  },

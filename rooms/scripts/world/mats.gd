@@ -1,15 +1,17 @@
 class_name Mats
-## shared materials, built once from manifest textures. triplanar mapping so plain
-## boxes get correctly scaled textures without uv work.
+## shared materials, built once from manifest textures. world space triplanar mapping, so
+## textures line up across separate wall pieces and keep the same real-world size.
+## the scale column = how many texture repeats per meter.
 
 static var _cache := {}
 
 # key -> [texture key or "", tint, roughness, metallic, triplanar scale, emission]
 const DEFS := {
-	"wall": ["wall", Color.WHITE, 0.9, 0.0, 0.5, 0.0],
-	"carpet_red": ["carpet_red", Color.WHITE, 1.0, 0.0, 0.6, 0.0],
-	"carpet_blue": ["carpet_blue", Color.WHITE, 1.0, 0.0, 0.6, 0.0],
-	"ceiling": ["ceiling", Color.WHITE, 0.9, 0.0, 0.42, 0.0],
+	"wall": ["wall", Color.WHITE, 0.95, 0.0, 0.5, 0.0],
+	"carpet_red": ["carpet_red", Color.WHITE, 1.0, 0.0, 0.8, 0.0],
+	"carpet_blue": ["carpet_blue", Color.WHITE, 1.0, 0.0, 0.8, 0.0],
+	"ceiling": ["ceiling", Color.WHITE, 0.95, 0.0, 0.8333, 0.0],
+	"trim": ["trim", Color.WHITE, 0.6, 0.0, 1.0, 0.0],
 	"door": ["door", Color.WHITE, 0.7, 0.0, 0.8, 0.0],
 	"frame": ["", Color(0.85, 0.85, 0.82), 0.6, 0.0, 1.0, 0.0],
 	"locker": ["locker", Color.WHITE, 0.45, 0.6, 0.8, 0.0],
@@ -44,6 +46,8 @@ static func get_mat(key: String) -> StandardMaterial3D:
 		m.uv1_triplanar = true
 		m.uv1_world_triplanar = true
 		m.uv1_scale = Vector3.ONE * float(d[4])
+		m.uv1_triplanar_sharpness = 6.0  # no smeared blending on box edges
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	m.albedo_color = d[1]
 	m.roughness = d[2]
 	m.metallic = d[3]

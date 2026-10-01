@@ -30,6 +30,7 @@ var _flicker: Array[Light3D] = []
 var _flicker_t := 0.0
 var _back_seal: CollisionShape3D
 var _path_global: Array[Vector3] = []
+var _height := 3.0  # ceiling height of the current shell, for the wall trim
 
 
 func setup(num: int, seed_value: int) -> void:
@@ -137,12 +138,22 @@ func _wall_piece(a: Vector3, d: Vector3, yaw: float, s: float, e: float, y0: flo
 		e += WALL_T / 2.0
 	var center := a + d * ((s + e) / 2.0) + Vector3.UP * ((y0 + y1) / 2.0)
 	box(Vector3(WALL_T, y1 - y0, e - s), center, mat, true, yaw)
+	if mat == Mats.get_mat("wall"):
+		var mid := a + d * ((s + e) / 2.0)
+		var trim := Mats.get_mat("trim")
+		if y0 <= 0.001:
+			# baseboard along the floor
+			box(Vector3(WALL_T + 0.05, 0.13, e - s), mid + Vector3.UP * 0.065, trim, false, yaw)
+		if y1 >= _height - 0.01:
+			# thin trim where the wall meets the ceiling
+			box(Vector3(WALL_T + 0.035, 0.05, e - s), mid + Vector3.UP * (y1 - 0.025), trim, false, yaw)
 
 
 ## standard rectangular room: x from x0 to x1, z from 0 to length.
 ## exit: side is "front", "left" (+x wall) or "right" (-x wall); offset is x (front) or z (sides)
 ## side_holes: extra open gaps without a door, e.g. {"right": [[z, width]]}
 func shell(x0: float, x1: float, length: float, height: float, exit_side: String, exit_offset: float, carpet := "carpet_red", side_holes := {}) -> void:
+	_height = height
 	var w := x1 - x0
 	var cx := (x0 + x1) / 2.0
 	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, -0.1, length / 2.0), Mats.get_mat(carpet))
@@ -199,18 +210,35 @@ func make_path(points: Array) -> void:
 
 func ceiling_light(pos: Vector3) -> void:
 	var broken := rng.randf() < darkness * 0.92
-	box(Vector3(1.2, 0.05, 0.6), pos - Vector3(0, 0.03, 0), Mats.get_mat("light_off" if broken else "light_panel"), false)
+	box(Vector3(1.2, 0.04, 0.6), pos - Vector3(0, 0.02, 0), Mats.get_mat("light_off" if broken else "light_panel"), false)
+	box(Vector3(1.26, 0.03, 0.66), pos - Vector3(0, 0.01, 0), Mats.get_mat("frame"), false)
 	if broken:
 		return
-	var l := OmniLight3D.new()
-	l.position = pos - Vector3(0, 0.35, 0)
-	l.omni_range = 7.5
-	l.light_energy = lerpf(1.3, 0.5, darkness)
-	l.light_color = Color(1.0, 0.98, 0.92)
-	l.omni_attenuation = 1.2
-	add_child(l)
+	# a soft downward spot for the floor + a weak fill so walls and ceiling aren't black.
+	# the light sits under the panel, not inside the room, so the ceiling doesn't blow out
+	var energy := lerpf(1.0, 0.45, darkness)
+	var s := SpotLight3D.new()
+	s.position = pos - Vector3(0, 0.06, 0)
+	s.rotation.x = -PI / 2
+	s.spot_angle = 68.0
+	s.spot_range = pos.y + 1.0
+	s.spot_attenuation = 0.9
+	s.light_energy = energy * 2.2
+	s.light_specular = 0.25
+	s.light_color = Color(1.0, 0.97, 0.9)
+	add_child(s)
+	var f := OmniLight3D.new()
+	f.position = pos - Vector3(0, 0.9, 0)
+	f.omni_range = 5.5
+	f.omni_attenuation = 1.6
+	f.light_energy = energy * 0.35
+	f.light_specular = 0.0
+	f.light_color = Color(1.0, 0.97, 0.9)
+	add_child(f)
 	if rng.randf() < 0.06 + darkness * 0.25:
-		_flicker.append(l)
+		_flicker.append(s)
+		_flicker.append(f)
+
 
 
 func add_locker(pos: Vector3, yaw: float) -> Locker:

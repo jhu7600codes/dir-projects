@@ -1,16 +1,19 @@
 extends Node
-## save data: best door, gold, achievements and a few stats. user://save.json
+## save data: best door, gold, achievements, a few stats and the run in progress
+## (so you can continue where you left off). user://save.json
 ## admin runs lock the save: changes happen in memory and are thrown away after the run.
 
 const PATH := "user://save.json"
 
 var data := {
 	"best_door": 0,
-	"gold": 0,
+	"gold": 100,  # starter gold
+	"starter_gold_given": true,
 	"achievements": {},  # id -> unix time unlocked
 	"deaths": 0,
 	"runs": 0,
 	"exits": 0,
+	"run": {},  # the run in progress, empty when there is none
 }
 var locked := false
 var _backup := {}
@@ -27,6 +30,11 @@ func load_data() -> void:
 	if parsed is Dictionary:
 		for k in parsed:
 			data[k] = parsed[k]
+		# saves from before starter gold existed get it once
+		if not parsed.has("starter_gold_given"):
+			data.gold = int(data.gold) + 100
+			data.starter_gold_given = true
+			write()
 
 
 func write() -> void:
@@ -44,6 +52,25 @@ func set_locked(on: bool) -> void:
 	elif not on and locked:
 		data = _backup
 	locked = on
+
+
+func has_run() -> bool:
+	return data.get("run", {}) is Dictionary and not data.run.is_empty()
+
+
+## called on every door and when you quit to the title screen
+func save_run(run: Dictionary) -> void:
+	if locked:
+		return
+	data.run = run
+	write()
+
+
+func clear_run() -> void:
+	if locked:
+		return
+	data.run = {}
+	write()
 
 
 func add_gold(amount: int) -> void:

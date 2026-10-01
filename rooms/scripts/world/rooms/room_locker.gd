@@ -13,6 +13,6 @@ func build() -> void:
 		add_locker(Vector3(w / 2 - 0.4, 0, z), -PI / 2)
 		add_locker(Vector3(-w / 2 + 0.4, 0, z), PI / 2)
 		z += 1.0
-	Props.table(self, Vector3(0, 0, length * 0.5), 0.0, Vector3(1.0, 0.45, 2.4))
-	scatter_loot([Vector3(0, 0.47, length * 0.5)])
+	Props.table(self, Vector3(0, 0, length * 0.5), 0.0, Vector3(1.0, 0.8, 2.4))
+	scatter_loot([Vector3(0, 0.82, length * 0.5)])
 	make_path([Vector3(1.0, 0, length * 0.3), Vector3(1.0, 0, length * 0.7)])

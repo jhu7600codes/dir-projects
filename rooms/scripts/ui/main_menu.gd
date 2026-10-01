@@ -25,7 +25,11 @@ func _ready() -> void:
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(stats)
 	v.add_child(Control.new())
-	v.add_child(UIKit.button("play", func(): Game.start_run(_admin), 24))
+	if Save.has_run():
+		v.add_child(UIKit.button("continue (%s)" % Game.door_label(int(Save.data.run.get("door", 0))), Game.continue_run, 24))
+		v.add_child(UIKit.button("new run", func(): Game.start_run(_admin), 20))
+	else:
+		v.add_child(UIKit.button("play", func(): Game.start_run(_admin), 24))
 	var adm := UIKit.check("enable admin panel (progress won't be saved)", false, func(on): _admin = on)
 	v.add_child(adm)
 	v.add_child(UIKit.button("achievements", func(): add_child(AchievementsScreen.new())))

@@ -2,6 +2,12 @@ class_name Props
 ## office furniture. each prop tries the manifest model first and falls back to
 ## a few placeholder boxes. everything is added to the given room.
 
+## furniture heights. these are a bit taller than real life on purpose, so they read right
+## from the player's camera height (like in doors)
+const TABLE_H := 1.0
+const COUNTER_H := 1.05
+const SEAT_H := 0.6
+
 
 static func _model(room: RoomBase, key: String, pos: Vector3, yaw: float) -> bool:
 	var m := Assets.model(key)
@@ -13,7 +19,7 @@ static func _model(room: RoomBase, key: String, pos: Vector3, yaw: float) -> boo
 	return true
 
 
-static func table(room: RoomBase, pos: Vector3, yaw := 0.0, size := Vector3(1.6, 0.76, 0.8)) -> void:
+static func table(room: RoomBase, pos: Vector3, yaw := 0.0, size := Vector3(1.6, TABLE_H, 0.8)) -> void:
 	if _model(room, "table", pos, yaw):
 		room.box(Vector3(size.x, size.y, size.z), pos + Vector3(0, size.y / 2, 0), Mats.get_mat("wood"), true, yaw).visible = false
 		return
@@ -35,9 +41,11 @@ static func chair(room: RoomBase, pos: Vector3, yaw := 0.0, fallen := false) -> 
 		holder.rotation.x = -PI / 2
 		holder.position.y += 0.25
 	room.add_child(holder)
-	room.box(Vector3(0.5, 0.06, 0.5), Vector3(0, 0.45, 0), Mats.get_mat("fabric"), false, 0.0, holder)
-	room.box(Vector3(0.5, 0.5, 0.06), Vector3(0, 0.72, -0.24), Mats.get_mat("fabric"), false, 0.0, holder)
-	room.box(Vector3(0.06, 0.45, 0.06), Vector3(0, 0.22, 0), Mats.get_mat("metal"), false, 0.0, holder)
+	room.box(Vector3(0.55, 0.07, 0.55), Vector3(0, SEAT_H, 0), Mats.get_mat("fabric"), false, 0.0, holder)
+	room.box(Vector3(0.55, 0.6, 0.07), Vector3(0, SEAT_H + 0.33, -0.26), Mats.get_mat("fabric"), false, 0.0, holder)
+	room.box(Vector3(0.06, SEAT_H, 0.06), Vector3(0, SEAT_H / 2, 0), Mats.get_mat("metal"), false, 0.0, holder)
+	room.box(Vector3(0.5, 0.04, 0.06), Vector3(0, 0.03, 0), Mats.get_mat("metal"), false, 0.0, holder)
+	room.box(Vector3(0.06, 0.04, 0.5), Vector3(0, 0.03, 0), Mats.get_mat("metal"), false, 0.0, holder)
 
 
 static func plant(room: RoomBase, pos: Vector3, fallen := false) -> void:
@@ -49,14 +57,14 @@ static func plant(room: RoomBase, pos: Vector3, fallen := false) -> void:
 		holder.rotation.z = PI / 2
 		holder.position.y += 0.2
 	room.add_child(holder)
-	room.box(Vector3(0.36, 0.4, 0.36), Vector3(0, 0.2, 0), Mats.get_mat("pot"), false, 0.0, holder)
+	room.box(Vector3(0.3, 0.34, 0.3), Vector3(0, 0.17, 0), Mats.get_mat("pot"), false, 0.0, holder)
 	var leaves := MeshInstance3D.new()
 	var sm := SphereMesh.new()
-	sm.radius = 0.35
-	sm.height = 0.8
+	sm.radius = 0.28
+	sm.height = 0.62
 	leaves.mesh = sm
 	leaves.material_override = Mats.get_mat("plant")
-	leaves.position = Vector3(0, 0.75, 0)
+	leaves.position = Vector3(0, 0.6, 0)
 	holder.add_child(leaves)
 
 
@@ -84,9 +92,9 @@ static func cubicle(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
 	# three low walls + a desk with a drawer inside
 	var b := Basis(Vector3.UP, yaw)
 	var mat := Mats.get_mat("cubicle")
-	room.box(Vector3(2.2, 1.4, 0.08), pos + b * Vector3(0, 0.7, -1.0), mat, true, yaw)
-	room.box(Vector3(0.08, 1.4, 2.0), pos + b * Vector3(-1.1, 0.7, 0), mat, true, yaw)
-	room.box(Vector3(0.08, 1.4, 2.0), pos + b * Vector3(1.1, 0.7, 0), mat, true, yaw)
+	room.box(Vector3(2.2, 1.6, 0.08), pos + b * Vector3(0, 0.8, -1.0), mat, true, yaw)
+	room.box(Vector3(0.08, 1.6, 2.0), pos + b * Vector3(-1.1, 0.8, 0), mat, true, yaw)
+	room.box(Vector3(0.08, 1.6, 2.0), pos + b * Vector3(1.1, 0.8, 0), mat, true, yaw)
 	room.add_drawer_desk(pos + b * Vector3(0, 0, -0.6), yaw)
 	if room.rng.randf() < 0.5:
 		chair(room, pos + b * Vector3(room.rng.randf_range(-0.5, 0.5), 0, 0.2), yaw + room.rng.randf_range(-1, 1), room.rng.randf() < 0.4)
@@ -99,8 +107,8 @@ static func fridge(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
 
 
 static func counter(room: RoomBase, pos: Vector3, yaw := 0.0, length := 3.0) -> void:
-	room.box(Vector3(length, 0.9, 0.65), pos + Vector3(0, 0.45, 0), Mats.get_mat("wood"), true, yaw)
-	room.box(Vector3(length + 0.05, 0.05, 0.7), pos + Vector3(0, 0.92, 0), Mats.get_mat("plastic"), false, yaw)
+	room.box(Vector3(length, COUNTER_H - 0.05, 0.65), pos + Vector3(0, (COUNTER_H - 0.05) / 2, 0), Mats.get_mat("wood"), true, yaw)
+	room.box(Vector3(length + 0.05, 0.05, 0.7), pos + Vector3(0, COUNTER_H - 0.025, 0), Mats.get_mat("plastic"), false, yaw)
 
 
 static func water_dispenser(room: RoomBase, pos: Vector3, broken := false) -> void:

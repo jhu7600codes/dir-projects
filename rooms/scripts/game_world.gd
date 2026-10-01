@@ -46,9 +46,14 @@ func _ready() -> void:
 	Game.player_died.connect(_on_died)
 	Game.run_finished.connect(_on_finished)
 
-	generator.start(randi())
-	player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 2.0)))
-	Game.set_door(0)
+	var run := Game.pending_run
+	Game.pending_run = {}
+	if run.is_empty():
+		generator.start(randi())
+		player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 2.0)))
+		Game.set_door(0)
+	else:
+		_load_run(run)
 
 	_ambience = AudioStreamPlayer.new()
 	_ambience.stream = Assets.sound("ambience")
@@ -62,17 +67,38 @@ func _ready() -> void:
 	hud.notify("open the door to start. hide in lockers when you hear something.")
 
 
+## continue a saved run: same seed, same door, same items
+func _load_run(run: Dictionary) -> void:
+	var n := int(run.get("door", 1))
+	generator.start(int(run.get("seed", randi())), n)
+	player.teleport(generator.room(n).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 1.2)))
+	player.health = float(run.get("health", 100.0))
+	Game.used_locker = bool(run.get("used_locker", false))
+	var items: Dictionary = run.get("items", {})
+	for k in items:
+		var cur = player.inventory.get(k)
+		# json turns every number into a float, put ints back as ints
+		player.inventory.set(k, int(items[k]) if cur is int else items[k])
+	player.inventory.changed.emit()
+	Game.door = n
+	Game.door_changed.emit(n)
+	player.select_item(str(run.get("selected", "flashlight")))
+	hud.notify("welcome back. you're at " + Game.door_label(n))
+
+
 func _make_environment() -> void:
 	env = Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Color(0.0, 0.0, 0.0)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.9, 0.9, 0.95)
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	env.tonemap_exposure = 1.1
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.08, 0.08, 0.09)
 	env.glow_enabled = int(Settings.data.quality) >= 1
-	env.glow_intensity = 0.6
+	env.glow_intensity = 0.35
+	env.glow_hdr_threshold = 1.2
 	env.ssao_enabled = int(Settings.data.quality) >= 2
 	var we := WorldEnvironment.new()
 	we.environment = env
@@ -123,6 +149,7 @@ func _on_died(cause: String) -> void:
 	if _ended:
 		return
 	_ended = true
+	Save.clear_run()
 	if not Game.admin:
 		Save.data.deaths = int(Save.data.deaths) + 1
 		Save.write()
@@ -143,6 +170,7 @@ func _on_finished(reason: String) -> void:
 	if _ended:
 		return
 	_ended = true
+	Save.clear_run()
 	entities.clear_all()
 	if reason == "a1000":
 		Achievements.unlock("a1000")

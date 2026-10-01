@@ -36,13 +36,10 @@ const HALLWAY := preload(R + "room_hallway.gd")
 var rooms: Array[RoomBase] = []
 var run_seed := 0
 var _heading := 0       # -1, 0, 1: which way the hallway currently points
-var _next_exit := 0     # door number of the next exit room
-var _last_type := ""
 
 
 func start(seed_value: int, first_door := 0) -> void:
 	run_seed = seed_value
-	_next_exit = 200 + _rng_for(7).randi_range(5, 60)
 	for r in rooms:
 		r.queue_free()
 	rooms.clear()
@@ -73,17 +70,38 @@ func _rng_for(n: int) -> RandomNumberGenerator:
 	return rng
 
 
-func _pick_script(n: int, rng: RandomNumberGenerator) -> Script:
+## which room goes at door n. only depends on the run seed and n (not on earlier rooms),
+## so a saved run rebuilds exactly the same rooms when you continue it.
+func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
 	if special.has(n):
 		return special[n]
-	# exit rooms: on schedule every 50-100 rooms after a-200, and rarely earlier than planned
-	if n > 200 and n < Game.LAST_DOOR - 5 and (n >= _next_exit or rng.randf() < 0.006):
-		_next_exit = n + rng.randi_range(50, 100)
+	if _is_exit_room(n):
 		return EXIT_ROOM
+	var s := _weighted_pick(n, 0)
+	# never the same room type twice in a row
+	if s == _weighted_pick(n - 1, 0):
+		s = _weighted_pick(n, 1)
+	return s
+
+
+## exit rooms after a-200: one in every block of 75 doors, placed 25-50 doors into the
+## block, so they're 50-100 rooms apart. rarely one shows up early as a bonus.
+func _is_exit_room(n: int) -> bool:
+	if n <= 200 or n >= Game.LAST_DOOR - 5:
+		return false
+	var block := (n - 201) / 75
+	var offset := _rng_for(-1000 - block).randi_range(25, 50)
+	if (n - 201) % 75 == offset:
+		return true
+	return _rng_for(n * 31 + 7).randf() < 0.006
+
+
+func _weighted_pick(n: int, attempt: int) -> Script:
+	var rng := _rng_for(n * 17 + attempt * 100003)
 	var total := 0
 	var options := []
 	for p in pool:
-		if n >= p.min and p.script.resource_path != _last_type:
+		if n >= p.min:
 			options.append(p)
 			total += p.weight
 	var roll := rng.randi_range(1, total)
@@ -106,7 +124,6 @@ func _spawn(n: int, at = null) -> RoomBase:
 	if r == null:
 		Glitch.failsafe("room a-%03d could not be generated" % n)
 		return null
-	_last_type = script.resource_path
 	var xf: Transform3D = at if at != null else (newest().global_exit() if newest() else Transform3D.IDENTITY)
 	r.transform = xf
 	add_child(r)

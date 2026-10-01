@@ -92,6 +92,8 @@ func _placeholder_image(p: Dictionary) -> Image:
 			return _img_sign(c1, str(p.get("style", "stop")))
 		"star":
 			return _img_star(c1)
+		"wallpaper", "carpet", "tiles", "wood", "metal":
+			return _img_surface(kind, c1, c2)
 	var img := Image.create(8, 8, false, Image.FORMAT_RGBA8)
 	img.fill(c1)
 	return img
@@ -109,6 +111,58 @@ func _img_noise(a: Color, b: Color, scale: float) -> Image:
 			img.set_pixel(x, y, a.lerp(b, clampf(v, 0.0, 1.0)))
 	img.generate_mipmaps()
 	return img
+
+
+## seamless surface textures (they tile with no visible seams). 256px each.
+##   wallpaper: off-white with faint vertical stripes   carpet: fine grain + soft blotches
+##   tiles: 2x2 acoustic ceiling tiles with grooves     wood: grain lines
+##   metal: brushed horizontal streaks
+func _img_surface(kind: String, a: Color, b: Color) -> Image:
+	const S := 256
+	var big := _seamless(S, 0.012, 1)
+	var fine := _seamless(S, 0.25, 2)
+	var img := Image.create(S, S, false, Image.FORMAT_RGBA8)
+	for y in S:
+		for x in S:
+			var n1 := big.get_pixel(x, y).r
+			var n2 := fine.get_pixel(x, y).r
+			var t := 0.0
+			match kind:
+				"wallpaper":
+					var stripe := 0.5 + 0.5 * sin(TAU * x * 8.0 / S)
+					t = n1 * 0.45 + n2 * 0.25 + stripe * 0.12
+				"carpet":
+					t = n2 * 0.7 + n1 * 0.4
+				"tiles":
+					t = n2 * 0.5 + n1 * 0.2
+					# small dark pits like acoustic tiles
+					if fine.get_pixel((x * 7) % S, (y * 5) % S).r > 0.82:
+						t = 1.0
+				"wood":
+					t = 0.5 + 0.5 * sin(TAU * (y * 6.0 / S) + n1 * 9.0)
+					t = t * 0.75 + n2 * 0.25
+				"metal":
+					t = fine.get_pixel(x, (y * 3) % S).r * 0.35 + n1 * 0.4 + fine.get_pixel((x * 9) % S, y).r * 0.25
+			var c := a.lerp(b, clampf(t, 0.0, 1.0))
+			if kind == "tiles":
+				# grooves between tiles: texture holds 2x2 tiles
+				var gx := x % (S / 2)
+				var gy := y % (S / 2)
+				if gx < 3 or gy < 3:
+					c = c.darkened(0.35)
+				elif gx < 5 or gy < 5:
+					c = c.lightened(0.08)
+			img.set_pixel(x, y, c)
+	img.generate_mipmaps()
+	return img
+
+
+func _seamless(size: int, freq: float, seed_value: int) -> Image:
+	var n := FastNoiseLite.new()
+	n.seed = seed_value
+	n.frequency = freq
+	n.fractal_octaves = 3
+	return n.get_seamless_image(size, size, false, false, 0.2, true)
 
 
 func _img_grid(base: Color, line: Color) -> Image:
