@@ -139,8 +139,8 @@ func _img_surface(kind: String, a: Color, b: Color) -> Image:
 					if fine.get_pixel((x * 7) % S, (y * 5) % S).r > 0.82:
 						t = 1.0
 				"wood":
-					t = 0.5 + 0.5 * sin(TAU * (y * 6.0 / S) + n1 * 9.0)
-					t = t * 0.75 + n2 * 0.25
+					t = 0.5 + 0.5 * sin(TAU * (y * 10.0 / S) + n1 * 4.0)
+					t = t * 0.35 + n2 * 0.25 + n1 * 0.4
 				"metal":
 					t = fine.get_pixel(x, (y * 3) % S).r * 0.35 + n1 * 0.4 + fine.get_pixel((x * 9) % S, y).r * 0.25
 			var c := a.lerp(b, clampf(t, 0.0, 1.0))

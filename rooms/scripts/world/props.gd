@@ -34,58 +34,50 @@ static func table(room: RoomBase, pos: Vector3, yaw := 0.0, size := Vector3(1.6,
 static func chair(room: RoomBase, pos: Vector3, yaw := 0.0, fallen := false) -> void:
 	if _model(room, "chair_fallen" if fallen else "chair", pos, yaw):
 		return
-	var holder := Node3D.new()
-	holder.position = pos
-	holder.rotation.y = yaw
+	var c := PropModels.office_chair(SEAT_H)
+	c.position = pos
+	c.rotation.y = yaw
 	if fallen:
-		holder.rotation.x = -PI / 2
-		holder.position.y += 0.25
-	room.add_child(holder)
-	room.box(Vector3(0.55, 0.07, 0.55), Vector3(0, SEAT_H, 0), Mats.get_mat("fabric"), false, 0.0, holder)
-	room.box(Vector3(0.55, 0.6, 0.07), Vector3(0, SEAT_H + 0.33, -0.26), Mats.get_mat("fabric"), false, 0.0, holder)
-	room.box(Vector3(0.06, SEAT_H, 0.06), Vector3(0, SEAT_H / 2, 0), Mats.get_mat("metal"), false, 0.0, holder)
-	room.box(Vector3(0.5, 0.04, 0.06), Vector3(0, 0.03, 0), Mats.get_mat("metal"), false, 0.0, holder)
-	room.box(Vector3(0.06, 0.04, 0.5), Vector3(0, 0.03, 0), Mats.get_mat("metal"), false, 0.0, holder)
+		# tipped over backwards, lying on its back
+		c.rotation.x = -PI / 2 + 0.15
+		c.position.y += 0.28
+	room.add_child(c)
 
 
 static func plant(room: RoomBase, pos: Vector3, fallen := false) -> void:
 	if _model(room, "plant_fallen" if fallen else "plant", pos, room.rng.randf() * TAU):
 		return
-	var holder := Node3D.new()
-	holder.position = pos
+	var kinds := ["fern", "fern", "snake", "bush"]
+	var p := PropModels.plant(kinds[room.rng.randi() % kinds.size()], room.rng.randi() % 3)
+	p.position = pos
+	p.rotation.y = room.rng.randf() * TAU
 	if fallen:
-		holder.rotation.z = PI / 2
-		holder.position.y += 0.2
-	room.add_child(holder)
-	room.box(Vector3(0.3, 0.34, 0.3), Vector3(0, 0.17, 0), Mats.get_mat("pot"), false, 0.0, holder)
-	var leaves := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 0.28
-	sm.height = 0.62
-	leaves.mesh = sm
-	leaves.material_override = Mats.get_mat("plant")
-	leaves.position = Vector3(0, 0.6, 0)
-	holder.add_child(leaves)
+		p.rotation.z = PI / 2 - 0.1
+		p.position.y += 0.17
+		# a bit of spilled soil
+		room.box(Vector3(0.5, 0.01, 0.35), pos + Vector3(0.35, 0.005, 0), PropModels._mat("soil", Color(0.16, 0.11, 0.08), 1.0), false, room.rng.randf() * TAU)
+	room.add_child(p)
 
 
 static func couch(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
-	if _model(room, "couch", pos, yaw):
-		return
+	if not _model(room, "couch", pos, yaw):
+		var c := PropModels.couch()
+		c.position = pos
+		c.rotation.y = yaw
+		room.add_child(c)
+	# collision only
 	var b := Basis(Vector3.UP, yaw)
-	room.box(Vector3(2.0, 0.45, 0.85), pos + Vector3(0, 0.22, 0), Mats.get_mat("fabric"), true, yaw)
-	room.box(Vector3(2.0, 0.5, 0.2), pos + b * Vector3(0, 0.7, -0.33), Mats.get_mat("fabric"), true, yaw)
-	for sx in [-1, 1]:
-		room.box(Vector3(0.2, 0.3, 0.85), pos + b * Vector3(sx * 0.95, 0.55, 0), Mats.get_mat("fabric"), true, yaw)
+	room.box(Vector3(2.0, 0.5, 0.85), pos + Vector3(0, 0.25, 0), Mats.get_mat("fabric"), true, yaw).visible = false
+	room.box(Vector3(2.0, 0.6, 0.22), pos + b * Vector3(0, 0.8, -0.33), Mats.get_mat("fabric"), true, yaw).visible = false
 
 
 static func shelf(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
-	if _model(room, "shelf", pos, yaw):
-		return
-	room.box(Vector3(1.4, 2.0, 0.45), pos + Vector3(0, 1.0, 0), Mats.get_mat("metal"), true, yaw)
-	for i in 3:
-		if room.rng.randf() < 0.6:
-			var off := Basis(Vector3.UP, yaw) * Vector3(room.rng.randf_range(-0.4, 0.4), 0.55 + i * 0.6, 0.15)
-			room.box(Vector3(0.35, 0.25, 0.3), pos + off, Mats.get_mat("paper"), false, yaw)
+	if not _model(room, "shelf", pos, yaw):
+		var s := PropModels.shelf(room.rng)
+		s.position = pos
+		s.rotation.y = yaw
+		room.add_child(s)
+	room.box(Vector3(1.4, 2.0, 0.45), pos + Vector3(0, 1.0, 0), Mats.get_mat("metal"), true, yaw).visible = false
 
 
 static func cubicle(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
@@ -101,9 +93,12 @@ static func cubicle(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
 
 
 static func fridge(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
-	if _model(room, "fridge", pos, yaw):
-		return
-	room.box(Vector3(0.8, 1.9, 0.7), pos + Vector3(0, 0.95, 0), Mats.get_mat("plastic"), true, yaw)
+	if not _model(room, "fridge", pos, yaw):
+		var f := PropModels.fridge()
+		f.position = pos
+		f.rotation.y = yaw
+		room.add_child(f)
+	room.box(Vector3(0.8, 1.9, 0.7), pos + Vector3(0, 0.95, 0), Mats.get_mat("plastic"), true, yaw).visible = false
 
 
 static func counter(room: RoomBase, pos: Vector3, yaw := 0.0, length := 3.0) -> void:

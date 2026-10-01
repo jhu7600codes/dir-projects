@@ -26,12 +26,14 @@ func _ready() -> void:
 	_flash.spot_attenuation = 0.8
 	_flash.shadow_enabled = int(Settings.data.quality) > 0
 	_flash.position = Vector3(0.2, -0.15, 0)
+	_flash.light_cull_mask = ~Viewmodel.LAYER  # don't light up your own hand
 	add_child(_flash)
 	_shake = SpotLight3D.new()
 	_shake.light_color = Color(0.45, 1.0, 0.5)
 	_shake.spot_range = 12.0
 	_shake.spot_angle = 40.0
 	_shake.position = Vector3(0.2, -0.15, 0)
+	_shake.light_cull_mask = ~Viewmodel.LAYER
 	add_child(_shake)
 	_audio = AudioStreamPlayer3D.new()
 	_audio.bus = "SFX"
