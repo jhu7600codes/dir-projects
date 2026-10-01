@@ -14,6 +14,9 @@ var _ended := false
 
 func _ready() -> void:
 	_make_environment()
+	# build the entity glow sprites now, so the first a-60 doesn't stutter
+	for k in ["a60_face_1", "a60_face_2", "a60_face_3", "a60b_face", "a120_face", "a200_face"]:
+		Assets.glow_texture(k)
 
 	generator = RoomGenerator.new()
 	generator.name = "Rooms"

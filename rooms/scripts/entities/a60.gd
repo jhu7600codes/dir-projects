@@ -25,7 +25,7 @@ func begin() -> void:
 	place(true)
 	setup_look("a60_face_1", Color(1.0, 0.15, 0.1), 2.6)
 	for k in ["a60_face_1", "a60_face_2", "a60_face_3"]:
-		_faces.append(Assets.texture(k))
+		_faces.append(Assets.glow_texture(k))
 	set_visible_body(false)
 	var rumble := make_3d_audio("a60_rumble", 30.0, 200.0)
 	rumble.play()

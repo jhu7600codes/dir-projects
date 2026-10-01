@@ -66,7 +66,7 @@ func after(seconds: float, what: Callable) -> void:
 ## glowing billboard. additive blending, so black backgrounds in the art disappear
 func make_sprite(tex_key: String, size := 2.2) -> Sprite3D:
 	var s := Sprite3D.new()
-	s.texture = Assets.texture(tex_key)
+	s.texture = Assets.glow_texture(tex_key)
 	s.pixel_size = size / maxf(1.0, s.texture.get_height())
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

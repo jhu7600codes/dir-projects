@@ -60,6 +60,39 @@ func texture(key: String) -> Texture2D:
 	return tex
 
 
+## entity sprite version of a texture: the edges fade out in a soft circle, so wiki renders
+## that come on a solid square background (like a-60's red one) turn into a glow
+func glow_texture(key: String) -> Texture2D:
+	var ck := "glow:" + key
+	if _cache.has(ck):
+		return _cache[ck]
+	var src := texture(key)
+	var img := src.get_image()
+	if img == null:
+		return src
+	img = img.duplicate()
+	if img.is_compressed():
+		img.decompress()
+	img.clear_mipmaps()
+	img.convert(Image.FORMAT_RGBA8)
+	var w := img.get_width()
+	var h := img.get_height()
+	var c := Vector2(w, h) / 2.0
+	var r := minf(w, h) / 2.0
+	for y in h:
+		for x in w:
+			var d := Vector2(x, y).distance_to(c) / r
+			var fade := clampf((1.0 - d) / 0.7, 0.0, 1.0)
+			if fade < 1.0:
+				var px := img.get_pixel(x, y)
+				px.a *= fade * fade
+				img.set_pixel(x, y, px)
+	img.generate_mipmaps()
+	var t := ImageTexture.create_from_image(img)
+	_cache[ck] = t
+	return t
+
+
 ## true when the real file exists (used to skip placeholder-only tricks like tinting)
 func has_real(section: String, key: String) -> bool:
 	return _have_file(entry(section, key).get("path", ""))

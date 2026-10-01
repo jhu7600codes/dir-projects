@@ -43,7 +43,34 @@ func _ready() -> void:
 	CreditsScreen.check_all()
 
 
-## a real hallway from the game, rendered behind the menu with a slow drifting camera
+## shots for the background: real places from the game, each shown for a few seconds
+## with a slow camera move, then a fade to the next one.
+##   door: which room, z: how far in the camera starts, dolly: meters it moves forward,
+##   dark: 0 lit .. 1 pitch black, light: camera carries a flashlight, a60: a-60 glimpse
+const SHOTS := [
+	{"door": 118, "z": 0.8, "dolly": 8.0, "dark": 0.7, "light": true},
+	{"door": 0, "z": 1.0, "dolly": 5.0, "dark": 0.0, "light": false},
+	{"door": 100, "z": 4.0, "dolly": 16.0, "dark": 0.45, "light": false},
+	{"door": 47, "z": 0.8, "dolly": 3.0, "dark": 0.15, "light": false, "a60": true},
+	{"door": -1, "z": 1.0, "dolly": 3.5, "dark": 0.6, "light": false},  # -1 = an exit room
+	{"door": 165, "z": 0.8, "dolly": 7.0, "dark": 1.0, "light": true},
+	{"door": 1000, "z": 3.0, "dolly": 22.0, "dark": 1.0, "light": false},
+]
+const SHOT_TIME := 9.0
+const SEED := 77031
+
+var _gen: RoomGenerator
+var _env: Environment
+var _cam_light: SpotLight3D
+var _fade: ColorRect
+var _place: Label
+var _shot := -1
+var _shot_t := 0.0
+var _dolly := 0.0
+var _extra: Node3D  # per-shot things like the a-60 glimpse
+var _fading := false
+
+
 func _make_backdrop() -> void:
 	var box := SubViewportContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -54,38 +81,107 @@ func _make_backdrop() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_2X
 	box.add_child(vp)
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color.BLACK
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.8, 0.85, 1.0)
-	env.ambient_light_energy = 0.12
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.02, 0.02, 0.025)
-	env.fog_density = 0.06
-	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.glow_enabled = true
-	env.glow_intensity = 0.4
+	_env = Environment.new()
+	_env.background_mode = Environment.BG_COLOR
+	_env.background_color = Color.BLACK
+	_env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	_env.ambient_light_color = Color(0.8, 0.85, 1.0)
+	_env.fog_enabled = true
+	_env.fog_light_color = Color(0.02, 0.02, 0.025)
+	_env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	_env.glow_enabled = true
+	_env.glow_intensity = 0.4
 	var we := WorldEnvironment.new()
-	we.environment = env
+	we.environment = _env
 	vp.add_child(we)
-	var gen := RoomGenerator.new()
-	vp.add_child(gen)
-	# a long locker-ish stretch somewhere past a-100, dim and foggy
-	gen.start(77031, 118)
+	_gen = RoomGenerator.new()
+	_gen.run_seed = SEED
+	vp.add_child(_gen)
 	_cam = Camera3D.new()
 	_cam.fov = 62
-	_cam_start = gen.room(118).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 1.55, 0.8))
-	_cam.transform = _cam_start
 	vp.add_child(_cam)
 	_cam.current = true
-	# a weak flashlight-like glow so the hallway reads
-	var l := SpotLight3D.new()
-	l.spot_angle = 30
-	l.spot_range = 18
-	l.light_energy = 1.0
-	l.light_color = Color(1, 0.95, 0.85)
-	_cam.add_child(l)
+	_cam_light = SpotLight3D.new()
+	_cam_light.spot_angle = 30
+	_cam_light.spot_range = 18
+	_cam_light.light_color = Color(1, 0.95, 0.85)
+	_cam.add_child(_cam_light)
+	# black overlay for the fades between shots
+	_fade = ColorRect.new()
+	_fade.color = Color.BLACK
+	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_fade)
+	# where we are, written small in the corner
+	_place = Label.new()
+	_place.add_theme_font_override("font", Assets.font("handwriting"))
+	_place.add_theme_font_size_override("font_size", 28)
+	_place.add_theme_color_override("font_color", Color(0.95, 0.85, 0.4, 0.8))
+	_place.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	_place.offset_left = -160
+	_place.offset_top = -56
+	_place.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_place)
+	_next_shot()
+
+
+func _next_shot() -> void:
+	_shot = (_shot + 1) % SHOTS.size()
+	var sh: Dictionary = SHOTS[_shot]
+	var n: int = sh.door
+	if n == -1:
+		n = 260
+		for k in range(201, 600):
+			if _gen._is_exit_room(k):
+				n = k
+				break
+	_gen.start(SEED, n)
+	var r := _gen.room(n)
+	_cam_start = r.global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 1.55, float(sh.z)))
+	if sh.door == -1:
+		# look toward the hole in the wall where the exit door glows
+		_cam_start = _cam_start.rotated_local(Vector3.UP, -0.5)
+	_dolly = float(sh.dolly)
+	var d: float = sh.dark
+	_env.ambient_light_energy = lerpf(0.3, 0.02, d)
+	_env.fog_density = lerpf(0.01, 0.07, d)
+	_cam_light.visible = sh.light
+	_cam_light.light_energy = 1.2
+	if _extra:
+		_extra.queue_free()
+		_extra = null
+	if sh.get("a60", false):
+		_extra = _a60_glimpse(r)
+		_gen.add_child(_extra)
+	_place.text = Game.door_label(n)
+	_shot_t = 0.0
+	_cam.transform = _cam_start
+	var tw := create_tween()
+	tw.tween_property(_fade, "color:a", 0.0, 1.0)
+
+
+## a red glow with a face at the far end of the room, rushing past slowly
+func _a60_glimpse(r: RoomBase) -> Node3D:
+	var root := Node3D.new()
+	var pts := r.path_global()
+	root.position = pts[pts.size() - 1] + Vector3(0, 0.2, 0)
+	var s := Sprite3D.new()
+	s.texture = Assets.glow_texture("a60_face_1")
+	s.pixel_size = 2.4 / maxf(1.0, s.texture.get_height())
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_texture = s.texture
+	s.material_override = m
+	root.add_child(s)
+	var l := OmniLight3D.new()
+	l.light_color = Color(1, 0.15, 0.1)
+	l.light_energy = 3.0
+	l.omni_range = 9.0
+	root.add_child(l)
+	return root
 
 
 func _make_menu() -> void:
@@ -158,11 +254,22 @@ func _menu_button(text: String, on_press: Callable, size := 22) -> Button:
 func _process(delta: float) -> void:
 	_t += delta
 	if _cam:
-		# slow drift down the hallway with a little sway, loops every 40 seconds
-		var k := fmod(_t, 40.0) / 40.0
-		var sway := Vector3(sin(_t * 0.4) * 0.15, sin(_t * 0.7) * 0.04, 0)
-		_cam.transform = _cam_start.translated_local(Vector3(0, 0, -k * 9.0) + sway)
-		_cam.rotate_object_local(Vector3.UP, sin(_t * 0.23) * 0.08)
+		_shot_t += delta
+		var k := _shot_t / SHOT_TIME
+		var sway := Vector3(sin(_t * 0.4) * 0.12, sin(_t * 0.7) * 0.035, 0)
+		_cam.transform = _cam_start.translated_local(Vector3(0, 0, -k * _dolly) + sway)
+		_cam.rotate_object_local(Vector3.UP, sin(_t * 0.23) * 0.06)
+		if _extra:
+			# the a-60 glimpse slides across the far doorway
+			_extra.get_child(0).modulate.a = 0.6 + randf() * 0.4
+		# fade out near the end of the shot, then cut to the next one
+		if _shot_t > SHOT_TIME - 1.0 and _fade.color.a < 0.01 and not _fading:
+			_fading = true
+			var tw := create_tween()
+			tw.tween_property(_fade, "color:a", 1.0, 0.9)
+			tw.tween_callback(func():
+				_fading = false
+				_next_shot())
 	# the title flickers now and then like a dying light
 	_flicker -= delta
 	if _flicker <= 0.0:
