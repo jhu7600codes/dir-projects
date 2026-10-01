@@ -1,0 +1,734 @@
+{
+ "_readme": [
+  "every game object loads its file through this manifest, swap paths here without touching code.",
+  "paths can point to imported godot resources or raw files (png jpg webp ogg mp3 wav glb gltf ttf).",
+  "if a file is missing the game uses the placeholder described next to it and prints a warning.",
+  "'source' = where tools/fetch_assets.py downloads it from (fandom wiki file name). no source = drop your own file at 'path'.",
+  "everything under assets/local/ is gitignored: those files are from the original games and only for personal use."
+ ],
+ "icon": {
+  "path": "res://assets/local/icon.png",
+  "source": {
+   "wiki": "r-rooms",
+   "file": "Rooms_icon.png"
+  }
+ },
+ "textures": {
+  "wall": {
+   "path": "res://assets/local/textures/wall.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#e9e7e1",
+    "color2": "#d4d1c8",
+    "scale": 0.05
+   }
+  },
+  "carpet_red": {
+   "path": "res://assets/local/textures/carpet_red.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#7a1b1b",
+    "color2": "#561010",
+    "scale": 0.3
+   }
+  },
+  "carpet_blue": {
+   "path": "res://assets/local/textures/carpet_blue.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#25365e",
+    "color2": "#18223f",
+    "scale": 0.3
+   }
+  },
+  "ceiling": {
+   "path": "res://assets/local/textures/ceiling.png",
+   "placeholder": {
+    "kind": "grid",
+    "color": "#e4e4e0",
+    "color2": "#a9a9a4"
+   }
+  },
+  "door": {
+   "path": "res://assets/local/textures/door.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#8a5a34",
+    "color2": "#6b4325",
+    "scale": 0.02
+   }
+  },
+  "wood": {
+   "path": "res://assets/local/textures/wood.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#9b6b43",
+    "color2": "#7a5131",
+    "scale": 0.03
+   }
+  },
+  "locker": {
+   "path": "res://assets/local/textures/locker.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#8b9097",
+    "color2": "#767b82",
+    "scale": 0.1
+   }
+  },
+  "a60_face_1": {
+   "path": "res://assets/local/textures/a60_face_1.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#e01818",
+    "style": "wide"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A-60R.png"
+   }
+  },
+  "a60_face_2": {
+   "path": "res://assets/local/textures/a60_face_2.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#c01010",
+    "style": "dots"
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-60_DOORS.png"
+   }
+  },
+  "a60_face_3": {
+   "path": "res://assets/local/textures/a60_face_3.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#ff3020",
+    "style": "smile"
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-60_Old.png"
+   }
+  },
+  "a60b_face": {
+   "path": "res://assets/local/textures/a60b_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#2f6bff",
+    "style": "wide"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Timmy_render.png"
+   }
+  },
+  "a90_face": {
+   "path": "res://assets/local/textures/a90_face.jpg",
+   "placeholder": {
+    "kind": "face",
+    "color": "#bdbdbd",
+    "style": "smile"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "SamuelNormalState.jpg"
+   }
+  },
+  "a90_stop": {
+   "path": "res://assets/local/textures/a90_stop.webp",
+   "placeholder": {
+    "kind": "sign",
+    "color": "#d01010",
+    "style": "stop"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "SamuelStop.webp"
+   }
+  },
+  "a90_jumpscare": {
+   "path": "res://assets/local/textures/a90_jumpscare.jpg",
+   "placeholder": {
+    "kind": "face",
+    "color": "#8a8a8a",
+    "style": "wide"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "SamuelAttacking.jpg"
+   }
+  },
+  "a90b_face": {
+   "path": "res://assets/local/textures/a90b_face.webp",
+   "placeholder": {
+    "kind": "face",
+    "color": "#c8c8c8",
+    "style": "dots"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A90bNormalState.webp"
+   }
+  },
+  "a90b_halt": {
+   "path": "res://assets/local/textures/a90b_halt.png",
+   "placeholder": {
+    "kind": "sign",
+    "color": "#d01010",
+    "style": "stop"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A90bHalt.png"
+   }
+  },
+  "a90b_proceed": {
+   "path": "res://assets/local/textures/a90b_proceed.webp",
+   "placeholder": {
+    "kind": "sign",
+    "color": "#1aa040",
+    "style": "proceed"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A90bProceed.webp"
+   }
+  },
+  "a90b_attack": {
+   "path": "res://assets/local/textures/a90b_attack.webp",
+   "placeholder": {
+    "kind": "face",
+    "color": "#909090",
+    "style": "wide"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Sensation_attack.webp"
+   }
+  },
+  "a120_face": {
+   "path": "res://assets/local/textures/a120_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#f2f2ff",
+    "style": "scribble"
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-120.png"
+   }
+  },
+  "a200_face": {
+   "path": "res://assets/local/textures/a200_face.webp",
+   "placeholder": {
+    "kind": "face",
+    "color": "#ffffff",
+    "style": "scribble"
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A-200.webp"
+   }
+  },
+  "star_marker": {
+   "path": "res://assets/local/textures/star.png",
+   "placeholder": {
+    "kind": "star",
+    "color": "#ffffff"
+   }
+  }
+ },
+ "sounds": {
+  "ambience": {
+   "path": "res://assets/local/sounds/ambience.mp3",
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.25
+   },
+   "loop": true,
+   "source": {
+    "wiki": "doors-game",
+    "file": "RoomsAmbienceNormal.mp3"
+   }
+  },
+  "door_open": {
+   "path": "res://assets/local/sounds/door_open.mp3",
+   "placeholder": {
+    "kind": "creak",
+    "length": 0.8,
+    "volume": 0.5
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "RoomsDoorOpen.mp3"
+   }
+  },
+  "door_locked": {
+   "path": "res://assets/local/sounds/door_locked.wav",
+   "placeholder": {
+    "kind": "thud",
+    "length": 0.4
+   }
+  },
+  "locker": {
+   "path": "res://assets/local/sounds/locker.mp3",
+   "placeholder": {
+    "kind": "thud",
+    "length": 0.35,
+    "volume": 0.5
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "LockerSmallOpen.mp3"
+   }
+  },
+  "step": {
+   "path": "res://assets/local/sounds/step.wav",
+   "placeholder": {
+    "kind": "step",
+    "length": 0.15,
+    "volume": 0.35
+   }
+  },
+  "flashlight_click": {
+   "path": "res://assets/local/sounds/flashlight_click.mp3",
+   "placeholder": {
+    "kind": "tone",
+    "freq": 1800,
+    "length": 0.04,
+    "volume": 0.3
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "FlashlightOpen.mp3"
+   }
+  },
+  "shakelight": {
+   "path": "res://assets/local/sounds/shakelight.mp3",
+   "placeholder": {
+    "kind": "rattle",
+    "length": 0.35,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "r-rooms",
+    "file": "Flashlight_shake.mp3"
+   }
+  },
+  "gold": {
+   "path": "res://assets/local/sounds/gold.wav",
+   "placeholder": {
+    "kind": "chime",
+    "freq": 1200,
+    "length": 0.4,
+    "volume": 0.4
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "GoldPickup.wav"
+   }
+  },
+  "pickup": {
+   "path": "res://assets/local/sounds/pickup.wav",
+   "placeholder": {
+    "kind": "chime",
+    "freq": 700,
+    "length": 0.25,
+    "volume": 0.35
+   }
+  },
+  "buy": {
+   "path": "res://assets/local/sounds/buy.wav",
+   "placeholder": {
+    "kind": "chime",
+    "freq": 900,
+    "length": 0.5,
+    "volume": 0.4
+   }
+  },
+  "deny": {
+   "path": "res://assets/local/sounds/deny.wav",
+   "placeholder": {
+    "kind": "tone",
+    "freq": 160,
+    "length": 0.25,
+    "volume": 0.4
+   }
+  },
+  "hurt": {
+   "path": "res://assets/local/sounds/hurt.wav",
+   "placeholder": {
+    "kind": "thud",
+    "length": 0.4,
+    "volume": 0.8
+   }
+  },
+  "vitamins": {
+   "path": "res://assets/local/sounds/vitamins.mp3",
+   "placeholder": {
+    "kind": "whoosh",
+    "length": 0.5,
+    "volume": 0.4
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "Vitamins.mp3"
+   }
+  },
+  "death": {
+   "path": "res://assets/local/sounds/death.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 1.2,
+    "volume": 0.5
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Office_Death.ogg"
+   }
+  },
+  "achievement": {
+   "path": "res://assets/local/sounds/achievement.wav",
+   "placeholder": {
+    "kind": "chime",
+    "freq": 880,
+    "length": 0.8,
+    "volume": 0.35
+   }
+  },
+  "glitch": {
+   "path": "res://assets/local/sounds/glitch.mp3",
+   "placeholder": {
+    "kind": "glitch",
+    "length": 0.8,
+    "volume": 0.5
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "Glitch-Sound1.mp3"
+   }
+  },
+  "exit_ambience": {
+   "path": "res://assets/local/sounds/exit_ambience.ogg",
+   "placeholder": {
+    "kind": "pad",
+    "length": 4.0,
+    "volume": 0.5
+   },
+   "loop": true,
+   "source": {
+    "wiki": "doors-game",
+    "file": "Curious_Light.ogg"
+   }
+  },
+  "a60_rumble": {
+   "path": "res://assets/local/sounds/a60_rumble.ogg",
+   "placeholder": {
+    "kind": "thud",
+    "length": 1.5,
+    "volume": 0.9
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-60_rumble.ogg"
+   }
+  },
+  "a60_far": {
+   "path": "res://assets/local/sounds/a60_far.ogg",
+   "placeholder": {
+    "kind": "static",
+    "length": 2.0,
+    "volume": 0.7
+   },
+   "loop": true,
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-60_far.ogg"
+   }
+  },
+  "a60_near": {
+   "path": "res://assets/local/sounds/a60_near.ogg",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 1.5,
+    "volume": 0.9
+   },
+   "loop": true,
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-60_near.ogg"
+   }
+  },
+  "a60b_far": {
+   "path": "res://assets/local/sounds/a60b_far.wav",
+   "placeholder": {
+    "kind": "buzz",
+    "length": 2.0,
+    "volume": 0.6
+   },
+   "loop": true,
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A-60Far.wav"
+   }
+  },
+  "a60b_near": {
+   "path": "res://assets/local/sounds/a60b_near.wav",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 1.5,
+    "volume": 0.9
+   },
+   "loop": true,
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A-60CloseNew.wav"
+   }
+  },
+  "a90_knock": {
+   "path": "res://assets/local/sounds/a90_knock.mp3",
+   "placeholder": {
+    "kind": "knock",
+    "length": 0.8,
+    "volume": 0.9
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "Knock,_knock!.mp3"
+   }
+  },
+  "a90_spawn": {
+   "path": "res://assets/local/sounds/a90_spawn.mp3",
+   "placeholder": {
+    "kind": "glitch",
+    "length": 0.5,
+    "volume": 0.6
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "A90Spawn.mp3"
+   }
+  },
+  "a90_jumpscare_sound": {
+   "path": "res://assets/local/sounds/a90_jumpscare.mp3",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.9,
+    "volume": 0.9
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-90_jumpscare.mp3"
+   }
+  },
+  "a90_despawn": {
+   "path": "res://assets/local/sounds/a90_despawn.ogg",
+   "placeholder": {
+    "kind": "tone",
+    "freq": 220,
+    "length": 0.2,
+    "volume": 0.3
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Paralysis_despawn.ogg"
+   }
+  },
+  "a90b_spawn": {
+   "path": "res://assets/local/sounds/a90b_spawn.ogg",
+   "placeholder": {
+    "kind": "glitch",
+    "length": 0.6,
+    "volume": 0.6
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Sensation_spawn.ogg"
+   }
+  },
+  "a90b_halt": {
+   "path": "res://assets/local/sounds/a90b_halt.ogg",
+   "placeholder": {
+    "kind": "tone",
+    "freq": 180,
+    "length": 0.5,
+    "volume": 0.6
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Halt.ogg"
+   }
+  },
+  "a90b_proceed": {
+   "path": "res://assets/local/sounds/a90b_proceed.ogg",
+   "placeholder": {
+    "kind": "tone",
+    "freq": 520,
+    "length": 0.5,
+    "volume": 0.6
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Proceed.ogg"
+   }
+  },
+  "a90b_attack_sound": {
+   "path": "res://assets/local/sounds/a90b_attack.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.8,
+    "volume": 0.9
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Paralysis_attack.ogg"
+   }
+  },
+  "a120_far": {
+   "path": "res://assets/local/sounds/a120_far.ogg",
+   "placeholder": {
+    "kind": "clang",
+    "length": 1.2,
+    "volume": 0.6
+   },
+   "loop": true,
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-120_ambience.ogg"
+   }
+  },
+  "a120_near": {
+   "path": "res://assets/local/sounds/a120_near.ogg",
+   "placeholder": {
+    "kind": "clang",
+    "length": 0.6,
+    "volume": 0.9
+   },
+   "loop": true,
+   "source": {
+    "wiki": "doors-game",
+    "file": "A-120_voice.ogg"
+   }
+  },
+  "a200_spawn": {
+   "path": "res://assets/local/sounds/a200_spawn.mp3",
+   "placeholder": {
+    "kind": "bitcrush",
+    "length": 1.5,
+    "volume": 0.7
+   },
+   "source": {
+    "wiki": "r-rooms",
+    "file": "A-200_Spawn.mp3"
+   }
+  },
+  "a200_far": {
+   "path": "res://assets/local/sounds/a200_far.mp3",
+   "placeholder": {
+    "kind": "bitcrush",
+    "length": 2.0,
+    "volume": 0.5
+   },
+   "loop": true,
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "A-200_sound_old.mp3"
+   }
+  },
+  "a200_near": {
+   "path": "res://assets/local/sounds/a200_near.wav",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 1.5,
+    "volume": 0.7
+   },
+   "loop": true
+  },
+  "a200_voice": {
+   "path": "res://assets/local/sounds/a200_voice.ogg",
+   "placeholder": {
+    "kind": "silent",
+    "length": 0.1
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Its_not_over_it_never_is.ogg"
+   }
+  }
+ },
+ "music": {
+  "menu_music": {
+   "path": "res://assets/local/music/menu.ogg",
+   "loop": true,
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.15
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "The_Office.ogg"
+   }
+  },
+  "a60b_theme": {
+   "path": "res://assets/local/music/a60b_theme.ogg",
+   "loop": true,
+   "placeholder": {
+    "kind": "buzz",
+    "length": 2.0,
+    "volume": 0.25
+   },
+   "source": {
+    "wiki": "rooms-revisited",
+    "file": "Teardown.ogg"
+   }
+  }
+ },
+ "models": {
+  "_note": "sketchfab models go here (glb/gltf). add them to assets/credits.json too, the credits screen checks the license.",
+  "locker": {
+   "path": "res://assets/local/models/locker.glb"
+  },
+  "door": {
+   "path": "res://assets/local/models/door.glb"
+  },
+  "desk": {
+   "path": "res://assets/local/models/desk.glb"
+  },
+  "table": {
+   "path": "res://assets/local/models/table.glb"
+  },
+  "chair": {
+   "path": "res://assets/local/models/chair.glb"
+  },
+  "chair_fallen": {
+   "path": "res://assets/local/models/chair_fallen.glb"
+  },
+  "plant": {
+   "path": "res://assets/local/models/plant.glb"
+  },
+  "plant_fallen": {
+   "path": "res://assets/local/models/plant_fallen.glb"
+  },
+  "couch": {
+   "path": "res://assets/local/models/couch.glb"
+  },
+  "shelf": {
+   "path": "res://assets/local/models/shelf.glb"
+  },
+  "fridge": {
+   "path": "res://assets/local/models/fridge.glb"
+  },
+  "water_dispenser": {
+   "path": "res://assets/local/models/water_dispenser.glb"
+  }
+ },
+ "fonts": {
+  "handwriting": {
+   "path": "res://assets/fonts/Caveat.ttf"
+  }
+ }
+}

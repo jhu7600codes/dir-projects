@@ -1,0 +1,39 @@
+; rooms: the hallway - unofficial fan game, see README.md
+
+config_version=5
+
+[application]
+
+config/name="rooms: the hallway"
+config/description="unofficial fan game inspired by nicorocks5555's rooms and the rooms subfloor from doors"
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.4", "Forward Plus")
+; the official rooms icon gets downloaded by tools/fetch_assets.py (it is not committed, see README)
+config/icon="res://assets/local/icon.png"
+
+[autoload]
+
+Settings="*res://scripts/autoload/settings.gd"
+Assets="*res://scripts/autoload/assets.gd"
+Save="*res://scripts/autoload/save.gd"
+Achievements="*res://scripts/autoload/achievements.gd"
+Game="*res://scripts/autoload/game.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="mobile"
+textures/vram_compression/import_etc2_astc=true
+lights_and_shadows/positional_shadow/atlas_size.mobile=1024

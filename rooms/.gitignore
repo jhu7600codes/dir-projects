@@ -1,0 +1,7 @@
+# godot
+.godot/
+/android/
+export/
+build/
+# assets from the original games: personal use only, never commit them (see README)
+assets/local/
