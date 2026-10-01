@@ -13,12 +13,34 @@ void fragment() {
 }
 """
 
+## the red handwritten line under the logo, a different one every time
+const TAGLINES := [
+	"keep walking.",
+	"don't stop.",
+	"the lights hum louder when you stop.",
+	"it's only a few more rooms.",
+	"hide when you hear it.",
+	"your badge just says worker.",
+	"freeze when it knocks.",
+	"same door. same sign. same door.",
+	"the exit is warm.",
+	"someone wrote on the walls.",
+	"did you hear that?",
+	"don't look back.",
+	"white means hide.",
+	"there is no a-1001.",
+	"clock in.",
+	"nobody else came to work today.",
+	"your feet hurt.",
+	"is that crackling getting closer?",
+]
+
 var _admin := false
 var _music: AudioStreamPlayer
 var _cam: Camera3D
 var _cam_start := Transform3D.IDENTITY
 var _t := 0.0
-var _title: Label
+var _title: Control
 var _flicker := 0.0
 
 
@@ -194,14 +216,16 @@ func _make_menu() -> void:
 	col.offset_right = 64 + 380
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(col)
-	_title = UIKit.label("rooms:", 30, Color(0.85, 0.85, 0.85))
-	col.add_child(_title)
-	var big := UIKit.label("the hallway", 58, Color(0.97, 0.97, 0.95))
-	big.add_theme_color_override("font_outline_color", Color(0, 0, 0))
-	big.add_theme_constant_override("outline_size", 6)
-	col.add_child(big)
+	# the logo (assets/branding/logo.png)
+	var logo := TextureRect.new()
+	logo.texture = load("res://assets/branding/logo.png")
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	logo.custom_minimum_size = Vector2(440, 440.0 * 811.0 / 1892.0)
+	col.add_child(logo)
+	_title = logo
 	var tag := Label.new()
-	tag.text = "keep walking."
+	tag.text = TAGLINES[randi() % TAGLINES.size()]
 	tag.add_theme_font_override("font", Assets.font("handwriting"))
 	tag.add_theme_font_size_override("font_size", 30)
 	tag.add_theme_color_override("font_color", Color(0.75, 0.2, 0.2))

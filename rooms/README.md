@@ -50,6 +50,10 @@ a first person horror game in an endless office. open doors, walk through genera
 - **achievements** (saved in `user://save.json`) with popups, **settings** (volume, sensitivity, fov, quality, touch layout), **credits** screen.
 - **admin panel**: tick it on the title screen. noclip, god mode, speed, jumping, sliding, infinite stamina, spawn any entity, open the next door, jump to any door. nothing is saved in admin runs.
 
+## logo and icon
+
+`assets/branding/` has the logo (title screen + boot splash) and the icon (window / linux / windows; the android launcher uses it on a white background). made by jhulian.
+
 ## assets and the manifest
 
 every object loads its files through `assets/manifest.json` (key -> path). swap a path to use a different file, no code changes. if a file is missing the game uses a placeholder (generated texture, box model, synthesized or silent sound) and prints a warning, so it always runs.

@@ -13,7 +13,7 @@ D=export/deb/rooms-the-hallway_${VERSION}_amd64
 rm -rf "export/deb"
 mkdir -p "$D/DEBIAN" "$D/usr/games" "$D/usr/share/applications" "$D/usr/share/icons/hicolor/256x256/apps"
 install -m 755 "$BIN" "$D/usr/games/rooms-the-hallway"
-[ -f assets/local/icon.png ] && cp assets/local/icon.png "$D/usr/share/icons/hicolor/256x256/apps/rooms-the-hallway.png"
+cp assets/branding/icon.png "$D/usr/share/icons/hicolor/256x256/apps/rooms-the-hallway.png"
 cat > "$D/usr/share/applications/rooms-the-hallway.desktop" <<DESK
 [Desktop Entry]
 Type=Application
