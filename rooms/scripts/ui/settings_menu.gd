@@ -25,6 +25,7 @@ func _ready() -> void:
 	v.add_child(UIKit.slider("sound volume", d.sfx_volume, 0, 1, func(x): Settings.set_value("sfx_volume", x)))
 	v.add_child(UIKit.label("controls", 14, Color(0.6, 0.6, 0.6)))
 	v.add_child(UIKit.slider("sensitivity", d.sensitivity, 0.2, 3.0, func(x): Settings.set_value("sensitivity", x)))
+	v.add_child(UIKit.check("open doors automatically", d.auto_doors, func(on): Settings.set_value("auto_doors", on)))
 	v.add_child(UIKit.slider("field of view", d.fov, 60, 100, func(x): Settings.set_value("fov", x), 1.0))
 	v.add_child(UIKit.label("graphics", 14, Color(0.6, 0.6, 0.6)))
 	if not OS.has_feature("mobile"):

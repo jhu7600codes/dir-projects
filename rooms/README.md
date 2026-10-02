@@ -23,7 +23,7 @@ a first person horror game in an endless office. open doors, walk through genera
 | look | mouse | right stick | drag on the right side |
 | sprint | shift (hold) | l3 | run (toggle) |
 | crouch | c or ctrl (hold) | b | duck (toggle) |
-| interact (doors, lockers, drawers, shops) | e | x | use |
+| interact (lockers, drawers, shops; hold for exit doors) | e | x | use (hold it for exit doors) |
 | use the item in your hand | left click | y or rb | item |
 | pick item (flashlight, shakelight, bandage, vitamins) | 1 2 3 4 or scroll | dpad left / right | swap |
 | pause | esc | start | \|\| |
@@ -43,6 +43,7 @@ a first person horror game in an endless office. open doors, walk through genera
   - **a-200** (the happy scribble) from the front, rebounds ~3 times. white = hide, purple = get out of the locker.
   - **a-60b** shows up once at a-505, bounces back and forth with boss music until you get through 20 more doors. you're forced to sprint at double speed, a star marks where it is. (in rooms: revisited it's after a-1005, but our game ends at a-1000, so it's moved. change `AT_DOOR` in `a60b.gd`.)
   - **glitch** failsafe puts you back in the current room if a room fails to generate or you fall out of the world.
+- **doors open by themselves** when you walk up to them (turn it off in settings).
 - **items**: flashlight + batteries, shakelight, gold, bandages, vitamins. drawers in desks hold gold. shops at a-000 and a-150. gold is saved between runs.
 - **saving**: the run saves on every door (and when you quit or switch apps). the title screen then shows "continue (a-xxx)". same rooms, same items, same health. dying or escaping clears it.
 - **100 starter gold** for new saves (older saves get it once too).

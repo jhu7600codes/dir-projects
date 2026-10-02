@@ -16,6 +16,7 @@ var _look_last := Vector2.ZERO
 var _fingers := {}
 var _buttons := []  # [name, action, center, radius, toggle]
 var _toggled := {}
+var _held := {}  # finger index -> action held by that finger (so "use" can be held for exit doors)
 
 
 func _ready() -> void:
@@ -66,7 +67,7 @@ func _input(event: InputEvent) -> void:
 			_fingers[event.index] = true
 			var b = _button_at(event.position)
 			if b != null:
-				_press_button(b)
+				_press_button(b, event.index)
 			elif _stick_finger == -1 and _stick_side_hit(event.position):
 				_stick_finger = event.index
 				_stick_center = event.position
@@ -76,6 +77,12 @@ func _input(event: InputEvent) -> void:
 				_look_last = event.position
 		else:
 			_fingers.erase(event.index)
+			if _held.has(event.index):
+				var up := InputEventAction.new()
+				up.action = _held[event.index]
+				up.pressed = false
+				Input.parse_input_event(up)
+				_held.erase(event.index)
 			if event.index == _stick_finger:
 				_stick_finger = -1
 				Game.touch_move = Vector2.ZERO
@@ -101,7 +108,7 @@ func _button_at(p: Vector2):
 	return null
 
 
-func _press_button(b: Array) -> void:
+func _press_button(b: Array, finger: int) -> void:
 	var action: String = b[1]
 	if b[4]:
 		# toggles: sprint and crouch stay on until tapped again
@@ -112,14 +119,12 @@ func _press_button(b: Array) -> void:
 		else:
 			Input.action_release(action)
 		return
+	# pressed while the finger stays down, released when it lifts (holding works)
 	var ev := InputEventAction.new()
 	ev.action = action
 	ev.pressed = true
 	Input.parse_input_event(ev)
-	var up := InputEventAction.new()
-	up.action = action
-	up.pressed = false
-	Input.parse_input_event.call_deferred(up)
+	_held[finger] = action
 
 
 func _draw_pad() -> void:

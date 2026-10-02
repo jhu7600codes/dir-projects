@@ -260,6 +260,7 @@ func _physics_process(delta: float) -> void:
 	elif admin_on and Game.admin_flags.jump and Input.is_action_just_pressed("jump"):
 		velocity.y = 6.0
 	move_and_slide()
+	_auto_open_door()
 
 	# footsteps
 	if is_on_floor():
@@ -271,6 +272,18 @@ func _physics_process(delta: float) -> void:
 			_steps.pitch_scale = randf_range(0.85, 1.15)
 			_steps.volume_db = -14.0 if crouching else -8.0
 			_steps.play()
+
+
+## doors open by themselves when you walk up to them (setting "open doors automatically")
+func _auto_open_door() -> void:
+	if not Settings.data.get("auto_doors", true) or Game.generator == null:
+		return
+	var r = Game.generator.room(Game.door)
+	if r == null or r.exit_door == null or r.exit_door.is_open or r.exit_door.locked:
+		return
+	var door_pos: Vector3 = r.exit_door.global_position
+	if Vector2(global_position.x - door_pos.x, global_position.z - door_pos.z).length() < 1.6:
+		r.exit_door.open()
 
 
 func _noclip(delta: float) -> void:

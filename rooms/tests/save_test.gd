@@ -64,6 +64,55 @@ func _ready() -> void:
 	Game.player.take_damage(999, "a60")
 	await _frames(5)
 	_check(not Save.has_run(), "dying clears the saved run")
+	# doors open by themselves when you walk up to them
+	Game.player.dead = false
+	Game.player.health = 100
+	Game.generator.jump_to(20)
+	await _frames(5)
+	var r20 = Game.generator.room(20)
+	Game.player.teleport(r20.global_exit() * Transform3D(Basis(), Vector3(0, 0.1, -1.0)))
+	await _frames(10)
+	_check(Game.door == 21, "door opens by itself when you walk up (now %s)" % Game.door_label(Game.door))
+	# touch: holding the "use" button opens an exit door
+	var finished := [false]
+	Game.run_finished.connect(func(_r): finished[0] = true)
+	var exit_n := -1
+	for n in range(201, 600):
+		if Game.generator._is_exit_room(n):
+			exit_n = n
+			break
+	Game.generator.jump_to(exit_n)
+	await _frames(5)
+	var ed: ExitDoor = null
+	for c in Game.generator.room(exit_n).get_children():
+		if c is ExitDoor:
+			ed = c
+	# stand in front of the exit door, looking at it
+	Game.player.teleport(ed.global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.05, -1.2)))
+	Game.player.head.rotation.x = -0.35
+	Settings.data.touch_controls = "on"
+	var tc: TouchControls = null
+	for c in Game.player.get_parent().get_children():
+		if c is TouchControls:
+			tc = c
+	tc._layout()
+	var use_pos: Vector2 = tc._buttons[0][2]
+	var down := InputEventScreenTouch.new()
+	down.index = 3
+	down.position = use_pos
+	down.pressed = true
+	# headless has no touchscreen, so hand the touch straight to the controls
+	tc._input(down)
+	await get_tree().create_timer(1.8).timeout
+	var lift := InputEventScreenTouch.new()
+	lift.index = 3
+	lift.position = use_pos
+	lift.pressed = false
+	tc._input(lift)
+	await _frames(3)
+	Settings.data.touch_controls = "auto"
+	_check(finished[0], "holding the touch use button opens an exit door")
+	get_tree().paused = false
 	# admin runs keep their own progress and don't touch the normal one
 	Save.use_profile("main")
 	var main_best := int(Save.data.best_door)

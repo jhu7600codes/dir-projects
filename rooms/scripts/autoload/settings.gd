@@ -15,6 +15,7 @@ var data := {
 	"fov": 75.0,
 	"quality": 1,               # 0 low, 1 medium, 2 high
 	"fullscreen": true,         # desktop only, f11 toggles it
+	"auto_doors": true,         # doors open by themselves when you walk up to them
 	"touch_controls": "auto",   # auto, on, off
 	"touch_left_handed": false, # swaps the stick and the buttons
 	"touch_scale": 1.0,
