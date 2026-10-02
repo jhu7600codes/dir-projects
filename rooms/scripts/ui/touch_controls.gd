@@ -13,6 +13,7 @@ const ICONS := {
 	"item": "res://assets/branding/touch_item.png",
 	"run": "res://assets/branding/touch_run.png",
 	"crouch": "res://assets/branding/touch_crouch.png",
+	"knob": "res://assets/branding/touch_knob.png",
 }
 
 var _pad: Control
@@ -181,7 +182,11 @@ func _draw_pad() -> void:
 		_pad.draw_string(font, b[2] + Vector2(-w / 2, fs * 0.35), UIKit.cap(b[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, a + 0.2))
 	if _stick_finger != -1:
 		_pad.draw_circle(_stick_center, STICK_R, Color(1, 1, 1, a * 0.15))
-		_pad.draw_circle(_stick_center + (_stick_pos - _stick_center).limit_length(STICK_R), 32, Color(1, 1, 1, a * 0.6))
+		var knob := _stick_center + (_stick_pos - _stick_center).limit_length(STICK_R)
+		if _icons.has("knob"):
+			_pad.draw_texture_rect(_icons["knob"], Rect2(knob - Vector2(40, 40), Vector2(80, 80)), false, Color(1, 1, 1, a + 0.2))
+		else:
+			_pad.draw_circle(knob, 32, Color(1, 1, 1, a * 0.6))
 	else:
 		var vs := get_viewport().get_visible_rect().size
 		var hint := Vector2(150, vs.y - 150) if not Settings.data.touch_left_handed else Vector2(vs.x - 150, vs.y - 150)
