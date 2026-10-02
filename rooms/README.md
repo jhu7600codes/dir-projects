@@ -33,8 +33,8 @@ a first person horror game in an endless office. open doors, walk through genera
 ## what's in it
 
 - **endless generated office**: 10 room types from a weighted pool (hallways, locker rooms, meeting rooms, l-turns, storage, break room, cubicles...), each tagged `has_lockers` / `entity_spawn_ok`. only ~4 rooms are loaded at once. door counter a-000, a-001...
-- **fog and darkness**: normal until a-30, foggy after, pitch black around a-130 to a-150. lights break and flicker more the deeper you go.
-- **special rooms**: a-000 lobby (couches, skylight, shakelight dispenser), a-100 message corridor, a-150 shop, exit rooms after a-200 (every 50-100 rooms, rarely earlier, you can hear them from the room before), a-1000 bridge over the void with the glowing door.
+- **fog and darkness**: normal until a-30, foggy after, dark from a-150 on (some rooms keep more lights working). lights break and flicker more the deeper you go.
+- **special rooms**: a-000 lobby (couches, skylight, shakelight dispenser), a-100 message corridor, a-150 shop, exit rooms after a-200 (every 50-100 rooms, rarely earlier, you can hear them from the room before), a-1000 wooden bridge over the void with the glowing door.
 - **entities** (one script each, spawn rules in each script's `RULES`):
   - **a-60** rushes from behind after you open a door into a room with lockers. crackle, then hiss. hide.
   - **a-120** comes from the rooms ahead, slow, metallic clanging, can rebound. wait until the sound is completely gone.
@@ -80,7 +80,7 @@ tools/              fetch_assets.py
 
 ## exporting
 
-project -> export. presets for linux, windows and android are included (you need godot's export templates, and for android the android sdk + a debug keystore set up in editor settings). desktop uses the forward+ renderer, android uses the mobile renderer automatically. the "quality" setting (low / medium / high) changes msaa, render scale, shadows, glow and ssao.
+project -> export. presets for linux, windows and android are included (you need godot's export templates, and for android the android sdk + a debug keystore set up in editor settings). desktop uses the forward+ renderer, android uses the compatibility renderer automatically (much faster on older phones). the "quality" setting (low / medium / high) changes msaa, render scale, shadows, glow and ssao.
 
 ## tests
 

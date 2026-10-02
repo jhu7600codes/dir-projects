@@ -23,6 +23,8 @@ var data := {
 
 
 func _ready() -> void:
+	if OS.has_feature("mobile"):
+		Engine.max_fps = 60  # no point drawing faster than the screen, saves battery and heat
 	_setup_input()
 	_setup_buses()
 	load_settings()

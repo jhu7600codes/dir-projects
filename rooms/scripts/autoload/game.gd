@@ -125,10 +125,11 @@ static func darkness(n: int) -> float:
 	if n < 30:
 		return 0.0
 	if n < 130:
-		return lerpf(0.0, 0.65, (n - 30) / 100.0)
+		return lerpf(0.0, 0.5, (n - 30) / 100.0)
 	if n < 150:
-		return lerpf(0.65, 1.0, (n - 130) / 20.0)
-	return 1.0
+		return lerpf(0.5, 0.75, (n - 130) / 20.0)
+	# capped: deep rooms are dark and foggy, but never a black void
+	return 0.75
 
 
 func play_ui(key: String) -> void:

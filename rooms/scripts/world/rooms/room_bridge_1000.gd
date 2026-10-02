@@ -1,5 +1,5 @@
 extends RoomBase
-## a-1000: a bridge over a dark void with a glowing door at the end. the real ending.
+## a-1000: an old wooden bridge over a dark void with a glowing door at the end. the real ending.
 
 
 func build() -> void:
@@ -9,17 +9,33 @@ func build() -> void:
 	# small landing behind the entry door so the doorway has something to stand in
 	box(Vector3(3.0, 0.2, 2.0), Vector3(0, -0.1, 1.0), Mats.get_mat("carpet_red"))
 	wall(Vector3(1.5, 0, 0), Vector3(-1.5, 0, 0), 3.0, [[1.5, DOOR_W]])
-	# the bridge
-	box(Vector3(2.4, 0.3, length), Vector3(0, -0.15, length / 2 + 1.0), Mats.get_mat("frame"))
-	for sx in [-1.25, 1.25]:
-		box(Vector3(0.08, 0.9, length), Vector3(sx, 0.45, length / 2 + 1.0), Mats.get_mat("metal"))
+	# the bridge: wooden planks with small gaps on two long beams, wooden railings.
+	# one invisible box is the floor you walk on, the planks are just for looks.
+	var mid := length / 2 + 1.0
+	box(Vector3(2.4, 0.2, length), Vector3(0, -0.1, mid), Mats.get_mat("wood_old"), true).visible = false
+	var z := 1.0
+	while z < length + 1.0:
+		var w := rng.randf_range(0.22, 0.3)
+		var tilt := rng.randf_range(-0.015, 0.015)
+		var plank := box(Vector3(2.4 + rng.randf_range(-0.08, 0.08), 0.07, w), Vector3(rng.randf_range(-0.04, 0.04), -0.035, z + w / 2), Mats.get_mat("wood_old" if rng.randf() < 0.7 else "wood_dark"), false, tilt)
+		plank.name = "plank"
+		z += w + 0.035
+	for sx in [-0.85, 0.85]:
+		box(Vector3(0.18, 0.25, length), Vector3(sx, -0.2, mid), Mats.get_mat("wood_dark"), false)
+	for sx in [-1.2, 1.2]:
+		var p := 1.2
+		while p < length + 1.0:
+			box(Vector3(0.1, 1.0, 0.1), Vector3(sx, 0.5, p), Mats.get_mat("wood_dark"), false)
+			p += 2.5
+		box(Vector3(0.08, 0.08, length), Vector3(sx, 0.98, mid), Mats.get_mat("wood_old"), true)
+		box(Vector3(0.05, 0.06, length), Vector3(sx, 0.55, mid), Mats.get_mat("wood_old"), false)
 	# dim little lights along the bridge so you can see where you walk
 	for i in range(0, int(length), 9):
 		var l := OmniLight3D.new()
 		l.position = Vector3(0, 1.2, 4.0 + i)
-		l.light_color = Color(0.7, 0.75, 0.9)
-		l.light_energy = 0.35
-		l.omni_range = 4.0
+		l.light_color = Color(1.0, 0.85, 0.6)  # warm, like old lanterns
+		l.light_energy = 0.8
+		l.omni_range = 5.5
 		add_child(l)
 	var ed := ExitDoor.new()
 	ed.style = "void"

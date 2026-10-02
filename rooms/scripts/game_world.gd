@@ -110,13 +110,13 @@ func _make_environment() -> void:
 		env.ssao_enabled = int(Settings.data.quality) >= 2)
 
 
-## normal until a-30, foggy after, pitch black by a-150
+## normal until a-30, foggy after, dark from a-150 (but you can still see the next room)
 func _apply_darkness(n: int) -> void:
 	var d := Game.darkness(n)
 	if n == Game.LAST_DOOR:
 		d = 1.0
-	env.ambient_light_energy = lerpf(0.35, 0.0, d)
-	env.fog_density = lerpf(0.004, 0.09, d) if n >= 30 else 0.004
+	env.ambient_light_energy = lerpf(0.35, 0.07, d)
+	env.fog_density = lerpf(0.004, 0.035, d) if n >= 30 else 0.004
 	env.fog_light_color = Color(0.08, 0.08, 0.09).lerp(Color(0, 0, 0), d)
 	env.fog_light_energy = 1.0 - d * 0.9
 

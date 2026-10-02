@@ -37,6 +37,9 @@ func setup(num: int, seed_value: int) -> void:
 	number = num
 	rng.seed = seed_value
 	darkness = Game.darkness(num)
+	# some deep rooms got lucky and most of their lights still work
+	if darkness > 0.4 and rng.randf() < 0.3:
+		darkness *= 0.4
 	name = "room_%04d" % num
 	_body = StaticBody3D.new()
 	_body.collision_layer = 1
@@ -269,7 +272,7 @@ func make_path(points: Array) -> void:
 
 
 func ceiling_light(pos: Vector3) -> void:
-	var broken := rng.randf() < darkness * 0.92
+	var broken := rng.randf() < darkness * 0.6
 	box(Vector3(1.2, 0.04, 0.6), pos - Vector3(0, 0.02, 0), Mats.get_mat("light_off" if broken else "light_panel"), false)
 	box(Vector3(1.26, 0.03, 0.66), pos - Vector3(0, 0.01, 0), Mats.get_mat("frame"), false)
 	if broken:
