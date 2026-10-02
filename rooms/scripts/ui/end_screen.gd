@@ -40,7 +40,7 @@ func setup(kind: String, cause := "") -> void:
 			v.add_child(UIKit.label("you walked all the way through. it's over.", 17))
 	v.add_child(UIKit.label("best: " + Game.door_label(int(Save.data.best_door)) + "    gold: %d" % int(Save.data.gold), 15, Color(0.6, 0.6, 0.6)))
 	if Game.admin:
-		v.add_child(UIKit.label("admin run - nothing was saved", 14, Color(1, 0.6, 0.3)))
+		v.add_child(UIKit.label("admin run - saved to your admin progress", 14, Color(1, 0.6, 0.3)))
 	v.add_child(UIKit.button("play again", func(): Game.start_run(Game.admin)))
 	v.add_child(UIKit.button("title screen", Game.to_menu))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

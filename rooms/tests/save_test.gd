@@ -36,7 +36,9 @@ func _ready() -> void:
 	for n in range(13, 300, 3):
 		Game.generator.jump_to(n)
 		await _frames(3)
-		if Game.generator.room(n).lockers.size() > 0:
+		var rr = Game.generator.room(n)
+		# a room with open floor in front of the lockers, so walking out doesn't hit furniture
+		if rr.lockers.size() > 0 and rr.room_type in ["locker_room", "four_locker", "three_locker"]:
 			lk = Game.generator.room(n).lockers[0]
 			break
 	var p: Player = Game.player
@@ -54,11 +56,32 @@ func _ready() -> void:
 	Input.action_release("move_forward")
 	var moved := p.global_position - before
 	moved.y = 0
-	var angle := rad_to_deg(moved.normalized().angle_to(look_dir.normalized()))
-	_check(moved.length() > 0.5 and angle < 10.0, "walks where you look after leaving a locker (off by %.1f deg)" % angle)
+	# "forward" for walking is the body's facing; it must match where the camera looks
+	var body_fwd := -p.global_basis.z
+	body_fwd.y = 0
+	var angle := rad_to_deg(body_fwd.normalized().angle_to(look_dir.normalized()))
+	_check(moved.length() > 0.5 and angle < 3.0, "walks where you look after leaving a locker (off by %.1f deg)" % angle)
 	Game.player.take_damage(999, "a60")
 	await _frames(5)
 	_check(not Save.has_run(), "dying clears the saved run")
+	# admin runs keep their own progress and don't touch the normal one
+	Save.use_profile("main")
+	var main_best := int(Save.data.best_door)
+	var main_gold := int(Save.data.gold)
+	Game.start_run(true)
+	await _frames(10)
+	Game.entities.natural_spawns = false
+	Game.generator.jump_to(main_best + 40)
+	await _frames(5)
+	Save.data.gold = 777
+	Game.to_menu()
+	await _frames(10)
+	_check(not Save.is_admin_profile(), "title screen goes back to normal progress")
+	_check(int(Save.data.best_door) == main_best and int(Save.data.gold) == main_gold, "normal progress untouched by the admin run")
+	Save.use_profile("admin")
+	_check(int(Save.data.best_door) >= main_best + 40 and int(Save.data.gold) == 777, "admin progress saved (best %s)" % Game.door_label(int(Save.data.best_door)))
+	_check(Save.has_run(), "admin run can be continued")
+	Save.use_profile("main")
 	print("save test %s (%d failures)" % ["passed" if failures == 0 else "FAILED", failures])
 	get_tree().quit(1 if failures else 0)
 

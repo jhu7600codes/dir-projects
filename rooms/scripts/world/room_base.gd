@@ -43,8 +43,25 @@ func setup(num: int, seed_value: int) -> void:
 	_body.collision_mask = 0
 	add_child(_body)
 	build()
+	_clear_doorways()
 	_add_back_seal()
 	_merge_static()
+
+
+## safety net against softlocks: any locker standing in front of the entry or the exit
+## door gets removed
+func _clear_doorways() -> void:
+	for lk in lockers.duplicate():
+		var p: Vector3 = lk.position
+		var q: Vector3 = exit_local.affine_inverse() * p
+		var blocks_entry := absf(p.x) < 1.3 and p.z < 1.4
+		var blocks_exit := exit_door != null and absf(q.x) < 1.3 and q.z > -1.6 and q.z < 0.4
+		if blocks_entry or blocks_exit:
+			lockers.erase(lk)
+			lk.free()
+	has_lockers = not lockers.is_empty()
+	if not has_lockers:
+		entity_spawn_ok = false  # nothing to hide in, so a-60 / a-120 can't come here
 
 
 ## performance: after building, every static mesh in the room (walls, floor, ceiling,

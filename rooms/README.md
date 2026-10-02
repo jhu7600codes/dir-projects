@@ -27,6 +27,7 @@ a first person horror game in an endless office. open doors, walk through genera
 | use the item in your hand | left click | y or rb | item |
 | pick item (flashlight, shakelight, bandage, vitamins) | 1 2 3 4 or scroll | dpad left / right | swap |
 | pause | esc | start | \|\| |
+| fullscreen | f11 (also in settings) | | |
 | admin panel (admin runs) | f1 or ` | back | adm |
 
 ## what's in it
@@ -48,7 +49,7 @@ a first person horror game in an endless office. open doors, walk through genera
 - **doors style camera**: step bob, a lean when strafing / turning, wider fov when sprinting, a dip when landing. items show in your hand.
 - **title screen** with a live foggy hallway behind the menu, and **the worker's journal**: 8 handwritten pages of backstory that unlock as your best door gets further (a-050, a-100, a-150, a-200, a-500, a-1000).
 - **achievements** (saved in `user://save.json`) with popups, **settings** (volume, sensitivity, fov, quality, touch layout), **credits** screen.
-- **admin panel**: tick it on the title screen. noclip, god mode, speed, jumping, sliding, infinite stamina, spawn any entity, open the next door, jump to any door. nothing is saved in admin runs.
+- **admin panel**: tick it on the title screen. noclip, god mode, speed, jumping, sliding, infinite stamina, spawn any entity, open the next door, jump to any door. admin runs have their own separate progress (best door, gold, achievements, continue) in `user://save_admin.json`, your normal progress is never touched.
 
 ## logo and icon
 

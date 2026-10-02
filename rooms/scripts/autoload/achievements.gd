@@ -52,7 +52,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	_panel.add_child(box)
 	var small := Label.new()
-	small.text = "achievement unlocked"
+	small.text = "Achievement unlocked"
 	small.add_theme_font_size_override("font_size", 13)
 	small.modulate = Color(0.95, 0.85, 0.4)
 	box.add_child(small)
@@ -86,8 +86,8 @@ func _show_next() -> void:
 		return
 	_showing = true
 	var id: String = _queue.pop_front()
-	_title.text = LIST[id][0]
-	_desc.text = LIST[id][1]
+	_title.text = UIKit.cap(LIST[id][0])
+	_desc.text = UIKit.cap(LIST[id][1])
 	Game.play_ui("achievement")
 	var tw := create_tween()
 	tw.tween_property(_panel, "modulate:a", 1.0, 0.3)

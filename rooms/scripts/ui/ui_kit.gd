@@ -1,8 +1,15 @@
 class_name UIKit
-## small helpers so every menu looks the same. all text is lowercase.
+## small helpers so every menu looks the same. text gets normal capitalization.
 
 const BG := Color(0.03, 0.03, 0.035, 0.94)
 const ACCENT := Color(0.95, 0.85, 0.4)
+
+
+## first letter uppercase ("open door" -> "Open door"), the rest stays as written
+static func cap(text: String) -> String:
+	if text.is_empty():
+		return text
+	return text.substr(0, 1).to_upper() + text.substr(1)
 
 
 static func panel(min_size := Vector2(420, 0)) -> PanelContainer:
@@ -28,7 +35,7 @@ static func centered(parent: Control, child: Control) -> CenterContainer:
 
 static func label(text: String, size := 18, color := Color(0.88, 0.88, 0.88)) -> Label:
 	var l := Label.new()
-	l.text = text.to_lower()
+	l.text = cap(text)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	return l
@@ -36,7 +43,7 @@ static func label(text: String, size := 18, color := Color(0.88, 0.88, 0.88)) ->
 
 static func button(text: String, on_press: Callable, size := 20) -> Button:
 	var b := Button.new()
-	b.text = text.to_lower()
+	b.text = cap(text)
 	b.add_theme_font_size_override("font_size", size)
 	b.custom_minimum_size = Vector2(0, 44)
 	b.focus_mode = Control.FOCUS_ALL
@@ -63,7 +70,7 @@ static func slider(text: String, value: float, lo: float, hi: float, on_change: 
 
 static func check(text: String, on: bool, on_toggle: Callable) -> CheckBox:
 	var c := CheckBox.new()
-	c.text = text.to_lower()
+	c.text = cap(text)
 	c.button_pressed = on
 	c.add_theme_font_size_override("font_size", 16)
 	c.toggled.connect(on_toggle)
@@ -77,7 +84,7 @@ static func options(text: String, items: Array, selected: int, on_select: Callab
 	row.add_child(l)
 	var o := OptionButton.new()
 	for it in items:
-		o.add_item(str(it).to_lower())
+		o.add_item(cap(str(it)))
 	o.selected = selected
 	o.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	o.item_selected.connect(on_select)

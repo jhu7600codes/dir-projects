@@ -130,8 +130,8 @@ func _draw_pad() -> void:
 		_pad.draw_circle(b[2], b[3], Color(1, 1, 1, a * 0.45) if on else Color(0, 0, 0, a * 0.45))
 		_pad.draw_arc(b[2], b[3], 0, TAU, 32, Color(1, 1, 1, a), 2.0)
 		var fs := int(b[3] * 0.42)
-		var w := font.get_string_size(b[0], HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		_pad.draw_string(font, b[2] + Vector2(-w / 2, fs * 0.35), b[0], HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, a + 0.2))
+		var w := font.get_string_size(UIKit.cap(b[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		_pad.draw_string(font, b[2] + Vector2(-w / 2, fs * 0.35), UIKit.cap(b[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, a + 0.2))
 	if _stick_finger != -1:
 		_pad.draw_circle(_stick_center, STICK_R, Color(1, 1, 1, a * 0.15))
 		_pad.draw_circle(_stick_center + (_stick_pos - _stick_center).limit_length(STICK_R), 32, Color(1, 1, 1, a * 0.6))

@@ -14,6 +14,7 @@ var data := {
 	"sensitivity": 1.0,
 	"fov": 75.0,
 	"quality": 1,               # 0 low, 1 medium, 2 high
+	"fullscreen": true,         # desktop only, f11 toggles it
 	"touch_controls": "auto",   # auto, on, off
 	"touch_left_handed": false, # swaps the stick and the buttons
 	"touch_scale": 1.0,
@@ -63,7 +64,22 @@ func apply() -> void:
 	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][q]
 	vp.scaling_3d_scale = [0.7, 0.85, 1.0][q]
 	vp.positional_shadow_atlas_size = [1024, 2048, 4096][q]
+	_apply_window()
 	changed.emit()
+
+
+func _apply_window() -> void:
+	if OS.has_feature("mobile") or DisplayServer.get_name() == "headless":
+		return
+	var want := DisplayServer.WINDOW_MODE_FULLSCREEN if data.fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+	if DisplayServer.window_get_mode() != want:
+		DisplayServer.window_set_mode(want)
+
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("fullscreen"):
+		set_value("fullscreen", not data.fullscreen)
+		get_viewport().set_input_as_handled()
 
 
 func use_touch() -> bool:
@@ -120,6 +136,7 @@ func _setup_input() -> void:
 	_add("item_next", [_mouse(MOUSE_BUTTON_WHEEL_DOWN), _btn(JOY_BUTTON_DPAD_RIGHT)])
 	_add("item_prev", [_mouse(MOUSE_BUTTON_WHEEL_UP), _btn(JOY_BUTTON_DPAD_LEFT)])
 	_add("pause", [_key(KEY_ESCAPE), _key(KEY_P), _btn(JOY_BUTTON_START)])
+	_add("fullscreen", [_key(KEY_F11)])
 	_add("admin_panel", [_key(KEY_F1), _key(KEY_QUOTELEFT), _btn(JOY_BUTTON_BACK)])
 
 

@@ -63,14 +63,14 @@ func after(seconds: float, what: Callable) -> void:
 	t.start()
 
 
-## glowing billboard. additive blending, so black backgrounds in the art disappear
+## billboard sprite, unshaded so it shows in the dark. edges fade (Assets.glow_texture)
 func make_sprite(tex_key: String, size := 2.2) -> Sprite3D:
 	var s := Sprite3D.new()
 	s.texture = Assets.glow_texture(tex_key)
 	s.pixel_size = size / maxf(1.0, s.texture.get_height())
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	# normal blending: additive glow vanished against the bright white office walls
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED

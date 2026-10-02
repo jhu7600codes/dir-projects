@@ -47,6 +47,9 @@ var _flicker := 0.0
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# the admin toggle picks which progress is shown and used
+	_admin = Game.menu_admin
+	Save.use_profile("admin" if _admin else "main")
 	Prewarm.run()
 	_make_backdrop()
 	var vig := ColorRect.new()
@@ -233,7 +236,7 @@ func _make_menu() -> void:
 	tag.add_theme_font_size_override("font_size", 30)
 	tag.add_theme_color_override("font_color", Color(0.75, 0.2, 0.2))
 	col.add_child(tag)
-	var stats := UIKit.label("best %s   ·   %d gold   ·   %d deaths" % [Game.door_label(int(Save.data.best_door)), int(Save.data.gold), int(Save.data.deaths)], 15, UIKit.ACCENT)
+	var stats := UIKit.label(("admin progress   ·   " if _admin else "") + "best %s   ·   %d gold   ·   %d deaths" % [Game.door_label(int(Save.data.best_door)), int(Save.data.gold), int(Save.data.deaths)], 15, Color(1, 0.6, 0.3) if _admin else UIKit.ACCENT)
 	col.add_child(stats)
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 14)
@@ -252,7 +255,7 @@ func _make_menu() -> void:
 	var gap2 := Control.new()
 	gap2.custom_minimum_size = Vector2(0, 6)
 	col.add_child(gap2)
-	col.add_child(UIKit.check("admin panel (progress won't be saved)", false, func(on): _admin = on))
+	col.add_child(UIKit.check("admin mode (separate admin progress)", _admin, _toggle_admin))
 	var foot := UIKit.label("unofficial fan game - not affiliated with doors, rooms or roblox", 12, Color(0.45, 0.45, 0.45))
 	foot.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	foot.offset_left = 16
@@ -260,9 +263,16 @@ func _make_menu() -> void:
 	add_child(foot)
 
 
+func _toggle_admin(on: bool) -> void:
+	Game.menu_admin = on
+	# rebuild the title screen with the other progress (best, gold, continue, journal)
+	get_tree().reload_current_scene.call_deferred()
+
+
 ## text-only menu buttons that light up when hovered, like a lot of horror games
 func _menu_button(text: String, on_press: Callable, size := 22) -> Button:
 	var b := Button.new()
+	text = UIKit.cap(text)
 	b.text = text
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT

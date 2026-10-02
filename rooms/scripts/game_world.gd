@@ -151,9 +151,8 @@ func _on_died(cause: String) -> void:
 		return
 	_ended = true
 	Save.clear_run()
-	if not Game.admin:
-		Save.data.deaths = int(Save.data.deaths) + 1
-		Save.write()
+	Save.data.deaths = int(Save.data.deaths) + 1
+	Save.write()
 	var deaths := int(Save.data.deaths)
 	Achievements.unlock("first_death")
 	if deaths >= 10:
@@ -177,9 +176,8 @@ func _on_finished(reason: String) -> void:
 		Achievements.unlock("a1000")
 	else:
 		Achievements.unlock("long_walk")
-		if not Game.admin:
-			Save.data.exits = int(Save.data.exits) + 1
-			Save.write()
+		Save.data.exits = int(Save.data.exits) + 1
+		Save.write()
 	if not Game.used_locker:
 		Achievements.unlock("no_lockers")
 	player.dead = true  # stops input

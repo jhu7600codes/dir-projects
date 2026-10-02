@@ -1,11 +1,12 @@
 extends Node
 ## save data: best door, gold, achievements, a few stats and the run in progress
-## (so you can continue where you left off). user://save.json
-## admin runs lock the save: changes happen in memory and are thrown away after the run.
+## (so you can continue where you left off).
+## there are two profiles: "main" (user://save.json) for normal runs and "admin"
+## (user://save_admin.json) for admin runs, so admin runs have their own progress that
+## never touches the normal one.
 
-const PATH := "user://save.json"
-
-var data := {
+const PATHS := {"main": "user://save.json", "admin": "user://save_admin.json"}
+const DEFAULTS := {
 	"best_door": 0,
 	"gold": 100,  # starter gold
 	"starter_gold_given": true,
@@ -15,18 +16,35 @@ var data := {
 	"exits": 0,
 	"run": {},  # the run in progress, empty when there is none
 }
-var locked := false
-var _backup := {}
+
+var profile := "main"
+var data := DEFAULTS.duplicate(true)
+var locked := false  # kept for older code paths, nothing locks the save anymore
 
 
 func _ready() -> void:
 	load_data()
 
 
-func load_data() -> void:
-	if not FileAccess.file_exists(PATH):
+## switch between the normal and the admin progress
+func use_profile(p: String) -> void:
+	if p == profile or not PATHS.has(p):
 		return
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	write()
+	profile = p
+	data = DEFAULTS.duplicate(true)
+	load_data()
+
+
+func is_admin_profile() -> bool:
+	return profile == "admin"
+
+
+func load_data() -> void:
+	var path: String = PATHS[profile]
+	if not FileAccess.file_exists(path):
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if parsed is Dictionary:
 		for k in parsed:
 			data[k] = parsed[k]
@@ -38,20 +56,9 @@ func load_data() -> void:
 
 
 func write() -> void:
-	if locked:
-		return
-	var f := FileAccess.open(PATH, FileAccess.WRITE)
+	var f := FileAccess.open(PATHS[profile], FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data, "\t"))
-
-
-## admin mode: snapshot now, restore when the run ends
-func set_locked(on: bool) -> void:
-	if on and not locked:
-		_backup = data.duplicate(true)
-	elif not on and locked:
-		data = _backup
-	locked = on
 
 
 func has_run() -> bool:

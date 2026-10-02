@@ -78,8 +78,8 @@
     "style": "wide"
    },
    "source": {
-    "wiki": "rooms-revisited",
-    "file": "A-60R.png"
+    "wiki": "doors-game",
+    "file": "A-60_DOORS.png"
    }
   },
   "a60_face_2": {
@@ -91,7 +91,7 @@
    },
    "source": {
     "wiki": "doors-game",
-    "file": "A-60_DOORS.png"
+    "file": "Creepyface1.png"
    }
   },
   "a60_face_3": {
@@ -103,7 +103,7 @@
    },
    "source": {
     "wiki": "doors-game",
-    "file": "A-60_Old.png"
+    "file": "Creepyface2.png"
    }
   },
   "a60b_face": {
@@ -119,39 +119,39 @@
    }
   },
   "a90_face": {
-   "path": "res://assets/local/textures/a90_face.jpg",
+   "path": "res://assets/local/textures/a90_face.png",
    "placeholder": {
     "kind": "face",
     "color": "#bdbdbd",
     "style": "smile"
    },
    "source": {
-    "wiki": "rooms-revisited",
-    "file": "SamuelNormalState.jpg"
+    "wiki": "doors-game",
+    "file": "A-90_IDLE.png"
    }
   },
   "a90_stop": {
-   "path": "res://assets/local/textures/a90_stop.webp",
+   "path": "res://assets/local/textures/a90_stop.png",
    "placeholder": {
     "kind": "sign",
     "color": "#d01010",
     "style": "stop"
    },
    "source": {
-    "wiki": "rooms-revisited",
-    "file": "SamuelStop.webp"
+    "wiki": "doors-game",
+    "file": "Blocka90.png"
    }
   },
   "a90_jumpscare": {
-   "path": "res://assets/local/textures/a90_jumpscare.jpg",
+   "path": "res://assets/local/textures/a90_jumpscare.png",
    "placeholder": {
     "kind": "face",
     "color": "#8a8a8a",
     "style": "wide"
    },
    "source": {
-    "wiki": "rooms-revisited",
-    "file": "SamuelAttacking.jpg"
+    "wiki": "doors-game",
+    "file": "A-90_JUMPSCARE.png"
    }
   },
   "a90b_face": {
@@ -211,7 +211,7 @@
    },
    "source": {
     "wiki": "doors-game",
-    "file": "A-120.png"
+    "file": "A-120_IDLE.png"
    }
   },
   "a200_face": {
@@ -491,7 +491,7 @@
    }
   },
   "a90_knock": {
-   "path": "res://assets/local/sounds/a90_knock.mp3",
+   "path": "res://assets/local/sounds/a90_knock.ogg",
    "placeholder": {
     "kind": "knock",
     "length": 0.8,
@@ -499,7 +499,7 @@
    },
    "source": {
     "wiki": "doors-game",
-    "file": "Knock,_knock!.mp3"
+    "file": "A90SpawnSound.ogg"
    }
   },
   "a90_spawn": {

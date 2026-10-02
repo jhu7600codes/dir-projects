@@ -178,11 +178,11 @@ func _process(_delta: float) -> void:
 		var item: String = Player.ITEMS[i]
 		if names[item] == "":
 			continue
-		var t: String = names[item] if Settings.use_touch() else "[%d] %s" % [i + 1, names[item]]
+		var t: String = UIKit.cap(names[item]) if Settings.use_touch() else "[%d] %s" % [i + 1, UIKit.cap(names[item])]
 		parts.append(("> " + t + " <") if player.selected == item else t)
-	parts.append("batteries %d" % inv.batteries)
-	parts.append("gold %d" % int(Save.data.gold))
-	_items.text = "   ".join(parts) + ("" if Settings.use_touch() else "      lmb - use")
+	parts.append("Batteries %d" % inv.batteries)
+	parts.append("Gold %d" % int(Save.data.gold))
+	_items.text = "   ".join(parts) + ("" if Settings.use_touch() else "      LMB - use")
 	_update_star()
 
 
@@ -207,16 +207,16 @@ func set_prompt(text: String, hold_progress := -1.0) -> void:
 	if text == "":
 		_prompt.text = ""
 	elif Settings.use_touch():
-		_prompt.text = text
+		_prompt.text = UIKit.cap(text)
 	else:
-		_prompt.text = "[e] " + text
+		_prompt.text = "[E] " + UIKit.cap(text)
 	_hold.visible = hold_progress >= 0.0
 	if _hold.visible:
 		_hold.value = hold_progress * 100.0
 
 
 func notify(text: String) -> void:
-	_toast.text = text
+	_toast.text = UIKit.cap(text)
 	if _toast_tw:
 		_toast_tw.kill()
 	_toast.modulate.a = 1.0
@@ -226,7 +226,7 @@ func notify(text: String) -> void:
 
 
 func show_subtitle(text: String, color := Color.WHITE) -> void:
-	_subtitle.text = text.to_lower()
+	_subtitle.text = UIKit.cap(text)
 	_subtitle.add_theme_color_override("font_color", color)
 	if _sub_tw:
 		_sub_tw.kill()

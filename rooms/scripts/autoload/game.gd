@@ -25,6 +25,7 @@ var generator: Node = null
 var entities: Node = null
 var tracked_entity: Node3D = null  # a-60b star indicator
 var pending_run: Dictionary = {}   # a saved run to load when the game scene starts
+var menu_admin := false            # the title screen's admin toggle, remembered between runs
 
 # touch controls write here, the player reads it
 var touch_move := Vector2.ZERO
@@ -45,18 +46,19 @@ func continue_run() -> void:
 	if not Save.has_run():
 		return
 	pending_run = Save.data.run.duplicate(true)
-	start_run(false, true)
+	start_run(Save.is_admin_profile(), true)
 
 
 func start_run(with_admin: bool, continuing := false) -> void:
 	if not continuing:
 		pending_run = {}
-		if not with_admin:
-			Save.clear_run()
 	admin = with_admin
+	# admin runs keep their own progress (user://save_admin.json)
+	Save.use_profile("admin" if admin else "main")
+	if not continuing:
+		Save.clear_run()
 	for k in admin_flags:
 		admin_flags[k] = false
-	Save.set_locked(admin)
 	door = 0
 	used_locker = false
 	forced_sprint = false
@@ -73,7 +75,6 @@ func to_menu() -> void:
 	save_run()
 	get_tree().paused = false
 	Settings.set_world_audio_muted(false)
-	Save.set_locked(false)
 	admin = false
 	player = null
 	generator = null
@@ -83,9 +84,8 @@ func to_menu() -> void:
 
 func set_door(n: int) -> void:
 	door = n
-	if not admin:
-		Save.record_door(n)
-		save_run()
+	Save.record_door(n)
+	save_run()
 	if n >= 150:
 		Achievements.unlock("lights_out")
 	door_changed.emit(n)
@@ -99,7 +99,7 @@ func _notification(what: int) -> void:
 
 ## remember the run in progress (door, seed, health and items)
 func save_run() -> void:
-	if admin or player == null or generator == null or player.dead or door <= 0:
+	if player == null or generator == null or player.dead or door <= 0:
 		return
 	var inv = player.inventory
 	Save.save_run({
@@ -117,7 +117,7 @@ func save_run() -> void:
 
 
 static func door_label(n: int) -> String:
-	return "a-%03d" % n
+	return "A-%03d" % n
 
 
 ## 0 = normal office, 1 = pitch black. normal until a-30, foggy after, black by a-150

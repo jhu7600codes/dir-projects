@@ -7,7 +7,8 @@ func build() -> void:
 	room_type = "storage"
 	var length := rng.randf_range(10.0, 12.0)
 	var w := 8.0
-	shell(-w / 2, w / 2, length, 3.4, "front", rng.randf_range(-2.0, 2.0), "carpet_blue")
+	# exit stays between the two lockers so they can never block it
+	shell(-w / 2, w / 2, length, 3.4, "front", rng.randf_range(-1.0, 0.9), "carpet_blue")
 	for i in 3:
 		Props.pillar(self, Vector3(-1.4, 0, 3.0 + i * 2.6), 3.4)
 	for i in 3:
