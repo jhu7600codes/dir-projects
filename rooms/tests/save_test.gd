@@ -110,8 +110,30 @@ func _ready() -> void:
 	lift.pressed = false
 	tc._input(lift)
 	await _frames(3)
-	Settings.data.touch_controls = "auto"
 	_check(finished[0], "holding the touch use button opens an exit door")
+	# touch item button: tap uses the item, holding switches to the next one
+	get_tree().paused = false
+	var pl = Game.player
+	if is_instance_valid(pl) and not pl.dead:
+		pl.inventory.has_shakelight = true
+		pl.select_item("flashlight")
+		var was_on: bool = pl.lights.flashlight_on
+		var item_pos: Vector2 = tc._buttons[1][2]
+		down.index = 4
+		down.position = item_pos
+		lift.index = 4
+		lift.position = item_pos
+		tc._input(down)
+		await _frames(2)
+		tc._input(lift)
+		await _frames(3)
+		_check(pl.lights.flashlight_on != was_on and pl.selected == "flashlight", "tapping touch item toggles the flashlight")
+		tc._input(down)
+		await get_tree().create_timer(0.6).timeout
+		tc._input(lift)
+		await _frames(3)
+		_check(pl.selected == "shakelight", "holding touch item switches to the next item")
+	Settings.data.touch_controls = "auto"
 	get_tree().paused = false
 	# admin runs keep their own progress and don't touch the normal one
 	Save.use_profile("main")

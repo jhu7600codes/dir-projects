@@ -22,10 +22,10 @@ a first person horror game in an endless office. open doors, walk through genera
 | move | wasd | left stick | left stick (drag on the left side) |
 | look | mouse | right stick | drag on the right side |
 | sprint | shift (hold) | l3 | run (toggle) |
-| crouch | c or ctrl (hold) | b | duck (toggle) |
+| crouch | c or ctrl (hold) | b | crouch (toggle) |
 | interact (lockers, drawers, shops; hold for exit doors) | e | x | use (hold it for exit doors) |
-| use the item in your hand | left click | y or rb | item |
-| pick item (flashlight, shakelight, bandage, vitamins) | 1 2 3 4 or scroll | dpad left / right | swap |
+| use the item in your hand | left click | y or rb | item (tap) |
+| pick item (flashlight, shakelight, bandage, vitamins) | 1 2 3 4 or scroll | dpad left / right | item (hold) |
 | pause | esc | start | \|\| |
 | fullscreen | f11 (also in settings) | | |
 | admin panel (admin runs) | f1 or ` | back | adm |
