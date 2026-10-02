@@ -81,7 +81,7 @@ tools/              fetch_assets.py
 
 ## exporting
 
-project -> export. presets for linux, windows and android are included (you need godot's export templates, and for android the android sdk + a debug keystore set up in editor settings). desktop uses the forward+ renderer, android uses the compatibility renderer automatically (much faster on older phones). the "quality" setting (low / medium / high) changes msaa, render scale, shadows, glow and ssao.
+project -> export. presets for linux, windows and android are included (you need godot's export templates, and for android the android sdk + a debug keystore set up in editor settings). desktop uses the forward+ renderer, android uses the mobile (vulkan) renderer. phones are capped at 60 fps, "uncap fps" in settings removes the cap and vsync. the "quality" setting (low / medium / high) changes msaa, render scale, shadows, glow and ssao.
 
 ## tests
 

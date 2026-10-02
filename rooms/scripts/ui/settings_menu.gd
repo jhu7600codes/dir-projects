@@ -30,6 +30,8 @@ func _ready() -> void:
 	v.add_child(UIKit.label("graphics", 14, Color(0.6, 0.6, 0.6)))
 	if not OS.has_feature("mobile"):
 		v.add_child(UIKit.check("fullscreen (F11)", d.fullscreen, func(on): Settings.set_value("fullscreen", on)))
+	else:
+		v.add_child(UIKit.check("uncap fps", d.uncap_fps, func(on): Settings.set_value("uncap_fps", on)))
 	v.add_child(UIKit.options("quality", ["low", "medium", "high"], int(d.quality), func(i): Settings.set_value("quality", i)))
 	v.add_child(UIKit.label("touch controls", 14, Color(0.6, 0.6, 0.6)))
 	var modes := ["auto", "on", "off"]

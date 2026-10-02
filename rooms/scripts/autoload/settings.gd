@@ -15,6 +15,7 @@ var data := {
 	"fov": 75.0,
 	"quality": 1,               # 0 low, 1 medium, 2 high
 	"fullscreen": true,         # desktop only, f11 toggles it
+	"uncap_fps": false,         # mobile only: no 60 fps cap and no vsync
 	"auto_doors": true,         # doors open by themselves when you walk up to them
 	"touch_controls": "auto",   # auto, on, off
 	"touch_left_handed": false, # swaps the stick and the buttons
@@ -24,8 +25,6 @@ var data := {
 
 
 func _ready() -> void:
-	if OS.has_feature("mobile"):
-		Engine.max_fps = 60  # no point drawing faster than the screen, saves battery and heat
 	_setup_input()
 	_setup_buses()
 	load_settings()
@@ -68,7 +67,17 @@ func apply() -> void:
 	vp.scaling_3d_scale = [0.7, 0.85, 1.0][q]
 	vp.positional_shadow_atlas_size = [1024, 2048, 4096][q]
 	_apply_window()
+	_apply_fps()
 	changed.emit()
+
+
+func _apply_fps() -> void:
+	if not OS.has_feature("mobile"):
+		return
+	# capped: 60 fps saves battery and heat. uncapped: as fast as the phone can go
+	var uncap: bool = data.uncap_fps
+	Engine.max_fps = 0 if uncap else 60
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED if uncap else DisplayServer.VSYNC_ENABLED)
 
 
 func _apply_window() -> void:
