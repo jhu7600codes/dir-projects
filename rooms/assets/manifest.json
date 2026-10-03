@@ -341,7 +341,7 @@
     "length": 2.0,
     "volume": 0.25
    },
-   "loop": true,
+   "loop": false,
    "source": {
     "wiki": "doors-game",
     "file": "RoomsAmbienceNormal.mp3"
@@ -922,6 +922,15 @@
     "wiki": "doors-game",
     "file": "SeekKill.mp3"
    }
+  },
+  "room_tone": {
+   "path": "res://assets/local/sounds/room_tone.ogg",
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.12
+   },
+   "loop": true
   }
  },
  "music": {

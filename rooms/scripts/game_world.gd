@@ -60,12 +60,27 @@ func _ready() -> void:
 	else:
 		_load_run(run)
 
+	# a quiet, steady room tone, plus the office ambience sound now and then. the ambience
+	# file is only 2.5 seconds long, looping it nonstop turned into an annoying beat
+	var tone := AudioStreamPlayer.new()
+	tone.stream = Assets.sound("room_tone")
+	tone.bus = "Ambience"
+	tone.volume_db = -14.0
+	add_child(tone)
+	tone.play()
 	_ambience = AudioStreamPlayer.new()
 	_ambience.stream = Assets.sound("ambience")
 	_ambience.bus = "Ambience"
-	_ambience.volume_db = -6.0
+	_ambience.volume_db = -10.0
 	add_child(_ambience)
-	_ambience.play()
+	var t := Timer.new()
+	t.wait_time = 8.0
+	t.timeout.connect(func():
+		_ambience.pitch_scale = randf_range(0.85, 1.05)
+		_ambience.play()
+		t.start(randf_range(15.0, 40.0)))
+	add_child(t)
+	t.start()
 
 	if not Settings.use_touch():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
