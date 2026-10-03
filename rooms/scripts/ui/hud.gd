@@ -28,6 +28,7 @@ var _door: Label
 var _health: ProgressBar
 var _stamina: ProgressBar
 var _items: Label
+var _fps: Label
 var _prompt: Label
 var _hold: ProgressBar
 var _toast: Label
@@ -80,6 +81,14 @@ func _ready() -> void:
 	_items.offset_bottom = -10
 	_items.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_items)
+
+	_fps = UIKit.label("", 14, Color(0.6, 1.0, 0.6))
+	_fps.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_fps.offset_left = -110
+	_fps.offset_right = -12
+	_fps.offset_top = 10
+	_fps.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	root.add_child(_fps)
 
 	var dot := ColorRect.new()
 	dot.color = Color(1, 1, 1, 0.5)
@@ -161,6 +170,9 @@ func _center_label(parent: Control, size: int, y: float) -> Label:
 
 
 func _process(_delta: float) -> void:
+	_fps.visible = Settings.data.show_fps
+	if _fps.visible:
+		_fps.text = "%d FPS" % Engine.get_frames_per_second()
 	if player == null:
 		return
 	_health.value = player.health

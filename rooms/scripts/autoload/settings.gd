@@ -16,6 +16,8 @@ var data := {
 	"quality": 1,               # 0 low, 1 medium, 2 high
 	"fullscreen": true,         # desktop only, f11 toggles it
 	"uncap_fps": false,         # mobile only: no 60 fps cap and no vsync
+	"render_scale": 1.0,        # 3d resolution, phones start at 0.6
+	"show_fps": false,
 	"auto_doors": true,         # doors open by themselves when you walk up to them
 	"touch_controls": "auto",   # auto, on, off
 	"touch_left_handed": false, # swaps the stick and the buttons
@@ -36,12 +38,16 @@ func load_settings() -> void:
 		# first launch: phones start on low quality
 		if OS.has_feature("mobile"):
 			data.quality = 0
+			data.render_scale = 0.6
 		return
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
 	if parsed is Dictionary:
 		for k in parsed:
 			if data.has(k):
 				data[k] = parsed[k]
+		# older settings files: phones get the lower resolution too
+		if not parsed.has("render_scale") and OS.has_feature("mobile"):
+			data.render_scale = 0.6
 
 
 func save_settings() -> void:
@@ -64,7 +70,7 @@ func apply() -> void:
 	var vp := get_viewport()
 	var q := int(data.quality)
 	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][q]
-	vp.scaling_3d_scale = [0.7, 0.85, 1.0][q]
+	vp.scaling_3d_scale = clampf(float(data.render_scale), 0.4, 1.0)
 	vp.positional_shadow_atlas_size = [1024, 2048, 4096][q]
 	_apply_window()
 	_apply_fps()

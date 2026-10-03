@@ -22,7 +22,7 @@ func build() -> void:
 	sun.spot_range = 8.0
 	sun.light_energy = 1.8
 	sun.light_color = Color(0.9, 0.95, 1.0)
-	sun.shadow_enabled = true
+	sun.shadow_enabled = int(Settings.data.quality) > 0
 	add_child(sun)
 	Props.couch(self, Vector3(w / 2 - 0.5, 0, length * 0.5), -PI / 2)
 	Props.couch(self, Vector3(-w / 2 + 0.5, 0, length * 0.5), PI / 2)

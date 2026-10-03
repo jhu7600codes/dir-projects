@@ -33,6 +33,8 @@ func _ready() -> void:
 	else:
 		v.add_child(UIKit.check("uncap fps", d.uncap_fps, func(on): Settings.set_value("uncap_fps", on)))
 	v.add_child(UIKit.options("quality", ["low", "medium", "high"], int(d.quality), func(i): Settings.set_value("quality", i)))
+	v.add_child(UIKit.slider("resolution", d.render_scale, 0.4, 1.0, func(x): Settings.set_value("render_scale", x)))
+	v.add_child(UIKit.check("show fps", d.show_fps, func(on): Settings.set_value("show_fps", on)))
 	v.add_child(UIKit.label("touch controls", 14, Color(0.6, 0.6, 0.6)))
 	var modes := ["auto", "on", "off"]
 	v.add_child(UIKit.options("touch controls", modes, maxi(0, modes.find(d.touch_controls)), func(i): Settings.set_value("touch_controls", modes[i])))

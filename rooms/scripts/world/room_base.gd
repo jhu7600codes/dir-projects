@@ -28,6 +28,7 @@ var rng := RandomNumberGenerator.new()
 var _body: StaticBody3D
 var _flicker: Array[Light3D] = []
 var _flicker_t := 0.0
+var _fixture_i := 0  # low quality: only every other ceiling panel gets a real light
 var _back_seal: CollisionShape3D
 var _path_global: Array[Vector3] = []
 var _height := 3.0  # ceiling height of the current shell, for the wall trim
@@ -278,7 +279,26 @@ func ceiling_light(pos: Vector3) -> void:
 	if broken:
 		return
 	var energy := lerpf(1.0, 0.45, darkness)
-	if int(Settings.data.quality) < 2:
+	var q := int(Settings.data.quality)
+	if q == 0:
+		# low (phones): every light re-shades the whole merged room mesh, so use half
+		# as many, a bit stronger and wider so the room looks about the same
+		_fixture_i += 1
+		if _fixture_i % 2 == 0:
+			return
+		var o := OmniLight3D.new()
+		o.position = pos - Vector3(0, 0.75, 0)
+		o.omni_range = 8.0
+		o.omni_attenuation = 1.1
+		o.light_energy = energy * 1.35
+		o.light_specular = 0.0
+		o.light_color = Color(1.0, 0.97, 0.9)
+		_fade_far(o)
+		add_child(o)
+		if rng.randf() < 0.06 + darkness * 0.25:
+			_flicker.append(o)
+		return
+	if q < 2:
 		# low / medium: one cheap light per fixture, a bit under the panel so the
 		# ceiling doesn't blow out
 		var o := OmniLight3D.new()
@@ -323,8 +343,9 @@ func ceiling_light(pos: Vector3) -> void:
 ## lights far away from the camera switch off, they're hidden by fog anyway
 func _fade_far(l: Light3D) -> void:
 	l.distance_fade_enabled = true
-	l.distance_fade_begin = 24.0
-	l.distance_fade_length = 6.0
+	var low := int(Settings.data.quality) == 0
+	l.distance_fade_begin = 15.0 if low else 24.0
+	l.distance_fade_length = 4.0 if low else 6.0
 
 
 func add_locker(pos: Vector3, yaw: float) -> Locker:
