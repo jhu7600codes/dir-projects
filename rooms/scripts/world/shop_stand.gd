@@ -35,7 +35,7 @@ func _ready() -> void:
 	add_child(t)
 	for i in offers.size():
 		var item: String = offers[i][0]
-		var price: int = offers[i][1]
+		var price: int = offers[i][1] * (2 if Game.mod("inflation") else 1)
 		var x := -w / 2 + 0.65 + i * 0.9
 		var l := Label3D.new()
 		l.text = "%s\n%d gold" % [item, price]

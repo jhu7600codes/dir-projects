@@ -36,9 +36,12 @@ func rules(id: String) -> Dictionary:
 
 func _roll_timer(id: String) -> float:
 	var t: Array = rules(id).get("timer", [120.0, 300.0])
+	var k := 1.0
 	if id == "a90" and Game.mod("staring_contest"):
-		return randf_range(t[0], t[1]) / 3.0
-	return randf_range(t[0], t[1])
+		k /= 3.0
+	if Game.mod("more_doors"):
+		k /= 3.0
+	return randf_range(t[0], t[1]) * k
 
 
 func _process(delta: float) -> void:
@@ -87,9 +90,12 @@ func on_room_entered(room: RoomBase) -> void:
 
 
 func _chance(id: String) -> float:
+	var c := _base_chance(id)
 	if Game.mod("rush_hour") and id in ["a60", "a120"]:
-		return minf(1.0, _base_chance(id) * 2.0)
-	return _base_chance(id)
+		c *= 2.0
+	if Game.mod("more_doors"):
+		c = maxf(c, float(rules(id).get("chance", 0.0))) * 3.0
+	return minf(1.0, c)
 
 
 func _base_chance(id: String) -> float:
@@ -106,7 +112,10 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 	if time < float(_cooldown.get(id, -1.0)):
 		return false
 	var n := Game.door
-	if n < int(r.get("min_door", 0)) and n < int(r.get("rare_min", 1 << 30)):
+	var min_door := int(r.get("min_door", 0))
+	if Game.mod("more_doors"):
+		min_door = mini(min_door, 10)  # everyone's invited, right from the start
+	if n < min_door and n < int(r.get("rare_min", 1 << 30)):
 		return false
 	if n == 0 or n >= Game.LAST_DOOR:
 		return false

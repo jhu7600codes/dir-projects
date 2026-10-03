@@ -102,6 +102,8 @@ func _open(player, it: Interactable) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = loot_seed
 	var r := rng.randf()
+	if Game.mod("empty_pockets") and rng.randf() < 0.65:
+		r = 1.0  # empty
 	if r < 0.55:
 		player.inventory.add("gold", rng.randi_range(5, 30))
 	elif r < 0.7:

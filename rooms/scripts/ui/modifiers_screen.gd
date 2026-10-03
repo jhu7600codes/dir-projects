@@ -22,9 +22,24 @@ func _ready() -> void:
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		v.add_child(hint)
 		var on := Array(Save.data.get("modifiers", []))
+		var scroll := ScrollContainer.new()
+		scroll.custom_minimum_size = Vector2(500, minf(440, get_viewport_rect().size.y - 230))
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		v.add_child(scroll)
+		var list := UIKit.vbox(2)
+		list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.add_child(list)
 		for id in Game.MODIFIERS:
 			var m: Array = Game.MODIFIERS[id]
-			v.add_child(UIKit.check(m[0] + "  -  " + m[1], on.has(id), func(t): _toggle(id, t)))
+			list.add_child(UIKit.check(m[0], on.has(id), func(t): _toggle(id, t)))
+			var d := UIKit.label(m[1], 13, Color(0.62, 0.62, 0.62))
+			d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			d.custom_minimum_size = Vector2(460, 0)
+			var row := MarginContainer.new()
+			row.add_theme_constant_override("margin_left", 30)
+			row.add_theme_constant_override("margin_bottom", 6)
+			row.add_child(d)
+			list.add_child(row)
 	v.add_child(UIKit.button("back", func():
 		closed.emit()
 		# the title screen shows how many are on

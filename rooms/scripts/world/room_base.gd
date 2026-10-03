@@ -63,6 +63,12 @@ func _clear_doorways() -> void:
 		if blocks_entry or blocks_exit:
 			lockers.erase(lk)
 			lk.free()
+	# nowhere to hide modifier: keep a single locker
+	if Game.mod("no_hiding"):
+		while lockers.size() > 1:
+			var lk = lockers[rng.randi() % lockers.size()]
+			lockers.erase(lk)
+			lk.free()
 	has_lockers = not lockers.is_empty()
 	if not has_lockers:
 		entity_spawn_ok = false  # nothing to hide in, so a-60 / a-120 can't come here
@@ -376,6 +382,8 @@ func add_pickup(pos: Vector3, item: String, amount := 1) -> void:
 func scatter_loot(spots: Array) -> void:
 	for s in spots:
 		var r := rng.randf()
+		if Game.mod("empty_pockets") and rng.randf() < 0.6:
+			continue
 		if r < 0.25:
 			add_pickup(s, "gold", rng.randi_range(5, 20))
 		elif r < 0.33:

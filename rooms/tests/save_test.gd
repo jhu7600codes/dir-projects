@@ -154,7 +154,7 @@ func _ready() -> void:
 	_check(Save.has_run(), "admin run can be continued")
 	# modifiers (in the admin profile, so normal progress stays clean)
 	Save.data.achievements["long_walk"] = 1
-	Save.data.modifiers = ["fragile", "lights_out", "gold_rush"]
+	Save.data.modifiers = ["fragile", "lights_out", "gold_rush", "no_hiding", "more_doors"]
 	Save.write()
 	Game.start_run(true)
 	await _frames(10)
@@ -164,6 +164,14 @@ func _ready() -> void:
 	var g0 := int(Save.data.gold)
 	Game.player.inventory.add("gold", 10)
 	_check(int(Save.data.gold) == g0 + 20, "gold rush doubles gold")
+	var most := 0
+	for n in range(1, 40):
+		Game.generator.jump_to(n)
+		await _frames(1)
+		most = maxi(most, Game.generator.room(n).lockers.size())
+	_check(most == 1, "nowhere to hide: one locker per room (max %d)" % most)
+	Game.door = 12
+	_check(Game.entities.can_spawn("a120") and Game.entities._chance("a60") >= 0.85, "got any more doors: entities early and often")
 	# journal pages pop up when the best door passes them
 	Save.data.best_door = 40
 	Achievements._queue.clear()

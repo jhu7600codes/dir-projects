@@ -235,7 +235,7 @@ func _physics_process(delta: float) -> void:
 	sprinting = want_sprint and inp.length() > 0.1 and not crouching and (stamina > 0.0 or Game.forced_sprint)
 	var infinite: bool = admin_on and Game.admin_flags.stamina
 	if sprinting and not infinite and not Game.forced_sprint:
-		stamina = maxf(0.0, stamina - STAMINA_DRAIN * delta)
+		stamina = maxf(0.0, stamina - STAMINA_DRAIN * delta * (2.0 if Game.mod("out_of_shape") else 1.0))
 		_stamina_wait = 1.0
 	elif _stamina_wait > 0.0:
 		_stamina_wait -= delta

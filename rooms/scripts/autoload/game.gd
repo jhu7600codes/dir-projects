@@ -31,6 +31,11 @@ const MODIFIERS := {
 	"staring_contest": ["staring contest", "a-90 shows up way more often"],
 	"cheap_batteries": ["cheap batteries", "your flashlight drains twice as fast"],
 	"gold_rush": ["gold rush", "all the gold you find is doubled"],
+	"no_hiding": ["nowhere to hide", "rooms only ever have one locker"],
+	"out_of_shape": ["out of shape", "running wears you out twice as fast"],
+	"empty_pockets": ["empty pockets", "drawers are mostly empty and there's less loot lying around"],
+	"inflation": ["inflation", "everything in the shops costs twice as much"],
+	"more_doors": ["got any more doors?", "\"They're for my friends Rush, Ambush, Eyes, Screech, Figure and Seek.\" every entity comes way more often, and way earlier"],
 }
 
 # set by the game scene
