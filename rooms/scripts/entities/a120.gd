@@ -26,9 +26,23 @@ func begin() -> void:
 	place(false)
 	setup_look("a120_face", Color(0.85, 0.85, 1.0), 2.4)
 	set_visible_body(false)
-	after(2.5, func():
+	after(_head_start(), func():
 		set_visible_body(true)
 		moving = true)
+
+
+## seconds before it starts moving: enough to sprint to the nearest free locker
+## (in the cubicle room they're all the way at the far end) and get inside
+func _head_start() -> float:
+	var p: Player = Game.player
+	var best := INF
+	for r in generator.rooms:
+		for lk in r.lockers:
+			if is_instance_valid(lk) and not lk.occupied:
+				best = minf(best, p.global_position.distance_to(lk.global_position))
+	if best == INF:
+		return 2.5
+	return clampf(best / Player.SPRINT + 2.0, 2.5, 6.0)
 
 
 func _process(delta: float) -> void:

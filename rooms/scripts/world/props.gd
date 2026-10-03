@@ -71,9 +71,9 @@ static func couch(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
 	room.box(Vector3(2.0, 0.6, 0.22), pos + b * Vector3(0, 0.8, -0.33), Mats.get_mat("fabric"), true, yaw).visible = false
 
 
-static func shelf(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
+static func shelf(room: RoomBase, pos: Vector3, yaw := 0.0, clear_spot := false) -> void:
 	if not _model(room, "shelf", pos, yaw):
-		var s := PropModels.shelf(room.rng)
+		var s := PropModels.shelf(room.rng, clear_spot)
 		s.position = pos
 		s.rotation.y = yaw
 		room.add_child(s)

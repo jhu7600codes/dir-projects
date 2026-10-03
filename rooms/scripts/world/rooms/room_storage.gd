@@ -12,7 +12,7 @@ func build() -> void:
 	for i in 3:
 		Props.pillar(self, Vector3(-1.4, 0, 3.0 + i * 2.6), 3.4)
 	for i in 3:
-		Props.shelf(self, Vector3(w / 2 - 0.35, 0, 2.5 + i * 2.5), -PI / 2)
+		Props.shelf(self, Vector3(w / 2 - 0.35, 0, 2.5 + i * 2.5), -PI / 2, i == 1)
 	# upside down tables on the right, stacked on the left
 	for i in 2:
 		var t := Node3D.new()
@@ -25,5 +25,5 @@ func build() -> void:
 	var lz := length - 0.45 if near_exit else 0.45
 	add_locker(Vector3(-w / 2 + 1.2, 0, lz), PI if near_exit else 0.0)
 	add_locker(Vector3(w / 2 - 1.8, 0, lz), PI if near_exit else 0.0)
-	scatter_loot([Vector3(w / 2 - 0.35, 1.2, 4.0), Vector3(0.5, 0, length * 0.6)])
+	scatter_loot([Vector3(w / 2 - 0.5, 0.735, 5.0), Vector3(0.5, 0, length * 0.6)])
 	make_path([Vector3(0.4, 0, length * 0.3), Vector3(0.4, 0, length * 0.75)])

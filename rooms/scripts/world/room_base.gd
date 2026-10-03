@@ -87,6 +87,12 @@ func _merge_static() -> void:
 
 func _collect_static(node: Node, xf: Transform3D, groups: Dictionary, to_free: Array[Node]) -> void:
 	for c in node.get_children():
+		# desks: only the parts that never move get merged
+		if c is Drawer:
+			var s: Node = c.get_node_or_null("Static")
+			if s:
+				_collect_static(s, xf * (c as Node3D).transform * (s as Node3D).transform, groups, to_free)
+			continue
 		# these move, get picked up or are interactive: keep them as they are
 		if c is Door or c is Locker or c is Drawer or c is Pickup or c is ExitDoor or c is ShopStand or c is Label3D or c is Light3D or c is StaticBody3D or c is Area3D:
 			continue
@@ -385,6 +391,7 @@ func add_drawer_desk(pos: Vector3, yaw: float) -> void:
 	d.position = pos
 	d.rotation.y = yaw
 	d.loot_seed = rng.randi()
+	d.build()
 	add_child(d)
 
 

@@ -181,7 +181,8 @@ static func couch() -> Node3D:
 
 
 ## metal shelf with uprights, 4 boards and some boxes / binders on it
-static func shelf(rng: RandomNumberGenerator) -> Node3D:
+## clear_spot: leaves the middle of the second board empty so loot can sit there
+static func shelf(rng: RandomNumberGenerator, clear_spot := false) -> Node3D:
 	var root := Node3D.new()
 	var metal := _mat("shelf_metal", Color(0.5, 0.52, 0.55), 0.45, 0.6)
 	for sx in [-0.68, 0.68]:
@@ -195,7 +196,7 @@ static func shelf(rng: RandomNumberGenerator) -> Node3D:
 			continue
 		var x := -0.6
 		while x < 0.55:
-			if rng.randf() < 0.3:
+			if rng.randf() < 0.3 or (clear_spot and i == 1 and x > -0.45 and x < 0.25):
 				x += 0.15
 				continue
 			if rng.randf() < 0.5:
