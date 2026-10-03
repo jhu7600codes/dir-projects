@@ -36,6 +36,8 @@ func rules(id: String) -> Dictionary:
 
 func _roll_timer(id: String) -> float:
 	var t: Array = rules(id).get("timer", [120.0, 300.0])
+	if id == "a90" and Game.mod("staring_contest"):
+		return randf_range(t[0], t[1]) / 3.0
 	return randf_range(t[0], t[1])
 
 
@@ -85,6 +87,12 @@ func on_room_entered(room: RoomBase) -> void:
 
 
 func _chance(id: String) -> float:
+	if Game.mod("rush_hour") and id in ["a60", "a120"]:
+		return minf(1.0, _base_chance(id) * 2.0)
+	return _base_chance(id)
+
+
+func _base_chance(id: String) -> float:
 	var r := rules(id)
 	if Game.door >= int(r.get("min_door", 0)):
 		return float(r.get("chance", 1.0))

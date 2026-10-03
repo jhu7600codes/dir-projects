@@ -83,7 +83,7 @@ func _click() -> void:
 
 func _process(delta: float) -> void:
 	if equipped == "flashlight" and flashlight_on:
-		inventory.battery -= FLASH_DRAIN * delta
+		inventory.battery -= FLASH_DRAIN * delta * (2.0 if Game.mod("cheap_batteries") else 1.0)
 		if inventory.battery <= 0.0:
 			inventory.battery = 0.0
 			if not inventory.use_battery():

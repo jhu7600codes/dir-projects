@@ -19,6 +19,7 @@ const PAD_LOOK_SPEED := 2.6
 
 var locker_exit_ms := -1000000  # when you last got out of a locker (the curious light uses it)
 var health := 100.0
+var max_health := 100.0  # 50 with the fragile modifier
 var stamina := 100.0
 var dead := false
 var hidden := false
@@ -56,6 +57,9 @@ var _time := 0.0
 
 
 func _ready() -> void:
+	if Game.mod("fragile"):
+		max_health = 50.0
+		health = minf(health, max_health)
 	collision_layer = 2
 	collision_mask = 1
 	floor_snap_length = 0.3
@@ -420,7 +424,7 @@ func take_damage(amount: float, cause: String) -> void:
 
 
 func heal(amount: float) -> void:
-	health = minf(100.0, health + amount)
+	health = minf(max_health, health + amount)
 
 
 func owns(item: String) -> bool:
@@ -477,7 +481,7 @@ func use_item() -> void:
 
 
 func use_bandage() -> void:
-	if health >= 100.0:
+	if health >= max_health:
 		notify("you're already at full health")
 	elif inventory.use_bandage():
 		heal(35.0)

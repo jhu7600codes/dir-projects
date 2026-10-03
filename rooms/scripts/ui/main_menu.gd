@@ -247,6 +247,11 @@ func _make_menu() -> void:
 	else:
 		col.add_child(_menu_button("play", func(): Game.start_run(_admin), 26))
 	col.add_child(_menu_button("journal", func(): add_child(JournalScreen.new())))
+	var mods := Array(Save.data.get("modifiers", []))
+	var mod_text := "modifiers" if Game.modifiers_unlocked() else "modifiers  (locked)"
+	if Game.modifiers_unlocked() and not mods.is_empty():
+		mod_text += "  (%d on)" % mods.size()
+	col.add_child(_menu_button(mod_text, func(): add_child(ModifiersScreen.new())))
 	col.add_child(_menu_button("achievements", func(): add_child(AchievementsScreen.new())))
 	col.add_child(_menu_button("settings", func(): add_child(SettingsMenu.new())))
 	col.add_child(_menu_button("credits", func(): add_child(CreditsScreen.new())))

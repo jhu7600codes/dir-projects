@@ -22,13 +22,16 @@ const LIST := {
 	"read_walls": ["someone was here", "walk the whole a-100 corridor"],
 	"lights_out": ["lights out", "reach a-150"],
 	"shake_it": ["shake it", "buy a shakelight"],
+	"early_bird": ["you're early", "meet a-90 in a-000"],
 }
 
-var _queue: Array[String] = []
+var _queue: Array = []  # [header, title, description, color]
 var _showing := false
 var _panel: PanelContainer
 var _title: Label
 var _desc: Label
+var _small: Label
+var _style: StyleBoxFlat
 
 
 func _ready() -> void:
@@ -51,11 +54,10 @@ func _ready() -> void:
 	_panel.add_theme_stylebox_override("panel", sb)
 	var box := VBoxContainer.new()
 	_panel.add_child(box)
-	var small := Label.new()
-	small.text = "Achievement unlocked"
-	small.add_theme_font_size_override("font_size", 13)
-	small.modulate = Color(0.95, 0.85, 0.4)
-	box.add_child(small)
+	_style = sb
+	_small = Label.new()
+	_small.add_theme_font_size_override("font_size", 13)
+	box.add_child(_small)
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", 20)
 	box.add_child(_title)
@@ -75,7 +77,12 @@ func unlock(id: String) -> void:
 		return
 	Save.data.achievements[id] = int(Time.get_unix_time_from_system())
 	Save.write()
-	_queue.append(id)
+	popup("achievement unlocked", LIST[id][0], LIST[id][1], Color(0.95, 0.85, 0.4))
+
+
+## a popup in the corner (achievements, journal pages). they queue up one after another
+func popup(header: String, title: String, desc: String, color: Color) -> void:
+	_queue.append([header, title, desc, color])
 	if not _showing:
 		_show_next()
 
@@ -85,9 +92,12 @@ func _show_next() -> void:
 		_showing = false
 		return
 	_showing = true
-	var id: String = _queue.pop_front()
-	_title.text = UIKit.cap(LIST[id][0])
-	_desc.text = UIKit.cap(LIST[id][1])
+	var p: Array = _queue.pop_front()
+	_small.text = UIKit.cap(p[0])
+	_small.modulate = p[3]
+	_style.border_color = p[3]
+	_title.text = UIKit.cap(p[1])
+	_desc.text = UIKit.cap(p[2])
 	Game.play_ui("achievement")
 	var tw := create_tween()
 	tw.tween_property(_panel, "modulate:a", 1.0, 0.3)

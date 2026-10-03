@@ -2,6 +2,7 @@ extends Node3D
 ## the game scene: sets up environment, room generator, player, entities, hud and menus,
 ## and reacts to deaths / exits. fog and darkness follow the door number.
 
+const LOBBY_A90_CHANCE := 0.04
 var env: Environment
 var generator: RoomGenerator
 var entities: EntityManager
@@ -53,6 +54,9 @@ func _ready() -> void:
 		generator.start(randi())
 		player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 2.0)))
 		Game.set_door(0)
+		# easter egg, like in doors: very rarely a-90 is already waiting in the lobby
+		if randf() < LOBBY_A90_CHANCE:
+			get_tree().create_timer(randf_range(6.0, 14.0)).timeout.connect(_lobby_a90)
 	else:
 		_load_run(run)
 
@@ -65,7 +69,20 @@ func _ready() -> void:
 
 	if not Settings.use_touch():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	hud.notify("open the door to start. hide in lockers when you hear something.")
+	if Game.modifiers.is_empty():
+		hud.notify("open the door to start. hide in lockers when you hear something.")
+	else:
+		var names := []
+		for m in Game.modifiers:
+			names.append(Game.MODIFIERS[m][0])
+		hud.notify("modifiers: " + ", ".join(names))
+
+
+func _lobby_a90() -> void:
+	if Game.door != 0 or player == null or player.dead or entities.active.has("a90"):
+		return
+	if entities.spawn("a90"):
+		Achievements.unlock("early_bird")
 
 
 ## continue a saved run: same seed, same door, same items

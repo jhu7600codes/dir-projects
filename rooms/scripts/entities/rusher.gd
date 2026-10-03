@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_update_audio()
 	if moving:
-		_move(speed * delta)
+		_move(speed * delta * (1.3 if Game.mod("in_a_hurry") else 1.0))
 	if player and not player.dead:
 		var d := global_position.distance_to(player.head_position())
 		if d < kill_range and should_kill(d):

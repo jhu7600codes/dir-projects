@@ -152,6 +152,42 @@ func _ready() -> void:
 	Save.use_profile("admin")
 	_check(int(Save.data.best_door) >= main_best + 40 and int(Save.data.gold) == 777, "admin progress saved (best %s)" % Game.door_label(int(Save.data.best_door)))
 	_check(Save.has_run(), "admin run can be continued")
+	# modifiers (in the admin profile, so normal progress stays clean)
+	Save.data.achievements["long_walk"] = 1
+	Save.data.modifiers = ["fragile", "lights_out", "gold_rush"]
+	Save.write()
+	Game.start_run(true)
+	await _frames(10)
+	Game.entities.natural_spawns = false
+	_check(Game.mod("fragile") and Game.player.max_health == 50.0 and Game.player.health <= 50.0, "fragile: 50 health")
+	_check(Game.darkness(5) == 0.75 and Game.darkness(0) == 0.0, "lights out: dark from a-001, lobby lit")
+	var g0 := int(Save.data.gold)
+	Game.player.inventory.add("gold", 10)
+	_check(int(Save.data.gold) == g0 + 20, "gold rush doubles gold")
+	# journal pages pop up when the best door passes them
+	Save.data.best_door = 40
+	Achievements._queue.clear()
+	Achievements._showing = true  # hold the queue so the test can count it
+	Save.record_door(120)
+	var pages := 0
+	for q in Achievements._queue:
+		if q[0] == "journal page found":
+			pages += 1
+	_check(pages == 2, "journal popups for a-050 and a-100 (got %d)" % pages)
+	Achievements._queue.clear()
+	Achievements._showing = false
+	# the lobby a-90 easter egg spawns a real a-90 in a-000
+	Game.generator.jump_to(0)
+	await _frames(3)
+	Game.door = 0
+	Game.player.get_parent()._lobby_a90()
+	await _frames(2)
+	_check(Game.entities.active.has("a90"), "a-90 can show up in a-000")
+	Game.entities.clear_all()
+	Save.data.modifiers = []
+	Save.write()
+	Game.to_menu()
+	await _frames(10)
 	Save.use_profile("main")
 	print("save test %s (%d failures)" % ["passed" if failures == 0 else "FAILED", failures])
 	get_tree().quit(1 if failures else 0)

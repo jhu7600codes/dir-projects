@@ -19,6 +19,19 @@ var door := 0
 var used_locker := false
 var forced_sprint := false  # a-60b
 var death_details := {}     # cause -> what exactly went wrong, for the curious light
+var modifiers: Array = []   # modifier ids active this run (see MODIFIERS)
+
+## unlocked by the "welp, thats been a long walk." achievement (leave through an exit door).
+## id -> [name, what it does]
+const MODIFIERS := {
+	"lights_out": ["lights out", "every room is dark, right from a-001"],
+	"rush_hour": ["rush hour", "a-60 and a-120 show up twice as often"],
+	"in_a_hurry": ["in a hurry", "everything that rushes at you is 30% faster"],
+	"fragile": ["fragile", "you only have 50 health"],
+	"staring_contest": ["staring contest", "a-90 shows up way more often"],
+	"cheap_batteries": ["cheap batteries", "your flashlight drains twice as fast"],
+	"gold_rush": ["gold rush", "all the gold you find is doubled"],
+}
 
 # set by the game scene
 var player: Node = null
@@ -64,6 +77,10 @@ func start_run(with_admin: bool, continuing := false) -> void:
 	used_locker = false
 	forced_sprint = false
 	death_details = {}
+	if continuing:
+		modifiers = Array(pending_run.get("modifiers", []))
+	else:
+		modifiers = Array(Save.data.get("modifiers", [])) if modifiers_unlocked() else []
 	tracked_entity = null
 	if not continuing:
 		Save.data.runs = int(Save.data.runs) + 1
@@ -109,6 +126,7 @@ func save_run() -> void:
 		"seed": generator.run_seed,
 		"health": player.health,
 		"used_locker": used_locker,
+		"modifiers": modifiers,
 		"selected": player.selected,
 		"items": {
 			"has_flashlight": inv.has_flashlight, "has_shakelight": inv.has_shakelight,
@@ -123,7 +141,17 @@ static func door_label(n: int) -> String:
 
 
 ## 0 = normal office, 1 = pitch black. normal until a-30, foggy after, black by a-150
-static func darkness(n: int) -> float:
+func modifiers_unlocked() -> bool:
+	return Achievements.has("long_walk")
+
+
+func mod(id: String) -> bool:
+	return modifiers.has(id)
+
+
+func darkness(n: int) -> float:
+	if n > 0 and mod("lights_out"):
+		return 0.75
 	if n < 30:
 		return 0.0
 	if n < 130:

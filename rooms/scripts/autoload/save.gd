@@ -15,6 +15,7 @@ const DEFAULTS := {
 	"runs": 0,
 	"exits": 0,
 	"run": {},  # the run in progress, empty when there is none
+	"modifiers": [],  # modifiers picked on the title screen for the next run
 }
 
 var profile := "main"
@@ -97,5 +98,11 @@ func spend_gold(amount: int) -> bool:
 
 func record_door(door: int) -> void:
 	if door > int(data.best_door):
+		var old := int(data.best_door)
 		data.best_door = door
 		write()
+		# new journal pages
+		for page in JournalScreen.PAGES:
+			var need := int(page[2])
+			if need > old and need <= door:
+				Achievements.popup("journal page found", page[0], "read it in the journal on the title screen", Color(0.75, 0.82, 1.0))

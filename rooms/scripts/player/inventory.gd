@@ -18,6 +18,8 @@ func add(item: String, amount := 1) -> void:
 	var p = get_parent()
 	match item:
 		"gold":
+			if Game.mod("gold_rush"):
+				amount *= 2
 			Save.add_gold(amount)
 			Game.play_ui("gold")
 			p.notify("+%d gold" % amount)
