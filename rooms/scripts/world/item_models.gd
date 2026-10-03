@@ -48,7 +48,7 @@ static func build(item: String) -> Node3D:
 		"gold":
 			var rng := RandomNumberGenerator.new()
 			rng.seed = 7
-			var gm := _mat("gold_coin", Color(1.0, 0.78, 0.25), 0.25, 1.0, 0.15)
+			var gm := _mat("gold_coin", Color(1.0, 0.78, 0.25), 0.35, 0.45, 0.35)
 			for i in 9:
 				var c := _cyl(root, 0.03, 0.03, 0.008, Vector3(rng.randf_range(-0.07, 0.07), 0.004 + (i / 3) * 0.008, rng.randf_range(-0.07, 0.07)), gm)
 				c.rotation = Vector3(rng.randf_range(-0.2, 0.2), 0, rng.randf_range(-0.2, 0.2))
