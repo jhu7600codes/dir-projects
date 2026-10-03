@@ -62,7 +62,12 @@ func _ready() -> void:
 	_check(Game.chase and sk._chasing, "seek's chase starts through the next door")
 	for i in Seek.CHASE_DOORS:
 		await _open_next()
+	var last_door = Game.generator.room(Game.door - 1).exit_door
 	await _frames(5)
+	# walk on into the room so the door can close behind you
+	Game.player.teleport(Game.player.global_transform * Transform3D(Basis(), Vector3(0, 0, -3.0)))
+	await _secs(1.5)
+	_check(not last_door.is_open, "the curious light slams the last door shut")
 	_check(not Game.entities.active.has("seek") and not Game.chase, "seek gives up after %d doors" % Seek.CHASE_DOORS)
 	Game.admin_flags.god = false
 

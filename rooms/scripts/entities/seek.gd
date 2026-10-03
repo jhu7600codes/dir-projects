@@ -16,6 +16,8 @@ const EYES := 14
 var _start_door := 0
 var _chasing := false
 var _eye_nodes: Array[Node3D] = []
+var _ending := false
+var _last_door: Door = null
 
 
 func begin() -> void:
@@ -87,13 +89,31 @@ func _start_chase() -> void:
 	after(1.2, func(): moving = true)
 
 
+## the chase is over once you're through the last door: wait until you're clear of the
+## doorway, then the curious light slams it shut in seek's face
 func _end_chase() -> void:
 	Game.chase = false
-	finish()
+	_ending = true
+	_last_door = generator.room(Game.door - 1).exit_door if generator.room(Game.door - 1) else null
+
+
+func _process(_delta: float) -> void:
+	if not _ending or _done:
+		return
+	if _last_door == null or not is_instance_valid(_last_door):
+		finish()
+		return
+	if player.global_position.distance_to(_last_door.global_position) > 2.2:
+		_ending = false
+		_chasing = false
+		moving = false
+		_last_door.slam_shut()
+		Game.subtitle.emit("...", Color(1.0, 0.86, 0.45))
+		after(1.0, finish)
 
 
 func should_kill(_dist: float) -> bool:
-	return _chasing  # lockers don't save you from seek
+	return _chasing and not _ending  # lockers don't save you from seek
 
 
 func kill() -> void:

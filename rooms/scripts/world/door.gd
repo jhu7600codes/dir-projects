@@ -110,3 +110,26 @@ func open() -> void:
 	var tw := create_tween()
 	tw.tween_property(_hinge, "rotation:y", -PI * 0.55, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	opened.emit(self)
+
+
+## the end of seek's chase: the curious light slams the door shut behind you
+func slam_shut() -> void:
+	if not is_open:
+		return
+	is_open = false
+	_panel_shape.set_deferred("disabled", false)
+	_audio.stream = Assets.sound("door_open")
+	_audio.pitch_scale = 0.6
+	_audio.volume_db = 6.0
+	_audio.play()
+	var tw := create_tween()
+	tw.tween_property(_hinge, "rotation:y", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	var glow := OmniLight3D.new()
+	glow.light_color = Color(1.0, 0.86, 0.45)
+	glow.light_energy = 4.0
+	glow.omni_range = 7.0
+	glow.position = Vector3(0, 1.4, -0.6)
+	add_child(glow)
+	var gt := create_tween()
+	gt.tween_property(glow, "light_energy", 0.0, 1.6)
+	gt.tween_callback(glow.queue_free)
