@@ -84,7 +84,7 @@ func _ready() -> void:
 
 	_fps = UIKit.label("", 14, Color(0.6, 1.0, 0.6))
 	_fps.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_fps.offset_left = -110
+	_fps.offset_left = -330
 	_fps.offset_right = -12
 	_fps.offset_top = 10
 	_fps.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -172,7 +172,12 @@ func _center_label(parent: Control, size: int, y: float) -> Label:
 func _process(_delta: float) -> void:
 	_fps.visible = Settings.data.show_fps
 	if _fps.visible:
-		_fps.text = "%d FPS" % Engine.get_frames_per_second()
+		# where the frame time goes: game scripts + physics, the renderer on the cpu, the gpu
+		var vp := get_viewport().get_viewport_rid()
+		RenderingServer.viewport_set_measure_render_time(vp, true)
+		var game_ms := (Performance.get_monitor(Performance.TIME_PROCESS) + Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0
+		_fps.text = "%d FPS\ngame %.1f  render %.1f  gpu %.1f ms" % [Engine.get_frames_per_second(), game_ms,
+				RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp)]
 	if player == null:
 		return
 	_health.value = player.health
