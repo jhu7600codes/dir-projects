@@ -11,6 +11,13 @@ const SCRIPTS := {
 	"a90b": preload("res://scripts/entities/a90b.gd"),
 	"a120": preload("res://scripts/entities/a120.gd"),
 	"a200": preload("res://scripts/entities/a200.gd"),
+	# doors' hotel entities, only with the "got any more doors?" modifier
+	"rush": preload("res://scripts/entities/rush.gd"),
+	"ambush": preload("res://scripts/entities/ambush.gd"),
+	"eyes": preload("res://scripts/entities/eyes.gd"),
+	"screech": preload("res://scripts/entities/screech.gd"),
+	"figure": preload("res://scripts/entities/figure.gd"),
+	"seek": preload("res://scripts/entities/seek.gd"),
 }
 ## chance that a-90 joins when a-60 or a-120 spawns (a-60 is slowed down when it does)
 const A90_JOIN_CHANCE := 0.2
@@ -38,8 +45,6 @@ func _roll_timer(id: String) -> float:
 	var t: Array = rules(id).get("timer", [120.0, 300.0])
 	var k := 1.0
 	if id == "a90" and Game.mod("staring_contest"):
-		k /= 3.0
-	if Game.mod("more_doors"):
 		k /= 3.0
 	return randf_range(t[0], t[1]) * k
 
@@ -93,8 +98,6 @@ func _chance(id: String) -> float:
 	var c := _base_chance(id)
 	if Game.mod("rush_hour") and id in ["a60", "a120"]:
 		c *= 2.0
-	if Game.mod("more_doors"):
-		c = maxf(c, float(rules(id).get("chance", 0.0))) * 3.0
 	return minf(1.0, c)
 
 
@@ -112,9 +115,11 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 	if time < float(_cooldown.get(id, -1.0)):
 		return false
 	var n := Game.door
+	if r.has("needs_mod") and not Game.mod(r.needs_mod):
+		return false
+	if r.get("needs_dark", false) and Game.darkness(n) < 0.35:
+		return false
 	var min_door := int(r.get("min_door", 0))
-	if Game.mod("more_doors"):
-		min_door = mini(min_door, 10)  # everyone's invited, right from the start
 	if n < min_door and n < int(r.get("rare_min", 1 << 30)):
 		return false
 	if n == 0 or n >= Game.LAST_DOOR:

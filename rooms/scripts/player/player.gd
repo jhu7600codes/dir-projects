@@ -233,7 +233,8 @@ func _physics_process(delta: float) -> void:
 	# sprint + stamina
 	var want_sprint := Input.is_action_pressed("sprint") or Game.forced_sprint
 	sprinting = want_sprint and inp.length() > 0.1 and not crouching and (stamina > 0.0 or Game.forced_sprint)
-	var infinite: bool = admin_on and Game.admin_flags.stamina
+	# seek's chase: running never wears you out (like in doors)
+	var infinite: bool = (admin_on and Game.admin_flags.stamina) or Game.chase
 	if sprinting and not infinite and not Game.forced_sprint:
 		stamina = maxf(0.0, stamina - STAMINA_DRAIN * delta * (2.0 if Game.mod("out_of_shape") else 1.0))
 		_stamina_wait = 1.0
@@ -281,7 +282,7 @@ func _physics_process(delta: float) -> void:
 
 ## doors open by themselves when you walk up to them (setting "open doors automatically")
 func _auto_open_door() -> void:
-	if not Settings.data.get("auto_doors", true) or Game.generator == null:
+	if not (Settings.data.get("auto_doors", true) or Game.chase) or Game.generator == null:
 		return
 	var r = Game.generator.room(Game.door)
 	if r == null or r.exit_door == null or r.exit_door.is_open or r.exit_door.locked:

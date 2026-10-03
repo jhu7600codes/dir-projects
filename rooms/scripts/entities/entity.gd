@@ -14,6 +14,8 @@ extends Node3D
 ##   group:     entities in the same group never run at the same time
 ##   blocked_by: ids that stop this one from spawning while active
 ##   pause_timer_while: ids that pause this one's timer while active
+##   needs_mod: only spawns with this modifier on (the doors entities use "more_doors")
+##   needs_dark: only in dark rooms (a-130 and deeper, or with lights out)
 
 signal finished(entity: Entity, survived: bool)
 

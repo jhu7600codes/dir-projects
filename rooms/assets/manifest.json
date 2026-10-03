@@ -240,6 +240,97 @@
     "color": "#ddd8cc",
     "color2": "#c4bdae"
    }
+  },
+  "rush_face": {
+   "path": "res://assets/local/textures/rush_face.webp",
+   "placeholder": {
+    "kind": "face",
+    "color": "#202030",
+    "style": "wide"
+   },
+   "max_size": 512,
+   "source": {
+    "wiki": "doors-game",
+    "file": "Rushvnew.webp"
+   }
+  },
+  "ambush_face": {
+   "path": "res://assets/local/textures/ambush_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#40ff60",
+    "style": "wide"
+   },
+   "max_size": 400,
+   "source": {
+    "wiki": "doors-game",
+    "file": "Ambush2.png"
+   }
+  },
+  "eyes_face": {
+   "path": "res://assets/local/textures/eyes_face.webp",
+   "placeholder": {
+    "kind": "face",
+    "color": "#9050ff",
+    "style": "dots"
+   },
+   "max_size": 512,
+   "source": {
+    "wiki": "doors-game",
+    "file": "Eyeopt2.webp"
+   }
+  },
+  "screech_face": {
+   "path": "res://assets/local/textures/screech_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#101010",
+    "style": "smile"
+   },
+   "max_size": 400,
+   "source": {
+    "wiki": "doors-game",
+    "file": "Screech Render.png"
+   }
+  },
+  "figure_body": {
+   "path": "res://assets/local/textures/figure_body.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#c05020",
+    "style": "wide"
+   },
+   "max_size": 600,
+   "source": {
+    "wiki": "doors-game",
+    "file": "FigureRenderOfficial.png"
+   }
+  },
+  "seek_body": {
+   "path": "res://assets/local/textures/seek_body.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#101010",
+    "style": "dots"
+   },
+   "max_size": 600,
+   "source": {
+    "wiki": "doors-game",
+    "file": "Seek2.png"
+   }
+  },
+  "seek_eye": {
+   "path": "res://assets/local/textures/seek_eye.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#101010",
+    "style": "dots"
+   },
+   "max_size": 256,
+   "source": {
+    "wiki": "doors-game",
+    "file": "M Render Seek Eye V1.png"
+   }
   }
  },
  "sounds": {
@@ -658,6 +749,178 @@
    "source": {
     "wiki": "rooms-revisited",
     "file": "Its_not_over_it_never_is.ogg"
+   }
+  },
+  "rush_far": {
+   "path": "res://assets/local/sounds/rush_far.mp3",
+   "placeholder": {
+    "kind": "static",
+    "length": 2.0,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "PlaySound (Rush).mp3"
+   },
+   "loop": true
+  },
+  "ambush_far": {
+   "path": "res://assets/local/sounds/ambush_far.mp3",
+   "placeholder": {
+    "kind": "buzz",
+    "length": 2.0,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "Ambush Near Noise.mp3"
+   },
+   "loop": true
+  },
+  "eyes_ambience": {
+   "path": "res://assets/local/sounds/eyes_ambience.mp3",
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.6
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "EyesAmbience.MP3"
+   },
+   "loop": true
+  },
+  "eyes_hurt": {
+   "path": "res://assets/local/sounds/eyes_hurt.mp3",
+   "placeholder": {
+    "kind": "glitch",
+    "length": 0.3,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "EyesAttack.MP3"
+   }
+  },
+  "screech_psst": {
+   "path": "res://assets/local/sounds/screech_psst.mp3",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 0.5,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "ScreechPsst.mp3"
+   }
+  },
+  "screech_bite": {
+   "path": "res://assets/local/sounds/screech_bite.mp3",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.6,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "Screech-Bite.mp3"
+   }
+  },
+  "screech_caught": {
+   "path": "res://assets/local/sounds/screech_caught.mp3",
+   "placeholder": {
+    "kind": "glitch",
+    "length": 0.4,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "ScreechCaught.mp3"
+   }
+  },
+  "figure_step": {
+   "path": "res://assets/local/sounds/figure_step.mp3",
+   "placeholder": {
+    "kind": "thud",
+    "length": 0.4,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "FigureFootstep.mp3"
+   }
+  },
+  "figure_growl": {
+   "path": "res://assets/local/sounds/figure_growl.mp3",
+   "placeholder": {
+    "kind": "buzz",
+    "length": 1.2,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "FigureGrowl1.mp3"
+   }
+  },
+  "figure_kill": {
+   "path": "res://assets/local/sounds/figure_kill.wav",
+   "placeholder": {
+    "kind": "scream",
+    "length": 1.0,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "FigureKill.wav"
+   }
+  },
+  "seek_eyes": {
+   "path": "res://assets/local/sounds/seek_eyes.mp3",
+   "placeholder": {
+    "kind": "whoosh",
+    "length": 1.0,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "SeekEyeSpawn.mp3"
+   }
+  },
+  "seek_scream": {
+   "path": "res://assets/local/sounds/seek_scream.mp3",
+   "placeholder": {
+    "kind": "scream",
+    "length": 1.5,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "SeekScream.mp3"
+   }
+  },
+  "seek_steps": {
+   "path": "res://assets/local/sounds/seek_steps.mp3",
+   "placeholder": {
+    "kind": "step",
+    "length": 0.4,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "SeekFootstepsClose.mp3"
+   },
+   "loop": true
+  },
+  "seek_kill": {
+   "path": "res://assets/local/sounds/seek_kill.mp3",
+   "placeholder": {
+    "kind": "scream",
+    "length": 1.0,
+    "volume": 0.8
+   },
+   "source": {
+    "wiki": "doors-game",
+    "file": "SeekKill.mp3"
    }
   }
  },

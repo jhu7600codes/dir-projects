@@ -11,6 +11,7 @@ const LINE_TIME := 3.2  # each line stays this long unless you skip it
 
 const NAMES := {
 	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
+	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
 const HINTS := {
@@ -36,6 +37,27 @@ const HINTS := {
 		"move": ["you kept walking while it was watching.", "when you hear the knock, stop walking right away."],
 		"look": ["you looked around while it was watching.", "when you hear the knock, don't even move the camera."],
 		"button": ["you pressed something while it was watching.", "when you hear the knock, don't touch anything."],
+	},
+	"rush": {
+		"": ["the lights flicker right before it comes.", "when they do, get into a locker right away."],
+		"left_early": ["you came out before it was gone.", "wait until the room is quiet again."],
+	},
+	"ambush": {
+		"": ["the lights flicker, and it comes, and it comes back. again and again.", "stay in the locker until it's gone for good."],
+		"left_early": ["it came back for you. it always comes back a few times.", "wait in the locker until it's quiet for a while."],
+	},
+	"eyes": {
+		"": ["you looked at it for too long.", "look at the floor and walk past it."],
+	},
+	"screech": {
+		"": ["it whispered to you, and you didn't look.", "when you hear psst, turn around and find it."],
+	},
+	"figure": {
+		"": ["it can't see you, but it can hear everything.", "crouch and walk slowly when it's close, or hide."],
+		"sprinting": ["you ran while it was listening.", "it hears running from far away. crouch-walk past it."],
+	},
+	"seek": {
+		"": ["it caught up with you.", "when the eyes appear on the walls, get ready to run. don't stop until it's gone."],
 	},
 	"a90b": {
 		"": ["you didn't do what it told you.", "halt means stand still, proceed means keep walking."],

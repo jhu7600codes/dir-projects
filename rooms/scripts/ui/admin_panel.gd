@@ -33,7 +33,7 @@ func _ready() -> void:
 	grid.columns = 3
 	v.add_child(grid)
 	for id in EntityManager.SCRIPTS:
-		grid.add_child(UIKit.button(id.insert(1, "-"), _spawn.bind(id), 16))
+		grid.add_child(UIKit.button(id.insert(1, "-") if id[1].is_valid_int() else id, _spawn.bind(id), 16))
 	v.add_child(UIKit.button("despawn all", _despawn, 16))
 	v.add_child(UIKit.check("no natural spawns", false, func(on): Game.entities.natural_spawns = not on))
 	v.add_child(UIKit.label("rooms", 15, UIKit.ACCENT))

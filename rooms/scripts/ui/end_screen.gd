@@ -9,6 +9,12 @@ const CAUSES := {
 	"a90b": "you didn't follow a-90b's orders.",
 	"a120": "a-120 saw you. wait until the clanging stops completely.",
 	"a200": "the happy scribble got you. white means hide, purple means get out.",
+	"rush": "Rush got you. hide when the lights flicker.",
+	"ambush": "Ambush got you. it rebounds, wait it out.",
+	"eyes": "you looked at Eyes for too long.",
+	"screech": "Screech bit you. look at it when it whispers.",
+	"figure": "Figure heard you.",
+	"seek": "Seek caught you. keep running.",
 }
 
 

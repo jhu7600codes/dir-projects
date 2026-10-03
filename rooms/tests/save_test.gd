@@ -171,7 +171,7 @@ func _ready() -> void:
 		most = maxi(most, Game.generator.room(n).lockers.size())
 	_check(most == 1, "nowhere to hide: one locker per room (max %d)" % most)
 	Game.door = 12
-	_check(Game.entities.can_spawn("a120") and Game.entities._chance("a60") >= 0.85, "got any more doors: entities early and often")
+	_check(Game.entities.can_spawn("rush") and Game.entities.can_spawn("eyes"), "got any more doors: rush and eyes can come")
 	# journal pages pop up when the best door passes them
 	Save.data.best_door = 40
 	Achievements._queue.clear()

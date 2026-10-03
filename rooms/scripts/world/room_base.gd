@@ -28,6 +28,8 @@ var rng := RandomNumberGenerator.new()
 var _body: StaticBody3D
 var _flicker: Array[Light3D] = []
 var _flicker_t := 0.0
+var _burst := 0.0
+var _burst_lights: Array = []
 var _fixture_i := 0  # low quality: only every other ceiling panel gets a real light
 var _back_seal: CollisionShape3D
 var _path_global: Array[Vector3] = []
@@ -154,7 +156,20 @@ func _add_back_seal() -> void:
 	_body.add_child(_back_seal)
 
 
+## rush / ambush warning: every light in the room flickers for a few seconds
+func flicker_burst(seconds: float) -> void:
+	_burst = seconds
+	_burst_lights.clear()
+	for l in find_children("*", "Light3D", true, false):
+		_burst_lights.append(l)
+
+
 func _process(delta: float) -> void:
+	if _burst > 0.0:
+		_burst -= delta
+		for l in _burst_lights:
+			if is_instance_valid(l):
+				l.visible = _burst <= 0.0 or rng.randf() > 0.5
 	if _flicker.is_empty():
 		return
 	_flicker_t -= delta

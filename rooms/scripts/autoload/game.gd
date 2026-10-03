@@ -18,6 +18,7 @@ var admin_flags := {
 var door := 0
 var used_locker := false
 var forced_sprint := false  # a-60b
+var chase := false          # seek is chasing you: no stamina limit, doors open by themselves
 var death_details := {}     # cause -> what exactly went wrong, for the curious light
 var modifiers: Array = []   # modifier ids active this run (see MODIFIERS)
 
@@ -35,7 +36,7 @@ const MODIFIERS := {
 	"out_of_shape": ["out of shape", "running wears you out twice as fast"],
 	"empty_pockets": ["empty pockets", "drawers are mostly empty and there's less loot lying around"],
 	"inflation": ["inflation", "everything in the shops costs twice as much"],
-	"more_doors": ["got any more doors?", "\"They're for my friends Rush, Ambush, Eyes, Screech, Figure and Seek.\" every entity comes way more often, and way earlier"],
+	"more_doors": ["got any more doors?", "\"They're for my friends Rush, Ambush, Eyes, Screech, Figure and Seek.\" the entities from doors' hotel move into the office"],
 }
 
 # set by the game scene
@@ -81,6 +82,7 @@ func start_run(with_admin: bool, continuing := false) -> void:
 	door = 0
 	used_locker = false
 	forced_sprint = false
+	chase = false
 	death_details = {}
 	if continuing:
 		modifiers = Array(pending_run.get("modifiers", []))

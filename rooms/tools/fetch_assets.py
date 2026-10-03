@@ -41,6 +41,18 @@ def file_url(wiki, name):
     return None
 
 
+def shrink(path, max_size):
+    # some wiki renders are 2000-3000px, way more than a sprite needs (and the apk size)
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    im = Image.open(path)
+    if max(im.size) > max_size:
+        im.thumbnail((max_size, max_size), Image.LANCZOS)
+        im.save(path)
+
+
 def entries(manifest):
     if "icon" in manifest:
         yield "icon", manifest["icon"]
@@ -74,6 +86,8 @@ def main():
             req = urllib.request.Request(url, headers=UA)
             with urllib.request.urlopen(req, timeout=60) as r, open(dest, "wb") as f:
                 f.write(r.read())
+            if e.get("max_size"):
+                shrink(dest, int(e["max_size"]))
             print(f"ok   {key} <- {src['file']}")
             got += 1
         except Exception as ex:  # keep going, the game uses placeholders for anything missing
