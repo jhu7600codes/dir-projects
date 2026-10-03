@@ -191,7 +191,7 @@
    }
   },
   "a90b_attack": {
-   "path": "res://assets/local/textures/a90b_attack.webp",
+   "path": "res://assets/local/textures/a90b_attack.png",
    "placeholder": {
     "kind": "face",
     "color": "#909090",
@@ -199,7 +199,7 @@
    },
    "source": {
     "wiki": "rooms-revisited",
-    "file": "Sensation_attack.webp"
+    "file": "A-90bNew.png"
    }
   },
   "a120_face": {

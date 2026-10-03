@@ -3,14 +3,16 @@ extends ScreenEntity
 ## a-90b: the screen flushes red and it gives 5-10 orders in a row.
 ##   halt (stop sign)      - don't walk or run until the next order
 ##   proceed (green arrow) - keep walking until the next order
-## you get a short moment to react after each order. get one wrong and it attacks for
+## you get a moment to react after each order, and a slow start or a tiny stop is forgiven.
+## stay wrong for longer and it attacks for
 ## 20-30 damage and leaves.
 
 const RULES := {
 	"trigger": "timer", "min_door": 60, "timer": [200.0, 600.0], "chance": 0.5,
 	"cooldown": 60.0, "group": "screen", "blocked_by": ["a90", "a60b"],
 }
-const REACT_TIME := 0.8
+const REACT_TIME := 1.1
+const FORGIVE := 0.5  # being wrong for less than this long (a slow start, a tiny stop) is fine
 
 var _orders_left := 0
 var _order := "halt"
@@ -19,6 +21,7 @@ var _grace := 0.0
 var _face: TextureRect
 var _sign: TextureRect
 var _failed := false
+var _wrong_t := 0.0
 
 
 func begin() -> void:
@@ -51,6 +54,7 @@ func _next_order() -> void:
 	play_alert("a90b_" + _order)
 	Game.subtitle.emit(_order, Color(1, 0.3, 0.3) if _order == "halt" else Color(0.4, 1, 0.5))
 	_grace = REACT_TIME
+	_wrong_t = 0.0
 	_check_t = randf_range(1.4, 2.8)
 
 
@@ -63,8 +67,12 @@ func _process(delta: float) -> void:
 	_check_t -= delta
 	var walking: bool = player.is_walking()
 	if (_order == "halt" and walking) or (_order == "proceed" and not walking):
-		_fail()
-		return
+		_wrong_t += delta
+		if _wrong_t >= FORGIVE:
+			_fail()
+			return
+	else:
+		_wrong_t = 0.0
 	if _check_t <= 0.0:
 		_next_order()
 
@@ -76,4 +84,4 @@ func _fail() -> void:
 	_face.visible = false
 	jumpscare("a90b_attack", "a90b_attack_sound", func():
 		player.take_damage(randi_range(20, 30), "a90b")
-		finish())
+		finish(), "lunge")
