@@ -58,6 +58,7 @@ const HINTS := {
 	},
 	"seek": {
 		"": ["it caught up with you.", "when the eyes appear on the walls, get ready to run. don't stop until it's gone."],
+		"hands": ["the hands got you.", "stay on the side of the room without hands, and crouch under the beams."],
 	},
 	"a90b": {
 		"": ["you didn't do what it told you.", "halt means stand still, proceed means keep walking."],

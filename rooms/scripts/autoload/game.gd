@@ -18,6 +18,7 @@ var admin_flags := {
 var door := 0
 var used_locker := false
 var forced_sprint := false  # a-60b
+var ui_open := false        # a keypad is open: no walking or looking around
 var chase := false          # seek is chasing you: no stamina limit, doors open by themselves
 var death_details := {}     # cause -> what exactly went wrong, for the curious light
 var modifiers: Array = []   # modifier ids active this run (see MODIFIERS)
@@ -83,6 +84,7 @@ func start_run(with_admin: bool, continuing := false) -> void:
 	used_locker = false
 	forced_sprint = false
 	chase = false
+	ui_open = false
 	death_details = {}
 	if continuing:
 		modifiers = Array(pending_run.get("modifiers", []))

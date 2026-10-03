@@ -75,7 +75,7 @@ func _stick_side_hit(p: Vector2) -> bool:
 
 
 func _input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or Game.ui_open:
 		return
 	if event is InputEventScreenTouch:
 		if event.pressed:

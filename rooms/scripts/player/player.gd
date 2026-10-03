@@ -101,12 +101,16 @@ func _ready() -> void:
 # ---- input helpers (a-90 / a-90b read these too) ---------------------------
 
 func move_input() -> Vector2:
+	if Game.ui_open:
+		return Vector2.ZERO
 	var v := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	v += Game.touch_move
 	return v.limit_length(1.0)
 
 
 func look_input() -> Vector2:
+	if Game.ui_open:
+		return Vector2.ZERO
 	return Input.get_vector("look_left", "look_right", "look_up", "look_down")
 
 

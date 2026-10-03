@@ -9,6 +9,7 @@ signal opened(door: Door)
 var number := 1
 var is_open := false
 var locked := false  # used for the decorative locked door in some rooms
+var lock_handler := Callable()  # figure's code lock: called instead of the "locked" sound
 
 var _hinge: Node3D
 var _panel_shape: CollisionShape3D
@@ -91,11 +92,39 @@ func _frame_box(size: Vector3, pos: Vector3) -> void:
 
 
 func _on_used(_player) -> void:
+	if locked and lock_handler.is_valid():
+		lock_handler.call()
+		return
 	if locked:
 		_audio.stream = Assets.sound("door_locked")
 		_audio.play()
 		return
 	open()
+
+
+## lock it with a code padlock (figure's room). `handler` runs when you try the door
+func code_lock(handler: Callable) -> void:
+	locked = true
+	lock_handler = handler
+	_it.prompt = "enter the code"
+	var pad := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.16, 0.22, 0.06)
+	pad.mesh = bm
+	pad.material_override = Mats.get_mat("metal")
+	pad.position = Vector3(RoomBase.DOOR_W - 0.2, 1.05, -0.06)  # hinge-local: the handle side
+	pad.name = "Padlock"
+	_hinge.add_child(pad)
+
+
+func unlock() -> void:
+	locked = false
+	lock_handler = Callable()
+	if is_instance_valid(_it):
+		_it.prompt = "open door"
+	var pad := _hinge.get_node_or_null("Padlock")
+	if pad:
+		pad.queue_free()
 
 
 func open() -> void:
