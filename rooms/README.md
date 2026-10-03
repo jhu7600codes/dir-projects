@@ -41,8 +41,9 @@ a first person horror game in an endless office. open doors, walk through genera
   - **a-90** knock, audio cuts out, face flashes, stop sign. any input = 90 damage. freezes other entities. can join a-60 / a-120 (a-60 gets slowed).
   - **a-90b** gives 5-10 orders: halt (don't walk) or proceed (keep walking). wrong = 20-30 damage.
   - **a-200** (the happy scribble) from the front, rebounds ~3 times. white = hide, purple = get out of the locker.
-  - **a-60b** shows up once at a-505, bounces back and forth with boss music until you get through 20 more doors. you're forced to sprint at double speed, a star marks where it is. (in rooms: revisited it's after a-1005, but our game ends at a-1000, so it's moved. change `AT_DOOR` in `a60b.gd`.)
+  - **a-60b** has a tiny (2%) chance to show up at a-505, bounces back and forth with boss music until you get through 20 more doors. you're forced to sprint at double speed, a star marks where it is. (in rooms: revisited it's after a-1005, but our game ends at a-1000, so it's moved. change `AT_DOOR` in `a60b.gd`.)
   - **glitch** failsafe puts you back in the current room if a room fails to generate or you fall out of the world.
+- **the curious light**: after you die a warm yellow light tells you what went wrong (which entity, and what exactly you did, like leaving a locker too early or touching the screen during a-90).
 - **doors open by themselves** when you walk up to them (turn it off in settings).
 - **items**: flashlight + batteries, shakelight, gold, bandages, vitamins. drawers in desks hold gold. shops at a-000 and a-150. gold is saved between runs.
 - **saving**: the run saves on every door (and when you quit or switch apps). the title screen then shows "continue (a-xxx)". same rooms, same items, same health. dying or escaping clears it.

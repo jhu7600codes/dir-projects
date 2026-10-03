@@ -161,6 +161,11 @@ func _on_died(cause: String) -> void:
 		Achievements.unlock("deaths_50")
 	Game.play_ui("death")
 	entities.clear_all()
+	# the curious light talks to you first, then the normal death screen
+	var cl := CuriousLight.new()
+	add_child(cl)
+	cl.setup(cause, str(Game.death_details.get(cause, "")))
+	await cl.done
 	var es := EndScreen.new()
 	add_child(es)
 	es.setup("death", cause)

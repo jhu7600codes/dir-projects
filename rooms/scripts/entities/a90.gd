@@ -60,31 +60,37 @@ func _process(delta: float) -> void:
 	if not _watching:
 		return
 	# held inputs count too: walking, a finger on the screen, a stick pushed
-	if player and (player.move_input().length() > 0.1 or player.look_input().length() > 0.1):
-		_trigger()
-	elif Game.touch_count > 0:
-		_trigger()
+	if Game.touch_count > 0:
+		_trigger("touch")
+	elif player and player.move_input().length() > 0.1:
+		_trigger("move")
+	elif player and player.look_input().length() > 0.1:
+		_trigger("look")
 
 
 func _input(event: InputEvent) -> void:
 	if not _watching:
 		return
 	var moved := false
+	var why := "button"
 	if event is InputEventMouseMotion:
+		why = "look"
 		moved = event.relative.length() > 2.0
 	elif event is InputEventKey or event is InputEventMouseButton or event is InputEventJoypadButton:
 		moved = event.is_pressed()
 	elif event is InputEventScreenTouch or event is InputEventScreenDrag:
 		moved = true
+		why = "touch"
 	elif event is InputEventJoypadMotion:
 		moved = absf(event.axis_value) > 0.4
 	if moved:
-		_trigger()
+		_trigger(why)
 
 
-func _trigger() -> void:
+func _trigger(why := "button") -> void:
 	if _caught:
 		return
+	Game.death_details["a90"] = why
 	_caught = true
 	_watching = false
 	hit_player = true

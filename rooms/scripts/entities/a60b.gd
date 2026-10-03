@@ -9,7 +9,7 @@ extends Rusher
 const AT_DOOR := 505
 const ROOMS_TO_SURVIVE := 20
 const RULES := {
-	"trigger": "door_number", "at_door": AT_DOOR,
+	"trigger": "door_number", "at_door": AT_DOOR, "chance": 0.02,
 	"group": "boss", "blocked_by": [],
 }
 

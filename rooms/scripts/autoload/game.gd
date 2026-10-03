@@ -18,6 +18,7 @@ var admin_flags := {
 var door := 0
 var used_locker := false
 var forced_sprint := false  # a-60b
+var death_details := {}     # cause -> what exactly went wrong, for the curious light
 
 # set by the game scene
 var player: Node = null
@@ -62,6 +63,7 @@ func start_run(with_admin: bool, continuing := false) -> void:
 	door = 0
 	used_locker = false
 	forced_sprint = false
+	death_details = {}
 	tracked_entity = null
 	if not continuing:
 		Save.data.runs = int(Save.data.runs) + 1

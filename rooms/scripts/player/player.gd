@@ -17,6 +17,7 @@ const STAMINA_REGEN := 16.0
 const LOOK_SPEED := 0.0025
 const PAD_LOOK_SPEED := 2.6
 
+var locker_exit_ms := -1000000  # when you last got out of a locker (the curious light uses it)
 var health := 100.0
 var stamina := 100.0
 var dead := false
@@ -362,6 +363,7 @@ func enter_locker(lk: Locker) -> void:
 func exit_locker() -> void:
 	if not hidden or _busy or current_locker == null:
 		return
+	locker_exit_ms = Time.get_ticks_msec()
 	_busy = true
 	current_locker.play_door()
 	current_locker.set_inside(false)

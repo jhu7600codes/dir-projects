@@ -149,4 +149,10 @@ func should_kill(_dist: float) -> bool:
 
 func kill() -> void:
 	hit_player = true
+	var detail := "open"
+	if player.hidden:
+		detail = "in_locker"
+	elif Time.get_ticks_msec() - player.locker_exit_ms < 8000:
+		detail = "left_early"
+	Game.death_details[id] = detail
 	player.take_damage(999, id)

@@ -79,6 +79,7 @@ func _process(delta: float) -> void:
 
 func _fail() -> void:
 	_failed = true
+	Game.death_details["a90b"] = _order
 	hit_player = true
 	_sign.visible = false
 	_face.visible = false

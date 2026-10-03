@@ -66,7 +66,7 @@ func on_room_entered(room: RoomBase) -> void:
 		var r := rules(id)
 		if r.get("trigger") == "door_number" and n == int(r.at_door) and not _once_done.has(id):
 			_once_done[id] = true
-			if can_spawn(id, room):
+			if can_spawn(id, room) and randf() < float(r.get("chance", 1.0)):
 				spawn(id)
 	var door_ids := []
 	for id in SCRIPTS:
