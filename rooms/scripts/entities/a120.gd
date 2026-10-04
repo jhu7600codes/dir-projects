@@ -24,11 +24,27 @@ func begin() -> void:
 	kill_range = 14.0
 	max_rebounds = [0, 1, 1, 2, 3][randi() % 5]
 	place(false)
+	_break_lockers()
 	setup_look("a120_face", Color(0.85, 0.85, 1.0), 2.4)
 	set_visible_body(false)
 	after(_head_start(), func():
 		set_visible_body(true)
 		moving = true)
+
+
+## the warning you can see: most lockers in the room you just walked into get torn open.
+## one stays usable (two in big locker rooms)
+func _break_lockers() -> void:
+	var r: RoomBase = generator.room(Game.door)
+	if r == null:
+		return
+	var usable: Array = r.lockers.filter(func(l): return is_instance_valid(l) and not l.broken)
+	if usable.size() <= 1:
+		return
+	usable.shuffle()
+	var keep := 2 if usable.size() >= 5 else 1
+	for i in range(keep, usable.size()):
+		usable[i].break_open()
 
 
 ## seconds before it starts moving: enough to sprint to the nearest free locker
@@ -38,7 +54,7 @@ func _head_start() -> float:
 	var best := INF
 	for r in generator.rooms:
 		for lk in r.lockers:
-			if is_instance_valid(lk) and not lk.occupied:
+			if is_instance_valid(lk) and not lk.occupied and not lk.broken:
 				best = minf(best, p.global_position.distance_to(lk.global_position))
 	if best == INF:
 		return 2.5

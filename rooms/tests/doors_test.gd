@@ -137,6 +137,24 @@ func _ready() -> void:
 			_check(passed < 0.0, "standing up, a beam blocks you (%.1f)" % passed)
 	sk2.queue_free()
 
+	# a-120's warning: most lockers in your room get torn open, at least one still works
+	var ln := Game.door
+	while Game.generator.room(ln).lockers.size() < 3:
+		ln += 1
+		Game.generator.jump_to(ln)
+		await _frames(1)
+	Game.door = ln
+	var lks: Array = Game.generator.room(ln).lockers
+	Game.entities.spawn("a120")
+	await _frames(2)
+	var ok_count := lks.filter(func(l): return not l.broken).size()
+	_check(ok_count >= 1 and ok_count <= 2 and ok_count < lks.size(), "a-120 breaks most lockers in the room (%d of %d still work)" % [ok_count, lks.size()])
+	var broken_one = lks.filter(func(l): return l.broken)[0]
+	p.enter_locker(broken_one)
+	_check(not p.hidden, "you can't hide in a broken locker")
+	Game.entities.clear_all()
+	await _frames(3)
+
 	# no ghost kills: during a-60's warning it's invisible and can't hurt you, even up close
 	p.health = 100.0
 	var a60 = Game.entities.spawn("a60")

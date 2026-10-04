@@ -37,7 +37,7 @@ a first person horror game in an endless office. open doors, walk through genera
 - **special rooms**: a-000 lobby (couches, skylight, shakelight dispenser), a-100 message corridor, a-150 shop, exit rooms after a-200 (every 50-100 rooms, rarely earlier, you can hear them from the room before), a-1000 wooden bridge over the void with the glowing door.
 - **entities** (one script each, spawn rules in each script's `RULES`):
   - **a-60** rushes from behind after you open a door into a room with lockers. crackle, then hiss. hide.
-  - **a-120** comes from the rooms ahead, slow, metallic clanging, can rebound. wait until the sound is completely gone.
+  - **a-120** comes from the rooms ahead, slow, metallic clanging, can rebound. most lockers in your room get torn open when it spawns (one or two still work). wait until the sound is completely gone.
   - **a-90** knock, audio cuts out, face flashes, stop sign. any input = 90 damage. freezes other entities. can join a-60 / a-120 (a-60 gets slowed).
   - **a-90b** gives 5-10 orders: halt (don't walk) or proceed (keep walking). wrong = 20-30 damage.
   - **a-200** (the happy scribble) from the front, rebounds ~3 times. white = hide, purple = get out of the locker.
