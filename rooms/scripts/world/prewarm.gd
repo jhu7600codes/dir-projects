@@ -20,7 +20,9 @@ static func run() -> void:
 	PropModels.fridge().free()
 	for item in ["flashlight", "shakelight", "battery", "bandage", "vitamins", "gold"]:
 		ItemModels.build(item).free()
-	for k in ["a60_face_1", "a60_face_2", "a60_face_3", "a60b_face", "a120_face", "a200_face"]:
+	Drawer.make_cache()
+	for k in ["a60_face_1", "a60_face_2", "a60_face_3", "a60b_face", "a120_face", "a200_face",
+			"rush_face", "ambush_face", "eyes_face", "screech_face", "figure_body", "seek_body", "seek_eye"]:
 		Assets.glow_texture(k)
 	for section in ["sounds", "music"]:
 		for key in Assets.manifest.get(section, {}):

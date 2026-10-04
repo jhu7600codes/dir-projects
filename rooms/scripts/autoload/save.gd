@@ -20,6 +20,8 @@ const DEFAULTS := {
 
 var profile := "main"
 var data := DEFAULTS.duplicate(true)
+var _lock := Mutex.new()
+var _pending := {}  # path -> json text waiting to be written
 var locked := false  # kept for older code paths, nothing locks the save anymore
 
 
@@ -56,10 +58,31 @@ func load_data() -> void:
 			write()
 
 
+## the file write happens on a worker thread, so a slow disk never hitches the game
+## (it saves on every door and every bit of gold). only the newest data per file gets
+## written, so an older save can never land after a newer one.
 func write() -> void:
-	var f := FileAccess.open(PATHS[profile], FileAccess.WRITE)
-	if f:
-		f.store_string(JSON.stringify(data, "\t"))
+	_lock.lock()
+	_pending[PATHS[profile]] = JSON.stringify(data, "\t")
+	_lock.unlock()
+	WorkerThreadPool.add_task(flush)
+
+
+## writes whatever is waiting. also called directly when quitting or switching apps
+func flush() -> void:
+	_lock.lock()
+	for path in _pending:
+		var f := FileAccess.open(path, FileAccess.WRITE)
+		if f:
+			f.store_string(_pending[path])
+			f.close()
+	_pending.clear()
+	_lock.unlock()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_PREDELETE:
+		flush()
 
 
 func has_run() -> bool:

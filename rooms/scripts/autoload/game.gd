@@ -123,6 +123,7 @@ func _notification(what: int) -> void:
 	# closing the window, or switching apps on android, saves the run too
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		save_run()
+		Save.flush()  # right now, not on a worker thread: the app may be about to close
 
 
 ## remember the run in progress (door, seed, health and items)

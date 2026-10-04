@@ -28,6 +28,7 @@ var rng := RandomNumberGenerator.new()
 var _body: StaticBody3D
 var _flicker: Array[Light3D] = []
 var _flicker_t := 0.0
+var _merged := false
 var _burst := 0.0
 var _burst_lights: Array = []
 var _fixture_i := 0  # low quality: only every other ceiling panel gets a real light
@@ -51,7 +52,14 @@ func setup(num: int, seed_value: int) -> void:
 	build()
 	_clear_doorways()
 	_add_back_seal()
-	_merge_static()
+
+
+## the mesh merge runs one frame after the room is added, so building a room and merging
+## it don't both land in the frame you open a door (that made big rooms hitch). the new
+## room is behind a closed door at that point anyway.
+func _ready() -> void:
+	if not _merged:
+		get_tree().process_frame.connect(_merge_static, CONNECT_ONE_SHOT)
 
 
 ## safety net against softlocks: any locker standing in front of the entry or the exit
@@ -80,6 +88,9 @@ func _clear_doorways() -> void:
 ## furniture, plants) is merged into one mesh per material, so a room costs a handful
 ## of draw calls instead of a hundred. moving / interactive things are left alone.
 func _merge_static() -> void:
+	if _merged:
+		return
+	_merged = true
 	var groups := {}  # material -> SurfaceTool
 	var to_free: Array[Node] = []
 	_collect_static(self, Transform3D.IDENTITY, groups, to_free)
