@@ -214,7 +214,7 @@ func _a60_glimpse(r: RoomBase) -> Node3D:
 
 func _make_menu() -> void:
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
+	col.add_theme_constant_override("separation", 4)
 	col.position = Vector2(64, 0)
 	col.custom_minimum_size = Vector2(360, 0)
 	col.set_anchors_preset(Control.PRESET_LEFT_WIDE)
@@ -227,7 +227,7 @@ func _make_menu() -> void:
 	logo.texture = load("res://assets/branding/logo.png")
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-	logo.custom_minimum_size = Vector2(440, 440.0 * 811.0 / 1892.0)
+	logo.custom_minimum_size = Vector2(400, 400.0 * 811.0 / 1892.0)
 	col.add_child(logo)
 	_title = logo
 	var tag := Label.new()
@@ -266,6 +266,18 @@ func _make_menu() -> void:
 	foot.offset_left = 16
 	foot.offset_top = -28
 	add_child(foot)
+	_fit_menu.call_deferred(col)
+
+
+## if the menu is still taller than the screen (more buttons, a short window), shrink it
+## to fit instead of letting the logo and the admin toggle fall off the edges
+func _fit_menu(col: Control) -> void:
+	var h := get_viewport_rect().size.y
+	var need := col.get_combined_minimum_size().y
+	if need > h - 24.0:
+		var k := (h - 24.0) / need
+		col.scale = Vector2(k, k)
+		col.pivot_offset = Vector2(0, h / 2.0)
 
 
 func _toggle_admin(on: bool) -> void:
@@ -286,7 +298,7 @@ func _menu_button(text: String, on_press: Callable, size := 22) -> Button:
 	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
 	b.add_theme_color_override("font_focus_color", Color(1, 0.92, 0.6))
 	b.add_theme_color_override("font_pressed_color", UIKit.ACCENT)
-	b.custom_minimum_size = Vector2(0, size + 14)
+	b.custom_minimum_size = Vector2(0, size + 8)
 	b.pressed.connect(on_press)
 	b.mouse_entered.connect(func(): b.text = "› " + text)
 	b.mouse_exited.connect(func(): b.text = text)
