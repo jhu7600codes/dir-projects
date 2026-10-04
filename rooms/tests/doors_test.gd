@@ -148,7 +148,10 @@ func _ready() -> void:
 	Game.entities.spawn("a120")
 	await _frames(2)
 	var ok_count := lks.filter(func(l): return not l.broken).size()
-	_check(ok_count >= 1 and ok_count <= 2 and ok_count < lks.size(), "a-120 breaks most lockers in the room (%d of %d still work)" % [ok_count, lks.size()])
+	var bc := lks.size() - ok_count
+	var want_lo := mini(2 if lks.size() <= 5 else 5, lks.size() - 1)
+	var want_hi := mini(3 if lks.size() <= 5 else 7, lks.size() - 1)
+	_check(ok_count >= 1 and bc >= want_lo and bc <= want_hi, "a-120 breaks some lockers (%d of %d broken)" % [bc, lks.size()])
 	var broken_one = lks.filter(func(l): return l.broken)[0]
 	p.enter_locker(broken_one)
 	_check(not p.hidden, "you can't hide in a broken locker")

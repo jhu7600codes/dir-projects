@@ -32,8 +32,8 @@ func begin() -> void:
 		moving = true)
 
 
-## the warning you can see: most lockers in the room you just walked into get torn open.
-## one stays usable (two in big locker rooms)
+## the warning you can see: some lockers in the room you just walked into get torn open.
+## rooms with up to 5 lockers lose 2-3, bigger ones lose 5-7. at least one always works
 func _break_lockers() -> void:
 	var r: RoomBase = generator.room(Game.door)
 	if r == null:
@@ -42,8 +42,10 @@ func _break_lockers() -> void:
 	if usable.size() <= 1:
 		return
 	usable.shuffle()
-	var keep := 2 if usable.size() >= 5 else 1
-	for i in range(keep, usable.size()):
+	var n := usable.size()
+	var count := randi_range(2, 3) if n <= 5 else randi_range(5, 7)
+	count = mini(count, n - 1)
+	for i in count:
 		usable[i].break_open()
 
 
