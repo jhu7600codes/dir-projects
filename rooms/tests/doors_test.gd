@@ -137,6 +137,15 @@ func _ready() -> void:
 			_check(passed < 0.0, "standing up, a beam blocks you (%.1f)" % passed)
 	sk2.queue_free()
 
+	# no ghost kills: during a-60's warning it's invisible and can't hurt you, even up close
+	p.health = 100.0
+	var a60 = Game.entities.spawn("a60")
+	p.teleport(Transform3D(Basis(), a60.global_position + Vector3(0, -1.6, 1.5)))
+	await _secs(3.0)
+	_check(not p.dead and p.health == 100.0, "a-60 can't kill you while it's still warning (invisible)")
+	Game.entities.clear_all()
+	await _frames(3)
+
 	Save.data.modifiers = []
 	Save.write()
 	Game.to_menu()

@@ -65,7 +65,9 @@ func _physics_process(delta: float) -> void:
 	_update_audio()
 	if moving:
 		_move(speed * delta * (1.3 if Game.mod("in_a_hurry") else 1.0))
-	if player and not player.dead:
+	# only while it's actually coming: during the warning (or between rebounds) it's
+	# invisible and must not be able to kill you from rooms away
+	if moving and player and not player.dead:
 		var d := global_position.distance_to(player.head_position())
 		if d < kill_range and should_kill(d):
 			kill()
