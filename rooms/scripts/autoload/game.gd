@@ -9,6 +9,9 @@ signal subtitle(text: String, color: Color)
 signal screen_tint(color: Color)      # a-200 uses this, Color(0,0,0,0) clears it
 
 const LAST_DOOR := 1000
+const WIRES_LAST := 50  # the wires subfloor: W-01 .. W-50
+## each wires switch powers one stretch of the office
+const POWER_RANGES := [[1, 200], [201, 400], [401, 600], [601, 800], [801, 1000]]
 
 var admin := false
 var admin_flags := {
@@ -22,6 +25,12 @@ var ui_open := false        # a keypad is open: no walking or looking around
 var chase := false          # seek is chasing you: no stamina limit, doors open by themselves
 var death_details := {}     # cause -> what exactly went wrong, for the curious light
 var modifiers: Array = []   # modifier ids active this run (see MODIFIERS)
+var floor := "offices"      # "offices" (the main a-floor) or "wires" (the w-subfloor)
+var carry := {}             # health + items brought along when you switch floors mid-run
+var has_key := false        # the management key from a drawer at a-240
+var power := [false, false, false, false, false]  # wires switches flipped this run (a-001..a-200, ..)
+var elevator_power := false
+var fixed_office := false   # this run is the office after the wires: lit, people, no entities
 
 ## unlocked by the "welp, thats been a long walk." achievement (leave through an exit door).
 ## id -> [name, what it does]
@@ -70,9 +79,11 @@ func continue_run() -> void:
 	start_run(Save.is_admin_profile(), true)
 
 
-func start_run(with_admin: bool, continuing := false) -> void:
+func start_run(with_admin: bool, continuing := false, floor_id := "offices", carry_over := {}) -> void:
 	if not continuing:
 		pending_run = {}
+	floor = str(pending_run.get("floor", "offices")) if continuing else floor_id
+	carry = carry_over
 	admin = with_admin
 	# admin runs keep their own progress (user://save_admin.json)
 	Save.use_profile("admin" if admin else "main")
@@ -85,6 +96,11 @@ func start_run(with_admin: bool, continuing := false) -> void:
 	forced_sprint = false
 	chase = false
 	ui_open = false
+	has_key = bool(pending_run.get("has_key", false)) if continuing else false
+	power = Array(pending_run.get("power", [false, false, false, false, false])) if continuing else [false, false, false, false, false]
+	elevator_power = bool(pending_run.get("elevator_power", false)) if continuing else false
+	# riding the elevator up from the wires gives you the fixed office for that run
+	fixed_office = bool(pending_run.get("fixed_office", false)) if continuing else bool(carry_over.get("fixed", false))
 	death_details = {}
 	if continuing:
 		modifiers = Array(pending_run.get("modifiers", []))
@@ -101,6 +117,7 @@ func start_run(with_admin: bool, continuing := false) -> void:
 
 func to_menu() -> void:
 	save_run()
+	floor = "offices"
 	get_tree().paused = false
 	Settings.set_world_audio_muted(false)
 	admin = false
@@ -112,9 +129,14 @@ func to_menu() -> void:
 
 func set_door(n: int) -> void:
 	door = n
-	Save.record_door(n)
+	if floor == "wires":
+		if n > int(Save.data.get("wires_best", 0)):
+			Save.data.wires_best = n
+			Save.write()
+	else:
+		Save.record_door(n)
 	save_run()
-	if n >= 150:
+	if n >= 150 and floor == "offices":
 		Achievements.unlock("lights_out")
 	door_changed.emit(n)
 
@@ -124,6 +146,21 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		save_run()
 		Save.flush()  # right now, not on a worker thread: the app may be about to close
+
+
+## health + items right now, to take along to another floor
+func carry_state() -> Dictionary:
+	if player == null:
+		return {}
+	var inv = player.inventory
+	return {
+		"health": player.health,
+		"items": {
+			"has_flashlight": inv.has_flashlight, "has_shakelight": inv.has_shakelight,
+			"battery": inv.battery, "shake_charge": inv.shake_charge,
+			"batteries": inv.batteries, "bandages": inv.bandages, "vitamins": inv.vitamins,
+		},
+	}
 
 
 ## remember the run in progress (door, seed, health and items)
@@ -136,6 +173,11 @@ func save_run() -> void:
 		"seed": generator.run_seed,
 		"health": player.health,
 		"used_locker": used_locker,
+		"floor": floor,
+		"has_key": has_key,
+		"power": power,
+		"elevator_power": elevator_power,
+		"fixed_office": fixed_office,
 		"modifiers": modifiers,
 		"selected": player.selected,
 		"items": {
@@ -146,8 +188,36 @@ func save_run() -> void:
 	})
 
 
-static func door_label(n: int) -> String:
+func door_label(n: int) -> String:
+	if floor == "wires":
+		return "W-%02d" % n
 	return "A-%03d" % n
+
+
+## always the office numbering (best door, journal pages)
+static func a_label(n: int) -> String:
+	return "A-%03d" % n
+
+
+## the office after the wires: lit, full of people, no entities (except the coworkers)
+func office_powered() -> bool:
+	return floor == "offices" and fixed_office
+
+
+func last_door() -> int:
+	return WIRES_LAST if floor == "wires" else LAST_DOOR
+
+
+## the wires switch that powers office door n (0-4), -1 for the lobby
+static func power_range(n: int) -> int:
+	if n < 1:
+		return -1
+	return clampi((n - 1) / 200, 0, 4)
+
+
+func powered(n: int) -> bool:
+	var r := power_range(n)
+	return r >= 0 and r < power.size() and bool(power[r])
 
 
 ## 0 = normal office, 1 = pitch black. normal until a-30, foggy after, black by a-150
@@ -160,6 +230,10 @@ func mod(id: String) -> bool:
 
 
 func darkness(n: int) -> float:
+	if floor == "wires":
+		return 0.45  # always dim down there, just the cage lamps
+	if office_powered():
+		return 0.0  # you switched the power back on down in the wires
 	if n > 0 and mod("lights_out"):
 		return 0.75
 	if n < 30:

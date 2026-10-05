@@ -42,7 +42,7 @@ func _ready() -> void:
 		var bm := BoxMesh.new()
 		bm.size = Vector3(w - 0.04, h - 0.04, 0.07)
 		mi.mesh = bm
-		mi.material_override = Mats.get_mat("door")
+		mi.material_override = Mats.get_mat("door_metal" if Game.floor == "wires" else "door")
 		mi.position = Vector3(w / 2, h / 2, 0)
 		_hinge.add_child(mi)
 	_panel_shape = CollisionShape3D.new()
@@ -103,10 +103,12 @@ func _on_used(_player) -> void:
 
 
 ## lock it with a code padlock (figure's room). `handler` runs when you try the door
-func code_lock(handler: Callable) -> void:
+func code_lock(handler: Callable, prompt := "enter the code", padlock := true) -> void:
 	locked = true
 	lock_handler = handler
-	_it.prompt = "enter the code"
+	_it.prompt = prompt
+	if not padlock:
+		return
 	var pad := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = Vector3(0.16, 0.22, 0.06)

@@ -54,8 +54,9 @@ func _ready() -> void:
 		generator.start(randi())
 		player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 2.0)))
 		Game.set_door(0)
+		_apply_carry()
 		# easter egg, like in doors: very rarely a-90 is already waiting in the lobby
-		if randf() < LOBBY_A90_CHANCE:
+		if randf() < LOBBY_A90_CHANCE and Game.floor == "offices":
 			get_tree().create_timer(randf_range(6.0, 14.0)).timeout.connect(_lobby_a90)
 	else:
 		_load_run(run)
@@ -98,6 +99,20 @@ func _lobby_a90() -> void:
 		return
 	if entities.spawn("a90"):
 		Achievements.unlock("early_bird")
+
+
+## switching floors mid-run (a-240 -> the wires -> back up): keep health and items
+func _apply_carry() -> void:
+	var c := Game.carry
+	Game.carry = {}
+	if c.is_empty():
+		return
+	player.health = float(c.get("health", player.health))
+	var items: Dictionary = c.get("items", {})
+	for k in items:
+		var cur = player.inventory.get(k)
+		player.inventory.set(k, int(items[k]) if cur is int else items[k])
+	player.inventory.changed.emit()
 
 
 ## continue a saved run: same seed, same door, same items
@@ -145,7 +160,7 @@ func _make_environment() -> void:
 ## normal until a-30, foggy after, dark from a-150 (but you can still see the next room)
 func _apply_darkness(n: int) -> void:
 	var d := Game.darkness(n)
-	if n == Game.LAST_DOOR:
+	if n == Game.LAST_DOOR and Game.floor == "offices":
 		d = 1.0
 	env.ambient_light_energy = lerpf(0.35, 0.07, d)
 	env.fog_density = lerpf(0.004, 0.035, d) if n >= 30 else 0.004
@@ -209,7 +224,14 @@ func _on_finished(reason: String) -> void:
 	_ended = true
 	Save.clear_run()
 	entities.clear_all()
-	if reason == "a1000":
+	if reason == "wires":
+		# the whole office has power again, and the elevator takes you back up
+		Save.data.wires_done = int(Save.data.get("wires_done", 0)) + 1
+		Save.write()
+		Achievements.unlock("wired_up")
+		Game.carry = Game.carry_state()
+		Game.carry["fixed"] = true  # the elevator takes you up into the fixed office
+	elif reason == "a1000":
 		Achievements.unlock("a1000")
 	else:
 		Achievements.unlock("long_walk")

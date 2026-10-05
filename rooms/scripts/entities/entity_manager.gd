@@ -18,6 +18,9 @@ const SCRIPTS := {
 	"screech": preload("res://scripts/entities/screech.gd"),
 	"figure": preload("res://scripts/entities/figure.gd"),
 	"seek": preload("res://scripts/entities/seek.gd"),
+	# the wires subfloor (spawned by its rooms, not by chance)
+	"w10": preload("res://scripts/entities/w10.gd"),
+	"w50": preload("res://scripts/entities/w50.gd"),
 }
 ## chance that a-90 joins when a-60 or a-120 spawns (a-60 is slowed down when it does)
 const A90_JOIN_CHANCE := 0.2
@@ -115,6 +118,10 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 	if time < float(_cooldown.get(id, -1.0)):
 		return false
 	var n := Game.door
+	if str(r.get("floor", "offices")) != Game.floor:
+		return false
+	if Game.office_powered():
+		return false  # the entities are gone. well. they work here now
 	if r.has("needs_mod") and not Game.mod(r.needs_mod):
 		return false
 	if r.get("needs_dark", false) and Game.darkness(n) < 0.35:
@@ -122,7 +129,7 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 	var min_door := int(r.get("min_door", 0))
 	if n < min_door and n < int(r.get("rare_min", 1 << 30)):
 		return false
-	if n == 0 or n >= Game.LAST_DOOR:
+	if n == 0 or n >= Game.last_door():
 		return false
 	if room != null and r.get("needs_spawn_room", false) and not room.entity_spawn_ok:
 		return false

@@ -41,7 +41,7 @@ func _ready() -> void:
 	var row := HBoxContainer.new()
 	_door_box = SpinBox.new()
 	_door_box.min_value = 0
-	_door_box.max_value = Game.LAST_DOOR
+	_door_box.max_value = Game.last_door()
 	_door_box.value = 100
 	row.add_child(_door_box)
 	row.add_child(UIKit.button("jump to door", _jump, 16))

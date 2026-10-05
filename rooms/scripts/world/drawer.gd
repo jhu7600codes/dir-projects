@@ -4,6 +4,7 @@ extends Node3D
 ## local space: desk on the floor at the origin, the drawer side faces +z.
 
 var loot_seed := 0
+var gives_key := false  # a-240: this drawer has the management key
 var _opened := false
 var _drawer: Node3D
 var _static: Node3D
@@ -119,9 +120,18 @@ func _nameplate() -> void:
 func _open(player, it: Interactable) -> void:
 	if _opened:
 		return
+	if Game.office_powered() and not gives_key:
+		player.notify("it's locked. you can't rob the place anymore")
+		Game.play_ui("deny")
+		return
 	_opened = true
 	it.queue_free()
 	create_tween().tween_property(_drawer, "position:z", FRONT_Z + 0.38, 0.25)
+	if gives_key:
+		Game.has_key = true
+		Game.play_ui("pickup")
+		player.notify("you found the MANAGEMENT KEY")
+		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = loot_seed
 	var r := rng.randf()

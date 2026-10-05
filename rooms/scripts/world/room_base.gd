@@ -29,6 +29,7 @@ var _body: StaticBody3D
 var _flicker: Array[Light3D] = []
 var _flicker_t := 0.0
 var _merged := false
+var theme := "office"  # "wires": concrete walls, cage lamps (set before calling shell)
 var _burst := 0.0
 var _burst_lights: Array = []
 var _fixture_i := 0  # low quality: only every other ceiling panel gets a real light
@@ -52,6 +53,54 @@ func setup(num: int, seed_value: int) -> void:
 	build()
 	_clear_doorways()
 	_add_back_seal()
+	if Game.office_powered():
+		_populate()
+
+
+## the powered office: someone at every desk, typing, the odd person standing around, and
+## sometimes an entity worker you'd better not look at
+func _populate() -> void:
+	var desks := get_children().filter(func(c): return c is Drawer)
+	for d in desks:
+		var w := Worker.new()
+		w.position = d.position + d.basis * Vector3(0, 0, 0.78)
+		w.rotation.y = d.rotation.y
+		add_child(w)
+		Props.chair(self, w.position + d.basis * Vector3(0, 0, 0.1), d.rotation.y)
+	if not desks.is_empty():
+		var t := AudioStreamPlayer3D.new()
+		t.stream = Assets.sound("typing")
+		t.bus = "Ambience"
+		t.unit_size = 5.0
+		t.max_distance = 30.0
+		t.position = desks[0].position + Vector3(0, 1.0, 0)
+		t.autoplay = true
+		add_child(t)
+	if path_local.size() >= 2:
+		for i in rng.randi_range(0, 2):
+			var p: Vector3 = path_local[rng.randi() % path_local.size()]
+			var s := Worker.new()
+			s.seated = false
+			s.position = Vector3(p.x + rng.randf_range(-0.8, 0.8), 0, p.z + rng.randf_range(-0.8, 0.8))
+			s.rotation.y = rng.randf() * TAU
+			add_child(s)
+		if number > 2 and rng.randf() < 0.18:
+			var e := EntityWorker.new()
+			e.entity_id = EntityWorker.NAMES.keys()[rng.randi() % EntityWorker.NAMES.size()]
+			e.room = self
+			var p2: Vector3 = path_local[path_local.size() - 1]
+			e.position = Vector3(p2.x, 0, p2.z)
+			add_child(e)
+
+
+## put an atm against a wall (only in the powered office)
+func add_atm(pos: Vector3, yaw: float) -> void:
+	if not Game.office_powered():
+		return
+	var a := Atm.new()
+	a.position = pos
+	a.rotation.y = yaw
+	add_child(a)
 
 
 ## the mesh merge runs one frame after the room is added, so building a room and merging
@@ -113,6 +162,8 @@ func _collect_static(node: Node, xf: Transform3D, groups: Dictionary, to_free: A
 				_collect_static(s, xf * (c as Node3D).transform * (s as Node3D).transform, groups, to_free)
 			continue
 		# these move, get picked up or are interactive: keep them as they are
+		if c.has_meta("no_merge"):
+			continue
 		if c is Door or c is Locker or c is Drawer or c is Pickup or c is ExitDoor or c is ShopStand or c is Label3D or c is Light3D or c is StaticBody3D or c is Area3D:
 			continue
 		if not c is Node3D:
@@ -214,7 +265,7 @@ func box(size: Vector3, pos: Vector3, mat: Material, collide := true, yaw := 0.0
 ## wall along the floor line a -> b, with door gaps given as [offset along the wall, width]
 func wall(a: Vector3, b: Vector3, height: float, gaps: Array = [], mat: Material = null) -> void:
 	if mat == null:
-		mat = Mats.get_mat("wall")
+		mat = Mats.get_mat("concrete" if theme == "wires" else "wall")
 	var d := (b - a)
 	var length := d.length()
 	d = d.normalized()
@@ -259,11 +310,11 @@ func shell(x0: float, x1: float, length: float, height: float, exit_side: String
 	var w := x1 - x0
 	var cx := (x0 + x1) / 2.0
 	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, -0.1, length / 2.0), Mats.get_mat(carpet))
-	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, height + 0.1, length / 2.0), Mats.get_mat("ceiling"), false)
+	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, height + 0.1, length / 2.0), Mats.get_mat("concrete" if theme == "wires" else "ceiling"), false)
 	# back wall with the entry gap at x = 0
 	wall(Vector3(x1, 0, 0), Vector3(x0, 0, 0), height, [[x1 - 0.0, DOOR_W]])
 	# front wall
-	var front_gaps := []
+	var front_gaps: Array = side_holes.get("front", []).duplicate()
 	if exit_side == "front":
 		front_gaps.append([exit_offset - x0, DOOR_W])
 	wall(Vector3(x0, 0, length), Vector3(x1, 0, length), height, front_gaps)
@@ -311,6 +362,9 @@ func make_path(points: Array) -> void:
 
 
 func ceiling_light(pos: Vector3) -> void:
+	if theme == "wires":
+		cage_lamp(pos)
+		return
 	var broken := rng.randf() < darkness * 0.6
 	box(Vector3(1.2, 0.04, 0.6), pos - Vector3(0, 0.02, 0), Mats.get_mat("light_off" if broken else "light_panel"), false)
 	box(Vector3(1.26, 0.03, 0.66), pos - Vector3(0, 0.01, 0), Mats.get_mat("frame"), false)
@@ -378,6 +432,30 @@ func ceiling_light(pos: Vector3) -> void:
 
 
 
+## the wires: a bare bulb in a little cage hanging from the ceiling, warm and dim
+func cage_lamp(pos: Vector3) -> void:
+	var drop := rng.randf_range(0.25, 0.6)
+	box(Vector3(0.02, drop, 0.02), pos - Vector3(0, drop / 2.0, 0), Mats.get_mat("wire"), false)
+	var at := pos - Vector3(0, drop + 0.1, 0)
+	box(Vector3(0.12, 0.16, 0.12), at, Mats.get_mat("bulb"), false)
+	for k in 4:
+		var a := k * PI / 2.0
+		box(Vector3(0.015, 0.2, 0.015), at + Vector3(cos(a), 0, sin(a)) * 0.085, Mats.get_mat("metal"), false)
+	if rng.randf() < 0.25:
+		return  # this one's dead
+	var o := OmniLight3D.new()
+	o.position = at - Vector3(0, 0.1, 0)
+	o.omni_range = 7.0
+	o.omni_attenuation = 1.4
+	o.light_energy = 0.9
+	o.light_specular = 0.1
+	o.light_color = Color(1.0, 0.72, 0.42)
+	_fade_far(o)
+	add_child(o)
+	if rng.randf() < 0.3:
+		_flicker.append(o)
+
+
 ## lights far away from the camera switch off, they're hidden by fog anyway
 func _fade_far(l: Light3D) -> void:
 	l.distance_fade_enabled = true
@@ -406,6 +484,8 @@ func add_pickup(pos: Vector3, item: String, amount := 1) -> void:
 
 ## scatter a little loot: gold piles, batteries, bandages
 func scatter_loot(spots: Array) -> void:
+	if Game.office_powered():
+		return  # nothing lying around in a working office
 	for s in spots:
 		var r := rng.randf()
 		if Game.mod("empty_pockets") and rng.randf() < 0.6:
@@ -420,13 +500,14 @@ func scatter_loot(spots: Array) -> void:
 			add_pickup(s, "vitamins")
 
 
-func add_drawer_desk(pos: Vector3, yaw: float) -> void:
+func add_drawer_desk(pos: Vector3, yaw: float) -> Drawer:
 	var d := Drawer.new()
 	d.position = pos
 	d.rotation.y = yaw
 	d.loot_seed = rng.randi()
 	d.build()
 	add_child(d)
+	return d
 
 
 func label(text: String, pos: Vector3, yaw: float, size := 64, color := Color(0.1, 0.1, 0.1), font_key := "") -> Label3D:

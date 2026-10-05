@@ -236,16 +236,18 @@ func _make_menu() -> void:
 	tag.add_theme_font_size_override("font_size", 30)
 	tag.add_theme_color_override("font_color", Color(0.75, 0.2, 0.2))
 	col.add_child(tag)
-	var stats := UIKit.label(("admin progress   ·   " if _admin else "") + "best %s   ·   %d gold   ·   %d deaths" % [Game.door_label(int(Save.data.best_door)), int(Save.data.gold), int(Save.data.deaths)], 15, Color(1, 0.6, 0.3) if _admin else UIKit.ACCENT)
+	var stats := UIKit.label(("admin progress   ·   " if _admin else "") + "best %s   ·   %d gold   ·   %d deaths" % [Game.a_label(int(Save.data.best_door)), int(Save.data.gold), int(Save.data.deaths)], 15, Color(1, 0.6, 0.3) if _admin else UIKit.ACCENT)
 	col.add_child(stats)
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 14)
 	col.add_child(gap)
 	if Save.has_run():
-		col.add_child(_menu_button("continue  (%s)" % Game.door_label(int(Save.data.run.get("door", 0))), Game.continue_run, 26))
-		col.add_child(_menu_button("new run", func(): Game.start_run(_admin)))
+		var rd := int(Save.data.run.get("door", 0))
+		var where := ("W-%02d" % rd) if str(Save.data.run.get("floor", "offices")) == "wires" else Game.a_label(rd)
+		col.add_child(_menu_button("continue  (%s)" % where, Game.continue_run, 26))
+		col.add_child(_menu_button("new run", _pick_floor))
 	else:
-		col.add_child(_menu_button("play", func(): Game.start_run(_admin), 26))
+		col.add_child(_menu_button("play", _pick_floor, 26))
 	col.add_child(_menu_button("journal", func(): add_child(JournalScreen.new())))
 	var mods := Array(Save.data.get("modifiers", []))
 	var mod_text := "modifiers" if Game.modifiers_unlocked() else "modifiers  (locked)"
@@ -278,6 +280,12 @@ func _fit_menu(col: Control) -> void:
 		var k := (h - 24.0) / need
 		col.scale = Vector2(k, k)
 		col.pivot_offset = Vector2(0, h / 2.0)
+
+
+func _pick_floor() -> void:
+	var fs := FloorSelect.new()
+	fs.admin = _admin
+	add_child(fs)
 
 
 func _toggle_admin(on: bool) -> void:

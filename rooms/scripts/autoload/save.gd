@@ -16,6 +16,9 @@ const DEFAULTS := {
 	"exits": 0,
 	"run": {},  # the run in progress, empty when there is none
 	"modifiers": [],  # modifiers picked on the title screen for the next run
+	"wires_found": false,  # been to the wires (through a-240), so it shows up on the floor select
+	"wires_best": 0,
+	"wires_done": 0,  # times you rode the elevator up out of the wires
 }
 
 var profile := "main"

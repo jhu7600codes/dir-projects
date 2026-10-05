@@ -34,4 +34,5 @@ func build() -> void:
 	shop.position = Vector3(w / 2 - 0.45, 0, length * 0.5 - 2.6)
 	shop.rotation.y = -PI / 2
 	add_child(shop)
+	add_atm(Vector3(-w / 2 + 0.3, 0, 2.2), PI / 2)
 	make_path([Vector3(0, 0, length * 0.5)])

@@ -331,6 +331,24 @@
     "wiki": "doors-game",
     "file": "M Render Seek Eye V1.png"
    }
+  },
+  "concrete": {
+   "path": "res://assets/local/textures/concrete.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#6f6f6a",
+    "color2": "#4c4c48",
+    "scale": 0.06
+   }
+  },
+  "concrete_floor": {
+   "path": "res://assets/local/textures/concrete_floor.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#45443f",
+    "color2": "#2a2a27",
+    "scale": 0.09
+   }
   }
  },
  "sounds": {
@@ -929,6 +947,81 @@
     "kind": "hum",
     "length": 2.0,
     "volume": 0.12
+   },
+   "loop": true
+  },
+  "w10_spark": {
+   "path": "res://assets/local/sounds/w10_spark.ogg",
+   "placeholder": {
+    "kind": "glitch",
+    "length": 0.5,
+    "volume": 0.7
+   }
+  },
+  "w10_lunge": {
+   "path": "res://assets/local/sounds/w10_lunge.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.4,
+    "volume": 0.8
+   }
+  },
+  "w15_zap": {
+   "path": "res://assets/local/sounds/w15_zap.ogg",
+   "placeholder": {
+    "kind": "buzz",
+    "length": 0.35,
+    "volume": 0.9
+   }
+  },
+  "w50_hum": {
+   "path": "res://assets/local/sounds/w50_hum.ogg",
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.5
+   },
+   "loop": true
+  },
+  "switch_flip": {
+   "path": "res://assets/local/sounds/switch_flip.ogg",
+   "placeholder": {
+    "kind": "thud",
+    "length": 0.3,
+    "volume": 0.9
+   }
+  },
+  "power_on": {
+   "path": "res://assets/local/sounds/power_on.ogg",
+   "placeholder": {
+    "kind": "pad",
+    "length": 2.5,
+    "volume": 0.6
+   }
+  },
+  "elevator": {
+   "path": "res://assets/local/sounds/elevator.ogg",
+   "placeholder": {
+    "kind": "hum",
+    "length": 3.0,
+    "volume": 0.5
+   }
+  },
+  "typing": {
+   "path": "res://assets/local/sounds/typing.ogg",
+   "placeholder": {
+    "kind": "rattle",
+    "length": 2.0,
+    "volume": 0.25
+   },
+   "loop": true
+  },
+  "wires_ambience": {
+   "path": "res://assets/local/sounds/wires_ambience.ogg",
+   "placeholder": {
+    "kind": "buzz",
+    "length": 2.0,
+    "volume": 0.08
    },
    "loop": true
   }

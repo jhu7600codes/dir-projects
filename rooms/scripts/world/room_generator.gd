@@ -28,9 +28,16 @@ var special := {
 	0: preload(R + "room_lobby.gd"),
 	100: preload(R + "room_corridor_100.gd"),
 	150: preload(R + "room_shop_150.gd"),
+	240: preload(R + "room_management_240.gd"),
 	1000: preload(R + "room_bridge_1000.gd"),
 }
 const EXIT_ROOM := preload(R + "room_exit.gd")
+const WIRES_START := preload(R + "wires_start.gd")
+const WIRES_CORRIDOR := preload(R + "wires_corridor.gd")
+const WIRES_PIPES := preload(R + "wires_pipes.gd")
+const WIRES_GENERATOR := preload(R + "wires_generator.gd")
+const WIRES_SWITCH := preload(R + "wires_switch.gd")
+const WIRES_END := preload(R + "wires_end.gd")
 const HALLWAY := preload(R + "room_hallway.gd")
 
 var rooms: Array[RoomBase] = []
@@ -73,6 +80,8 @@ func _rng_for(n: int) -> RandomNumberGenerator:
 ## which room goes at door n. only depends on the run seed and n (not on earlier rooms),
 ## so a saved run rebuilds exactly the same rooms when you continue it.
 func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
+	if Game.floor == "wires":
+		return _pick_wires(n)
 	if special.has(n):
 		return special[n]
 	if _is_exit_room(n):
@@ -86,8 +95,24 @@ func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
 
 ## exit rooms after a-200: one in every block of 75 doors, placed 25-50 doors into the
 ## block, so they're 50-100 rooms apart. rarely one shows up early as a bonus.
+## the wires: a start room, switch rooms every 10 doors, the elevator room at w-50
+func _pick_wires(n: int) -> Script:
+	if n == 0:
+		return WIRES_START
+	if n == Game.WIRES_LAST:
+		return WIRES_END
+	if n % 10 == 0:
+		return WIRES_SWITCH
+	var rng := _rng_for(n * 13 + 5)
+	var opts := [WIRES_CORRIDOR, WIRES_CORRIDOR, WIRES_PIPES, WIRES_GENERATOR]
+	var s: Script = opts[rng.randi() % opts.size()]
+	return s
+
+
 func _is_exit_room(n: int) -> bool:
-	if n <= 200 or n >= Game.LAST_DOOR - 5:
+	if Game.floor != "offices":
+		return false
+	if n <= 200 or n >= Game.last_door() - 5:
 		return false
 	var block := (n - 201) / 75
 	var offset := _rng_for(-1000 - block).randi_range(25, 50)
@@ -113,16 +138,16 @@ func _weighted_pick(n: int, attempt: int) -> Script:
 
 
 func _spawn(n: int, at = null) -> RoomBase:
-	if n > Game.LAST_DOOR:
+	if n > Game.last_door():
 		return null
 	var rng := _rng_for(n)
 	var script := _pick_script(n, rng)
 	var r := _build(script, n, rng)
 	if r == null:
-		push_warning("room a-%03d failed to build, using a hallway" % n)
+		push_warning("room %s failed to build, using a hallway" % Game.door_label(n))
 		r = _build(HALLWAY, n, rng)
 	if r == null:
-		Glitch.failsafe("room a-%03d could not be generated" % n)
+		Glitch.failsafe("room %s could not be generated" % Game.door_label(n))
 		return null
 	var xf: Transform3D = at if at != null else (newest().global_exit() if newest() else Transform3D.IDENTITY)
 	r.transform = xf
@@ -176,7 +201,7 @@ func _update_seal() -> void:
 
 ## admin: rebuild the hallway starting at door n and put the player there
 func jump_to(n: int) -> void:
-	n = clampi(n, 0, Game.LAST_DOOR)
+	n = clampi(n, 0, Game.last_door())
 	if Game.entities:
 		Game.entities.clear_all()
 	start(run_seed, n)

@@ -23,6 +23,8 @@ const LIST := {
 	"lights_out": ["lights out", "reach a-150"],
 	"shake_it": ["shake it", "buy a shakelight"],
 	"early_bird": ["you're early", "meet a-90 in a-000"],
+	"management": ["management access", "find the management key and go down into the wires"],
+	"wired_up": ["wired up", "power the whole office and ride the elevator back up"],
 }
 
 var _queue: Array = []  # [header, title, description, color]

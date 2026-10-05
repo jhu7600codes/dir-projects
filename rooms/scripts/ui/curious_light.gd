@@ -11,6 +11,7 @@ const LINE_TIME := 3.2  # each line stays this long unless you skip it
 
 const NAMES := {
 	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
+	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
@@ -37,6 +38,18 @@ const HINTS := {
 		"move": ["you kept walking while it was watching.", "when you hear the knock, stop walking right away."],
 		"look": ["you looked around while it was watching.", "when you hear the knock, don't even move the camera."],
 		"button": ["you pressed something while it was watching.", "when you hear the knock, don't touch anything."],
+	},
+	"worker": {
+		"": ["they work here now. they don't like being stared at.", "keep your eyes down when one walks past. look at the floor, the walls, anything else."],
+	},
+	"w10": {
+		"": ["the outlets only wake up while a breaker room has no power.", "watch where it crackles, then step aside. find the switch and they stop."],
+	},
+	"w15": {
+		"": ["that wire was live.", "they hang too low to duck under. walk around them."],
+	},
+	"w50": {
+		"": ["it's slow, but it doesn't stop.", "don't stand in the fog. run for the elevator the moment you turn its power on."],
 	},
 	"rush": {
 		"": ["the lights flicker right before it comes.", "when they do, get into a locker right away."],

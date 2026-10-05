@@ -9,6 +9,10 @@ const CAUSES := {
 	"a90b": "you didn't follow a-90b's orders.",
 	"a120": "a-120 saw you. wait until the clanging stops completely.",
 	"a200": "the happy scribble got you. white means hide, purple means get out.",
+	"w10": "an outlet jumped out of the wall at you.",
+	"worker": "you looked at one of your new coworkers. everyone in the room is gone.",
+	"w15": "you walked into a live wire.",
+	"w50": "the shock caught up with you.",
 	"rush": "Rush got you. hide when the lights flicker.",
 	"ambush": "Ambush got you. it rebounds, wait it out.",
 	"eyes": "you looked at Eyes for too long.",
@@ -41,12 +45,20 @@ func setup(kind: String, cause := "") -> void:
 		"exit":
 			v.add_child(UIKit.label("you got out at " + where, 30, UIKit.ACCENT))
 			v.add_child(UIKit.label("the fresh air feels weird after all those rooms.", 17))
+		"wires":
+			v.add_child(UIKit.label("the lights come back on", 30, UIKit.ACCENT))
+			var t := UIKit.label("one floor at a time, all the way up. the elevator hums. you can hear keyboards up there, and people talking.", 17)
+			t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			v.add_child(t)
+			var carry := Game.carry
+			v.add_child(UIKit.button("ride up to the office", func(): Game.start_run(Game.admin, false, "offices", carry)))
 		"a1000":
 			v.add_child(UIKit.label("a-1000", 34, UIKit.ACCENT))
 			v.add_child(UIKit.label("you walked all the way through. it's over.", 17))
-	v.add_child(UIKit.label("best: " + Game.door_label(int(Save.data.best_door)) + "    gold: %d" % int(Save.data.gold), 15, Color(0.6, 0.6, 0.6)))
+	v.add_child(UIKit.label("best: " + Game.a_label(int(Save.data.best_door)) + "    gold: %d" % int(Save.data.gold), 15, Color(0.6, 0.6, 0.6)))
 	if Game.admin:
 		v.add_child(UIKit.label("admin run - saved to your admin progress", 14, Color(1, 0.6, 0.3)))
-	v.add_child(UIKit.button("play again", func(): Game.start_run(Game.admin)))
+	var fl := Game.floor
+	v.add_child(UIKit.button("play again", func(): Game.start_run(Game.admin, false, fl)))
 	v.add_child(UIKit.button("title screen", Game.to_menu))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

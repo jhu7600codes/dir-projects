@@ -11,4 +11,6 @@ func build() -> void:
 	if rng.randf() < 0.5:
 		Props.plant(self, Vector3(w / 2 - 0.4, 0, length * 0.5), rng.randf() < 0.3)
 	scatter_loot([Vector3(-w / 2 + 0.35, 0, length * 0.3)])
+	if rng.randf() < 0.3:
+		add_atm(Vector3(-w / 2 + 0.3, 0, length * 0.6), PI / 2)
 	make_path([Vector3(0, 0, length * 0.5), Vector3(ex, 0, length - 1.0)])

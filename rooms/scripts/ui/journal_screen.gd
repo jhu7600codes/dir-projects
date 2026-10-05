@@ -118,7 +118,7 @@ func _show() -> void:
 		_text.modulate = Color.WHITE
 	else:
 		_title.text = "???"
-		_text.text = "the next pages are stuck together.\n\n(get to %s to read this one)" % Game.door_label(int(p[2]))
+		_text.text = "the next pages are stuck together.\n\n(get to %s to read this one)" % Game.a_label(int(p[2]))
 		_text.modulate = Color(1, 1, 1, 0.55)
 	_num.text = "%d / %d" % [_page + 1, PAGES.size()]
 	_prev.disabled = _page == 0
