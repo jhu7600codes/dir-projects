@@ -51,7 +51,16 @@ func _ready() -> void:
 
 	# w-15: a raw wire shocks you when you walk into it
 	var wire: RawWire = null
-	for n in range(1, 9):
+	var early := 0
+	for n in range(1, 15):
+		Game.generator.jump_to(n)
+		await _frames(1)
+		early += Game.generator.room(n).find_children("*", "RawWire", true, false).size()
+	_check(early == 0, "no raw wires before w-15 (%d)" % early)
+	Game.generator.jump_to(15)
+	await _frames(1)
+	_check(Game.generator.room(15).find_children("*", "RawWire", true, false).size() > 0, "w-15 always has raw wires")
+	for n in range(15, 30):
 		Game.generator.jump_to(n)
 		await _frames(2)
 		var ws: Array = Game.generator.room(n).find_children("*", "RawWire", true, false)

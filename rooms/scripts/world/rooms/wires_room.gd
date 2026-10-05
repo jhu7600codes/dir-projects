@@ -7,6 +7,16 @@ func _init() -> void:
 	theme = "wires"
 
 
+## how many rooms after w-15 get raw wires, picked once per run seed
+static func wire_density() -> float:
+	var seed_value: int = Game.generator.run_seed if Game.generator else 0
+	var r := RandomNumberGenerator.new()
+	r.seed = hash(str(seed_value) + ":w15")
+	if r.randf() < 0.15:
+		return 0.0  # a quiet seed: only w-15 has them
+	return r.randf_range(0.35, 0.75)
+
+
 ## a few pipes running along one wall near the ceiling
 func pipes_along(x: float, length: float, height: float) -> void:
 	var n := rng.randi_range(2, 3)
@@ -32,8 +42,17 @@ func crate(pos: Vector3, s := 0.8) -> void:
 	box(Vector3(s, s, s), pos + Vector3(0, s / 2.0, 0), Mats.get_mat("wood_old"), true, rng.randf_range(-0.3, 0.3))
 
 
-## w-15: live wires hanging from the ceiling at these spots
+## w-15: live wires hanging from the ceiling at these spots. like a-60 starts at a-060,
+## they start at w-15: none before it, always some in w-15 itself, and after that it
+## depends on the seed. some seeds only ever have them in w-15, most have plenty more.
 func raw_wires(spots: Array, height: float) -> void:
+	if number < 15:
+		return
+	if number == 15:
+		if spots.is_empty():
+			spots = [Vector3(0.6, 0, 4.0)]
+	elif rng.randf() >= wire_density():
+		return
 	for p in spots:
 		var w := RawWire.new()
 		w.height = height
