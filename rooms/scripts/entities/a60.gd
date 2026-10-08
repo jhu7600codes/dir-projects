@@ -5,6 +5,7 @@ extends Rusher
 ## kills you unless you're in a locker (or it can't see you).
 
 const RULES := {
+	"floor": ["offices", "city"], "city_min": 3,
 	"trigger": "door", "min_door": 60, "chance": 0.3,
 	"rare_min": 15, "rare_chance": 0.04,
 	"needs_spawn_room": true, "cooldown": 40.0,

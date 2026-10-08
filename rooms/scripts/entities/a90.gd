@@ -6,6 +6,7 @@ extends ScreenEntity
 ## on touch screens: no finger on the screen = safe.
 
 const RULES := {
+	"floor": ["offices", "city"], "city_min": 4,
 	"trigger": "timer", "min_door": 90, "timer": [100.0, 400.0], "chance": 1.0,
 	"rare_min": 10, "rare_chance": 0.2, "cooldown": 20.0,
 	"group": "screen", "blocked_by": ["a90b"],

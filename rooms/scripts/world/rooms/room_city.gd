@@ -1,60 +1,114 @@
 extends RoomBase
 ## the great city: what's outside after a-1000. you walk out of the glass doors of the miles
 ## building (the office you were trapped in: the company is called miles, its logo is on the
-## tower) into an empty city at dusk. one long avenue with cross streets, tall buildings,
-## street lamps, parked cars, traffic lights. no one around... unless you powered the office
-## in the wires, then people are walking the sidewalks. at the end of the avenue a bus is
-## waiting to take you home.
-## local space: you start at the origin facing +z, the miles tower is behind you (-z).
+## tower) into a city at dusk. the avenue is split into blocks by metal gates, c-01 to c-30.
+## entities still find you out here: hide in the phone booths. if you powered the office in
+## the wires, your coworkers walk the sidewalks too. at the end a bus takes you home.
+## local space: you enter at the origin facing +z.
 
-const AVE := 170.0     # avenue length
 const ROAD := 7.0      # half width of the road
 const WALK := 11.0     # outer edge of the sidewalk
-const CROSS := [45.0, 95.0, 145.0]
 const FACADES := ["facade_a", "facade_b", "facade_c"]
 
-var walkers_on := false
+var length := 40.0
 
 
 func build() -> void:
 	room_type = "city"
-	is_special = true
 	darkness = 0.0
-	walkers_on = Game.fixed_office
+	var last := number >= Game.last_door()
+	length = 40.0 if number == 0 else rng.randf_range(38.0, 56.0)
 	_ground()
-	_miles_tower()
-	_blocks()
+	if number == 0:
+		_miles_tower()
+	_sides()
 	_lamps_and_lights()
 	_cars()
-	_bus_stop()
-	_bounds()
-	if walkers_on:
+	if last:
+		_bus_stop()
+		_building(Vector3(0, 0, length + 10.0), Vector3(30.0, 45.0, 20.0))
+		exit_local = Transform3D(Basis(), Vector3(0, 0, length - 2.0))
+	else:
+		_gate()
+	if number > 0:
+		_booths()
+	if Game.fixed_office:
 		_walkers()
-	var amb := AudioStreamPlayer.new()
-	amb.stream = Assets.sound("city_ambience")
-	amb.bus = "Ambience"
-	amb.volume_db = -8.0
-	amb.autoplay = true
-	add_child(amb)
-	make_path([Vector3(0, 0, 10.0), Vector3(0, 0, AVE - 10.0)])
+	if number == 0:
+		var amb := AudioStreamPlayer.new()
+		amb.stream = Assets.sound("city_ambience")
+		amb.bus = "Ambience"
+		amb.volume_db = -8.0
+		amb.autoplay = true
+		amb.set_meta("no_merge", true)
+		add_child(amb)
+	make_path([Vector3(0, 0, length * 0.3), Vector3(0, 0, length * 0.7)])
+
+
+## the whole width of the street is sealed behind you, not just a doorway
+func _add_back_seal() -> void:
+	_back_seal = CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(WALK * 2.0 + 4.0, 8.0, 0.3)
+	_back_seal.shape = sh
+	_back_seal.position = Vector3(0, 4.0, -0.4)
+	_back_seal.disabled = true
+	_body.add_child(_back_seal)
 
 
 func _ground() -> void:
-	box(Vector3(160, 0.2, AVE + 60), Vector3(0, -0.1, AVE / 2), Mats.get_mat("asphalt"))
-	# sidewalks along the avenue (flush with the road, a curb line for looks)
-	for s in [-1.0, 1.0]:
-		box(Vector3(WALK - ROAD, 0.02, AVE + 6), Vector3(s * (ROAD + WALK) / 2, 0.01, AVE / 2), Mats.get_mat("sidewalk"), false)
-		box(Vector3(0.2, 0.12, AVE + 6), Vector3(s * ROAD, 0.06, AVE / 2), Mats.get_mat("frame"), false)
-	# a plaza in front of the miles tower
-	box(Vector3(40, 0.02, 16), Vector3(0, 0.012, 7.0), Mats.get_mat("sidewalk"), false)
-	# lane markings
-	var z := 8.0
-	while z < AVE:
+	box(Vector3(WALK * 2.0 + 60.0, 0.2, length), Vector3(0, -0.1, length / 2), Mats.get_mat("asphalt"))
+	for sd in [-1.0, 1.0]:
+		box(Vector3(WALK - ROAD, 0.02, length), Vector3(sd * (ROAD + WALK) / 2, 0.01, length / 2), Mats.get_mat("sidewalk"), false)
+		box(Vector3(0.2, 0.12, length), Vector3(sd * ROAD, 0.06, length / 2), Mats.get_mat("frame"), false)
+	if number == 0:
+		box(Vector3(40, 0.02, 16), Vector3(0, 0.012, 7.0), Mats.get_mat("sidewalk"), false)
+	var z := 4.0
+	while z < length - 3.0:
 		box(Vector3(0.15, 0.02, 3.0), Vector3(0, 0.015, z), Mats.get_mat("lane"), false)
 		z += 7.0
-	for cz in CROSS:
-		for i in 7:
-			box(Vector3(1.0, 0.02, 3.5), Vector3(-5.4 + i * 1.8, 0.016, cz - 7.5), Mats.get_mat("plastic"), false)
+	# a crosswalk before the gate
+	for i in 7:
+		box(Vector3(1.0, 0.02, 3.0), Vector3(-5.4 + i * 1.8, 0.016, length - 4.0), Mats.get_mat("plastic"), false)
+
+
+## buildings on both sides, wall to wall
+func _sides() -> void:
+	for sd in [-1.0, 1.0]:
+		var z := 0.0
+		while z < length - 0.5:
+			var d := minf(rng.randf_range(10.0, 16.0), length - z)
+			var depth := rng.randf_range(16.0, 24.0)
+			_building(Vector3(sd * (WALK + depth / 2), 0, z + d / 2), Vector3(depth, rng.randf_range(14.0, 48.0), d))
+			z += d
+
+
+## a tall fence of bars across the whole street, with the gate (the door) in the middle
+func _gate() -> void:
+	set_exit(Vector3(0, 0, length), 0.0)
+	var gap := DOOR_W / 2 + 0.12
+	for sd in [-1.0, 1.0]:
+		var w := WALK - gap
+		var cx: float = sd * (gap + w / 2)
+		var col := box(Vector3(w, 3.4, 0.2), Vector3(cx, 1.7, length), Mats.get_mat("dark"), true)
+		col.visible = false
+		var x := gap + 0.1
+		while x < WALK:
+			box(Vector3(0.06, 3.4, 0.06), Vector3(sd * x, 1.7, length), Mats.get_mat("dark"), false)
+			x += 0.32
+		box(Vector3(w, 0.1, 0.1), Vector3(cx, 3.35, length), Mats.get_mat("dark"), false)
+		box(Vector3(w, 0.1, 0.1), Vector3(cx, 0.4, length), Mats.get_mat("dark"), false)
+	box(Vector3(DOOR_W + 0.3, 1.0, 0.1), Vector3(0, DOOR_H + 0.6, length), Mats.get_mat("dark"), true)
+
+
+## phone booths to hide in (they work like lockers)
+func _booths() -> void:
+	var n := rng.randi_range(1, 3)
+	for i in n:
+		var sd := -1.0 if rng.randf() < 0.5 else 1.0
+		var z := rng.randf_range(5.0, length - 8.0)
+		add_locker(Vector3(sd * (WALK - 0.6), 0, z), -sd * PI / 2, "booth")
+	entity_spawn_ok = true
 
 
 ## the building you came out of. MILES on the front, the logo up high
@@ -89,29 +143,6 @@ func _miles_tower() -> void:
 	add_child(glow)
 
 
-## rows of buildings along both sides of the avenue, a wall of buildings closing off the
-## cross streets and the far end
-func _blocks() -> void:
-	var segments := [[5.0, CROSS[0] - 7.0], [CROSS[0] + 7.0, CROSS[1] - 7.0], [CROSS[1] + 7.0, CROSS[2] - 7.0], [CROSS[2] + 7.0, AVE + 4.0]]
-	for s in [-1.0, 1.0]:
-		for seg in segments:
-			var z: float = seg[0]
-			while z < seg[1] - 4.0:
-				var d := minf(rng.randf_range(10.0, 18.0), seg[1] - z)
-				var hgt := rng.randf_range(14.0, 55.0)
-				var depth := rng.randf_range(18.0, 28.0)
-				_building(Vector3(s * (WALK + 1.0 + depth / 2), 0, z + d / 2), Vector3(depth, hgt, d))
-				z += d + rng.randf_range(0.0, 0.4)
-		# the far side of the cross streets
-		var zz := -2.0
-		while zz < AVE + 10.0:
-			var d2 := rng.randf_range(14.0, 22.0)
-			_building(Vector3(s * 56.0, 0, zz + d2 / 2), Vector3(22.0, rng.randf_range(20.0, 60.0), d2))
-			zz += d2
-	# closing off the end of the avenue
-	_building(Vector3(0, 0, AVE + 18.0), Vector3(30.0, 45.0, 20.0))
-
-
 func _building(c: Vector3, size: Vector3) -> void:
 	var mat := Mats.get_mat(FACADES[rng.randi() % FACADES.size()])
 	box(size, c + Vector3(0, size.y / 2, 0), mat)
@@ -128,35 +159,25 @@ func _building(c: Vector3, size: Vector3) -> void:
 func _lamps_and_lights() -> void:
 	var z := 6.0
 	var k := 0
-	while z < AVE:
-		for s in [-1.0, 1.0]:
-			var base := Vector3(s * (WALK - 0.6), 0, z)
-			box(Vector3(0.14, 5.5, 0.14), base + Vector3(0, 2.75, 0), Mats.get_mat("dark"), false)
-			box(Vector3(1.2, 0.1, 0.1), base + Vector3(-s * 0.6, 5.45, 0), Mats.get_mat("dark"), false)
-			box(Vector3(0.45, 0.12, 0.3), base + Vector3(-s * 1.15, 5.35, 0), Mats.get_mat("lamp_glow"), false)
-			if k % 2 == 0:
-				var l := OmniLight3D.new()
-				l.position = base + Vector3(-s * 1.15, 5.0, 0)
-				l.light_color = Color(1.0, 0.82, 0.55)
-				l.light_energy = 1.3
-				l.omni_range = 11.0
-				l.distance_fade_enabled = true
-				l.distance_fade_begin = 45.0
-				l.distance_fade_length = 10.0
-				add_child(l)
+	while z < length - 2.0:
+		var sd := -1.0 if k % 2 == 0 else 1.0
+		var base := Vector3(sd * (WALK - 0.6), 0, z)
+		box(Vector3(0.14, 5.5, 0.14), base + Vector3(0, 2.75, 0), Mats.get_mat("dark"), false)
+		box(Vector3(1.2, 0.1, 0.1), base + Vector3(-sd * 0.6, 5.45, 0), Mats.get_mat("dark"), false)
+		box(Vector3(0.45, 0.12, 0.3), base + Vector3(-sd * 1.15, 5.35, 0), Mats.get_mat("lamp_glow"), false)
+		var l := OmniLight3D.new()
+		l.position = base + Vector3(-sd * 1.15, 5.0, 0)
+		l.light_color = Color(1.0, 0.82, 0.55)
+		l.light_energy = 1.3
+		l.omni_range = 11.0
+		l.distance_fade_enabled = true
+		l.distance_fade_begin = 45.0
+		l.distance_fade_length = 10.0
+		add_child(l)
 		z += 14.0
 		k += 1
-	# traffic lights at the crossings
-	for cz in CROSS:
-		for s in [-1.0, 1.0]:
-			var p := Vector3(s * (ROAD + 0.8), 0, cz - 7.0 * s)
-			box(Vector3(0.15, 3.2, 0.15), p + Vector3(0, 1.6, 0), Mats.get_mat("dark"), false)
-			box(Vector3(0.35, 0.9, 0.3), p + Vector3(0, 3.5, 0), Mats.get_mat("dark"), false)
-			box(Vector3(0.2, 0.2, 0.32), p + Vector3(0, 3.75, 0), Mats.get_mat("tl_red" if rng.randf() < 0.5 else "dark"), false)
-			box(Vector3(0.2, 0.2, 0.32), p + Vector3(0, 3.3, 0), Mats.get_mat("tl_green" if rng.randf() < 0.5 else "dark"), false)
-		# trees in planters on the corners
-		for s in [-1.0, 1.0]:
-			_tree(Vector3(s * (WALK - 1.8), 0, cz + 9.0))
+	if rng.randf() < 0.6:
+		_tree(Vector3((-1.0 if rng.randf() < 0.5 else 1.0) * (WALK - 1.8), 0, rng.randf_range(8.0, length - 8.0)))
 
 
 func _tree(p: Vector3) -> void:
@@ -167,16 +188,12 @@ func _tree(p: Vector3) -> void:
 
 func _cars() -> void:
 	var colors := ["car_red", "car_blue", "car_white", "car_black"]
-	var z := 10.0
-	while z < AVE - 8.0:
-		for s in [-1.0, 1.0]:
-			var near_cross := false
-			for cz in CROSS:
-				if absf(z - cz) < 9.0:
-					near_cross = true
-			if near_cross or rng.randf() > 0.45:
+	var z := 6.0
+	while z < length - 9.0:
+		for sd in [-1.0, 1.0]:
+			if rng.randf() > 0.4:
 				continue
-			var c := Vector3(s * (ROAD - 1.3), 0, z)
+			var c := Vector3(sd * (ROAD - 1.3), 0, z)
 			var mat := Mats.get_mat(colors[rng.randi() % colors.size()])
 			box(Vector3(1.8, 0.7, 4.2), c + Vector3(0, 0.6, 0), mat, true)
 			box(Vector3(1.6, 0.6, 2.2), c + Vector3(0, 1.2, -0.2), Mats.get_mat("glass_dark"), false)
@@ -188,7 +205,7 @@ func _cars() -> void:
 
 ## the end of the avenue: a bus stop and the night bus home
 func _bus_stop() -> void:
-	var p := Vector3(ROAD + 2.4, 0, AVE - 12.0)
+	var p := Vector3(ROAD + 2.4, 0, length - 12.0)
 	for dz in [-1.6, 1.6]:
 		box(Vector3(0.1, 2.5, 0.1), p + Vector3(0.6, 1.25, dz), Mats.get_mat("metal"), false)
 	box(Vector3(1.6, 0.1, 3.6), p + Vector3(0, 2.55, 0), Mats.get_mat("metal"), false)
@@ -202,7 +219,7 @@ func _bus_stop() -> void:
 	sign.outline_size = 0
 	sign.position = p + Vector3(-0.2, 2.9, 1.8)
 	add_child(sign)
-	var bus := Vector3(ROAD - 1.8, 0, AVE - 12.0)
+	var bus := Vector3(ROAD - 1.8, 0, length - 12.0)
 	box(Vector3(2.6, 3.0, 11.0), bus + Vector3(0, 1.8, 0), Mats.get_mat("car_white"), true)
 	box(Vector3(2.62, 0.9, 9.0), bus + Vector3(0, 2.4, -0.5), Mats.get_mat("glass_dark"), false)
 	box(Vector3(2.64, 0.4, 11.0), bus + Vector3(0, 0.6, 0), Mats.get_mat("car_blue"), false)
@@ -218,20 +235,13 @@ func _bus_stop() -> void:
 	add_child(it)
 
 
-func _bounds() -> void:
-	for x in [-70.0, 70.0]:
-		box(Vector3(1, 40, AVE + 80), Vector3(x, 20, AVE / 2), Mats.get_mat("dark"), true).visible = false
-	box(Vector3(160, 40, 1), Vector3(0, 20, -1.0), Mats.get_mat("dark"), true).visible = false
-	box(Vector3(160, 40, 1), Vector3(0, 20, AVE + 40), Mats.get_mat("dark"), true).visible = false
-
-
 ## only after the wires: people walking up and down the sidewalks
 func _walkers() -> void:
-	for i in 16:
+	for i in rng.randi_range(2, 5):
 		var w := CityWalker.new()
-		var s := -1.0 if i % 2 == 0 else 1.0
-		w.lane_x = s * rng.randf_range(ROAD + 1.0, WALK - 1.5)
-		w.z_min = 4.0
-		w.z_max = AVE - 6.0
-		w.position = Vector3(w.lane_x, 0, rng.randf_range(6.0, AVE - 10.0))
+		var sd := -1.0 if i % 2 == 0 else 1.0
+		w.lane_x = sd * rng.randf_range(ROAD + 1.0, WALK - 1.5)
+		w.z_min = 2.0
+		w.z_max = length - 3.0
+		w.position = Vector3(w.lane_x, 0, rng.randf_range(3.0, length - 4.0))
 		add_child(w)

@@ -4,6 +4,7 @@ extends Rusher
 ## it can rebound like ambush, so stay in the locker until the sound is completely gone.
 
 const RULES := {
+	"floor": ["offices", "city"], "city_min": 6,
 	"trigger": "door", "min_door": 120, "chance": 0.25,
 	"rare_min": 40, "rare_chance": 0.03,
 	"needs_spawn_room": true, "cooldown": 50.0,

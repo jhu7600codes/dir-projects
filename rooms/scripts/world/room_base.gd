@@ -485,8 +485,9 @@ func _fade_far(l: Light3D) -> void:
 	l.distance_fade_length = 4.0 if low else 6.0
 
 
-func add_locker(pos: Vector3, yaw: float) -> Locker:
+func add_locker(pos: Vector3, yaw: float, style := "locker") -> Locker:
 	var lk := Locker.new()
+	lk.style = style
 	lk.position = pos
 	lk.rotation.y = yaw
 	add_child(lk)

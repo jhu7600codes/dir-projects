@@ -394,6 +394,22 @@
     "color2": "#24384f",
     "scale": 0.35
    }
+  },
+  "headlights_face": {
+   "path": "res://assets/local/textures/headlights_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#fff3c0",
+    "style": "dots"
+   }
+  },
+  "billboard_face": {
+   "path": "res://assets/local/textures/billboard_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#ff3a5c",
+    "style": "wide"
+   }
   }
  },
  "sounds": {
@@ -1078,6 +1094,41 @@
     "volume": 0.12
    },
    "loop": true
+  },
+  "car_horn": {
+   "path": "res://assets/local/sounds/car_horn.ogg",
+   "placeholder": {
+    "kind": "tone",
+    "freq": 330,
+    "length": 0.9,
+    "volume": 0.7
+   }
+  },
+  "headlights_far": {
+   "path": "res://assets/local/sounds/headlights_far.ogg",
+   "placeholder": {
+    "kind": "buzz",
+    "length": 2.0,
+    "volume": 0.6
+   },
+   "loop": true
+  },
+  "billboard_hum": {
+   "path": "res://assets/local/sounds/billboard_hum.ogg",
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.5
+   },
+   "loop": true
+  },
+  "introvert": {
+   "path": "res://assets/local/sounds/introvert.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.5,
+    "volume": 0.8
+   }
   }
  },
  "music": {

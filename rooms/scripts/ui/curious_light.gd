@@ -12,6 +12,7 @@ const LINE_TIME := 3.2  # each line stays this long unless you skip it
 const NAMES := {
 	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
 	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
+	"headlights": "headlights", "billboard": "the billboard",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
@@ -39,8 +40,11 @@ const HINTS := {
 		"look": ["you looked around while it was watching.", "when you hear the knock, don't even move the camera."],
 		"button": ["you pressed something while it was watching.", "when you hear the knock, don't touch anything."],
 	},
-	"worker": {
-		"": ["they work here now. they don't like being stared at.", "keep your eyes down when one walks past. look at the floor, the walls, anything else."],
+	"headlights": {
+		"": ["you heard the horn, and you stayed out on the street.", "when it honks, get into a phone booth."],
+	},
+	"billboard": {
+		"": ["you kept looking up at the billboard.", "keep your eyes on the street."],
 	},
 	"w10": {
 		"": ["the outlets only wake up while a breaker room has no power.", "watch where it crackles, then step aside. find the switch and they stop."],
@@ -99,6 +103,10 @@ var _finished := false
 func setup(cause: String, detail: String) -> void:
 	layer = 46
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if cause == "worker":
+		_lines = ["they overreact."]
+		_build()
+		return
 	var by_detail: Dictionary = HINTS.get(cause, {})
 	if NAMES.has(cause):
 		_lines.append("you died to what you call " + NAMES[cause] + "...")
@@ -106,7 +114,10 @@ func setup(cause: String, detail: String) -> void:
 		_lines.append("the office got you this time...")
 	_lines.append_array(by_detail.get(detail, by_detail.get("", [])))
 	_lines.append(ENDINGS[randi() % ENDINGS.size()])
+	_build()
 
+
+func _build() -> void:
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE

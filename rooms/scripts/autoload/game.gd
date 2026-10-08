@@ -10,6 +10,7 @@ signal screen_tint(color: Color)      # a-200 uses this, Color(0,0,0,0) clears i
 
 const LAST_DOOR := 1000
 const WIRES_LAST := 50  # the wires subfloor: W-01 .. W-50
+const CITY_LAST := 30  # the great city: c-01 to c-30, the bus stop is at the end
 ## each wires switch powers one stretch of the office
 const POWER_RANGES := [[1, 200], [201, 400], [401, 600], [601, 800], [801, 1000]]
 
@@ -129,7 +130,9 @@ func to_menu() -> void:
 
 func set_door(n: int) -> void:
 	door = n
-	if floor == "wires":
+	if floor == "city":
+		pass
+	elif floor == "wires":
 		if n > int(Save.data.get("wires_best", 0)):
 			Save.data.wires_best = n
 			Save.write()
@@ -190,7 +193,7 @@ func save_run() -> void:
 
 func door_label(n: int) -> String:
 	if floor == "city":
-		return "OUTSIDE"
+		return "C-%02d" % n
 	if floor == "wires":
 		return "W-%02d" % n
 	return "A-%03d" % n
@@ -208,7 +211,7 @@ func office_powered() -> bool:
 
 func last_door() -> int:
 	if floor == "city":
-		return 0
+		return CITY_LAST
 	return WIRES_LAST if floor == "wires" else LAST_DOOR
 
 

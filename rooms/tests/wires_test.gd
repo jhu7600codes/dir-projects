@@ -136,7 +136,7 @@ func _ready() -> void:
 	atm._deposit(50)
 	_check(int(Save.data.gold) == 70 and int(Save.data.get("bank", 0)) == bank0 + 50, "the atm moves gold into the bank")
 	atm.close()
-	# look at a coworker and the room goes down with you
+	# stare at a coworker and they overreact: back to their spot, then they come for you
 	var ew := EntityWorker.new()
 	ew.entity_id = "a120"
 	ew.room = cub
@@ -148,8 +148,10 @@ func _ready() -> void:
 	var to: Vector3 = (ew.global_position + Vector3(0, 1.8, 0)) - p.head_position()
 	p.rotation.y = atan2(-to.x, -to.z)
 	p.head.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
+	Game.entities.natural_spawns = false
 	await _secs(1.2)
-	_check(p.dead and workers[0].dead, "looking at a coworker kills everyone in the room")
+	_check(Game.entities.active.has("worker") and not p.dead, "staring at a coworker makes them overreact")
+	Game.entities.clear_all()
 	# just playing the offices floor is the normal office
 	get_tree().paused = false
 	Game.start_run(true)

@@ -21,6 +21,11 @@ const SCRIPTS := {
 	# the wires subfloor (spawned by its rooms, not by chance)
 	"w10": preload("res://scripts/entities/w10.gd"),
 	"w50": preload("res://scripts/entities/w50.gd"),
+	# the coworkers, when you stare at one (spawned by the worker itself)
+	"worker": preload("res://scripts/entities/overreact.gd"),
+	# the great city
+	"headlights": preload("res://scripts/entities/headlights.gd"),
+	"billboard": preload("res://scripts/entities/billboard.gd"),
 }
 ## chance that a-90 joins when a-60 or a-120 spawns (a-60 is slowed down when it does)
 const A90_JOIN_CHANCE := 0.2
@@ -104,9 +109,16 @@ func _chance(id: String) -> float:
 	return minf(1.0, c)
 
 
+## the city only has 30 gates, so entities there use their own (much lower) first door
+func _min_door(r: Dictionary) -> int:
+	if Game.floor == "city":
+		return int(r.get("city_min", 2))
+	return int(r.get("min_door", 0))
+
+
 func _base_chance(id: String) -> float:
 	var r := rules(id)
-	if Game.door >= int(r.get("min_door", 0)):
+	if Game.door >= _min_door(r):
 		return float(r.get("chance", 1.0))
 	return float(r.get("rare_chance", 0.0))
 
@@ -118,7 +130,8 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 	if time < float(_cooldown.get(id, -1.0)):
 		return false
 	var n := Game.door
-	if str(r.get("floor", "offices")) != Game.floor:
+	var fl = r.get("floor", "offices")
+	if (fl is Array and not fl.has(Game.floor)) or (fl is String and fl != Game.floor):
 		return false
 	if Game.office_powered():
 		return false  # the entities are gone. well. they work here now
@@ -126,8 +139,9 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 		return false
 	if r.get("needs_dark", false) and Game.darkness(n) < 0.35:
 		return false
-	var min_door := int(r.get("min_door", 0))
-	if n < min_door and n < int(r.get("rare_min", 1 << 30)):
+	var min_door := _min_door(r)
+	var rare_min := 1 << 30 if Game.floor == "city" else int(r.get("rare_min", 1 << 30))
+	if n < min_door and n < rare_min:
 		return false
 	if n == 0 or n >= Game.last_door():
 		return false

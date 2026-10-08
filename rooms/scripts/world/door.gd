@@ -33,8 +33,26 @@ func _ready() -> void:
 	body.collision_mask = 0
 	body.sync_to_physics = false
 	_hinge.add_child(body)
-	var mesh := Assets.model("door")
-	if mesh:
+	var mesh: Node3D = null if Game.floor == "city" else Assets.model("door")
+	if Game.floor == "city":
+		# a metal gate: bars and two rails
+		for i in 8:
+			var bar := MeshInstance3D.new()
+			var bb := BoxMesh.new()
+			bb.size = Vector3(0.05, h - 0.04, 0.05)
+			bar.mesh = bb
+			bar.material_override = Mats.get_mat("dark")
+			bar.position = Vector3(0.08 + i * (w - 0.16) / 7.0, h / 2, 0)
+			_hinge.add_child(bar)
+		for y in [0.3, h - 0.3]:
+			var rail := MeshInstance3D.new()
+			var rb := BoxMesh.new()
+			rb.size = Vector3(w - 0.04, 0.08, 0.06)
+			rail.mesh = rb
+			rail.material_override = Mats.get_mat("dark")
+			rail.position = Vector3(w / 2, y, 0)
+			_hinge.add_child(rail)
+	elif mesh:
 		mesh.position = Vector3(w / 2, 0, 0)
 		_hinge.add_child(mesh)
 	else:

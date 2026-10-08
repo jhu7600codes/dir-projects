@@ -13,6 +13,7 @@ var _t := 0.0
 func _init() -> void:
 	super._init()
 	seated = false
+	look_range = 12.0
 
 
 func _ready() -> void:
@@ -20,6 +21,10 @@ func _ready() -> void:
 	_dir = 1.0 if randf() < 0.5 else -1.0
 	_speed = randf_range(1.0, 1.6)
 	rotation.y = 0.0 if _dir < 0 else PI
+
+
+func on_overreact() -> void:
+	_t = 0.0
 
 
 func _process(delta: float) -> void:

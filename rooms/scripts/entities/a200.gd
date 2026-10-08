@@ -7,6 +7,7 @@ extends Rusher
 ## the screen edges glow in her current color.
 
 const RULES := {
+	"floor": ["offices", "city"], "city_min": 10,
 	"trigger": "timer", "min_door": 100, "timer": [250.0, 325.0], "chance": 0.6,
 	"cooldown": 60.0, "group": "rusher",
 	"blocked_by": ["a60", "a60b", "a120"], "pause_timer_while": ["a60", "a60b"],

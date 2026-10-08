@@ -3,6 +3,7 @@ extends Node3D
 ## grey office locker. interact to hide; inside you look out through the slits.
 ## local space: the locker stands on the floor at the origin, its door faces +z.
 
+var style := "locker"  # "booth": a phone booth out in the city
 var occupied := false
 var broken := false  # a-120 tore it open: can't hide in it anymore
 var _door: Node3D
@@ -21,8 +22,10 @@ func _ready() -> void:
 	cs.shape = sh
 	cs.position = Vector3(0, 1.05, 0)
 	body.add_child(cs)
-	var m := Assets.model("locker")
-	if m:
+	var m: Node3D = null if style == "booth" else Assets.model("locker")
+	if style == "booth":
+		_booth()
+	elif m:
 		add_child(m)
 	else:
 		_placeholder()
@@ -34,6 +37,29 @@ func _ready() -> void:
 	_audio.bus = "SFX"
 	_audio.position = Vector3(0, 1.2, 0.3)
 	add_child(_audio)
+
+
+func _booth() -> void:
+	var frame := Mats.get_mat("car_red")
+	for x in [-0.44, 0.44]:
+		for z in [-0.33, 0.3]:
+			_mesh(Vector3(0.06, 2.2, 0.06), Vector3(x, 1.1, z), frame, self)
+	_mesh(Vector3(0.96, 0.12, 0.72), Vector3(0, 2.26, -0.02), frame, self)
+	_mesh(Vector3(0.9, 2.1, 0.03), Vector3(0, 1.05, -0.34), Mats.get_mat("glass"), self)
+	for x in [-0.44, 0.44]:
+		_mesh(Vector3(0.03, 2.1, 0.62), Vector3(x, 1.05, -0.02), Mats.get_mat("glass"), self)
+	_mesh(Vector3(0.3, 0.4, 0.12), Vector3(0, 1.4, -0.28), Mats.get_mat("dark"), self)
+	var l := Label3D.new()
+	l.text = "PHONE"
+	l.font_size = 40
+	l.pixel_size = 0.005
+	l.outline_size = 0
+	l.position = Vector3(0, 2.26, 0.35)
+	add_child(l)
+	_door = Node3D.new()
+	_door.position = Vector3(-0.43, 0, 0.3)
+	add_child(_door)
+	_mesh(Vector3(0.86, 2.0, 0.03), Vector3(0.43, 1.05, 0), Mats.get_mat("glass"), _door)
 
 
 func _placeholder() -> void:
