@@ -9,6 +9,7 @@ signal room_entered(room: RoomBase)
 
 const KEEP_BEHIND := 2
 const R := "res://scripts/world/rooms/"
+const CITY := preload(R + "room_city.gd")
 
 ## the pool of normal rooms. weight = how common, min = first door it can show up at
 var pool := [
@@ -28,10 +29,12 @@ var pool := [
 	{"script": preload(R + "room_reception.gd"), "weight": 3, "min": 10},
 	{"script": preload(R + "room_server.gd"), "weight": 3, "min": 20, "lockers": true},
 	{"script": preload(R + "room_copy.gd"), "weight": 4, "min": 4, "lockers": true},
+	{"script": preload(R + "room_cafeteria.gd"), "weight": 3, "min": 60, "lockers": true},
 ]
 ## fixed rooms at fixed doors
 var special := {
 	0: preload(R + "room_lobby.gd"),
+	50: preload(R + "room_library_50.gd"),
 	100: preload(R + "room_corridor_100.gd"),
 	150: preload(R + "room_shop_150.gd"),
 	240: preload(R + "room_management_240.gd"),
@@ -51,8 +54,11 @@ var run_seed := 0
 var _heading := 0       # -1, 0, 1: which way the hallway currently points
 
 
+var _picks := {}  # door -> the room script picked for it this run
+
 func start(seed_value: int, first_door := 0) -> void:
 	run_seed = seed_value
+	_picks.clear()
 	for r in rooms:
 		r.queue_free()
 	rooms.clear()
@@ -86,30 +92,45 @@ func _rng_for(n: int) -> RandomNumberGenerator:
 ## which room goes at door n. only depends on the run seed and n (not on earlier rooms),
 ## so a saved run rebuilds exactly the same rooms when you continue it.
 func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
+	if Game.floor == "city":
+		return CITY
 	if Game.floor == "wires":
 		return _pick_wires(n)
+	if _picks.has(n):
+		return _picks[n]
+	# picks depend on the real picks before them, so work forward from the last known one
+	var k := n
+	while k > 1 and not _picks.has(k - 1):
+		k -= 1
+	while k <= n:
+		_picks[k] = _decide(k)
+		k += 1
+	return _picks[n]
+
+
+func _decide(n: int) -> Script:
 	if special.has(n):
 		return special[n]
 	if _is_exit_room(n):
 		return EXIT_ROOM
+	var recent := [_picks.get(n - 1), _picks.get(n - 2)]
 	# lockers at least every few rooms once things start hunting you, so a-60 is fair
-	if n > 15 and not _has_lockers(n - 1) and not _has_lockers(n - 2) and not _has_lockers(n - 3):
-		return _weighted_pick(n, 0, true)
+	var need_lockers := n > 15 and not _has_lockers(n - 1) and not _has_lockers(n - 2) and not _has_lockers(n - 3)
 	# no room type twice within three doors
-	var recent := [_weighted_pick(n - 1, 0), _weighted_pick(n - 2, 0)]
-	for attempt in 4:
-		var s := _weighted_pick(n, attempt)
-		if not recent.has(s):
-			return s
-	return _weighted_pick(n, 4)
+	for attempt in 8:
+		var sc := _weighted_pick(n, attempt, need_lockers)
+		if not recent.has(sc):
+			return sc
+	return _weighted_pick(n, 8, need_lockers)
 
 
-## does the room the plain pick gives for door n have lockers (approximation, special and
-## exit rooms aside) - only depends on the seed, so it's the same every time
+## does the room picked for door n have lockers (doors before the first count as yes)
 func _has_lockers(n: int) -> bool:
-	var s := _weighted_pick(n, 0)
+	if n < 1:
+		return true
+	var sc: Script = _picks.get(n)
 	for p in pool:
-		if p.script == s:
+		if p.script == sc:
 			return p.get("lockers", false)
 	return false
 

@@ -349,6 +349,51 @@
     "color2": "#2a2a27",
     "scale": 0.09
    }
+  },
+  "facade_a": {
+   "path": "res://assets/local/textures/facade_a.png",
+   "placeholder": {
+    "kind": "windows",
+    "color": "#8a8783",
+    "color2": "#3d4c5e",
+    "seed": 3
+   }
+  },
+  "facade_b": {
+   "path": "res://assets/local/textures/facade_b.png",
+   "placeholder": {
+    "kind": "windows",
+    "color": "#5e5a56",
+    "color2": "#2d3a48",
+    "seed": 7
+   }
+  },
+  "facade_c": {
+   "path": "res://assets/local/textures/facade_c.png",
+   "placeholder": {
+    "kind": "windows",
+    "color": "#a39a8c",
+    "color2": "#45566b",
+    "seed": 11
+   }
+  },
+  "asphalt": {
+   "path": "res://assets/local/textures/asphalt.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#2b2b2d",
+    "color2": "#1c1c1e",
+    "scale": 0.2
+   }
+  },
+  "books": {
+   "path": "res://assets/local/textures/books.png",
+   "placeholder": {
+    "kind": "noise",
+    "color": "#6b2a22",
+    "color2": "#24384f",
+    "scale": 0.35
+   }
   }
  },
  "sounds": {
@@ -1022,6 +1067,15 @@
     "kind": "buzz",
     "length": 2.0,
     "volume": 0.08
+   },
+   "loop": true
+  },
+  "city_ambience": {
+   "path": "res://assets/local/sounds/city_ambience.ogg",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 2.0,
+    "volume": 0.12
    },
    "loop": true
   }

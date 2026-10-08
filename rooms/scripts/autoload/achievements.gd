@@ -5,6 +5,7 @@ const LIST := {
 	# the two you asked for
 	"long_walk": ["welp, thats been a long walk.", "leave through an exit door"],
 	"a1000": ["a-1000", "my legs hurt..."],
+	"going_home": ["going home", "get on the bus outside miles"],
 	# one per entity
 	"survive_a60": ["static on the line", "hide from a-60 and live"],
 	"survive_a60b": ["ping, pong, gone", "outlast a-60b for twenty rooms"],

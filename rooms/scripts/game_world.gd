@@ -52,7 +52,7 @@ func _ready() -> void:
 	Game.pending_run = {}
 	if run.is_empty():
 		generator.start(randi())
-		player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 2.0)))
+		player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 14.0 if Game.floor == "city" else 2.0)))
 		Game.set_door(0)
 		_apply_carry()
 		# easter egg, like in doors: very rarely a-90 is already waiting in the lobby
@@ -148,17 +148,45 @@ func _make_environment() -> void:
 	env.glow_intensity = 0.35
 	env.glow_hdr_threshold = 1.2
 	env.ssao_enabled = int(Settings.data.quality) >= 2
+	if Game.floor == "city":
+		_city_sky()
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
-	_apply_darkness(0)
+	if Game.floor != "city":
+		_apply_darkness(0)
 	Settings.changed.connect(func():
 		env.glow_enabled = int(Settings.data.quality) >= 1
 		env.ssao_enabled = int(Settings.data.quality) >= 2)
 
 
+## outside: dusk over the city, a low orange sun
+func _city_sky() -> void:
+	var sky_mat := ProceduralSkyMaterial.new()
+	sky_mat.sky_top_color = Color(0.12, 0.16, 0.34)
+	sky_mat.sky_horizon_color = Color(0.95, 0.55, 0.3)
+	sky_mat.ground_horizon_color = Color(0.4, 0.3, 0.28)
+	sky_mat.ground_bottom_color = Color(0.08, 0.08, 0.1)
+	var sky := Sky.new()
+	sky.sky_material = sky_mat
+	env.background_mode = Environment.BG_SKY
+	env.sky = sky
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_energy = 0.8
+	env.fog_light_color = Color(0.55, 0.5, 0.6)
+	env.fog_density = 0.006
+	var sun := DirectionalLight3D.new()
+	sun.light_color = Color(1.0, 0.72, 0.5)
+	sun.light_energy = 1.1
+	sun.rotation = Vector3(deg_to_rad(-18), deg_to_rad(150), 0)
+	sun.shadow_enabled = int(Settings.data.quality) > 0
+	add_child(sun)
+
+
 ## normal until a-30, foggy after, dark from a-150 (but you can still see the next room)
 func _apply_darkness(n: int) -> void:
+	if Game.floor == "city":
+		return
 	var d := Game.darkness(n)
 	if n == Game.LAST_DOOR and Game.floor == "offices":
 		d = 1.0
@@ -170,7 +198,7 @@ func _apply_darkness(n: int) -> void:
 
 func _on_door_changed(n: int) -> void:
 	_apply_darkness(n)
-	if n == 30 and player.inventory.has_flashlight and not player.lights.flashlight_on:
+	if n == 30 and Game.floor != "city" and player.inventory.has_flashlight and not player.lights.flashlight_on:
 		hud.notify("it's getting darker. " + ("tap item" if Settings.use_touch() else "left click") + " for your flashlight")
 
 
@@ -224,6 +252,15 @@ func _on_finished(reason: String) -> void:
 	_ended = true
 	Save.clear_run()
 	entities.clear_all()
+	if reason == "a1000" and Game.floor == "offices":
+		# the last door opens onto the street. the run keeps going outside
+		Achievements.unlock("a1000")
+		var c := Game.carry_state()
+		c["fixed"] = Game.fixed_office
+		Game.start_run.call_deferred(Game.admin, false, "city", c)
+		return
+	if reason == "city":
+		Achievements.unlock("going_home")
 	if reason == "wires":
 		# the whole office has power again, and the elevator takes you back up
 		Save.data.wires_done = int(Save.data.get("wires_done", 0)) + 1
@@ -231,8 +268,8 @@ func _on_finished(reason: String) -> void:
 		Achievements.unlock("wired_up")
 		Game.carry = Game.carry_state()
 		Game.carry["fixed"] = true  # the elevator takes you up into the fixed office
-	elif reason == "a1000":
-		Achievements.unlock("a1000")
+	elif reason == "city":
+		pass
 	else:
 		Achievements.unlock("long_walk")
 		Save.data.exits = int(Save.data.exits) + 1

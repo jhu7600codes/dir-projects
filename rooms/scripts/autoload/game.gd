@@ -189,6 +189,8 @@ func save_run() -> void:
 
 
 func door_label(n: int) -> String:
+	if floor == "city":
+		return "OUTSIDE"
 	if floor == "wires":
 		return "W-%02d" % n
 	return "A-%03d" % n
@@ -205,6 +207,8 @@ func office_powered() -> bool:
 
 
 func last_door() -> int:
+	if floor == "city":
+		return 0
 	return WIRES_LAST if floor == "wires" else LAST_DOOR
 
 
@@ -230,6 +234,8 @@ func mod(id: String) -> bool:
 
 
 func darkness(n: int) -> float:
+	if floor == "city":
+		return 0.0
 	if floor == "wires":
 		return 0.45  # always dim down there, just the cage lamps
 	if office_powered():

@@ -52,13 +52,15 @@ func setup(kind: String, cause := "") -> void:
 			v.add_child(t)
 			var carry := Game.carry
 			v.add_child(UIKit.button("ride up to the office", func(): Game.start_run(Game.admin, false, "offices", carry)))
-		"a1000":
-			v.add_child(UIKit.label("a-1000", 34, UIKit.ACCENT))
-			v.add_child(UIKit.label("you walked all the way through. it's over.", 17))
+		"a1000", "city":
+			v.add_child(UIKit.label("going home", 34, UIKit.ACCENT))
+			var t := UIKit.label("you walked all the way through, out past miles, and got on the bus. it's over. for today.", 17)
+			t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			v.add_child(t)
 	v.add_child(UIKit.label("best: " + Game.a_label(int(Save.data.best_door)) + "    gold: %d" % int(Save.data.gold), 15, Color(0.6, 0.6, 0.6)))
 	if Game.admin:
 		v.add_child(UIKit.label("admin run - saved to your admin progress", 14, Color(1, 0.6, 0.3)))
-	var fl := Game.floor
+	var fl := "offices" if Game.floor == "city" else Game.floor
 	v.add_child(UIKit.button("play again", func(): Game.start_run(Game.admin, false, fl)))
 	v.add_child(UIKit.button("title screen", Game.to_menu))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

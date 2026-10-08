@@ -119,6 +119,8 @@ func _placeholder_image(p: Dictionary) -> Image:
 			return _img_noise(c1, c2, float(p.get("scale", 0.08)))
 		"grid":
 			return _img_grid(c1, c2)
+		"windows":
+			return _img_windows(c1, c2, int(p.get("seed", 1)))
 		"face":
 			return _img_face(c1, str(p.get("style", "smile")))
 		"sign":
@@ -196,6 +198,24 @@ func _seamless(size: int, freq: float, seed_value: int) -> Image:
 	n.frequency = freq
 	n.fractal_octaves = 3
 	return n.get_seamless_image(size, size, false, false, 0.2, true)
+
+
+## a building facade: rows of windows, some lit warm, most dark, in a concrete wall
+func _img_windows(wall: Color, glass: Color, seed_value: int) -> Image:
+	const S := 256
+	var img := Image.create(S, S, true, Image.FORMAT_RGBA8)
+	img.fill(wall)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for wy in 4:
+		for wx in 4:
+			var lit := rng.randf() < 0.22
+			var c := Color(1.0, 0.82, 0.5) if lit else glass.lerp(Color(0.05, 0.06, 0.08), rng.randf_range(0.0, 0.5))
+			for y in range(wy * 64 + 14, wy * 64 + 54):
+				for x in range(wx * 64 + 10, wx * 64 + 54):
+					img.set_pixel(x, y, c)
+	img.generate_mipmaps()
+	return img
 
 
 func _img_grid(base: Color, line: Color) -> Image:
