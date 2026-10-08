@@ -100,11 +100,11 @@ func _ready() -> void:
 		if picks.size() >= 3 and sc != gen.EXIT_ROOM and not gen.special.has(n):
 			if picks[-2] == sc or picks[-3] == sc:
 				repeats += 1
-		var lk := false
+		var has_lk := false
 		for pp in gen.pool:
 			if pp.script == sc and pp.get("lockers", false):
-				lk = true
-		dry = 0 if lk or n <= 15 else dry + 1
+				has_lk = true
+		dry = 0 if has_lk or n <= 15 else dry + 1
 		worst_dry = maxi(worst_dry, dry)
 	_check(repeats == 0, "no room type repeats within three doors (%d)" % repeats)
 	_check(worst_dry <= 4, "a room with lockers at least every few doors (longest gap %d)" % worst_dry)
