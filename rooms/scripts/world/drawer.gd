@@ -107,6 +107,8 @@ static func _box(into: Dictionary, key: String, size: Vector3, xf: Transform3D) 
 func _nameplate() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = loot_seed + 77
+	if rng.randf() < 0.5:
+		return  # not every desk has one (each sign is a bit of text to lay out, keep rooms cheap)
 	var l := Label3D.new()
 	l.text = "Julian" if rng.randf() < 0.04 else "Worker"
 	l.font_size = 40

@@ -88,6 +88,26 @@ func _ready() -> void:
 	up.physical_keycode = KEY_W
 	Input.parse_input_event(up)
 	_check(Game.player.health == 10, "a-90 hits for 90 when you press a key (hp %d)" % Game.player.health)
+	# room generation rules: no type twice within three doors, lockers at least every 4 rooms
+	var gen = Game.generator
+	var repeats := 0
+	var dry := 0
+	var worst_dry := 0
+	var picks := []
+	for n in range(1, 600):
+		var sc: Script = gen._pick_script(n, null)
+		picks.append(sc)
+		if picks.size() >= 3 and sc != gen.EXIT_ROOM and not gen.special.has(n):
+			if picks[-2] == sc or picks[-3] == sc:
+				repeats += 1
+		var lk := false
+		for pp in gen.pool:
+			if pp.script == sc and pp.get("lockers", false):
+				lk = true
+		dry = 0 if lk or n <= 15 else dry + 1
+		worst_dry = maxi(worst_dry, dry)
+	_check(repeats == 0, "no room type repeats within three doors (%d)" % repeats)
+	_check(worst_dry <= 4, "a room with lockers at least every few doors (longest gap %d)" % worst_dry)
 	print("smoke test %s (%d failures)" % ["passed" if failures == 0 else "FAILED", failures])
 	get_tree().quit(1 if failures else 0)
 

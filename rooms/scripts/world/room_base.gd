@@ -29,7 +29,11 @@ var _body: StaticBody3D
 var _flicker: Array[Light3D] = []
 var _flicker_t := 0.0
 var _merged := false
-var theme := "office"  # "wires": concrete walls, cage lamps (set before calling shell)
+var theme := "office"
+## filled by shell(): the room's box and where the door gaps are, so the dressing pass
+## knows which wall spots are free. {x0, x1, length, height, gaps: {back/front: [x], left/right: [z]}}
+var shell_info := {}
+var decor_block: Array[AABB] = []  # extra spots the dressing pass must leave alone  # "wires": concrete walls, cage lamps (set before calling shell)
 var _burst := 0.0
 var _burst_lights: Array = []
 var _fixture_i := 0  # low quality: only every other ceiling panel gets a real light
@@ -53,6 +57,8 @@ func setup(num: int, seed_value: int) -> void:
 	build()
 	_clear_doorways()
 	_add_back_seal()
+	if theme == "office" and not is_special and not shell_info.is_empty():
+		Dressing.dress(self)
 	if Game.office_powered():
 		_populate()
 
@@ -309,6 +315,21 @@ func shell(x0: float, x1: float, length: float, height: float, exit_side: String
 	_height = height
 	var w := x1 - x0
 	var cx := (x0 + x1) / 2.0
+	var gx := {"back": [0.0], "front": [], "left": [], "right": []}
+	for g in side_holes.get("front", []):
+		gx.front.append(x0 + g[0])
+	for g in side_holes.get("left", []):
+		gx.left.append(g[0])
+	for g in side_holes.get("right", []):
+		gx.right.append(g[0])
+	match exit_side:
+		"front":
+			gx.front.append(exit_offset)
+		"left":
+			gx.left.append(exit_offset)
+		"right":
+			gx.right.append(exit_offset)
+	shell_info = {"x0": x0, "x1": x1, "length": length, "height": height, "gaps": gx}
 	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, -0.1, length / 2.0), Mats.get_mat(carpet))
 	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, height + 0.1, length / 2.0), Mats.get_mat("concrete" if theme == "wires" else "ceiling"), false)
 	# back wall with the entry gap at x = 0

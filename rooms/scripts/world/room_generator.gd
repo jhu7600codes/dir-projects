@@ -12,16 +12,22 @@ const R := "res://scripts/world/rooms/"
 
 ## the pool of normal rooms. weight = how common, min = first door it can show up at
 var pool := [
-	{"script": preload(R + "room_hallway.gd"), "weight": 10, "min": 1},
-	{"script": preload(R + "room_plant.gd"), "weight": 6, "min": 1},
+	{"script": preload(R + "room_hallway.gd"), "weight": 9, "min": 1},
+	{"script": preload(R + "room_plant.gd"), "weight": 5, "min": 1},
 	{"script": preload(R + "room_turn.gd"), "weight": 8, "min": 2},
-	{"script": preload(R + "room_locker.gd"), "weight": 7, "min": 3},
-	{"script": preload(R + "room_three_locker.gd"), "weight": 7, "min": 1},
+	{"script": preload(R + "room_locker.gd"), "weight": 6, "min": 3, "lockers": true},
+	{"script": preload(R + "room_three_locker.gd"), "weight": 6, "min": 1, "lockers": true},
 	{"script": preload(R + "room_meeting.gd"), "weight": 5, "min": 4},
-	{"script": preload(R + "room_storage.gd"), "weight": 5, "min": 5},
+	{"script": preload(R + "room_storage.gd"), "weight": 4, "min": 5, "lockers": true},
 	{"script": preload(R + "room_break.gd"), "weight": 4, "min": 6},
-	{"script": preload(R + "room_four_locker.gd"), "weight": 4, "min": 1},
-	{"script": preload(R + "room_cubicles.gd"), "weight": 6, "min": 8},
+	{"script": preload(R + "room_four_locker.gd"), "weight": 4, "min": 1, "lockers": true},
+	{"script": preload(R + "room_cubicles.gd"), "weight": 5, "min": 8, "lockers": true},
+	{"script": preload(R + "room_open_office.gd"), "weight": 5, "min": 6, "lockers": true},
+	{"script": preload(R + "room_side_offices.gd"), "weight": 7, "min": 3},
+	{"script": preload(R + "room_supply_closet.gd"), "weight": 4, "min": 5, "lockers": true},
+	{"script": preload(R + "room_reception.gd"), "weight": 3, "min": 10},
+	{"script": preload(R + "room_server.gd"), "weight": 3, "min": 20, "lockers": true},
+	{"script": preload(R + "room_copy.gd"), "weight": 4, "min": 4, "lockers": true},
 ]
 ## fixed rooms at fixed doors
 var special := {
@@ -86,11 +92,26 @@ func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
 		return special[n]
 	if _is_exit_room(n):
 		return EXIT_ROOM
+	# lockers at least every few rooms once things start hunting you, so a-60 is fair
+	if n > 15 and not _has_lockers(n - 1) and not _has_lockers(n - 2) and not _has_lockers(n - 3):
+		return _weighted_pick(n, 0, true)
+	# no room type twice within three doors
+	var recent := [_weighted_pick(n - 1, 0), _weighted_pick(n - 2, 0)]
+	for attempt in 4:
+		var s := _weighted_pick(n, attempt)
+		if not recent.has(s):
+			return s
+	return _weighted_pick(n, 4)
+
+
+## does the room the plain pick gives for door n have lockers (approximation, special and
+## exit rooms aside) - only depends on the seed, so it's the same every time
+func _has_lockers(n: int) -> bool:
 	var s := _weighted_pick(n, 0)
-	# never the same room type twice in a row
-	if s == _weighted_pick(n - 1, 0):
-		s = _weighted_pick(n, 1)
-	return s
+	for p in pool:
+		if p.script == s:
+			return p.get("lockers", false)
+	return false
 
 
 ## exit rooms after a-200: one in every block of 75 doors, placed 25-50 doors into the
@@ -121,14 +142,16 @@ func _is_exit_room(n: int) -> bool:
 	return _rng_for(n * 31 + 7).randf() < 0.006
 
 
-func _weighted_pick(n: int, attempt: int) -> Script:
-	var rng := _rng_for(n * 17 + attempt * 100003)
+func _weighted_pick(n: int, attempt: int, lockers_only := false) -> Script:
+	var rng := _rng_for(n * 17 + attempt * 100003 + (7 if lockers_only else 0))
 	var total := 0
 	var options := []
 	for p in pool:
-		if n >= p.min:
+		if n >= p.min and (not lockers_only or p.get("lockers", false)):
 			options.append(p)
 			total += p.weight
+	if options.is_empty():
+		return HALLWAY
 	var roll := rng.randi_range(1, total)
 	for p in options:
 		roll -= p.weight
