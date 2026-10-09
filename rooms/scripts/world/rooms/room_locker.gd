@@ -13,12 +13,13 @@ func build() -> void:
 		add_locker(Vector3(w / 2 - 0.4, 0, z), -PI / 2)
 		add_locker(Vector3(-w / 2 + 0.4, 0, z), PI / 2)
 		z += 1.0
-	# the doors variant: most of them are busted, only 5 still open
-	if rng.randf() < 0.5 and lockers.size() > 5:
+	# busted variants: only 3 still open (nico's rooms) or 5 (doors' rooms)
+	var usable: int = [0, 3, 5][rng.randi() % 3]
+	if usable > 0 and lockers.size() > usable:
 		room_type = "locker_room_broken"
 		var keep := lockers.duplicate()
 		keep.shuffle()
-		for lk in keep.slice(5):
+		for lk in keep.slice(usable):
 			lockers.erase(lk)
 			lk.ready.connect(func(): lk.break_open(true), CONNECT_ONE_SHOT)
 	Props.table(self, Vector3(0, 0, length * 0.5), 0.0, Vector3(1.0, 0.8, 2.4))

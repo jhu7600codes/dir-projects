@@ -26,6 +26,8 @@ var pool := [
 	{"script": preload(R + "room_catwalk.gd"), "weight": 4, "min": 10, "lockers": true},
 	{"script": preload(R + "room_e_shaped.gd"), "weight": 4, "min": 3, "lockers": true},
 	{"script": preload(R + "room_box.gd"), "weight": 5, "min": 2},
+	{"script": preload(R + "room_tall.gd"), "weight": 4, "min": 8, "lockers": true},
+	{"script": preload(R + "room_two_locker.gd"), "weight": 5, "min": 1, "lockers": true},
 	{"script": preload(R + "room_reference.gd"), "weight": 4, "min": 4},
 	{"script": preload(R + "room_open_office.gd"), "weight": 5, "min": 6, "lockers": true, "after_wires": true},
 	{"script": preload(R + "room_side_offices.gd"), "weight": 7, "min": 3, "after_wires": true},
