@@ -25,6 +25,8 @@ func _ready() -> void:
 	var m: Node3D = null if style == "booth" else Assets.model("locker")
 	if style == "booth":
 		_booth()
+	elif style == "fridge":
+		_fridge()
 	elif m:
 		add_child(m)
 	else:
@@ -37,6 +39,18 @@ func _ready() -> void:
 	_audio.bus = "SFX"
 	_audio.position = Vector3(0, 1.2, 0.3)
 	add_child(_audio)
+
+
+## the break room fridge: you can hide in it, like in doors' rooms
+func _fridge() -> void:
+	var white := Mats.get_mat("fridge_white")
+	_mesh(Vector3(0.9, 2.0, 0.62), Vector3(0, 1.0, -0.04), white, self)
+	_door = Node3D.new()
+	_door.position = Vector3(-0.43, 0, 0.3)
+	add_child(_door)
+	_mesh(Vector3(0.86, 1.25, 0.05), Vector3(0.43, 1.35, 0), white, _door)
+	_mesh(Vector3(0.86, 0.68, 0.05), Vector3(0.43, 0.36, 0), white, _door)
+	_mesh(Vector3(0.04, 0.5, 0.05), Vector3(0.78, 1.2, 0.05), Mats.get_mat("metal"), _door)
 
 
 func _booth() -> void:
@@ -129,7 +143,7 @@ func play_door() -> void:
 
 
 ## a-120's warning: the door gets ripped half off and the inside is dark and empty
-func break_open() -> void:
+func break_open(silent := false) -> void:
 	if broken or occupied:
 		return
 	broken = true
@@ -144,6 +158,8 @@ func break_open() -> void:
 	# a few dents / scratches on the side
 	for i in 3:
 		_mesh(Vector3(0.02, randf_range(0.2, 0.5), 0.05), Vector3(0.455, randf_range(0.6, 1.8), randf_range(-0.2, 0.2)), Mats.get_mat("dark"), self)
+	if silent:
+		return
 	_audio.stream = Assets.sound("locker")
 	_audio.pitch_scale = randf_range(0.5, 0.7)
 	_audio.volume_db = 4.0

@@ -14,7 +14,18 @@ func build() -> void:
 		var side := -1.0 if i % 2 == 0 else 1.0
 		var p := c + Vector3(side * 1.1, 0, -1.4 + (i / 2) * 1.4)
 		Props.chair(self, p, side * PI / 2 + rng.randf_range(-0.6, 0.6), rng.randf() < 0.6)
-	Props.whiteboard(self, Vector3(w - 3.0 - 0.15, 1.6, length * 0.5), PI / 2)
+	# projector on the table, a screen on the wall with the light on it, the whiteboard next to it
+	box(Vector3(0.35, 0.12, 0.3), c + Vector3(0, Props.TABLE_H + 0.06, 0), Mats.get_mat("dark"), false)
+	box(Vector3(0.03, 1.4, 2.2), Vector3(w - 3.0 - 0.12, 1.75, length * 0.5 - 1.3), Mats.get_mat("fridge_white"), false)
+	box(Vector3(0.01, 1.1, 1.8), Vector3(w - 3.0 - 0.14, 1.75, length * 0.5 - 1.3), Mats.get_mat("projector_light"), false)
+	Props.whiteboard(self, Vector3(w - 3.0 - 0.15, 1.6, length * 0.5 + 1.6), PI / 2)
+	# glass walls around the meeting area
+	var gx0 := -0.4
+	box(Vector3(0.06, 2.4, length - 4.0), Vector3(gx0, 1.2, length * 0.5), Mats.get_mat("glass"), true)
+	box(Vector3(0.08, 0.06, length - 4.0), Vector3(gx0, 2.4, length * 0.5), Mats.get_mat("metal"), false)
+	# a couple of small tables along the other wall
+	for i in 2:
+		Props.table(self, Vector3(-2.3, 0, 3.0 + i * 3.0), PI / 2, Vector3(0.9, Props.TABLE_H, 0.7))
 	add_locker(Vector3(1.5, 0, 0.45), 0.0)
 	add_locker(Vector3(w - 3.0 - 0.4, 0, length - 2.3), -PI / 2)
 	scatter_loot([c + Vector3(0, Props.TABLE_H + 0.02, 0.5), Vector3(-2.5, 0, length - 1.0)])

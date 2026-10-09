@@ -20,16 +20,20 @@ var pool := [
 	{"script": preload(R + "room_three_locker.gd"), "weight": 6, "min": 1, "lockers": true},
 	{"script": preload(R + "room_meeting.gd"), "weight": 5, "min": 4},
 	{"script": preload(R + "room_storage.gd"), "weight": 4, "min": 5, "lockers": true},
-	{"script": preload(R + "room_break.gd"), "weight": 4, "min": 6},
+	{"script": preload(R + "room_break.gd"), "weight": 4, "min": 6, "lockers": true},
 	{"script": preload(R + "room_four_locker.gd"), "weight": 4, "min": 1, "lockers": true},
 	{"script": preload(R + "room_cubicles.gd"), "weight": 5, "min": 8, "lockers": true},
-	{"script": preload(R + "room_open_office.gd"), "weight": 5, "min": 6, "lockers": true},
-	{"script": preload(R + "room_side_offices.gd"), "weight": 7, "min": 3},
-	{"script": preload(R + "room_supply_closet.gd"), "weight": 4, "min": 5, "lockers": true},
-	{"script": preload(R + "room_reception.gd"), "weight": 3, "min": 10},
-	{"script": preload(R + "room_server.gd"), "weight": 3, "min": 20, "lockers": true},
-	{"script": preload(R + "room_copy.gd"), "weight": 4, "min": 4, "lockers": true},
-	{"script": preload(R + "room_cafeteria.gd"), "weight": 3, "min": 60, "lockers": true},
+	{"script": preload(R + "room_catwalk.gd"), "weight": 4, "min": 10, "lockers": true},
+	{"script": preload(R + "room_e_shaped.gd"), "weight": 4, "min": 3, "lockers": true},
+	{"script": preload(R + "room_box.gd"), "weight": 5, "min": 2},
+	{"script": preload(R + "room_reference.gd"), "weight": 4, "min": 4},
+	{"script": preload(R + "room_open_office.gd"), "weight": 5, "min": 6, "lockers": true, "after_wires": true},
+	{"script": preload(R + "room_side_offices.gd"), "weight": 7, "min": 3, "after_wires": true},
+	{"script": preload(R + "room_supply_closet.gd"), "weight": 4, "min": 5, "lockers": true, "after_wires": true},
+	{"script": preload(R + "room_reception.gd"), "weight": 3, "min": 10, "after_wires": true},
+	{"script": preload(R + "room_server.gd"), "weight": 3, "min": 20, "lockers": true, "after_wires": true},
+	{"script": preload(R + "room_copy.gd"), "weight": 4, "min": 4, "lockers": true, "after_wires": true},
+	{"script": preload(R + "room_cafeteria.gd"), "weight": 3, "min": 60, "lockers": true, "after_wires": true},
 ]
 ## fixed rooms at fixed doors
 var special := {
@@ -109,7 +113,8 @@ func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
 
 
 func _decide(n: int) -> Script:
-	if special.has(n):
+	# the office library only exists in the fixed office
+	if special.has(n) and (n != 50 or Game.fixed_office):
 		return special[n]
 	if _is_exit_room(n):
 		return EXIT_ROOM
@@ -168,6 +173,8 @@ func _weighted_pick(n: int, attempt: int, lockers_only := false) -> Script:
 	var total := 0
 	var options := []
 	for p in pool:
+		if p.get("after_wires", false) and not Game.fixed_office:
+			continue  # the newer office rooms only show up after the wires
 		if n >= p.min and (not lockers_only or p.get("lockers", false)):
 			options.append(p)
 			total += p.weight

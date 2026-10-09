@@ -57,7 +57,7 @@ func setup(num: int, seed_value: int) -> void:
 	build()
 	_clear_doorways()
 	_add_back_seal()
-	if theme == "office" and not is_special and not shell_info.is_empty():
+	if theme == "office" and not is_special and not shell_info.is_empty() and Game.fixed_office:
 		Dressing.dress(self)
 	if Game.office_powered():
 		_populate()
