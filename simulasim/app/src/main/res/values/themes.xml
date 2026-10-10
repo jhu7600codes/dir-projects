@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.Simulasim" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+    </style>
+    <color name="bg">#FF0E0F14</color>
+    <color name="icon_bg">#FF7C5CFF</color>
+</resources>
