@@ -271,10 +271,17 @@ func _on_finished(reason: String) -> void:
 		Achievements.unlock("a1000")
 		var c := Game.carry_state()
 		c["fixed"] = Game.fixed_office
-		Game.start_run.call_deferred(Game.admin, false, "city", c)
+		var adm := Game.admin
+		if Game.cutscenes:
+			Game.play_cutscene.call_deferred("outside", func(): Game.start_run(adm, false, "city", c))
+		else:
+			Game.start_run.call_deferred(adm, false, "city", c)
 		return
 	if reason == "city":
 		Achievements.unlock("going_home")
+		if Game.cutscenes:
+			Game.play_cutscene.call_deferred("bus", Game.to_menu)
+			return
 	if reason == "wires":
 		# the whole office has power again, and the elevator takes you back up
 		Save.data.wires_done = int(Save.data.get("wires_done", 0)) + 1
@@ -282,6 +289,11 @@ func _on_finished(reason: String) -> void:
 		Achievements.unlock("wired_up")
 		Game.carry = Game.carry_state()
 		Game.carry["fixed"] = true  # the elevator takes you up into the fixed office
+		if Game.cutscenes:
+			var cw := Game.carry
+			var adm2 := Game.admin
+			Game.play_cutscene.call_deferred("elevator", func(): Game.start_run(adm2, false, "offices", cw))
+			return
 	elif reason == "city":
 		pass
 	else:

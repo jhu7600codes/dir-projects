@@ -80,6 +80,19 @@ func continue_run() -> void:
 	start_run(Save.is_admin_profile(), true)
 
 
+## cutscenes (scripts/cutscene/cutscene.gd). off in headless test runs
+var cutscenes := DisplayServer.get_name() != "headless"
+var cutscene_id := ""
+var cutscene_then := Callable()
+
+
+func play_cutscene(id: String, then: Callable) -> void:
+	cutscene_id = id
+	cutscene_then = then
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/cutscene.tscn")
+
+
 func start_run(with_admin: bool, continuing := false, floor_id := "offices", carry_over := {}) -> void:
 	if not continuing:
 		pending_run = {}
@@ -113,6 +126,10 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 		Save.write()
 	Achievements.unlock("first_run")
 	get_tree().paused = false
+	# a fresh run in the office starts with your first day at miles
+	if cutscenes and not continuing and floor == "offices" and carry_over.is_empty():
+		play_cutscene("intro", func(): get_tree().change_scene_to_file("res://scenes/game.tscn"))
+		return
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
 
 
