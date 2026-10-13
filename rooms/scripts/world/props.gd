@@ -55,7 +55,7 @@ static func plant(room: RoomBase, pos: Vector3, fallen := false) -> void:
 		p.rotation.z = PI / 2 - 0.1
 		p.position.y += 0.17
 		# a bit of spilled soil
-		room.box(Vector3(0.5, 0.01, 0.35), pos + Vector3(0.35, 0.005, 0), PropModels._mat("soil", Color(0.16, 0.11, 0.08), 1.0), false, room.rng.randf() * TAU)
+		room.box(Vector3(0.5, 0.01, 0.35), pos + Vector3(0.35, 0.02, 0), PropModels._mat("soil", Color(0.16, 0.11, 0.08), 1.0), false, room.rng.randf() * TAU)
 	room.add_child(p)
 
 

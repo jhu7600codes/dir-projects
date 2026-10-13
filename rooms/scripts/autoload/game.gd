@@ -82,6 +82,12 @@ func continue_run() -> void:
 
 ## cutscenes (scripts/cutscene/cutscene.gd). off in headless test runs
 var cutscenes := DisplayServer.get_name() != "headless"
+var net_seed := 0  # multiplayer: the host's room seed for this run
+
+
+## cutscenes aren't shown in multiplayer (everyone would be watching at different times)
+func use_cutscenes() -> bool:
+	return cutscenes and not Net.active
 var cutscene_id := ""
 var cutscene_then := Callable()
 
@@ -127,7 +133,7 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 	Achievements.unlock("first_run")
 	get_tree().paused = false
 	# a fresh run in the office starts with your first day at miles
-	if cutscenes and not continuing and floor == "offices" and carry_over.is_empty():
+	if use_cutscenes() and not continuing and floor == "offices" and carry_over.is_empty():
 		play_cutscene("intro", func(): get_tree().change_scene_to_file("res://scenes/game.tscn"))
 		return
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
@@ -185,7 +191,8 @@ func carry_state() -> Dictionary:
 
 ## remember the run in progress (door, seed, health and items)
 func save_run() -> void:
-	if player == null or generator == null or player.dead or door <= 0:
+	# multiplayer runs can't be continued later
+	if Net.active or player == null or generator == null or player.dead or door <= 0:
 		return
 	var inv = player.inventory
 	Save.save_run({

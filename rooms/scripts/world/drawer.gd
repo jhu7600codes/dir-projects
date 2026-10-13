@@ -115,7 +115,7 @@ func _nameplate() -> void:
 	l.pixel_size = 0.0012
 	l.modulate = Color(0.9, 0.8, 0.45)
 	l.outline_size = 0
-	l.transform = Transform3D(Basis(Vector3.RIGHT, -0.35), Vector3(-0.3, Props.TABLE_H, 0.22)) * Transform3D(Basis(), Vector3(0, 0.035, 0.009))
+	l.transform = Transform3D(Basis(Vector3.RIGHT, -0.35), Vector3(-0.3, Props.TABLE_H, 0.22)) * Transform3D(Basis(), Vector3(0, 0.035, 0.016))
 	add_child(l)
 
 
@@ -129,6 +129,7 @@ func _open(player, it: Interactable) -> void:
 	_opened = true
 	it.queue_free()
 	create_tween().tween_property(_drawer, "position:z", FRONT_Z + 0.38, 0.25)
+	Net.send_event(self, "opened")
 	if gives_key:
 		Game.has_key = true
 		Game.play_ui("pickup")
@@ -149,3 +150,14 @@ func _open(player, it: Interactable) -> void:
 		player.inventory.add("vitamins", 1)
 	else:
 		player.notify("empty")
+
+
+## multiplayer: someone else opened it (and got what was inside)
+func net_event(what: String, _arg) -> void:
+	if what != "opened" or _opened:
+		return
+	_opened = true
+	for c in get_children():
+		if c is Interactable:
+			c.queue_free()
+	create_tween().tween_property(_drawer, "position:z", FRONT_Z + 0.38, 0.25)

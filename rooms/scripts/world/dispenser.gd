@@ -11,6 +11,7 @@ const H := 2.0
 const D := 0.7
 
 var _slot_items := 0
+var _drops := 0
 
 
 func _ready() -> void:
@@ -86,6 +87,13 @@ func _press(player, item: String, price: int, button: MeshInstance3D) -> void:
 	if item == "shakelight":
 		Achievements.unlock("shake_it")
 	_drop(item)
+	Net.send_event(self, "drop", item)
+
+
+## multiplayer: someone else bought something, it rolls out here too
+func net_event(what: String, arg) -> void:
+	if what == "drop":
+		_drop(str(arg))
 
 
 ## the item falls off its shelf, rolls down the chute inside and lands in the slot
@@ -100,6 +108,7 @@ func _drop(item: String) -> void:
 	a.volume_db = -6.0
 	a.position = Vector3(0, 0.5, D / 2)
 	add_child(a)
+	_drops += 1
 	var slot_x := -0.2 + (_slot_items % 3) * 0.15
 	_slot_items += 1
 	var tw := create_tween()
@@ -112,6 +121,7 @@ func _drop(item: String) -> void:
 		m.queue_free()
 		var p := Pickup.new()
 		p.item = item
+		p.name = "drop_%d" % _drops
 		p.position = Vector3(slot_x, 0.29, D / 2 + 0.02)
 		add_child(p)
 		p.tree_exited.connect(func(): _slot_items = maxi(0, _slot_items - 1)))

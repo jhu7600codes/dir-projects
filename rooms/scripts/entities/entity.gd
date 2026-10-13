@@ -24,6 +24,10 @@ var manager: Node = null
 var player: Node = null
 var generator: Node = null
 var hit_player := false  # did it damage the player at all (for the "survive" achievements)
+## multiplayer: on the other players' machines the entity follows where the host has it
+var remote := false
+var net_pos := Vector3.ZERO
+var has_net_pos := false
 var _done := false
 
 
@@ -100,3 +104,14 @@ func make_3d_audio(key: String, unit := 8.0, max_dist := 120.0) -> AudioStreamPl
 	a.max_distance = max_dist
 	add_child(a)
 	return a
+
+
+## multiplayer: moves a remote entity toward the host's position, after the entity's own code
+class NetFollow extends Node:
+	func _physics_process(delta: float) -> void:
+		var e = get_parent()
+		if e.has_net_pos:
+			if e.global_position.distance_to(e.net_pos) > 12.0:
+				e.global_position = e.net_pos
+			else:
+				e.global_position = e.global_position.lerp(e.net_pos, minf(1.0, 14.0 * delta))

@@ -9,7 +9,8 @@ signal opened(door: Door)
 var number := 1
 var is_open := false
 var locked := false  # used for the decorative locked door in some rooms
-var lock_handler := Callable()  # figure's code lock: called instead of the "locked" sound
+var lock_handler := Callable()
+var _from_net := false  # figure's code lock: called instead of the "locked" sound
 
 var _hinge: Node3D
 var _panel_shape: CollisionShape3D
@@ -83,7 +84,7 @@ func _ready() -> void:
 	lbl.pixel_size = 0.0035
 	lbl.modulate = Color(0.08, 0.08, 0.08)
 	lbl.outline_size = 0
-	lbl.position = Vector3(0, h + 0.28, -0.16)
+	lbl.position = Vector3(0, h + 0.28, -0.175)
 	lbl.rotation.y = PI
 	add_child(lbl)
 	# interaction area on the room side
@@ -147,10 +148,18 @@ func unlock() -> void:
 		pad.queue_free()
 
 
+## multiplayer: someone else opened it
+func open_remote() -> void:
+	_from_net = true
+	open()
+
+
 func open() -> void:
 	if is_open:
 		return
 	is_open = true
+	if not _from_net:
+		Net.door_opened(number)
 	_it.enabled = false
 	_it.queue_free()
 	_panel_shape.set_deferred("disabled", true)

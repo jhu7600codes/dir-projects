@@ -1,0 +1,130 @@
+class_name MPMenu
+extends Control
+## multiplayer: host a run or join one on the same wifi / network.
+## hosts show up in the list by themselves; you can also type the host's ip.
+
+var _name: LineEdit
+var _ip: LineEdit
+var _status: Label
+var _list: VBoxContainer
+var _found: VBoxContainer
+var _start: Button
+var _mode := ""  # "", "host", "join"
+
+
+func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	UIKit.full_screen_bg(self, Color(0, 0, 0, 0.9))
+	var p := UIKit.panel(Vector2(520, 0))
+	UIKit.centered(self, p)
+	var v := UIKit.vbox(10)
+	p.add_child(v)
+	v.add_child(UIKit.label("multiplayer", 28, UIKit.ACCENT))
+	v.add_child(UIKit.label("play together on the same wifi. up to 4 workers.", 15, Color(0.7, 0.7, 0.7)))
+	var nr := HBoxContainer.new()
+	nr.add_child(UIKit.label("your name", 16))
+	_name = LineEdit.new()
+	_name.text = str(Save.data.get("mp_name", "worker %d" % randi_range(10, 99)))
+	_name.max_length = 16
+	_name.custom_minimum_size = Vector2(260, 40)
+	_name.text_changed.connect(func(t):
+		Save.data.mp_name = t
+		Save.write())
+	nr.add_child(_name)
+	v.add_child(nr)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.add_child(UIKit.button("host", _host, 18))
+	_ip = LineEdit.new()
+	_ip.placeholder_text = "host ip, like 192.168.1.5"
+	_ip.text = str(Save.data.get("mp_last_ip", ""))
+	_ip.custom_minimum_size = Vector2(220, 40)
+	row.add_child(_ip)
+	row.add_child(UIKit.button("join", func(): _join(_ip.text), 18))
+	v.add_child(row)
+	v.add_child(UIKit.label("games on your network:", 15, Color(0.7, 0.7, 0.7)))
+	_found = UIKit.vbox(4)
+	v.add_child(_found)
+	_status = UIKit.label("", 15, UIKit.ACCENT)
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(_status)
+	_list = UIKit.vbox(4)
+	v.add_child(_list)
+	_start = UIKit.button("start the run", func(): Net.host_start("offices"), 20)
+	_start.visible = false
+	v.add_child(_start)
+	v.add_child(UIKit.button("back", func():
+		Net.stop("")
+		Net.stop_listening()
+		queue_free(), 16))
+	Net.players_changed.connect(_refresh)
+	Net.joined.connect(_on_joined)
+	Net.left.connect(_on_left)
+	Net.start_listening()
+	var t := Timer.new()
+	t.wait_time = 1.0
+	t.autostart = true
+	t.timeout.connect(_refresh_found)
+	add_child(t)
+	_refresh()
+
+
+func _on_joined() -> void:
+	_status.text = "joined! waiting for the host to start..."
+
+
+func _on_left(reason: String) -> void:
+	_mode = ""
+	_status.text = reason
+	_start.visible = false
+	_refresh()
+
+
+func _host() -> void:
+	var err := Net.host(_name.text)
+	if err != "":
+		_status.text = err
+		return
+	_mode = "host"
+	var ips := Net.local_ips()
+	_status.text = "hosting! others can join with: " + (", ".join(ips) if not ips.is_empty() else "your ip")
+	_start.visible = true
+
+
+func _join(ip: String) -> void:
+	if ip.strip_edges() == "":
+		_status.text = "type the host's ip, or pick a game from the list"
+		return
+	Save.data.mp_last_ip = ip
+	Save.write()
+	var err := Net.join(ip, _name.text)
+	if err != "":
+		_status.text = err
+		return
+	_mode = "join"
+	_status.text = "connecting to %s..." % ip
+
+
+func _refresh() -> void:
+	for c in _list.get_children():
+		c.queue_free()
+	for id in Net.players:
+		var n: String = Net.players[id].get("name", "?")
+		_list.add_child(UIKit.label(("  host: " if int(id) == 1 else "  ") + n, 16))
+	_start.visible = Net.is_host
+
+
+func _refresh_found() -> void:
+	for c in _found.get_children():
+		c.queue_free()
+	var now := Time.get_ticks_msec()
+	for ip in Net.hosts_found.keys():
+		var h: Dictionary = Net.hosts_found[ip]
+		if now - int(h.t) > 4000:
+			Net.hosts_found.erase(ip)
+			continue
+		if Net.is_host:
+			continue
+		_found.add_child(UIKit.button("join %s  (%d/4)  -  %s" % [h.name, h.players, ip], func(): _join(ip), 15))
+	if _found.get_child_count() == 0:
+		_found.add_child(UIKit.label("  none yet", 14, Color(0.5, 0.5, 0.5)))

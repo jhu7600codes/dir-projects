@@ -62,14 +62,14 @@ func _ground() -> void:
 		box(Vector3(WALK - ROAD, 0.02, length), Vector3(sd * (ROAD + WALK) / 2, 0.01, length / 2), Mats.get_mat("sidewalk"), false)
 		box(Vector3(0.2, 0.12, length), Vector3(sd * ROAD, 0.06, length / 2), Mats.get_mat("frame"), false)
 	if number == 0:
-		box(Vector3(40, 0.02, 16), Vector3(0, 0.012, 7.0), Mats.get_mat("sidewalk"), false)
+		box(Vector3(40, 0.035, 16), Vector3(0, 0.0175, 7.0), Mats.get_mat("sidewalk"), false)
 	var z := 4.0
-	while z < length - 3.0:
-		box(Vector3(0.15, 0.02, 3.0), Vector3(0, 0.015, z), Mats.get_mat("lane"), false)
+	while z < length - 6.5:
+		box(Vector3(0.15, 0.025, 3.0), Vector3(0, 0.0125, z), Mats.get_mat("lane"), false)
 		z += 7.0
 	# a crosswalk before the gate
 	for i in 7:
-		box(Vector3(1.0, 0.02, 3.0), Vector3(-5.4 + i * 1.8, 0.016, length - 4.0), Mats.get_mat("plastic"), false)
+		box(Vector3(1.0, 0.045, 3.0), Vector3(-5.4 + i * 1.8, 0.0225, length - 4.0), Mats.get_mat("plastic"), false)
 
 
 ## buildings on both sides, wall to wall

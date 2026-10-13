@@ -71,7 +71,7 @@ func _booth() -> void:
 	l.font_size = 40
 	l.pixel_size = 0.005
 	l.outline_size = 0
-	l.position = Vector3(0, 2.26, 0.35)
+	l.position = Vector3(0, 2.26, 0.37)
 	add_child(l)
 	_door = Node3D.new()
 	_door.position = Vector3(-0.43, 0, 0.3)
@@ -208,7 +208,7 @@ func _mimic_look() -> void:
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	q.material_override = m
-	q.position = Vector3(0, 1.05, 0.33)
+	q.position = Vector3(0, 1.05, 0.345)
 	add_child(q)
 
 
@@ -228,3 +228,18 @@ func trigger_mimic() -> void:
 func set_inside(on: bool) -> void:
 	if _door:
 		_door.visible = not on
+
+
+## multiplayer: something happened to this locker on another player's machine
+func net_event(what: String, arg) -> void:
+	match what:
+		"occupied":
+			occupied = bool(arg)
+			play_door()
+		"mimic":
+			# it burst out at someone else
+			mimic = false
+			broken = true
+			_it.enabled = false
+			if _door:
+				create_tween().tween_property(_door, "rotation:y", -2.4, 0.1)

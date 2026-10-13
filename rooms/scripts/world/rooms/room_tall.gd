@@ -18,8 +18,8 @@ func build() -> void:
 	var w := x1 - x0
 	_height = UP + H
 	var plate := Mats.get_mat("metal")
-	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(0, -0.1, length / 2), Mats.get_mat("carpet_blue"))
-	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(0, UP + H + 0.1, length / 2), Mats.get_mat("ceiling"), false)
+	box(Vector3(w, 0.2, length), Vector3(0, -0.1, length / 2), Mats.get_mat("carpet_blue"))
+	box(Vector3(w, 0.2, length), Vector3(0, UP + H + 0.1, length / 2), Mats.get_mat("ceiling"), false)
 	wall(Vector3(x1, 0, 0), Vector3(x0, 0, 0), UP + H, [[x1, DOOR_W]])
 	wall(Vector3(x0, 0, length), Vector3(x1, 0, length), UP)
 	wall(Vector3(x0, UP, length), Vector3(x1, UP, length), H, [[-x0, DOOR_W]])

@@ -63,7 +63,7 @@ func _physics_process(delta: float) -> void:
 	if is_frozen() or _done:
 		return
 	_update_audio()
-	if moving:
+	if moving and not remote:
 		_move(speed * delta * (1.3 if Game.mod("in_a_hurry") else 1.0))
 	# only while it's actually coming: during the warning (or between rebounds) it's
 	# invisible and must not be able to kill you from rooms away

@@ -248,6 +248,7 @@ func _make_menu() -> void:
 		col.add_child(_menu_button("new run", _pick_floor))
 	else:
 		col.add_child(_menu_button("play", _pick_floor, 26))
+	col.add_child(_menu_button("multiplayer", func(): add_child(MPMenu.new())))
 	col.add_child(_menu_button("journal", func(): add_child(JournalScreen.new())))
 	var mods := Array(Save.data.get("modifiers", []))
 	var mod_text := "modifiers" if Game.modifiers_unlocked() else "modifiers  (locked)"

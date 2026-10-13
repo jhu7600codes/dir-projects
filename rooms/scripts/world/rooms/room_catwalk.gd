@@ -16,8 +16,8 @@ func build() -> void:
 	var x1 := 6.0
 	var w := x1 - x0
 	_height = H
-	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(0, -DROP - 0.1, length / 2), Mats.get_mat("carpet_blue"))
-	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(0, H + 0.1, length / 2), Mats.get_mat("ceiling"), false)
+	box(Vector3(w, 0.2, length), Vector3(0, -DROP - 0.1, length / 2), Mats.get_mat("carpet_blue"))
+	box(Vector3(w, 0.2, length), Vector3(0, H + 0.1, length / 2), Mats.get_mat("ceiling"), false)
 	# walls: solid below the catwalk level, the doorways above it
 	wall(Vector3(x1, -DROP, 0), Vector3(x0, -DROP, 0), DROP)
 	wall(Vector3(x1, 0, 0), Vector3(x0, 0, 0), H, [[x1, DOOR_W]])

@@ -44,6 +44,9 @@ func _ready() -> void:
 		add_child(AdminPanel.new())
 
 	generator.room_entered.connect(entities.on_room_entered)
+	if Net.active:
+		# the host left (or you lost connection): back to the title screen
+		Net.left.connect(_on_net_left)
 	Game.door_changed.connect(_on_door_changed)
 	Game.player_died.connect(_on_died)
 	Game.run_finished.connect(_on_finished)
@@ -51,12 +54,12 @@ func _ready() -> void:
 	var run := Game.pending_run
 	Game.pending_run = {}
 	if run.is_empty():
-		generator.start(randi())
+		generator.start(Game.net_seed if Net.active else randi())
 		player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 14.0 if Game.floor == "city" else 2.0)))
 		Game.set_door(0)
 		_apply_carry()
 		# easter egg, like in doors: very rarely a-90 is already waiting in the lobby
-		if randf() < LOBBY_A90_CHANCE and Game.floor == "offices":
+		if randf() < LOBBY_A90_CHANCE and Game.floor == "offices" and (not Net.active or Net.is_host):
 			get_tree().create_timer(randf_range(6.0, 14.0)).timeout.connect(_lobby_a90)
 	else:
 		_load_run(run)
@@ -92,6 +95,10 @@ func _ready() -> void:
 		for m in Game.modifiers:
 			names.append(Game.MODIFIERS[m][0])
 		hud.notify("modifiers: " + ", ".join(names))
+
+
+func _on_net_left(_reason: String) -> void:
+	Game.to_menu.call_deferred()
 
 
 func _lobby_a90() -> void:
@@ -254,6 +261,14 @@ func _on_died(cause: String) -> void:
 	var cl := CuriousLight.new()
 	add_child(cl)
 	cl.setup(cause, str(Game.death_details.get(cause, "")))
+	if Net.active:
+		# multiplayer: watch the others until everyone's dead
+		_death_cause = cause
+		Net.i_died()
+		await cl.done
+		if not _over:
+			_spectate()
+		return
 	await cl.done
 	var es := EndScreen.new()
 	add_child(es)
@@ -261,6 +276,53 @@ func _on_died(cause: String) -> void:
 
 
 func _on_finished(reason: String) -> void:
+	if Net.active:
+		# multiplayer: everyone's run ends together
+		Net.finish(reason)
+		net_finished(reason)
+		return
+	_end_run(reason)
+
+
+## multiplayer: the run ended for everyone (someone left through an exit, reached a-1000,
+## rode the elevator, took the bus, or everybody died)
+func net_finished(reason: String) -> void:
+	if _over:
+		return
+	_over = true
+	if _spectator:
+		_spectator.queue_free()
+	match reason:
+		"a1000":
+			Achievements.unlock("a1000")
+			if Net.is_host:
+				Net.host_start("city", Game.fixed_office)
+		"wires":
+			Achievements.unlock("wired_up")
+			if Net.is_host:
+				Net.host_start("offices", true)
+		"all_dead":
+			var es := EndScreen.new()
+			add_child(es)
+			es.setup("death", _death_cause)
+		_:
+			_ended = false
+			_end_run(reason)
+
+
+var _over := false
+var _death_cause := ""
+var _spectator: Node = null
+
+
+## dead in multiplayer: the camera follows one of the others. tap / click to switch
+func _spectate() -> void:
+	var s := Spectator.new()
+	add_child(s)
+	_spectator = s
+
+
+func _end_run(reason: String) -> void:
 	if _ended:
 		return
 	_ended = true
@@ -272,14 +334,14 @@ func _on_finished(reason: String) -> void:
 		var c := Game.carry_state()
 		c["fixed"] = Game.fixed_office
 		var adm := Game.admin
-		if Game.cutscenes:
+		if Game.use_cutscenes():
 			Game.play_cutscene.call_deferred("outside", func(): Game.start_run(adm, false, "city", c))
 		else:
 			Game.start_run.call_deferred(adm, false, "city", c)
 		return
 	if reason == "city":
 		Achievements.unlock("going_home")
-		if Game.cutscenes:
+		if Game.use_cutscenes():
 			Game.play_cutscene.call_deferred("bus", Game.to_menu)
 			return
 	if reason == "wires":
@@ -289,7 +351,7 @@ func _on_finished(reason: String) -> void:
 		Achievements.unlock("wired_up")
 		Game.carry = Game.carry_state()
 		Game.carry["fixed"] = true  # the elevator takes you up into the fixed office
-		if Game.cutscenes:
+		if Game.use_cutscenes():
 			var cw := Game.carry
 			var adm2 := Game.admin
 			Game.play_cutscene.call_deferred("elevator", func(): Game.start_run(adm2, false, "offices", cw))

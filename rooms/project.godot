@@ -23,6 +23,7 @@ Assets="*res://scripts/autoload/assets.gd"
 Save="*res://scripts/autoload/save.gd"
 Achievements="*res://scripts/autoload/achievements.gd"
 Game="*res://scripts/autoload/game.gd"
+Net="*res://scripts/autoload/net.gd"
 
 [display]
 

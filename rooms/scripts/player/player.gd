@@ -75,7 +75,8 @@ func _ready() -> void:
 	add_child(head)
 	camera = Camera3D.new()
 	camera.fov = float(Settings.data.fov)
-	camera.near = 0.05
+	camera.near = 0.08
+	camera.far = 400.0
 	camera.current = true
 	head.add_child(camera)
 	inventory = Inventory.new()
@@ -351,12 +352,14 @@ func enter_locker(lk: Locker) -> void:
 		return
 	if lk.mimic:
 		lk.trigger_mimic()
+		Net.send_event(lk, "mimic")
 		return
 	_busy = true
 	hidden = true
 	Game.used_locker = true
 	current_locker = lk
 	lk.occupied = true
+	Net.send_event(lk, "occupied", true)
 	lk.play_door()
 	_shape.set_deferred("disabled", true)
 	velocity = Vector3.ZERO
@@ -387,6 +390,7 @@ func exit_locker() -> void:
 	tw.tween_property(self, "global_transform", t, dur)
 	tw.tween_callback(func():
 		current_locker.occupied = false
+		Net.send_event(current_locker, "occupied", false)
 		current_locker = null
 		hidden = false
 		_busy = false

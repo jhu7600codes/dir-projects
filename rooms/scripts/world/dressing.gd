@@ -56,11 +56,11 @@ static func dress(room: RoomBase) -> void:
 	# wear and tear the deeper you go
 	if room.darkness > 0.3:
 		for i in rng.randi_range(1, 3):
-			var sp := Vector3(rng.randf_range(x0 + 0.5, x1 - 0.5), 0.004, rng.randf_range(1.0, length - 1.0))
-			room.box(Vector3(rng.randf_range(0.3, 0.9), 0.006, rng.randf_range(0.3, 0.8)), sp, Mats.get_mat("stain"), false, rng.randf() * PI)
+			var sp := Vector3(rng.randf_range(x0 + 0.5, x1 - 0.5), 0.015, rng.randf_range(1.0, length - 1.0))
+			room.box(Vector3(rng.randf_range(0.3, 0.9), 0.01, rng.randf_range(0.3, 0.8)), sp, Mats.get_mat("stain"), false, rng.randf() * PI)
 	if room.darkness > 0.5:
 		for i in rng.randi_range(1, 3):
-			var tp := Vector3(rng.randf_range(x0 + 0.6, x1 - 0.6), height - 0.004, rng.randf_range(1.0, length - 1.0))
+			var tp := Vector3(rng.randf_range(x0 + 0.6, x1 - 0.6), height - 0.02, rng.randf_range(1.0, length - 1.0))
 			room.box(Vector3(0.6, 0.01, 0.6), tp, Mats.get_mat("crack"), false)
 
 

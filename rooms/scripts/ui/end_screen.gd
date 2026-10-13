@@ -65,6 +65,15 @@ func setup(kind: String, cause := "") -> void:
 	if Game.admin:
 		v.add_child(UIKit.label("admin run - saved to your admin progress", 14, Color(1, 0.6, 0.3)))
 	var fl := "offices" if Game.floor == "city" else Game.floor
-	v.add_child(UIKit.button("play again", func(): Game.start_run(Game.admin, false, fl)))
-	v.add_child(UIKit.button("title screen", Game.to_menu))
+	if Net.active:
+		if Net.is_host:
+			v.add_child(UIKit.button("play again (everyone)", func(): Net.host_start("offices")))
+		else:
+			v.add_child(UIKit.label("waiting for the host to start again...", 15, Color(0.7, 0.7, 0.7)))
+		v.add_child(UIKit.button("leave", func():
+			Net.stop("")
+			Game.to_menu()))
+	else:
+		v.add_child(UIKit.button("play again", func(): Game.start_run(Game.admin, false, fl)))
+		v.add_child(UIKit.button("title screen", Game.to_menu))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

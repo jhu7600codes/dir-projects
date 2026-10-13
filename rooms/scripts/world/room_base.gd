@@ -388,8 +388,10 @@ func shell(x0: float, x1: float, length: float, height: float, exit_side: String
 		"right":
 			gx.right.append(exit_offset)
 	shell_info = {"x0": x0, "x1": x1, "length": length, "height": height, "gaps": gx}
-	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, -0.1, length / 2.0), Mats.get_mat(carpet))
-	box(Vector3(w + WALL_T, 0.2, length + WALL_T), Vector3(cx, height + 0.1, length / 2.0), Mats.get_mat("concrete" if theme == "wires" else "ceiling"), false)
+	# floor and ceiling end exactly at the room's edges: the next room starts right there,
+	# and any overlap would z-fight under the doorway
+	box(Vector3(w, 0.2, length), Vector3(cx, -0.1, length / 2.0), Mats.get_mat(carpet))
+	box(Vector3(w, 0.2, length), Vector3(cx, height + 0.1, length / 2.0), Mats.get_mat("concrete" if theme == "wires" else "ceiling"), false)
 	# back wall with the entry gap at x = 0
 	wall(Vector3(x1, 0, 0), Vector3(x0, 0, 0), height, [[x1 - 0.0, DOOR_W]])
 	# front wall
@@ -593,7 +595,8 @@ func add_drawer_desk(pos: Vector3, yaw: float) -> Drawer:
 func label(text: String, pos: Vector3, yaw: float, size := 64, color := Color(0.1, 0.1, 0.1), font_key := "") -> Label3D:
 	var l := Label3D.new()
 	l.text = text
-	l.position = pos
+	# a little off whatever it's written on, so it doesn't flicker with the wall behind it
+	l.position = pos + Basis(Vector3.UP, yaw) * Vector3(0, 0, 0.015)
 	l.rotation.y = yaw
 	l.font_size = size
 	l.pixel_size = 0.004

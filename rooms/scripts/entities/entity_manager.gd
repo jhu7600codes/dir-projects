@@ -159,7 +159,36 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 	return true
 
 
+## entities that only concern one player (your own staring, your own fake locker)
+const LOCAL_IDS := ["a70", "worker"]
+
+
 func spawn(id: String, opts := {}) -> Entity:
+	# multiplayer: only the host decides spawns, everyone else gets them from the host
+	if Net.active and not Net.is_host and not id in LOCAL_IDS:
+		return null
+	var s := randi()
+	if Net.active and not id in LOCAL_IDS:
+		seed(s)  # same dice rolls inside the entity on every machine
+	var e := _spawn(id, opts)
+	if e and Net.active and not id in LOCAL_IDS:
+		Net.entity_spawned(id, opts, s)
+	return e
+
+
+## multiplayer: the host spawned this one
+func spawn_remote(id: String, opts: Dictionary, seed_value: int) -> void:
+	if active.has(id):
+		active[id].queue_free()
+		active.erase(id)
+	seed(seed_value)
+	var e := _spawn(id, opts, true)
+	if e:
+		var f := Entity.NetFollow.new()
+		e.add_child(f)
+
+
+func _spawn(id: String, opts := {}, remote := false) -> Entity:
 	if active.has(id) or not SCRIPTS.has(id):
 		return null
 	if Game.generator == null or Game.generator.rooms.is_empty():
@@ -170,6 +199,7 @@ func spawn(id: String, opts := {}) -> Entity:
 	e.generator = Game.generator
 	for k in opts:
 		e.set(k, opts[k])
+	e.remote = remote
 	e.name = id
 	add_child(e)
 	active[id] = e
@@ -180,6 +210,8 @@ func spawn(id: String, opts := {}) -> Entity:
 
 
 func _on_finished(e: Entity, survived: bool) -> void:
+	if Net.active and Net.is_host and not e.id in LOCAL_IDS:
+		Net.entity_gone(e.id)
 	active.erase(e.id)
 	_cooldown[e.id] = time + float(rules(e.id).get("cooldown", 0.0))
 	if survived:

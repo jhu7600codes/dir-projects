@@ -34,6 +34,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func toggle() -> void:
 	visible = not visible
-	get_tree().paused = visible
+	get_tree().paused = visible and not Net.active
 	if not Settings.use_touch():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if visible else Input.MOUSE_MODE_CAPTURED

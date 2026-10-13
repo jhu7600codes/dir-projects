@@ -30,4 +30,11 @@ func _name() -> String:
 
 func _take(player) -> void:
 	player.inventory.add(item, amount)
+	Net.send_event(self, "taken")
 	queue_free()
+
+
+## multiplayer: someone else took it
+func net_event(what: String, _arg) -> void:
+	if what == "taken":
+		queue_free()
