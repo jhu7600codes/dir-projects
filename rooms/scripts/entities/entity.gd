@@ -114,4 +114,4 @@ class NetFollow extends Node:
 			if e.global_position.distance_to(e.net_pos) > 12.0:
 				e.global_position = e.net_pos
 			else:
-				e.global_position = e.global_position.lerp(e.net_pos, minf(1.0, 14.0 * delta))
+				e.global_position = e.global_position.lerp(e.net_pos, minf(1.0, (7.0 if Net.online else 14.0) * delta))

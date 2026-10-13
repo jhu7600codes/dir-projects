@@ -1,6 +1,8 @@
 extends Node
-## multiplayer (lan co-op, up to 4 players). one player hosts, the others join by ip, or
-## pick the host from the list (hosts shout on the lan every second).
+## multiplayer (co-op, up to 4 players). two ways to play together:
+## - online: the host gets a 5 letter code, others type it in. goes through supabase
+##   realtime (SupabasePeer), works from anywhere
+## - lan: join by ip, or pick the host from the list (hosts shout on the lan every second)
 ##
 ## how it stays in sync:
 ## - everyone builds the same rooms from the same seed, so only door openings are sent
@@ -22,12 +24,13 @@ const SEND_RATE := 1.0 / 15.0
 
 var active := false
 var is_host := false
+var online := false
+var code := ""
 var my_name := "worker"
 var players := {}  # peer id -> {name, dead}
 var hosts_found := {}  # ip -> {name, players, t}
 var remotes := {}  # peer id -> RemotePlayer (in the game scene)
 var _send_t := 0.0
-var _ent_t := 0.0
 var _shout_t := 0.0
 var _udp: PacketPeerUDP
 var _listen: PacketPeerUDP
@@ -62,6 +65,46 @@ func host(player_name: String) -> String:
 	return ""
 
 
+## online: host a game through supabase, others join with the code
+func host_online(player_name: String) -> String:
+	stop("")
+	my_name = player_name
+	var letters := "ABCDEFGHJKLMNPQRSTUVWXYZ"
+	code = ""
+	for i in 5:
+		code += letters[randi() % letters.length()]
+	var peer := SupabasePeer.new()
+	if peer.create_host(code) != OK:
+		return "couldn't reach the server"
+	multiplayer.multiplayer_peer = peer
+	active = true
+	is_host = true
+	online = true
+	players = {1: {"name": my_name, "dead": false}}
+	players_changed.emit()
+	return ""
+
+
+func join_online(join_code: String, player_name: String) -> String:
+	stop("")
+	my_name = player_name
+	code = join_code.strip_edges().to_upper()
+	var peer := SupabasePeer.new()
+	if peer.create_client(code) != OK:
+		return "couldn't reach the server"
+	multiplayer.multiplayer_peer = peer
+	active = true
+	is_host = false
+	online = true
+	return ""
+
+
+## how often players send where they are. online it's slower (the free supabase plan
+## only allows about 100 messages a second for everyone together)
+func send_rate() -> float:
+	return 0.2 if online else SEND_RATE
+
+
 func join(ip: String, player_name: String) -> String:
 	stop("")
 	my_name = player_name
@@ -79,6 +122,7 @@ func stop(reason: String) -> void:
 	var was := active
 	active = false
 	is_host = false
+	online = false
 	players.clear()
 	remotes.clear()
 	if multiplayer.multiplayer_peer and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
@@ -160,7 +204,7 @@ func _process(delta: float) -> void:
 	if not active:
 		return
 	# the host shouts "i'm here" on the lan so people can find it
-	if is_host and _udp and not _in_game():
+	if is_host and _udp and not online and not _in_game():
 		_shout_t -= delta
 		if _shout_t <= 0.0:
 			_shout_t = 1.0
@@ -170,13 +214,8 @@ func _process(delta: float) -> void:
 		return
 	_send_t -= delta
 	if _send_t <= 0.0:
-		_send_t = SEND_RATE
+		_send_t = send_rate()
 		_send_me()
-	if is_host:
-		_ent_t -= delta
-		if _ent_t <= 0.0:
-			_ent_t = 0.1
-			_send_entities()
 
 
 func _in_game() -> bool:
@@ -222,6 +261,9 @@ func _send_me() -> void:
 		return
 	var state := [p.global_position, p.global_rotation.y, p.head.rotation.x, p.hidden, p.crouching, p.dead,
 			p.lights.is_lit(), Game.door]
+	# the host's update also carries where the entities are (one message instead of two)
+	if is_host:
+		state.append(_entity_positions())
 	rpc("_state", state)
 
 
@@ -238,6 +280,8 @@ func _state(s: Array) -> void:
 		Game.player.get_parent().add_child(r)
 		remotes[id] = r
 	r.apply(s)
+	if s.size() > 8 and id == 1:
+		_entity_pos(s[8])
 
 
 func alive_remotes() -> Array:
@@ -333,19 +377,18 @@ func _entity_gone(id: String) -> void:
 			e.queue_free()
 
 
-func _send_entities() -> void:
-	var em = Game.entities
-	if em == null or em.active.is_empty():
-		return
+func _entity_positions() -> Dictionary:
 	var pos := {}
+	var em = Game.entities
+	if em == null:
+		return pos
 	for id in em.active:
 		var e = em.active[id]
 		if is_instance_valid(e):
 			pos[id] = e.global_position
-	rpc("_entity_pos", pos)
+	return pos
 
 
-@rpc("authority", "unreliable_ordered")
 func _entity_pos(pos: Dictionary) -> void:
 	if not _in_game() or Game.entities == null:
 		return

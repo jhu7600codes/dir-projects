@@ -20,7 +20,7 @@ func _ready() -> void:
 	var v := UIKit.vbox(10)
 	p.add_child(v)
 	v.add_child(UIKit.label("multiplayer", 28, UIKit.ACCENT))
-	v.add_child(UIKit.label("play together on the same wifi. up to 4 workers.", 15, Color(0.7, 0.7, 0.7)))
+	v.add_child(UIKit.label("up to 4 workers. host online and send your friends the code,\nor play on the same wifi.", 15, Color(0.7, 0.7, 0.7)))
 	var nr := HBoxContainer.new()
 	nr.add_child(UIKit.label("your name", 16))
 	_name = LineEdit.new()
@@ -34,15 +34,19 @@ func _ready() -> void:
 	v.add_child(nr)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	row.add_child(UIKit.button("host", _host, 18))
+	row.add_child(UIKit.button("host online", _host_online, 18))
+	row.add_child(UIKit.button("host on wifi", _host, 16))
+	v.add_child(row)
+	row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
 	_ip = LineEdit.new()
-	_ip.placeholder_text = "host ip, like 192.168.1.5"
+	_ip.placeholder_text = "code (ABCDE) or wifi ip"
 	_ip.text = str(Save.data.get("mp_last_ip", ""))
 	_ip.custom_minimum_size = Vector2(220, 40)
 	row.add_child(_ip)
 	row.add_child(UIKit.button("join", func(): _join(_ip.text), 18))
 	v.add_child(row)
-	v.add_child(UIKit.label("games on your network:", 15, Color(0.7, 0.7, 0.7)))
+	v.add_child(UIKit.label("games on your wifi:", 15, Color(0.7, 0.7, 0.7)))
 	_found = UIKit.vbox(4)
 	v.add_child(_found)
 	_status = UIKit.label("", 15, UIKit.ACCENT)
@@ -80,6 +84,16 @@ func _on_left(reason: String) -> void:
 	_refresh()
 
 
+func _host_online() -> void:
+	var err := Net.host_online(_name.text)
+	if err != "":
+		_status.text = err
+		return
+	_mode = "host"
+	_status.text = "hosting online! your code:  %s\nsend it to your friends." % Net.code
+	_start.visible = true
+
+
 func _host() -> void:
 	var err := Net.host(_name.text)
 	if err != "":
@@ -97,12 +111,14 @@ func _join(ip: String) -> void:
 		return
 	Save.data.mp_last_ip = ip
 	Save.write()
-	var err := Net.join(ip, _name.text)
+	# a code (letters) goes online, an ip (numbers and dots) goes over the wifi
+	var by_ip := ip.count(".") >= 3
+	var err := Net.join(ip, _name.text) if by_ip else Net.join_online(ip, _name.text)
 	if err != "":
 		_status.text = err
 		return
 	_mode = "join"
-	_status.text = "connecting to %s..." % ip
+	_status.text = "connecting to %s..." % ip.to_upper()
 
 
 func _refresh() -> void:

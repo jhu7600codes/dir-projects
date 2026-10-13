@@ -59,8 +59,9 @@ func apply(s: Array) -> void:
 
 
 func _process(delta: float) -> void:
-	global_position = global_position.lerp(_target, minf(1.0, 12.0 * delta))
-	rotation.y = lerp_angle(rotation.y, _yaw, minf(1.0, 12.0 * delta))
+	var k := minf(1.0, (6.0 if Net.online else 12.0) * delta)
+	global_position = global_position.lerp(_target, k)
+	rotation.y = lerp_angle(rotation.y, _yaw, k)
 
 
 func head_position() -> Vector3:
