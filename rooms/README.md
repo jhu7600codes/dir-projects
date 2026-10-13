@@ -44,7 +44,7 @@ a first person horror game in an endless office. open doors, walk through genera
   - **a-60b** has a tiny (2%) chance to show up at a-505, bounces back and forth with boss music until you get through 20 more doors. you're forced to sprint at double speed, a star marks where it is. (in rooms: revisited it's after a-1005, but our game ends at a-1000, so it's moved. change `AT_DOOR` in `a60b.gd`.)
   - **a-70** (from rooms: revisited) the locker mimic: from a-035 a locker can be a fake, with a faint face on its door. try to hide in it and it bursts out and chases you.
   - **a-25** (from rooms: revisited) warp: a portal opens in the room. keep looking at it, look away for too long and it pulls you in.
-  - **warnings you can see**: the lights flash red every 4 seconds before a-60 comes through. before a-120 bulbs fall out of the ceiling, the lights flicker blue and your room goes dark. before a-200 the lockers around you open by themselves one by one (never the one you're in).
+  - **warnings you can see**: the lights flash red every 4 seconds before a-60 comes through. before a-120 bulbs fall out of the ceiling, the lights flicker blue and your room goes pitch dark. before a-200 the lockers around you slowly creak open by themselves one by one (never the one you're in). a-70 is a running locker with teeth.
   - **glitch** failsafe puts you back in the current room if a room fails to generate or you fall out of the world.
 - **the curious light**: after you die a warm yellow light tells you what went wrong (which entity, and what exactly you did, like leaving a locker too early or touching the screen during a-90).
 - **floors**: pressing play lets you pick a floor.

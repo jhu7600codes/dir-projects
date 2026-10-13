@@ -136,6 +136,19 @@ func outside_transform() -> Transform3D:
 	return global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.02, 1.0))
 
 
+## a-200's warning: the door slowly swings open by itself, hangs there, then shuts
+func creak_open() -> void:
+	if occupied or broken or _door == null:
+		return
+	_audio.stream = Assets.sound("locker")
+	_audio.pitch_scale = 0.55
+	_audio.play()
+	var tw := create_tween()
+	tw.tween_property(_door, "rotation:y", -1.3, 0.8).set_trans(Tween.TRANS_SINE)
+	tw.tween_interval(0.6)
+	tw.tween_property(_door, "rotation:y", 0.0, 0.5).set_trans(Tween.TRANS_SINE)
+
+
 func play_door() -> void:
 	_audio.stream = Assets.sound("locker")
 	_audio.play()

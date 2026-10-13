@@ -36,7 +36,9 @@ func begin() -> void:
 		_dark_room.drop_bulbs(randi_range(2, 3))
 		after(1.6, func():
 			if is_instance_valid(_dark_room):
-				_dark_room.set_lights_out(true))
+				_dark_room.set_lights_out(true)
+				if player and player.get_parent().has_method("set_blackout"):
+					player.get_parent().set_blackout(true))
 	setup_look("a120_face", Color(0.85, 0.85, 1.0), 2.4)
 	set_visible_body(false)
 	after(_head_start(), func():
@@ -101,3 +103,5 @@ func on_path_end() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(_dark_room):
 		_dark_room.set_lights_out(false)
+		if player and is_instance_valid(player) and player.get_parent().has_method("set_blackout"):
+			player.get_parent().set_blackout(false)

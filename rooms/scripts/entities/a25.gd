@@ -30,6 +30,8 @@ func begin() -> void:
 	var p: Vector3 = pts[clampi(pts.size() / 2, 0, pts.size() - 1)]
 	global_position = p + Vector3(randf_range(-1.0, 1.0), -0.2, randf_range(-1.0, 1.0))
 	sprite = make_sprite("a25_face", 2.0)
+	sprite.texture = _swirl()
+	sprite.material_override.albedo_texture = sprite.texture
 	var l := OmniLight3D.new()
 	l.light_color = Color(0.55, 0.3, 1.0)
 	l.light_energy = 2.5
@@ -73,3 +75,29 @@ func _looked_at() -> bool:
 	var cam: Camera3D = player.camera
 	var to := global_position - cam.global_position
 	return (-cam.global_transform.basis.z).dot(to.normalized()) > 0.7 and sees_player()
+
+
+## a spinning purple and black spiral with a bright rim, made once
+static var _swirl_tex: Texture2D = null
+
+
+static func _swirl() -> Texture2D:
+	if _swirl_tex:
+		return _swirl_tex
+	var n := 128
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		for x in n:
+			var d := Vector2(x - n / 2.0, y - n / 2.0) / (n / 2.0)
+			var r := d.length()
+			if r > 1.0:
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+				continue
+			var a := atan2(d.y, d.x)
+			var arm := 0.5 + 0.5 * sin(a * 3.0 + r * 14.0)
+			var col := Color(0.04, 0.0, 0.08).lerp(Color(0.6, 0.25, 1.0), arm * r)
+			if r > 0.86:
+				col = col.lerp(Color(0.85, 0.7, 1.0), (r - 0.86) / 0.14)
+			img.set_pixel(x, y, Color(col.r, col.g, col.b, clampf((1.0 - r) * 8.0, 0.0, 1.0)))
+	_swirl_tex = ImageTexture.create_from_image(img)
+	return _swirl_tex

@@ -5,7 +5,7 @@ extends Node3D
 ## lives on the player's camera.
 
 const FLASH_DRAIN := 100.0 / 240.0   # a full battery lasts 4 minutes
-const SHAKE_DRAIN := 100.0 / 35.0
+const SHAKE_DRAIN := 100.0 / 120.0  # a full shake lasts 2 minutes
 const SHAKE_PER_PRESS := 9.0
 
 var inventory: Inventory

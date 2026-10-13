@@ -56,6 +56,15 @@ func _draw() -> void:
 		draw_rect(r, Color(0, 0, 0, 0.55))
 		draw_rect(r, Color(1.0, 0.85, 0.4) if sel else Color(1, 1, 1, 0.25), false, 3.0 if sel else 1.5)
 		_icon(it, r.get_center())
+		# the lights get a charge bar along the bottom of the square instead of a number
+		if it in ["flashlight", "shakelight"]:
+			var f: float = (player.inventory.battery if it == "flashlight" else player.inventory.shake_charge) / 100.0
+			var bar := Rect2(r.position.x + 5, r.end.y - 9, SLOT - 10, 5)
+			draw_rect(bar, Color(0, 0, 0, 0.7))
+			var col := Color(1.0, 0.85, 0.35) if it == "flashlight" else Color(0.45, 1.0, 0.5)
+			if f < 0.2:
+				col = Color(1.0, 0.3, 0.25)
+			draw_rect(Rect2(bar.position, Vector2(bar.size.x * clampf(f, 0.0, 1.0), bar.size.y)), col)
 		var corner := _corner(it)
 		if corner != "":
 			draw_string(font, Vector2(r.position.x + 4, r.end.y - 5), corner, HORIZONTAL_ALIGNMENT_RIGHT, SLOT - 8, 13, Color(1, 1, 1, 0.9))
@@ -68,8 +77,6 @@ func _draw() -> void:
 func _corner(it: String) -> String:
 	var inv := player.inventory
 	match it:
-		"flashlight": return "%d%%" % int(inv.battery)
-		"shakelight": return "%d%%" % int(inv.shake_charge)
 		"bandage": return str(inv.bandages)
 		"vitamins": return str(inv.vitamins)
 		"battery": return str(inv.batteries)

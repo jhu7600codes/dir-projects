@@ -183,6 +183,20 @@ func _city_sky() -> void:
 	add_child(sun)
 
 
+## a-120 turned the lights off: almost no ambient light, the ceiling panels stop glowing
+func set_blackout(on: bool) -> void:
+	var panel := Mats.get_mat("light_panel")
+	if on:
+		env.ambient_light_energy = 0.02
+		env.fog_light_energy = 0.05
+		panel.emission_energy_multiplier = 0.0
+		panel.albedo_color = Color(0.25, 0.25, 0.25)
+	else:
+		panel.emission_energy_multiplier = 2.0
+		panel.albedo_color = Color(1, 1, 0.96)
+		_apply_darkness(Game.door)
+
+
 ## normal until a-30, foggy after, dark from a-150 (but you can still see the next room)
 func _apply_darkness(n: int) -> void:
 	if Game.floor == "city":
@@ -284,6 +298,9 @@ func _on_finished(reason: String) -> void:
 
 
 func _exit_tree() -> void:
+	# the panel material is shared: don't carry an a-120 blackout into the next run
+	Mats.get_mat("light_panel").emission_energy_multiplier = 2.0
+	Mats.get_mat("light_panel").albedo_color = Color(1, 1, 0.96)
 	Game.player = null
 	Game.generator = null
 	Game.entities = null
