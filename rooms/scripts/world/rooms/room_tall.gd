@@ -94,8 +94,9 @@ func _stairs(x: float, top: float) -> void:
 	cs.shape = sh
 	cs.transform = Transform3D(Basis(Vector3.RIGHT, -ang), Vector3(x, UP / 2 - 0.05, z0 + run / 2))
 	_body.add_child(cs)
-	# a solid side so you can't walk under the stairs into them
-	box(Vector3(1.4, UP, 0.1), Vector3(x, UP / 2, top - 0.05), Mats.get_mat("metal"), true).visible = false
+	# a wall under the top of the stairs so you can't walk in underneath them. it stays
+	# well below the steps (it used to stick out at the top and you got stuck there)
+	box(Vector3(1.4, UP - 0.6, 0.1), Vector3(x, (UP - 0.6) / 2, top - 0.05), Mats.get_mat("metal"), true).visible = false
 	# railing on the open side, no collision (like the original)
 	var inner := x - signf(x) * 0.7
 	_rail(Vector3(inner, 0.2, z0), Vector3(inner, UP, top), false)
