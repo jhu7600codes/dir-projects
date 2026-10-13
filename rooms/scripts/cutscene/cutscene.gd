@@ -3,7 +3,7 @@ extends Node3D
 ## the cutscenes. each one builds a small stage out of the game's own rooms and props, moves
 ## a camera around it, shows a few lines of text and then hands over (Game.cutscene_then).
 ##   intro    - your first day: you walk into the miles tower, the lobby door locks behind you
-##   elevator - the ride up out of the wires, the lights come on, coworkers at their desks
+##   elevator - the ride up out of the wires, past every floor from w to a, coworkers at their desks
 ##   outside  - the a-1000 door opens onto the street in front of the miles tower
 ##   bus      - you get on the bus home, it drives off, credits
 ## once you've seen one, tap / any key skips it.
@@ -307,7 +307,7 @@ func _elevator() -> void:
 	for s in [-1.0, 1.0]:
 		doors.append(_cube(cage, Vector3(1.2, 2.2, 0.06), Vector3(s * 0.6, 1.1, 1.28), Mats.get_mat("metal")))
 	var counter := Label3D.new()
-	counter.text = "B5"
+	counter.text = "W"
 	counter.font_size = 64
 	counter.pixel_size = 0.004
 	counter.modulate = Color(1.0, 0.4, 0.2)
@@ -319,13 +319,20 @@ func _elevator() -> void:
 	var hum := sound("elevator", Vector3(0, 1, 0), -4.0)
 	fade(false, 1.0)
 	say("the elevator shudders, then starts to climb.", 3.2)
-	for i in 5:
-		if not await wait(1.3): return
-		counter.text = ["B4", "B3", "B2", "B1", "1"][i]
-		lamp.light_energy = 0.3 + i * 0.35
-		_env.ambient_light_energy = 0.05 + i * 0.07
-		if i == 2:
+	# from the wires all the way up to the office, floor by floor: w, v, u ... a.
+	# slow at first, then picking up speed, then slowing down for a
+	var floors := "VUTSRQPONMLKJIHGFEDCBA"
+	for i in floors.length():
+		var k := float(i) / (floors.length() - 1)
+		var step := lerpf(0.55, 0.16, sin(k * PI)) if i < floors.length() - 1 else 0.7
+		if not await wait(step): return
+		counter.text = floors[i]
+		sound("flashlight_click", Vector3(0, 2.4, 1.2), -10.0, 0.6)
+		lamp.light_energy = 0.3 + k * 1.4
+		_env.ambient_light_energy = 0.05 + k * 0.28
+		if i == 9:
 			say("the lights come on, one floor at a time.", 3.0)
+	if not await wait(0.4): return
 	sound("power_on", Vector3(0, 2, 1), 0.0)
 	if hum:
 		hum.stop()
