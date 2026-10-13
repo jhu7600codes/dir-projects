@@ -3,7 +3,8 @@ extends Node3D
 ## grey office locker. interact to hide; inside you look out through the slits.
 ## local space: the locker stands on the floor at the origin, its door faces +z.
 
-var style := "locker"  # "booth": a phone booth out in the city
+var style := "locker"
+var mimic := false  # a-70 in disguise  # "booth": a phone booth out in the city
 var occupied := false
 var broken := false  # a-120 tore it open: can't hide in it anymore
 var _door: Node3D
@@ -35,6 +36,8 @@ func _ready() -> void:
 	_it.position = Vector3(0, 1.0, 0.45)
 	_it.used.connect(func(player): player.enter_locker(self))
 	add_child(_it)
+	if mimic:
+		_mimic_look()
 	_audio = AudioStreamPlayer3D.new()
 	_audio.bus = "SFX"
 	_audio.position = Vector3(0, 1.2, 0.3)
@@ -142,28 +145,70 @@ func play_door() -> void:
 		tw.tween_property(_door, "rotation:y", 0.0, 0.18)
 
 
-## a-120's warning: the door gets ripped half off and the inside is dark and empty
+## a broken locker: squished down, dented all over, door jammed shut. can't hide in it.
+## (a-120's warning breaks a few, and some locker rooms just have busted ones)
 func break_open(silent := false) -> void:
 	if broken or occupied:
 		return
 	broken = true
 	_it.enabled = false
 	_it.prompt = "broken"
-	if _door:
-		var tw := create_tween()
-		tw.tween_property(_door, "rotation", Vector3(0.0, -randf_range(1.7, 2.2), randf_range(0.15, 0.3)), 0.15)
-		tw.parallel().tween_property(_door, "position:y", -0.12, 0.15)
-	# the empty, dark inside you now see through the open door
-	_mesh(Vector3(0.8, 1.95, 0.02), Vector3(0, 1.05, 0.275), Mats.get_mat("dark"), self)
-	# a few dents / scratches on the side
-	for i in 3:
-		_mesh(Vector3(0.02, randf_range(0.2, 0.5), 0.05), Vector3(0.455, randf_range(0.6, 1.8), randf_range(-0.2, 0.2)), Mats.get_mat("dark"), self)
+	var squish := Vector3(randf_range(1.02, 1.06), randf_range(0.82, 0.9), randf_range(0.9, 0.96))
+	var tilt := randf_range(-0.05, 0.05)
+	var dents := Node3D.new()
+	add_child(dents)
+	for c in get_children():
+		if c is StaticBody3D or c is Interactable or c is AudioStreamPlayer3D:
+			continue
+		if silent:
+			c.scale = squish
+			c.rotation.z = tilt
+		else:
+			var tw := create_tween()
+			tw.tween_property(c, "scale", squish, 0.12).set_trans(Tween.TRANS_BOUNCE)
+			tw.parallel().tween_property(c, "rotation:z", tilt, 0.12)
+	# dents: dark dimples on the door and the sides
+	var dark := Mats.get_mat("dark")
+	for i in randi_range(4, 7):
+		var size := randf_range(0.08, 0.2)
+		_mesh(Vector3(size, size * randf_range(0.5, 1.2), 0.012), Vector3(randf_range(-0.32, 0.32), randf_range(0.3, 1.7) * squish.y, 0.33), dark, dents)
+	for i in randi_range(2, 4):
+		var sx := 0.465 if randf() < 0.5 else -0.465
+		_mesh(Vector3(0.012, randf_range(0.1, 0.3), randf_range(0.08, 0.2)), Vector3(sx, randf_range(0.4, 1.6) * squish.y, randf_range(-0.2, 0.2)), dark, dents)
 	if silent:
 		return
 	_audio.stream = Assets.sound("locker")
 	_audio.pitch_scale = randf_range(0.5, 0.7)
 	_audio.volume_db = 4.0
 	_audio.play()
+
+
+## a-70: a fake locker. the door has a faint face texture over it that's very easy to miss
+func _mimic_look() -> void:
+	var q := MeshInstance3D.new()
+	var qm := QuadMesh.new()
+	qm.size = Vector2(0.8, 1.9)
+	q.mesh = qm
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = Assets.texture("a70_face")
+	m.albedo_color = Color(0.2, 0.2, 0.22, 0.07)
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	q.material_override = m
+	q.position = Vector3(0, 1.05, 0.33)
+	add_child(q)
+
+
+## someone tried to hide in a-70. it bursts out and the locker is wrecked
+func trigger_mimic() -> void:
+	mimic = false
+	broken = true
+	_it.enabled = false
+	if _door:
+		var tw := create_tween()
+		tw.tween_property(_door, "rotation:y", -2.4, 0.1)
+	if Game.entities:
+		Game.entities.spawn("a70", {"start": global_position + global_basis.z * 0.6})
 
 
 ## hide the door mesh while the player is inside, the hud draws the slits instead

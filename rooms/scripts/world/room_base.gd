@@ -35,6 +35,7 @@ var theme := "office"
 var shell_info := {}
 var decor_block: Array[AABB] = []  # extra spots the dressing pass must leave alone  # "wires": concrete walls, cage lamps (set before calling shell)
 var _burst := 0.0
+var _lights_out := false
 var _burst_lights: Array = []
 var _fixture_i := 0  # low quality: only every other ceiling panel gets a real light
 var _back_seal: CollisionShape3D
@@ -57,6 +58,11 @@ func setup(num: int, seed_value: int) -> void:
 	build()
 	_clear_doorways()
 	_add_back_seal()
+	# a-70: from a-035 one locker in a room can be a fake
+	if Game.floor == "offices" and not Game.fixed_office and num >= 35 and lockers.size() >= 2 and rng.randf() < 0.1:
+		var lk: Locker = lockers[rng.randi() % lockers.size()]
+		lk.mimic = true
+		lockers.erase(lk)
 	if theme == "office" and not is_special and not shell_info.is_empty() and Game.fixed_office:
 		Dressing.dress(self)
 	if Game.office_powered():
@@ -170,7 +176,7 @@ func _collect_static(node: Node, xf: Transform3D, groups: Dictionary, to_free: A
 		# these move, get picked up or are interactive: keep them as they are
 		if c.has_meta("no_merge"):
 			continue
-		if c is Door or c is Locker or c is Drawer or c is Pickup or c is ExitDoor or c is ShopStand or c is Label3D or c is Light3D or c is StaticBody3D or c is Area3D:
+		if c is Door or c is Locker or c is Drawer or c is Pickup or c is ExitDoor or c is ShopStand or c is Dispenser or c is Label3D or c is Light3D or c is StaticBody3D or c is Area3D:
 			continue
 		if not c is Node3D:
 			continue
@@ -224,6 +230,58 @@ func _add_back_seal() -> void:
 	_body.add_child(_back_seal)
 
 
+## entity warnings: every light in the room flashes a color for a moment, then goes back
+func light_pulse(color: Color, seconds: float) -> void:
+	for l in find_children("*", "Light3D", true, false):
+		if not l.has_meta("base_color"):
+			l.set_meta("base_color", l.light_color)
+		l.light_color = color
+	flicker_burst(seconds)
+	get_tree().create_timer(seconds, false).timeout.connect(func():
+		if not is_instance_valid(self):
+			return
+		for l in find_children("*", "Light3D", true, false):
+			if l.has_meta("base_color"):
+				l.light_color = l.get_meta("base_color"))
+
+
+## a-120: the room goes dark until it's gone
+func set_lights_out(on: bool) -> void:
+	for l in find_children("*", "Light3D", true, false):
+		l.visible = not on
+	_lights_out = on
+
+
+## a-120's warning: a few bulbs fall out of the ceiling and smash on the floor
+func drop_bulbs(n: int) -> void:
+	var ls := find_children("*", "Light3D", true, false)
+	ls.shuffle()
+	for i in mini(n, ls.size()):
+		var l: Light3D = ls[i]
+		var bulb := MeshInstance3D.new()
+		var cm := CapsuleMesh.new()
+		cm.radius = 0.06
+		cm.height = 0.6
+		bulb.mesh = cm
+		bulb.material_override = Mats.get_mat("light_panel")
+		bulb.rotation.z = PI / 2
+		add_child(bulb)
+		bulb.global_position = l.global_position
+		var floor_y := global_position.y + 0.06
+		var tw := bulb.create_tween()
+		tw.tween_interval(randf_range(0.0, 0.8))
+		tw.tween_property(bulb, "global_position:y", floor_y, 0.45).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		tw.tween_callback(func():
+			bulb.material_override = Mats.get_mat("light_off")
+			bulb.rotation.y = randf() * TAU
+			var a := AudioStreamPlayer3D.new()
+			a.stream = Assets.sound("locker")
+			a.pitch_scale = 2.4
+			a.volume_db = -4.0
+			bulb.add_child(a)
+			a.play())
+
+
 ## rush / ambush warning: every light in the room flickers for a few seconds
 func flicker_burst(seconds: float) -> void:
 	_burst = seconds
@@ -237,7 +295,7 @@ func _process(delta: float) -> void:
 		_burst -= delta
 		for l in _burst_lights:
 			if is_instance_valid(l):
-				l.visible = _burst <= 0.0 or rng.randf() > 0.5
+				l.visible = not _lights_out and (_burst <= 0.0 or rng.randf() > 0.5)
 	if _flicker.is_empty():
 		return
 	_flicker_t -= delta

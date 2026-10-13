@@ -27,7 +27,7 @@ var player: Player
 var _door: Label
 var _health: ProgressBar
 var _stamina: ProgressBar
-var _items: Label
+var slots: ItemSlots
 var _fps: Label
 var _prompt: Label
 var _hold: ProgressBar
@@ -75,12 +75,8 @@ func _ready() -> void:
 	_health = _bar(bars, Color(0.8, 0.15, 0.15))
 	_stamina = _bar(bars, Color(0.35, 0.7, 1.0))
 
-	_items = UIKit.label("", 15, Color(0.85, 0.85, 0.85))
-	_items.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	_items.offset_top = -34
-	_items.offset_bottom = -10
-	_items.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(_items)
+	slots = ItemSlots.new()
+	root.add_child(slots)
 
 	_fps = UIKit.label("", 14, Color(0.6, 1.0, 0.6))
 	_fps.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -183,23 +179,8 @@ func _process(_delta: float) -> void:
 	_health.value = player.health
 	_stamina.value = player.stamina
 	_stamina.visible = player.stamina < 99.0 or player.sprinting
-	var inv := player.inventory
-	var parts := []
-	var names := {
-		"flashlight": "flashlight %d%%" % int(inv.battery) if inv.has_flashlight else "",
-		"shakelight": "shakelight %d%%" % int(inv.shake_charge) if inv.has_shakelight else "",
-		"bandage": "bandages %d" % inv.bandages,
-		"vitamins": "vitamins %d" % inv.vitamins,
-	}
-	for i in Player.ITEMS.size():
-		var item: String = Player.ITEMS[i]
-		if names[item] == "":
-			continue
-		var t: String = UIKit.cap(names[item]) if Settings.use_touch() else "[%d] %s" % [i + 1, UIKit.cap(names[item])]
-		parts.append(("> " + t + " <") if player.selected == item else t)
-	parts.append("Batteries %d" % inv.batteries)
-	parts.append("Gold %d" % int(Save.data.gold))
-	_items.text = "   ".join(parts) + ("" if Settings.use_touch() else "      LMB - use")
+	if slots.player == null:
+		slots.player = player
 	_update_star()
 
 

@@ -1,7 +1,8 @@
 class_name TouchControls
 extends CanvasLayer
 ## android controls: a virtual stick on one side, drag anywhere else to look, and
-## four buttons: use, item (tap = use it, hold = next item), run and crouch.
+## four buttons: use, item (tap = use it), run and crouch. the item squares at the bottom
+## pick which item you hold.
 ## layout (left handed, size, opacity) comes from the settings. everything is
 ## drawn by hand so multitouch works.
 ## Game.touch_count tells a-90 if any finger is on the screen.
@@ -79,6 +80,13 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch:
 		if event.pressed:
+			# tapping an item square picks that item
+			var p: Player = Game.player
+			if p and p.hud and p.hud.slots:
+				var it: String = p.hud.slots.item_at(event.position)
+				if it != "":
+					p.select_item(it)
+					return
 			_fingers[event.index] = true
 			var b = _button_at(event.position)
 			if b != null:
@@ -128,9 +136,7 @@ func _button_at(p: Vector2):
 
 
 func _process(_delta: float) -> void:
-	if _item_finger != -1 and not _item_swapped and Time.get_ticks_msec() / 1000.0 - _item_time >= ITEM_HOLD:
-		_item_swapped = true
-		_tap("item_next")
+	pass
 
 
 func _tap(action: String) -> void:

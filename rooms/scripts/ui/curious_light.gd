@@ -12,7 +12,7 @@ const LINE_TIME := 3.2  # each line stays this long unless you skip it
 const NAMES := {
 	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
 	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
-	"headlights": "headlights", "billboard": "the billboard",
+	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
@@ -39,6 +39,12 @@ const HINTS := {
 		"move": ["you kept walking while it was watching.", "when you hear the knock, stop walking right away."],
 		"look": ["you looked around while it was watching.", "when you hear the knock, don't even move the camera."],
 		"button": ["you pressed something while it was watching.", "when you hear the knock, don't touch anything."],
+	},
+	"a70": {
+		"": ["that locker wasn't a locker.", "look closely at the doors. if one looks a bit off, don't get in.", "if it gets out, run. it can't keep up with you sprinting."],
+	},
+	"a25": {
+		"": ["you looked away from the portal for too long.", "keep it in sight while you walk to the next door."],
 	},
 	"headlights": {
 		"": ["you heard the horn, and you stayed out on the street.", "when it honks, get into a phone booth."],

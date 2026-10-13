@@ -30,10 +30,19 @@ func begin() -> void:
 	set_visible_body(false)
 	var rumble := make_3d_audio("a60_rumble", 30.0, 200.0)
 	rumble.play()
+	# the lights flash red, once every 4 seconds, until it comes through
+	_red_flash()
+	after(4.0, _red_flash)
 	# a few seconds of warning, then it goes
 	after(5.0, func():
 		set_visible_body(true)
 		moving = true)
+
+
+func _red_flash() -> void:
+	for r in generator.rooms:
+		if is_instance_valid(r):
+			r.light_pulse(Color(1.0, 0.1, 0.08), 0.45)
 
 
 func _process(delta: float) -> void:

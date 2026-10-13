@@ -11,6 +11,7 @@ const RULES := {
 	"group": "rusher", "blocked_by": ["a60b"],
 }
 
+var _dark_room: RoomBase = null
 var rebounds := 0
 var max_rebounds := 0
 var _blink_t := 0.0
@@ -26,6 +27,16 @@ func begin() -> void:
 	max_rebounds = [0, 1, 1, 2, 3][randi() % 5]
 	place(false)
 	_break_lockers()
+	# bulbs drop, the lights flicker blue, then your room goes dark until it's gone
+	_dark_room = generator.room(Game.door)
+	for r in generator.rooms:
+		if is_instance_valid(r):
+			r.light_pulse(Color(0.3, 0.5, 1.0), 1.6)
+	if _dark_room:
+		_dark_room.drop_bulbs(randi_range(2, 3))
+		after(1.6, func():
+			if is_instance_valid(_dark_room):
+				_dark_room.set_lights_out(true))
 	setup_look("a120_face", Color(0.85, 0.85, 1.0), 2.4)
 	set_visible_body(false)
 	after(_head_start(), func():
@@ -85,3 +96,8 @@ func on_path_end() -> void:
 			moving = true)
 		return
 	finish()
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(_dark_room):
+		_dark_room.set_lights_out(false)

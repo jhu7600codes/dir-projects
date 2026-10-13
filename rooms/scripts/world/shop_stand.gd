@@ -1,11 +1,12 @@
 class_name ShopStand
 extends Node3D
-## a counter that sells items for gold. a-000 has the shakelight dispenser,
-## a-150 has a bigger shop. offers: [[item, price], ...]
+## a counter with the items you can buy standing on it, slowly turning. no signs: walk up
+## to an item and the price shows up. offers: [[item, price], ...]
 ## local space: the counter faces +z (that's where you stand).
 
 var offers: Array = [["shakelight", 10]]
 var title := "shop"
+var _models: Array[Node3D] = []
 
 
 func _ready() -> void:
@@ -26,35 +27,40 @@ func _ready() -> void:
 	mi.material_override = Mats.get_mat("metal")
 	mi.position = Vector3(0, 0.5, 0)
 	add_child(mi)
-	var t := Label3D.new()
-	t.text = title
-	t.font_size = 40
-	t.pixel_size = 0.004
-	t.position = Vector3(0, 1.45, 0)
-	t.modulate = Color(0.95, 0.85, 0.4)
-	add_child(t)
 	for i in offers.size():
 		var item: String = offers[i][0]
 		var price: int = offers[i][1] * (2 if Game.mod("inflation") else 1)
 		var x := -w / 2 + 0.65 + i * 0.9
-		var l := Label3D.new()
-		l.text = "%s\n%d gold" % [item, price]
-		l.font_size = 28
-		l.pixel_size = 0.004
-		l.position = Vector3(x, 1.12, 0.1)
-		add_child(l)
-		var it := Interactable.make(Vector3(0.8, 0.6, 0.5), "buy %s (%d gold)" % [item, price])
-		it.position = Vector3(x, 1.0, 0.3)
+		# a little stand with the item on it
+		var pad := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius = 0.16
+		pm.bottom_radius = 0.18
+		pm.height = 0.04
+		pad.mesh = pm
+		pad.material_override = Mats.get_mat("dark")
+		pad.position = Vector3(x, 1.02, 0.02)
+		add_child(pad)
+		var m := ItemModels.build(item)
+		m.scale = Vector3.ONE * 2.2
+		if item == "battery":
+			m.scale = Vector3.ONE * 2.6
+		m.position = Vector3(x, 1.05, 0.02)
+		add_child(m)
+		_models.append(m)
+		var it := Interactable.make(Vector3(0.8, 0.8, 0.6), "%d gold" % price)
+		it.position = Vector3(x, 1.2, 0.2)
 		it.used.connect(_buy.bind(item, price))
 		add_child(it)
 
 
+func _process(delta: float) -> void:
+	for m in _models:
+		m.rotation.y += delta * 0.8
+
+
 func _buy(player, item: String, price: int) -> void:
-	if item == "shakelight" and player.inventory.has_shakelight:
-		player.notify("you already have one")
-		return
-	if item == "flashlight" and player.inventory.has_flashlight:
-		player.notify("you already have one")
+	if not ShopStand.can_buy(player, item):
 		return
 	if not Save.spend_gold(price):
 		player.notify("not enough gold")
@@ -64,3 +70,11 @@ func _buy(player, item: String, price: int) -> void:
 	Game.play_ui("buy")
 	if item == "shakelight":
 		Achievements.unlock("shake_it")
+
+
+static func can_buy(player, item: String) -> bool:
+	if (item == "shakelight" and player.inventory.has_shakelight) or (item == "flashlight" and player.inventory.has_flashlight):
+		player.notify("you already have one")
+		Game.play_ui("deny")
+		return false
+	return true

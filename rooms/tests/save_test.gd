@@ -128,11 +128,15 @@ func _ready() -> void:
 		tc._input(lift)
 		await _frames(3)
 		_check(pl.lights.flashlight_on != was_on and pl.selected == "flashlight", "tapping touch item toggles the flashlight")
-		tc._input(down)
-		await get_tree().create_timer(0.6).timeout
-		tc._input(lift)
+		await _frames(2)
+		var sq: Vector2 = pl.hud.slots._rects["shakelight"].get_center()
+		var tap := InputEventScreenTouch.new()
+		tap.index = 5
+		tap.position = sq
+		tap.pressed = true
+		tc._input(tap)
 		await _frames(3)
-		_check(pl.selected == "shakelight", "holding touch item switches to the next item")
+		_check(pl.selected == "shakelight", "tapping the shakelight square picks it")
 	Settings.data.touch_controls = "auto"
 	get_tree().paused = false
 	# admin runs keep their own progress and don't touch the normal one

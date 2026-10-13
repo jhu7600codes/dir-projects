@@ -11,6 +11,8 @@ const CAUSES := {
 	"a200": "the happy scribble got you. white means hide, purple means get out.",
 	"w10": "an outlet jumped out of the wall at you.",
 	"worker": "you stared at a coworker. they overreact.",
+	"a70": "a-70 was pretending to be a locker.",
+	"a25": "a-25 pulled you into its portal. don't look away from it.",
 	"headlights": "the headlights ran you over. hide when you hear the horn.",
 	"billboard": "you looked at the billboard for too long.",
 	"w15": "you walked into a live wire.",

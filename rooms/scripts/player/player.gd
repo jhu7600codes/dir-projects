@@ -349,6 +349,9 @@ func press_interact() -> void:
 func enter_locker(lk: Locker) -> void:
 	if hidden or _busy or dead or lk.occupied or lk.broken:
 		return
+	if lk.mimic:
+		lk.trigger_mimic()
+		return
 	_busy = true
 	hidden = true
 	Game.used_locker = true

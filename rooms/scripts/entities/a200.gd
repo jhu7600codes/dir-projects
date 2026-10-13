@@ -39,10 +39,26 @@ func begin() -> void:
 	setup_look("a200_face", WHITE, 2.6)
 	set_visible_body(false)
 	make_3d_audio("a200_spawn", 30.0, 200.0).play()
+	# the lockers around you start opening by themselves, slowly, one after another.
+	# never the one you're in
+	for i in 5:
+		after(0.3 + i * 0.95, _knock_locker)
 	after(5.0, func():
 		set_visible_body(true)
 		_set_mode(false)
 		moving = true)
+
+
+func _knock_locker() -> void:
+	var near := []
+	for r in generator.rooms:
+		if not is_instance_valid(r):
+			continue
+		for lk in r.lockers:
+			if is_instance_valid(lk) and not lk.occupied and not lk.broken and lk.global_position.distance_to(player.global_position) < 25.0:
+				near.append(lk)
+	if not near.is_empty():
+		near[randi() % near.size()].play_door()
 
 
 func _set_mode(p: bool) -> void:

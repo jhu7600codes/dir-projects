@@ -28,11 +28,9 @@ func build() -> void:
 	Props.couch(self, Vector3(-w / 2 + 0.5, 0, length * 0.5), PI / 2)
 	Props.plant(self, Vector3(w / 2 - 0.5, 0, 0.6))
 	Props.plant(self, Vector3(-w / 2 + 0.5, 0, length - 0.6))
-	var shop := ShopStand.new()
-	shop.title = "shakelight dispenser"
-	shop.offers = [["shakelight", 10], ["bandage", 5], ["battery", 4]]
-	shop.position = Vector3(w / 2 - 0.45, 0, length * 0.5 - 2.6)
-	shop.rotation.y = -PI / 2
-	add_child(shop)
+	var disp := Dispenser.new()
+	disp.position = Vector3(w / 2 - 0.4, 0, length * 0.5 - 2.6)
+	disp.rotation.y = -PI / 2
+	add_child(disp)
 	add_atm(Vector3(-w / 2 + 0.3, 0, 2.2), PI / 2)
 	make_path([Vector3(0, 0, length * 0.5)])

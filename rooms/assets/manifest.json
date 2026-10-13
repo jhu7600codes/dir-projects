@@ -410,6 +410,22 @@
     "color": "#ff3a5c",
     "style": "wide"
    }
+  },
+  "a70_face": {
+   "path": "res://assets/local/textures/a70_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#8a8f99",
+    "style": "wide"
+   }
+  },
+  "a25_face": {
+   "path": "res://assets/local/textures/a25_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#8c4dff",
+    "style": "dots"
+   }
   }
  },
  "sounds": {
@@ -1129,6 +1145,23 @@
     "length": 0.5,
     "volume": 0.8
    }
+  },
+  "a70_scream": {
+   "path": "res://assets/local/sounds/a70_scream.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.8,
+    "volume": 0.9
+   }
+  },
+  "a25_hum": {
+   "path": "res://assets/local/sounds/a25_hum.ogg",
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.6
+   },
+   "loop": true
   }
  },
  "music": {

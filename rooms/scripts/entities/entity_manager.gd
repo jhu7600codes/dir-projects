@@ -21,6 +21,9 @@ const SCRIPTS := {
 	# the wires subfloor (spawned by its rooms, not by chance)
 	"w10": preload("res://scripts/entities/w10.gd"),
 	"w50": preload("res://scripts/entities/w50.gd"),
+	# from rooms: revisited
+	"a70": preload("res://scripts/entities/a70.gd"),
+	"a25": preload("res://scripts/entities/a25.gd"),
 	# the coworkers, when you stare at one (spawned by the worker itself)
 	"worker": preload("res://scripts/entities/overreact.gd"),
 	# the great city
