@@ -31,7 +31,7 @@ static func make() -> Theme:
 		t.set_color("font_pressed_color", type, Color.WHITE)
 		t.set_color("font_focus_color", type, Color(0.95, 0.95, 0.95))
 	# panels
-	var p := _box(Color(0.035, 0.035, 0.04, 0.95), Color(0.2, 0.2, 0.22), 1, 0)
+	var p := _box(Color(0.07, 0.07, 0.08, 0.97), Color(0.3, 0.3, 0.33), 1, 0)
 	p.set_corner_radius_all(10)
 	p.shadow_color = Color(0, 0, 0, 0.55)
 	p.shadow_size = 18

@@ -10,15 +10,23 @@ func _ready() -> void:
 	UIKit.full_screen_bg(self, Color(0, 0, 0, 0.8))
 	var p := UIKit.panel(Vector2(600, 0))
 	UIKit.centered(self, p)
+	# the title and the back button stay put, only the settings in between scroll
+	var outer := UIKit.vbox(10)
+	p.add_child(outer)
+	outer.add_child(UIKit.label("settings", 28, UIKit.ACCENT))
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(550, minf(560, get_viewport_rect().size.y - 80))
+	scroll.custom_minimum_size = Vector2(550, clampf(get_viewport_rect().size.y - 230, 200, 520))
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	p.add_child(scroll)
+	outer.add_child(scroll)
+	# room on the right so the scroll bar never covers the values
+	var pad := MarginContainer.new()
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.add_theme_constant_override("margin_right", 18)
+	scroll.add_child(pad)
 	var v := UIKit.vbox(10)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(v)
+	pad.add_child(v)
 	var d := Settings.data
-	v.add_child(UIKit.label("settings", 28, UIKit.ACCENT))
 	UIKit.section(v, "audio")
 	v.add_child(UIKit.slider("master volume", d.master_volume, 0, 1, func(x): Settings.set_value("master_volume", x)))
 	v.add_child(UIKit.slider("music volume", d.music_volume, 0, 1, func(x): Settings.set_value("music_volume", x)))
@@ -41,6 +49,6 @@ func _ready() -> void:
 	v.add_child(UIKit.check("left handed layout", d.touch_left_handed, func(on): Settings.set_value("touch_left_handed", on)))
 	v.add_child(UIKit.slider("button size", d.touch_scale, 0.6, 1.6, func(x): Settings.set_value("touch_scale", x)))
 	v.add_child(UIKit.slider("button opacity", d.touch_opacity, 0.15, 1.0, func(x): Settings.set_value("touch_opacity", x)))
-	v.add_child(UIKit.button("back", func():
+	outer.add_child(UIKit.button("back", func():
 		closed.emit()
 		queue_free()))
