@@ -275,12 +275,18 @@ func _make_menu() -> void:
 ## if the menu is still taller than the screen (more buttons, a short window), shrink it
 ## to fit instead of letting the logo and the admin toggle fall off the edges
 func _fit_menu(col: Control) -> void:
-	var h := get_viewport_rect().size.y
+	# the menu lives above the "unofficial fan game" line at the bottom, and shrinks when
+	# it doesn't fit (phones, short windows) instead of running into it
+	const FOOT := 44.0
+	col.offset_top = 8
+	col.offset_bottom = -FOOT
+	var h := get_viewport_rect().size.y - FOOT - 8.0
 	var need := col.get_combined_minimum_size().y
-	if need > h - 24.0:
-		var k := (h - 24.0) / need
-		col.scale = Vector2(k, k)
-		col.pivot_offset = Vector2(0, h / 2.0)
+	var k := minf(1.0, h / maxf(1.0, need))
+	col.scale = Vector2(k, k)
+	col.pivot_offset = Vector2(0, h / 2.0)
+	if not get_viewport().size_changed.is_connected(_fit_menu):
+		get_viewport().size_changed.connect(_fit_menu.bind(col))
 
 
 func _pick_floor() -> void:
