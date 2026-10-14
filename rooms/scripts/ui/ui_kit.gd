@@ -59,10 +59,31 @@ static func slider(text: String, value: float, lo: float, hi: float, on_change: 
 	s.step = step
 	s.value = value
 	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	s.custom_minimum_size = Vector2(180, 32)
+	s.custom_minimum_size = Vector2(160, 32)
 	s.value_changed.connect(on_change)
 	row.add_child(s)
+	# the value, so you know where it's at
+	var val := label("", 14, Color(0.6, 0.6, 0.62))
+	val.custom_minimum_size = Vector2(60, 0)
+	val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var fmt := func(x: float) -> String:
+		return str(int(x)) if step >= 1.0 else ("%d%%" % int(round(x * 100.0)) if hi <= 1.0 else "%.1f" % x)
+	val.text = fmt.call(value)
+	s.value_changed.connect(func(x): val.text = fmt.call(x))
+	row.add_child(val)
 	return row
+
+
+## a section title in a menu: small, yellow, with a thin line under it
+static func section(parent: Control, text: String) -> void:
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 6)
+	parent.add_child(gap)
+	parent.add_child(label(text.to_upper(), 13, ACCENT.darkened(0.15)))
+	var line := ColorRect.new()
+	line.color = Color(1, 1, 1, 0.08)
+	line.custom_minimum_size = Vector2(0, 1)
+	parent.add_child(line)
 
 
 static func check(text: String, on: bool, on_toggle: Callable) -> CheckBox:

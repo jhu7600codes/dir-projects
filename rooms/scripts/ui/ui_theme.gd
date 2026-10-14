@@ -1,6 +1,6 @@
 class_name UITheme
-## the look of every menu: dark glassy panels, oswald for titles and buttons, inter for
-## text, the yellow accent on hover. set once on the root window (Game._ready).
+## the look of every menu: dark glassy panels, rounded buttons with the yellow accent on
+## hover. keeps the game's normal font. set once on the root window (Game._ready).
 
 const ACCENT := Color(0.95, 0.85, 0.4)
 static var title_font: Font = null
@@ -8,19 +8,18 @@ static var body_font: Font = null
 
 
 static func fonts() -> void:
+	# the game's normal font everywhere (the custom fonts didn't fit)
 	if title_font == null:
-		title_font = load("res://assets/fonts/Oswald.ttf")
-		body_font = load("res://assets/fonts/Inter.ttf")
+		title_font = ThemeDB.fallback_font
+		body_font = ThemeDB.fallback_font
 
 
 static func make() -> Theme:
 	fonts()
 	var t := Theme.new()
-	t.default_font = body_font
 	t.default_font_size = 18
 	# buttons
 	for type in ["Button", "OptionButton", "MenuButton"]:
-		t.set_font("font", type, title_font)
 		t.set_font_size("font_size", type, 20)
 		t.set_stylebox("normal", type, _box(Color(0.07, 0.07, 0.08, 0.88), Color(0.22, 0.22, 0.24), 1, 2))
 		t.set_stylebox("hover", type, _box(Color(0.14, 0.13, 0.1, 0.95), ACCENT, 1, 2, true))
