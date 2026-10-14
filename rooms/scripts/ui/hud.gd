@@ -89,6 +89,7 @@ func _ready() -> void:
 	_door.offset_right = 100
 	_door.offset_top = 10
 	root.add_child(_door)
+	_door.visible = false  # no counter on screen; the door number is in the pause menu
 
 	vitals = Vitals.new()
 	root.add_child(vitals)

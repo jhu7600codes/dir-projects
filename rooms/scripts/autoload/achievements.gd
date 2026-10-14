@@ -30,45 +30,99 @@ const LIST := {
 
 var _queue: Array = []  # [header, title, description, color]
 var _showing := false
-var _panel: PanelContainer
+var _card: Control
+var _icon: Control
+var _small: Label
 var _title: Label
 var _desc: Label
-var _small: Label
-var _style: StyleBoxFlat
+var _bar: ColorRect
+var _kind := "achievement"
+var _color := Color(0.95, 0.85, 0.4)
+
+const CARD_W := 400.0
+const CARD_H := 108.0
 
 
+## the popup card: slides in from the right edge, an icon on the left (a star badge for
+## achievements, a torn page for journal pages), a colored edge, and a thin line along the
+## bottom that runs out while it's on screen
 func _ready() -> void:
 	layer = 100
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_panel = PanelContainer.new()
-	_panel.anchor_left = 1.0
-	_panel.anchor_right = 1.0
-	_panel.offset_left = -360
-	_panel.offset_right = -16
-	_panel.offset_top = 16
-	_panel.modulate.a = 0.0
-	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.05, 0.05, 0.06, 0.9)
-	sb.border_color = Color(0.95, 0.85, 0.4)
-	sb.set_border_width_all(2)
-	sb.set_content_margin_all(12)
-	sb.set_corner_radius_all(6)
-	_panel.add_theme_stylebox_override("panel", sb)
+	UITheme.fonts()
+	_card = Control.new()
+	_card.anchor_left = 1.0
+	_card.anchor_right = 1.0
+	_card.offset_top = 20
+	_card.offset_bottom = 20 + CARD_H
+	_card.offset_left = 40
+	_card.offset_right = 40 + CARD_W
+	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_card.draw.connect(_draw_card)
+	add_child(_card)
+	_icon = Control.new()
+	_icon.position = Vector2(14, 14)
+	_icon.size = Vector2(64, 64)
+	_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_icon.draw.connect(_draw_icon)
+	_card.add_child(_icon)
 	var box := VBoxContainer.new()
-	_panel.add_child(box)
-	_style = sb
+	box.position = Vector2(92, 12)
+	box.size = Vector2(CARD_W - 104, CARD_H - 20)
+	box.add_theme_constant_override("separation", 0)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_card.add_child(box)
 	_small = Label.new()
+	_small.add_theme_font_override("font", UITheme.title_font)
 	_small.add_theme_font_size_override("font_size", 13)
 	box.add_child(_small)
 	_title = Label.new()
-	_title.add_theme_font_size_override("font_size", 20)
+	_title.add_theme_font_override("font", UITheme.title_font)
+	_title.add_theme_font_size_override("font_size", 22)
+	_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	box.add_child(_title)
 	_desc = Label.new()
-	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_desc.modulate = Color(0.8, 0.8, 0.8)
+	_desc.add_theme_font_size_override("font_size", 14)
+	_desc.add_theme_color_override("font_color", Color(0.72, 0.72, 0.74))
+	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_desc.max_lines_visible = 2
 	box.add_child(_desc)
-	add_child(_panel)
+	_bar = ColorRect.new()
+	_bar.position = Vector2(0, CARD_H - 3)
+	_bar.size = Vector2(CARD_W, 3)
+	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_card.add_child(_bar)
+	_card.visible = false
+
+
+func _draw_card() -> void:
+	var r := Rect2(Vector2.ZERO, Vector2(CARD_W, CARD_H))
+	# soft shadow, the dark glass card, a colored edge on the left
+	for i in 6:
+		_card.draw_rect(r.grow(float(6 - i) * 2.0), Color(0, 0, 0, 0.06))
+	_card.draw_rect(r, Color(0.04, 0.04, 0.05, 0.94))
+	_card.draw_rect(Rect2(0, 0, 4, CARD_H), _color)
+	_card.draw_rect(r, Color(1, 1, 1, 0.06), false, 1.0)
+
+
+func _draw_icon() -> void:
+	var c := Vector2(32, 32)
+	_icon.draw_circle(c, 31, Color(_color, 0.12))
+	_icon.draw_arc(c, 30, 0, TAU, 40, Color(_color, 0.6), 2.0)
+	if _kind == "journal":
+		# a torn notebook page with handwriting lines
+		var page := PackedVector2Array([c + Vector2(-14, -18), c + Vector2(14, -18), c + Vector2(14, 14), c + Vector2(9, 18), c + Vector2(3, 15), c + Vector2(-3, 18), c + Vector2(-9, 15), c + Vector2(-14, 18)])
+		_icon.draw_colored_polygon(page, Color(0.92, 0.9, 0.82))
+		for i in 4:
+			_icon.draw_line(c + Vector2(-9, -10 + i * 6), c + Vector2(9 - (i % 2) * 5, -10 + i * 6), Color(0.3, 0.35, 0.6, 0.8), 1.5)
+	else:
+		# a star badge
+		var pts := PackedVector2Array()
+		for i in 10:
+			var rr := 20.0 if i % 2 == 0 else 8.5
+			var a := -PI / 2 + i * PI / 5
+			pts.append(c + Vector2(cos(a), sin(a)) * rr)
+		_icon.draw_colored_polygon(pts, _color)
 
 
 func has(id: String) -> bool:
@@ -93,17 +147,31 @@ func popup(header: String, title: String, desc: String, color: Color) -> void:
 func _show_next() -> void:
 	if _queue.is_empty():
 		_showing = false
+		_card.visible = false
 		return
 	_showing = true
 	var p: Array = _queue.pop_front()
-	_small.text = UIKit.cap(p[0])
-	_small.modulate = p[3]
-	_style.border_color = p[3]
+	_kind = "journal" if str(p[0]).begins_with("journal") else "achievement"
+	_color = p[3]
+	_small.text = str(p[0]).to_upper()
+	_small.add_theme_color_override("font_color", _color)
 	_title.text = UIKit.cap(p[1])
 	_desc.text = UIKit.cap(p[2])
+	_bar.color = Color(_color, 0.8)
+	_bar.size.x = CARD_W
+	_card.queue_redraw()
+	_icon.queue_redraw()
+	_card.visible = true
+	_card.offset_left = 40
+	_card.offset_right = 40 + CARD_W
+	_icon.scale = Vector2(0.6, 0.6)
+	_icon.pivot_offset = Vector2(32, 32)
 	Game.play_ui("achievement")
 	var tw := create_tween()
-	tw.tween_property(_panel, "modulate:a", 1.0, 0.3)
-	tw.tween_interval(3.5)
-	tw.tween_property(_panel, "modulate:a", 0.0, 0.5)
+	tw.tween_property(_card, "offset_left", -CARD_W - 20, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(_card, "offset_right", -20.0, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(_icon, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT).set_delay(0.15)
+	tw.tween_property(_bar, "size:x", 0.0, 4.0)
+	tw.tween_property(_card, "offset_left", 40.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(_card, "offset_right", 40.0 + CARD_W, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_callback(_show_next)
