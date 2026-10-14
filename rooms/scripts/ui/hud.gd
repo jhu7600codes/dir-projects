@@ -12,12 +12,13 @@ void fragment() {
 	COLOR = vec4(tint.rgb, tint.a * v);
 }
 """
-## a soft dark vignette around the edges (no grain)
+## an almost invisible vignette in the far corners (no grain)
 const FILM_SHADER := """
 shader_type canvas_item;
 void fragment() {
-	float v = smoothstep(0.42, 0.95, length(UV - 0.5) * 1.25);
-	COLOR = vec4(0.0, 0.0, 0.0, 0.55 * v);
+	// barely there: only the far corners get a little darker, like doors
+	float v = smoothstep(0.6, 1.15, length(UV - 0.5) * 1.3);
+	COLOR = vec4(0.0, 0.0, 0.0, 0.18 * v);
 }
 """
 const SLIT_SHADER := """
