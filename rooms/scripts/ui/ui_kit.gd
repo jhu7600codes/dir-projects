@@ -13,15 +13,9 @@ static func cap(text: String) -> String:
 
 
 static func panel(min_size := Vector2(420, 0)) -> PanelContainer:
+	# the look comes from UITheme (dark glass, rounded, a soft shadow)
 	var p := PanelContainer.new()
 	p.custom_minimum_size = min_size
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = BG
-	sb.border_color = Color(0.3, 0.3, 0.32)
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(6)
-	sb.set_content_margin_all(18)
-	p.add_theme_stylebox_override("panel", sb)
 	return p
 
 
@@ -36,6 +30,9 @@ static func centered(parent: Control, child: Control) -> CenterContainer:
 static func label(text: String, size := 18, color := Color(0.88, 0.88, 0.88)) -> Label:
 	var l := Label.new()
 	l.text = cap(text)
+	if size >= 24:
+		UITheme.fonts()
+		l.add_theme_font_override("font", UITheme.title_font)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	return l

@@ -298,13 +298,16 @@ func _toggle_admin(on: bool) -> void:
 ## text-only menu buttons that light up when hovered, like a lot of horror games
 func _menu_button(text: String, on_press: Callable, size := 22) -> Button:
 	var b := Button.new()
-	text = UIKit.cap(text)
+	text = text.to_upper()
 	b.text = text
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.add_theme_font_size_override("font_size", size)
+	UITheme.fonts()
+	b.add_theme_font_override("font", UITheme.title_font)
+	b.add_theme_font_size_override("font_size", size + 2)
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.add_theme_color_override("font_color", Color(0.72, 0.72, 0.72))
-	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	b.add_theme_color_override("font_hover_color", UIKit.ACCENT)
 	b.add_theme_color_override("font_focus_color", Color(1, 0.92, 0.6))
 	b.add_theme_color_override("font_pressed_color", UIKit.ACCENT)
 	b.custom_minimum_size = Vector2(0, size + 8)

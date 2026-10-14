@@ -36,6 +36,19 @@ func add(item: String, amount := 1) -> void:
 			has_flashlight = true
 			battery = 100.0
 			p.notify("got a flashlight")
+		"stardevice":
+			Save.data.stardevice = true
+			Save.data.stardevice_on = true
+			Save.write()
+			p.notify("got the STARDEVICE - it warns you when something's coming (5)")
+		"starjug":
+			Save.data.starjug = 6
+			Save.write()
+			p.notify("got the STARJUG - 6 sips of starlight (6)")
+		"starhelp":
+			Save.data.starhelp = true
+			Save.write()
+			p.notify("got the STARHELP - runs on batteries (7)")
 		"shakelight":
 			has_shakelight = true
 			p.notify("got a shakelight - press 2, then spam left click to charge it" if not Settings.use_touch() else "got a shakelight - tap its square, then spam item to charge it")

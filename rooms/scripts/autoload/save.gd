@@ -19,6 +19,12 @@ const DEFAULTS := {
 	"wires_found": false,  # been to the wires (through a-240), so it shows up on the floor select
 	"wires_best": 0,
 	"wires_done": 0,  # times you rode the elevator up out of the wires
+	# the star items. they stay between runs
+	"stardevice": false,     # found at a-1000. warns you when an entity is coming
+	"stardevice_on": true,
+	"starjug": 0,            # uses left (6 when full). found at a-1000
+	"starhelp": false,       # got it by leaving through an exit door
+	"starhelp_charge": 100.0,
 }
 
 var profile := "main"

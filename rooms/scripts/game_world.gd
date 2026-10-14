@@ -155,6 +155,10 @@ func _make_environment() -> void:
 	env.glow_intensity = 0.35
 	env.glow_hdr_threshold = 1.2
 	env.ssao_enabled = int(Settings.data.quality) >= 2
+	# a light grade: a touch more contrast, a little less saturation
+	env.adjustment_enabled = true
+	env.adjustment_contrast = 1.07
+	env.adjustment_saturation = 0.9
 	if Game.floor == "city":
 		_city_sky()
 	var we := WorldEnvironment.new()
@@ -360,6 +364,11 @@ func _end_run(reason: String) -> void:
 		pass
 	else:
 		Achievements.unlock("long_walk")
+		# leaving through an exit door gives you the starhelp, for good
+		if not Save.data.get("starhelp", false):
+			Save.data.starhelp = true
+			Save.data.starhelp_charge = 100.0
+			Game.starhelp_new = true
 		Save.data.exits = int(Save.data.exits) + 1
 		Save.write()
 	if not Game.used_locker:

@@ -176,7 +176,7 @@ func _collect_static(node: Node, xf: Transform3D, groups: Dictionary, to_free: A
 		# these move, get picked up or are interactive: keep them as they are
 		if c.has_meta("no_merge"):
 			continue
-		if c is Door or c is Locker or c is Drawer or c is Pickup or c is ExitDoor or c is ShopStand or c is Dispenser or c is Label3D or c is Light3D or c is StaticBody3D or c is Area3D:
+		if c is Door or c is Locker or c is Drawer or c is Pickup or c is ExitDoor or c is ShopStand or c is Dispenser or c is LootCabinet or c is Label3D or c is Light3D or c is StaticBody3D or c is Area3D:
 			continue
 		if not c is Node3D:
 			continue
@@ -580,6 +580,16 @@ func scatter_loot(spots: Array) -> void:
 			add_pickup(s, "bandage")
 		elif r < 0.40:
 			add_pickup(s, "vitamins")
+
+
+## a long loot dresser against a wall (three drawers, like doors)
+func add_cabinet(pos: Vector3, yaw: float) -> LootCabinet:
+	var c := LootCabinet.new()
+	c.position = pos
+	c.rotation.y = yaw
+	c.loot_seed = rng.randi()
+	add_child(c)
+	return c
 
 
 func add_drawer_desk(pos: Vector3, yaw: float) -> Drawer:

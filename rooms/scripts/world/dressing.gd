@@ -161,7 +161,7 @@ static func _occupied(room: RoomBase) -> Array:
 				continue
 			out.append(cs.transform * AABB(-sz / 2.0, sz))
 	for c in room.get_children():
-		if c is Locker or c is Drawer or c is ShopStand or c is Dispenser or c is Atm or c is ExitDoor:
+		if c is Locker or c is Drawer or c is ShopStand or c is Dispenser or c is LootCabinet or c is Atm or c is ExitDoor:
 			out.append(AABB(c.position - Vector3(0.9, 0, 0.9), Vector3(1.8, 2.4, 1.8)))
 	out.append_array(room.decor_block)
 	# doorways

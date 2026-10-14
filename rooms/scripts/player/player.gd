@@ -27,7 +27,7 @@ var crouching := false
 var sprinting := false
 var current_locker: Locker = null
 ## the hotbar: the item in your hand is used with left click
-const ITEMS := ["flashlight", "shakelight", "bandage", "vitamins"]
+const ITEMS := ["flashlight", "shakelight", "bandage", "vitamins", "stardevice", "starjug", "starhelp"]
 var selected := "flashlight"
 var hud: Node = null  # set by the game scene
 
@@ -44,6 +44,10 @@ var _steps: AudioStreamPlayer
 var _step_dist := 0.0
 var _stamina_wait := 0.0
 var _speed_boost := 0.0     # vitamins timer
+## star protection (starjug / starhelp): soaks up damage before your health does
+var star_shield := 0.0
+var star_max := 0.0
+var star_t := 0.0
 var _slide_t := 0.0
 var _hold_t := 0.0          # holding interact on a hold_time target
 var _busy := false          # locker animation
@@ -253,6 +257,19 @@ func _physics_process(delta: float) -> void:
 		speed = CROUCH
 	elif sprinting:
 		speed = SPRINT
+	if star_t > 0.0:
+		star_t -= delta
+		if star_t <= 0.0:
+			star_shield = 0.0
+	# the starhelp slowly uses up its charge, and takes a battery when it runs out
+	if Save.data.get("starhelp", false):
+		var ch := float(Save.data.get("starhelp_charge", 0.0)) - delta * 100.0 / 300.0
+		if ch <= 0.0 and inventory.batteries > 0:
+			inventory.batteries -= 1
+			inventory.changed.emit()
+			ch = 100.0
+			notify("starhelp took a battery")
+		Save.data.starhelp_charge = maxf(0.0, ch)
 	if _speed_boost > 0.0:
 		_speed_boost -= delta
 		speed *= 1.45
@@ -426,6 +443,16 @@ func take_damage(amount: float, cause: String) -> void:
 		if hud:
 			hud.flash(Color(1, 1, 1, 0.3), 0.2)
 		return
+	# star protection takes the hit first (not a-90's or anything that kills outright)
+	if star_shield > 0.0 and amount < 900.0:
+		var soak := minf(star_shield, amount)
+		star_shield -= soak
+		amount -= soak
+		if hud:
+			hud.flash(Color(0.6, 0.8, 1.0, 0.45), 0.4)
+		if amount <= 0.0:
+			Game.play_ui("hurt")
+			return
 	health -= amount
 	if hud:
 		hud.flash(Color(0.8, 0, 0, 0.6), 0.5)
@@ -449,6 +476,12 @@ func owns(item: String) -> bool:
 			return inventory.bandages > 0
 		"vitamins":
 			return inventory.vitamins > 0
+		"stardevice":
+			return bool(Save.data.get("stardevice", false))
+		"starjug":
+			return int(Save.data.get("starjug", 0)) > 0
+		"starhelp":
+			return bool(Save.data.get("starhelp", false))
 	return false
 
 
@@ -487,9 +520,47 @@ func use_item() -> void:
 			use_bandage()
 		"vitamins":
 			use_vitamins()
+		"stardevice":
+			Save.data.stardevice_on = not bool(Save.data.get("stardevice_on", true))
+			Save.write()
+			notify("stardevice " + ("on" if Save.data.stardevice_on else "off"))
+		"starjug":
+			if int(Save.data.get("starjug", 0)) > 0:
+				Save.data.starjug = int(Save.data.starjug) - 1
+				Save.write()
+				heal(20.0)
+				give_star(40.0, 30.0)
+				Game.play_ui("vitamins")
+				notify("starlight. %d sips left" % int(Save.data.starjug))
+		"starhelp":
+			if inventory.batteries > 0:
+				inventory.batteries -= 1
+				inventory.changed.emit()
+				give_star(25.0, 20.0)
+				Game.play_ui("vitamins")
+				notify("starhelp: shield up (used a battery)")
+			else:
+				notify("the starhelp needs a battery")
 	# used the last one: go back to something you still have
 	if not owns(selected):
 		cycle_item(-1)
+
+
+func give_star(amount: float, seconds: float) -> void:
+	star_shield = maxf(star_shield, amount)
+	star_max = star_shield
+	star_t = maxf(star_t, seconds)
+
+
+## an entity just showed up: the stardevice / starhelp beep and tell you what it is
+func star_warn(id: String) -> void:
+	var device: bool = bool(Save.data.get("stardevice", false)) and bool(Save.data.get("stardevice_on", true))
+	var helper: bool = bool(Save.data.get("starhelp", false)) and float(Save.data.get("starhelp_charge", 0.0)) > 0.0
+	if dead or not (device or helper) or id in ["worker", "a70"]:
+		return
+	var who: String = CuriousLight.NAMES.get(id, id)
+	if hud:
+		hud.star_warning(who)
 
 
 func use_bandage() -> void:

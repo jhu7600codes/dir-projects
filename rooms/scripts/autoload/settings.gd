@@ -145,12 +145,15 @@ func _setup_input() -> void:
 	_add("crouch", [_key(KEY_C), _key(KEY_CTRL), _btn(JOY_BUTTON_B)])
 	_add("jump", [_key(KEY_SPACE), _btn(JOY_BUTTON_A)])
 	_add("interact", [_key(KEY_E), _btn(JOY_BUTTON_X)])
-	# every item is used with left click; 1-4 or the scroll wheel picks which one you hold
+	# every item is used with left click; 1-7 or the scroll wheel picks which one you hold
 	_add("use_item", [_mouse(MOUSE_BUTTON_LEFT), _btn(JOY_BUTTON_Y), _btn(JOY_BUTTON_RIGHT_SHOULDER)])
 	_add("slot_1", [_key(KEY_1)])
 	_add("slot_2", [_key(KEY_2)])
 	_add("slot_3", [_key(KEY_3)])
 	_add("slot_4", [_key(KEY_4)])
+	_add("slot_5", [_key(KEY_5)])
+	_add("slot_6", [_key(KEY_6)])
+	_add("slot_7", [_key(KEY_7)])
 	_add("item_next", [_mouse(MOUSE_BUTTON_WHEEL_DOWN), _btn(JOY_BUTTON_DPAD_RIGHT)])
 	_add("item_prev", [_mouse(MOUSE_BUTTON_WHEEL_UP), _btn(JOY_BUTTON_DPAD_LEFT)])
 	_add("pause", [_key(KEY_ESCAPE), _key(KEY_P), _btn(JOY_BUTTON_START)])

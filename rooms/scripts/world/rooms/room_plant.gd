@@ -11,5 +11,7 @@ func build() -> void:
 	Props.plant(self, Vector3(1.9, Props.TABLE_H + 0.02, length * 0.5 + 0.5), rng.randf() < 0.3)
 	if rng.randf() < 0.4:
 		Props.plant(self, Vector3(-1.6, 0, length - 0.6))
+	if rng.randf() < 0.45:
+		add_cabinet(Vector3(-2.0 + 0.27, 0, length * 0.5), PI / 2)
 	scatter_loot([Vector3(1.9, Props.TABLE_H + 0.02, length * 0.5), Vector3(-1.6, 0, 1.5)])
 	make_path([Vector3(0, 0, length * 0.5)])

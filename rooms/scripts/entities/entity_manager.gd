@@ -205,6 +205,8 @@ func _spawn(id: String, opts := {}, remote := false) -> Entity:
 	active[id] = e
 	e.finished.connect(_on_finished)
 	e.begin()
+	if Game.player and is_instance_valid(Game.player):
+		Game.player.star_warn(id)
 	print("[entities] %s spawned at %s" % [id, Game.door_label(Game.door)])
 	return e
 

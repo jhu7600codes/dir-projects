@@ -12,6 +12,14 @@ void fragment() {
 	COLOR = vec4(tint.rgb, tint.a * v);
 }
 """
+## a soft dark vignette around the edges (no grain)
+const FILM_SHADER := """
+shader_type canvas_item;
+void fragment() {
+	float v = smoothstep(0.42, 0.95, length(UV - 0.5) * 1.25);
+	COLOR = vec4(0.0, 0.0, 0.0, 0.55 * v);
+}
+"""
 const SLIT_SHADER := """
 shader_type canvas_item;
 void fragment() {
@@ -25,8 +33,7 @@ void fragment() {
 
 var player: Player
 var _door: Label
-var _health: ProgressBar
-var _stamina: ProgressBar
+var vitals: Vitals
 var slots: ItemSlots
 var _fps: Label
 var _prompt: Label
@@ -38,6 +45,8 @@ var _tint: ColorRect
 var _slits: ColorRect
 var _star: TextureRect
 var _toast_tw: Tween
+var _film: ColorRect
+var _star_banner: Label
 var _sub_tw: Tween
 
 
@@ -47,6 +56,15 @@ func _ready() -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
+
+	var film := _rect(root, Color.WHITE)
+	var fm := ShaderMaterial.new()
+	fm.shader = _shader(FILM_SHADER)
+	film.material = fm
+	film.visible = true
+	_film = film
+	Settings.changed.connect(func(): _film.visible = int(Settings.data.quality) >= 1)
+	_film.visible = int(Settings.data.quality) >= 1
 
 	_slits = _rect(root, Color.BLACK)
 	var sm := ShaderMaterial.new()
@@ -61,7 +79,9 @@ func _ready() -> void:
 
 	_flash = _rect(root, Color(0, 0, 0, 0))
 
-	_door = UIKit.label("a-000", 34, Color(0.95, 0.85, 0.4))
+	_door = UIKit.label("a-000", 36, Color(0.95, 0.85, 0.4))
+	_door.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
+	_door.add_theme_constant_override("shadow_offset_y", 2)
 	_door.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_door.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_door.offset_left = -100
@@ -69,11 +89,8 @@ func _ready() -> void:
 	_door.offset_top = 10
 	root.add_child(_door)
 
-	var bars := UIKit.vbox(4)
-	bars.position = Vector2(16, 14)
-	root.add_child(bars)
-	_health = _bar(bars, Color(0.8, 0.15, 0.15))
-	_stamina = _bar(bars, Color(0.35, 0.7, 1.0))
+	vitals = Vitals.new()
+	root.add_child(vitals)
 
 	slots = ItemSlots.new()
 	root.add_child(slots)
@@ -104,6 +121,19 @@ func _ready() -> void:
 	root.add_child(_hold)
 	_toast = _center_label(root, 17, 130)
 	_toast.modulate.a = 0.0
+	_star_banner = UIKit.label("", 24, Color(0.6, 0.8, 1.0))
+	UITheme.fonts()
+	_star_banner.add_theme_font_override("font", UITheme.title_font)
+	_star_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_star_banner.offset_left = -400
+	_star_banner.offset_right = 400
+	_star_banner.offset_top = 56
+	_star_banner.offset_bottom = 90
+	_star_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_star_banner.add_theme_color_override("font_outline_color", Color(0, 0, 0.1))
+	_star_banner.add_theme_constant_override("outline_size", 6)
+	_star_banner.modulate.a = 0.0
+	root.add_child(_star_banner)
 	_subtitle = _center_label(root, 22, 190)
 	_subtitle.modulate.a = 0.0
 
@@ -153,6 +183,8 @@ func _bar(parent: Control, c: Color) -> ProgressBar:
 
 func _center_label(parent: Control, size: int, y: float) -> Label:
 	var l := UIKit.label("", size)
+	UITheme.fonts()
+	l.add_theme_font_override("font", UITheme.title_font)
 	l.set_anchors_preset(Control.PRESET_CENTER)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.offset_left = -400
@@ -176,9 +208,8 @@ func _process(_delta: float) -> void:
 				RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp)]
 	if player == null:
 		return
-	_health.value = player.health
-	_stamina.value = player.stamina
-	_stamina.visible = player.stamina < 99.0 or player.sprinting
+	if vitals.player == null:
+		vitals.player = player
 	if slots.player == null:
 		slots.player = player
 	_update_star()
@@ -211,6 +242,22 @@ func set_prompt(text: String, hold_progress := -1.0) -> void:
 	_hold.visible = hold_progress >= 0.0
 	if _hold.visible:
 		_hold.value = hold_progress * 100.0
+
+
+## stardevice / starhelp: a blue banner at the top when an entity shows up
+func star_warning(who: String) -> void:
+	_star_banner.text = "★  %s is coming  ★" % who.to_upper()
+	_star_banner.modulate.a = 1.0
+	var tw := create_tween()
+	tw.tween_interval(2.5)
+	tw.tween_property(_star_banner, "modulate:a", 0.0, 0.8)
+	var a := AudioStreamPlayer.new()
+	a.stream = Assets.sound("switch_flip")
+	a.pitch_scale = 1.8
+	a.bus = "SFX"
+	add_child(a)
+	a.play()
+	a.finished.connect(a.queue_free)
 
 
 func notify(text: String) -> void:

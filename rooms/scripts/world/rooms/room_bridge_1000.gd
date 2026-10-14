@@ -6,6 +6,11 @@ func build() -> void:
 	room_type = "bridge_1000"
 	is_special = true
 	var length := 55.0
+	# the stardevice and the starjug, on a little table near the end
+	if not Save.data.get("stardevice", false):
+		add_pickup(Vector3(-0.45, 0.0, length - 5.0), "stardevice")
+	if int(Save.data.get("starjug", 0)) < 6:
+		add_pickup(Vector3(0.45, 0.0, length - 5.0), "starjug")
 	# small landing behind the entry door so the doorway has something to stand in
 	box(Vector3(3.0, 0.2, 2.0), Vector3(0, -0.1, 1.0), Mats.get_mat("carpet_red"))
 	wall(Vector3(1.5, 0, 0), Vector3(-1.5, 0, 0), 3.0, [[1.5, DOOR_W]])

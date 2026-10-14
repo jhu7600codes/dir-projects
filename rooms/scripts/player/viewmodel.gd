@@ -33,10 +33,10 @@ func _ready() -> void:
 		m.rotation = Vector3(-PI / 2 + 0.08, 0.05, 0)
 		m.position = Vector3(0, 0, 0.12)  # hold it by the handle, not the middle
 		m.scale = Vector3.ONE * 0.75
-		if item in ["bandage", "vitamins"]:
+		if item in ["bandage", "vitamins", "stardevice", "starjug", "starhelp"]:
 			m.rotation = Vector3(-0.3, 0.4, 0)
 			m.position = Vector3.ZERO
-			m.scale = Vector3.ONE * 1.1
+			m.scale = Vector3.ONE * (0.65 if item == "starjug" else 1.1)
 		m.visible = false
 		_set_no_shadows(m)
 		_set_layer(m)

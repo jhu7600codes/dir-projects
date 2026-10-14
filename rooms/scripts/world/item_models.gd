@@ -54,6 +54,19 @@ static func build(item: String) -> Node3D:
 				c.rotation = Vector3(rng.randf_range(-0.2, 0.2), 0, rng.randf_range(-0.2, 0.2))
 			for i in 4:
 				_cyl(root, 0.03, 0.03, 0.008, Vector3(0.02, 0.004 + i * 0.008, -0.01), gm)
+		"stardevice":
+			_box(root, Vector3(0.07, 0.11, 0.025), Vector3(0, 0.055, 0), _mat("device", Color(0.12, 0.13, 0.18), 0.4, 0.3))
+			_box(root, Vector3(0.055, 0.05, 0.004), Vector3(0, 0.075, 0.013), _mat("star_screen", Color(0.45, 0.7, 1.0), 0.2, 0.0, 1.8))
+			_cyl(root, 0.004, 0.004, 0.05, Vector3(0.025, 0.13, 0), _mat("black", Color(0.08, 0.08, 0.09), 0.4, 0.6))
+		"starjug":
+			_cyl(root, 0.045, 0.05, 0.12, Vector3(0, 0.06, 0), _mat("jug_glass", Color(0.7, 0.85, 1.0, 0.45), 0.05, 0.0))
+			_cyl(root, 0.042, 0.047, 0.08, Vector3(0, 0.042, 0), _mat("starlight", Color(0.35, 0.6, 1.0), 0.2, 0.0, 2.0))
+			_cyl(root, 0.018, 0.024, 0.04, Vector3(0, 0.14, 0), _mat("jug_glass", Color(0.7, 0.85, 1.0, 0.45), 0.05, 0.0))
+			_cyl(root, 0.02, 0.02, 0.015, Vector3(0, 0.165, 0), _mat("cork", Color(0.55, 0.4, 0.25), 0.9, 0.0))
+		"starhelp":
+			_box(root, Vector3(0.09, 0.09, 0.04), Vector3(0, 0.045, 0), _mat("device", Color(0.12, 0.13, 0.18), 0.4, 0.3))
+			_box(root, Vector3(0.05, 0.05, 0.004), Vector3(-0.01, 0.05, 0.021), _mat("star_screen", Color(0.45, 0.7, 1.0), 0.2, 0.0, 1.8))
+			_cyl(root, 0.012, 0.012, 0.045, Vector3(0.032, 0.03, 0.025), _mat("copper", Color(0.85, 0.5, 0.2), 0.3, 0.9))
 		_:
 			_box(root, Vector3(0.1, 0.1, 0.1), Vector3(0, 0.05, 0), _mat("unknown", Color.MAGENTA, 1.0, 0.0))
 	return root
