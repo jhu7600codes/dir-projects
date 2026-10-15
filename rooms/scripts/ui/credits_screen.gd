@@ -77,6 +77,9 @@ func _ready() -> void:
 	_section(v, "other")
 	for line in c.get("other", []):
 		_line(v, str(line))
+	_section(v, "entity art and sounds")
+	_line(v, "the doors team")
+	_line(v, "the rooms: revisited team (eclipse games)")
 	_line(v, "this is an unofficial fan project. not affiliated with roblox, lsplash or nicorocks5555.", Color(0.6, 0.6, 0.6), 13)
 	outer.add_child(UIKit.button("back", func():
 		closed.emit()

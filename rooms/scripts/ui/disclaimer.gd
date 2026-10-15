@@ -23,7 +23,7 @@ func _ready() -> void:
 	big.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	big.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(big)
-	var small := UIKit.label("unofficial fan game. not affiliated with doors, rooms, rooms: revisited or roblox.\nall credit for those assets goes to their creators.", 16, Color(0.75, 0.75, 0.75))
+	var small := UIKit.label("unofficial fan game. credit: the doors team and the rooms: revisited team.\nnot affiliated with roblox.", 16, Color(0.75, 0.75, 0.75))
 	small.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	small.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(small)
