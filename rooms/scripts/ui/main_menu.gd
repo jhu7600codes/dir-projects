@@ -45,6 +45,9 @@ var _flicker := 0.0
 
 
 func _ready() -> void:
+	if not Game.disclaimer_shown:
+		Game.disclaimer_shown = true
+		add_child(Disclaimer.new())
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	# the admin toggle picks which progress is shown and used
@@ -227,7 +230,7 @@ func _make_menu() -> void:
 	logo.texture = load("res://assets/branding/logo.png")
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-	logo.custom_minimum_size = Vector2(400, 400.0 * 811.0 / 1892.0)
+	logo.custom_minimum_size = Vector2(400, 400.0 * 733.0 / 1892.0)
 	col.add_child(logo)
 	_title = logo
 	var tag := Label.new()

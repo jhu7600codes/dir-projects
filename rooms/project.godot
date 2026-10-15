@@ -1,10 +1,10 @@
-; rooms: the hallway - unofficial fan game, see README.md
+; The ROOMS - unofficial fan game, see README.md
 
 config_version=5
 
 [application]
 
-config/name="rooms: the hallway"
+config/name="The ROOMS"
 config/description="unofficial fan game inspired by nicorocks5555's rooms and the rooms subfloor from doors"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")

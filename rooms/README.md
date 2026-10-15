@@ -1,4 +1,4 @@
-# rooms: the hallway
+# The ROOMS
 
 a first person horror game in an endless office. open doors, walk through generated rooms, hide in lockers and survive the entities. made in godot 4 (gdscript), runs on windows, linux and android from one project.
 

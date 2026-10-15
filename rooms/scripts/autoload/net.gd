@@ -51,8 +51,10 @@ func _ready() -> void:
 func host(player_name: String) -> String:
 	stop("")
 	my_name = player_name
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(PORT, MAX_PLAYERS - 1)
+	if OS.has_feature("web"):
+		return "wifi games don't work in the browser, use host online"
+	var peer = ClassDB.instantiate("ENetMultiplayerPeer")
+	var err: int = peer.create_server(PORT, MAX_PLAYERS - 1)
 	if err != OK:
 		return "couldn't host (port %d busy?)" % PORT
 	multiplayer.multiplayer_peer = peer
@@ -108,8 +110,10 @@ func send_rate() -> float:
 func join(ip: String, player_name: String) -> String:
 	stop("")
 	my_name = player_name
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(ip.strip_edges(), PORT)
+	if OS.has_feature("web"):
+		return "wifi games don't work in the browser, use a code"
+	var peer = ClassDB.instantiate("ENetMultiplayerPeer")
+	var err: int = peer.create_client(ip.strip_edges(), PORT)
 	if err != OK:
 		return "couldn't connect to " + ip
 	multiplayer.multiplayer_peer = peer
@@ -137,7 +141,7 @@ func stop(reason: String) -> void:
 
 
 func start_listening() -> void:
-	if _listen:
+	if _listen or OS.has_feature("web"):
 		return
 	_listen = PacketPeerUDP.new()
 	if _listen.bind(DISCOVER_PORT) != OK:

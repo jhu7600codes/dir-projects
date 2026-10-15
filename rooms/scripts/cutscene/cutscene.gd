@@ -448,7 +448,7 @@ func _bus() -> void:
 	# credits
 	var lines := [
 		"going home",
-		"rooms: the hallway",
+		"The ROOMS",
 		"a fan game by jhu",
 		"based on rooms by nicorocks5555\nand the rooms in doors by lsplash",
 		"thanks for playing.",

@@ -84,7 +84,8 @@ func continue_run() -> void:
 ## cutscenes (scripts/cutscene/cutscene.gd). off in headless test runs
 var cutscenes := DisplayServer.get_name() != "headless"
 var net_seed := 0
-var starhelp_new := false  # the end screen says you got the starhelp  # multiplayer: the host's room seed for this run
+var starhelp_new := false
+var disclaimer_shown := false  # the "uses doors assets" screen, once per launch  # the end screen says you got the starhelp  # multiplayer: the host's room seed for this run
 
 
 ## cutscenes aren't shown in multiplayer (everyone would be watching at different times)

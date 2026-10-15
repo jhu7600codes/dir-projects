@@ -35,7 +35,8 @@ func _ready() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	row.add_child(UIKit.button("host online", _host_online, 18))
-	row.add_child(UIKit.button("host on wifi", _host, 16))
+	if not OS.has_feature("web"):
+		row.add_child(UIKit.button("host on wifi", _host, 16))
 	v.add_child(row)
 	row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
