@@ -230,7 +230,7 @@ func _make_menu() -> void:
 	logo.texture = load("res://assets/branding/logo.png")
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
-	logo.custom_minimum_size = Vector2(400, 400.0 * 733.0 / 1892.0)
+	logo.custom_minimum_size = Vector2(400, 400.0 * 724.0 / 1892.0)
 	col.add_child(logo)
 	_title = logo
 	var tag := Label.new()
