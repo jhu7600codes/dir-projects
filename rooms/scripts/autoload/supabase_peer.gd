@@ -9,8 +9,9 @@ extends MultiplayerPeerExtension
 
 const URL := "wss://upehzacowjdlwfgijfdc.supabase.co/realtime/v1/websocket?apikey=%s&vsn=1.0.0"
 const KEY := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwZWh6YWNvd2pkbHdmZ2lqZmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MDE1MzUsImV4cCI6MjEwNzQ3NzUzNX0.XzGJObl-4LsVZTelzIj0EEUJW9M4O_374ErHyhrNCfk"
-const TIMEOUT := 10.0   # a player we haven't heard from in this long is gone
-const JOIN_WAIT := 8.0  # how long a joining player waits for the host to answer
+const TIMEOUT := 20.0   # a player we haven't heard from in this long is gone
+const JOIN_WAIT := 25.0  # how long a joining player waits for the host to answer (vpns can be slow)
+const RECONNECTS := 5   # how many times a dropped connection is reopened before giving up
 
 var _ws := WebSocketPeer.new()
 var _topic := ""
@@ -28,6 +29,7 @@ var _beat := 0.0
 var _alive_t := 0.0
 var _wait := 0.0
 var _last_poll := 0
+var _reconnects := 0
 
 
 func create_host(code: String) -> Error:
@@ -44,14 +46,20 @@ func create_client(code: String) -> Error:
 
 func _open(code: String) -> Error:
 	_topic = "realtime:rooms-" + code.to_upper()
-	_ws.inbound_buffer_size = 1 << 20
-	_ws.outbound_buffer_size = 1 << 20
-	var err := _ws.connect_to_url(URL % KEY)
+	var err := _connect()
 	if err != OK:
 		return err
 	_status = MultiplayerPeer.CONNECTION_CONNECTING
 	_last_poll = Time.get_ticks_msec()
 	return OK
+
+
+func _connect() -> Error:
+	_ws = WebSocketPeer.new()
+	_ws.inbound_buffer_size = 1 << 20
+	_ws.outbound_buffer_size = 1 << 20
+	_joined_channel = false
+	return _ws.connect_to_url(URL % KEY)
 
 
 func _send_raw(event: String, payload: Dictionary, topic := "") -> void:
@@ -70,7 +78,9 @@ func _bc(kind: String, data: Dictionary) -> void:
 
 func _poll() -> void:
 	var now := Time.get_ticks_msec()
-	var dt := (now - _last_poll) / 1000.0
+	# phones pause the game when you switch apps (to send the code, say). that time
+	# doesn't count, or everyone would time out the moment you come back
+	var dt := minf((now - _last_poll) / 1000.0, 0.5)
 	_last_poll = now
 	_ws.poll()
 	var st := _ws.get_ready_state()
@@ -82,6 +92,12 @@ func _poll() -> void:
 		else:
 			_wait = 0.0
 	elif st == WebSocketPeer.STATE_CLOSED and _status != MultiplayerPeer.CONNECTION_DISCONNECTED:
+		# the connection dropped (app was in the background, wifi blip, vpn switched servers):
+		# open it again and rejoin the same channel, the others never notice
+		if _reconnects < RECONNECTS:
+			_reconnects += 1
+			if _connect() == OK:
+				return
 		_drop_all()
 		return
 	while _ws.get_available_packet_count() > 0:
@@ -114,6 +130,7 @@ func _poll() -> void:
 
 
 func _handle(text: String) -> void:
+	_reconnects = 0  # we're hearing from the server again
 	var msg = JSON.parse_string(text)
 	if not (msg is Dictionary) or msg.get("event", "") != "broadcast":
 		return

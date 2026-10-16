@@ -91,7 +91,7 @@ func _host_online() -> void:
 		_status.text = err
 		return
 	_mode = "host"
-	_status.text = Loc.t("hosting online! your code:  %s\nsend it to your friends.") % Net.code
+	_status.text = Loc.t("hosting online! your code:  %s\nsend it to your friends, then come back to the game.") % Net.code
 	_start.visible = true
 
 
