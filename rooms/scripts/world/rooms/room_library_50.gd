@@ -73,7 +73,7 @@ func _hint_book(at: Vector3, slot: int, face: float) -> void:
 		var pattern := ""
 		for k in 4:
 			pattern += (code[slot] if k == slot else "_") + " "
-		p.notify("the book has a note in it: " + pattern.strip_edges())
+		p.notify(Loc.t("the book has a note in it: ") + pattern.strip_edges())
 		Game.play_ui("pickup"))
 	b.add_child(it)
 

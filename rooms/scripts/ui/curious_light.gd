@@ -115,7 +115,7 @@ func setup(cause: String, detail: String) -> void:
 		return
 	var by_detail: Dictionary = HINTS.get(cause, {})
 	if NAMES.has(cause):
-		_lines.append("you died to what you call " + NAMES[cause] + "...")
+		_lines.append(Loc.t("you died to what you call ") + Loc.t(NAMES[cause]) + "...")
 	else:
 		_lines.append("the office got you this time...")
 	_lines.append_array(by_detail.get(detail, by_detail.get("", [])))

@@ -38,7 +38,7 @@ func _process(delta: float) -> void:
 		_label.text = "everyone's down..."
 		return
 	var r: RemotePlayer = alive[_i % alive.size()]
-	_label.text = "spectating %s  -  %s to switch" % [r.player_name, "tap" if Settings.use_touch() else "click"]
+	_label.text = Loc.t("spectating %s  -  %s to switch") % [r.player_name, Loc.t("tap") if Settings.use_touch() else Loc.t("click")]
 	var behind: Vector3 = r.global_position + r.global_basis.z * 2.6 + Vector3(0, 2.2, 0)
 	_cam.global_position = _cam.global_position.lerp(behind, minf(1.0, 6.0 * delta))
 	_cam.look_at(r.head_position(), Vector3.UP)

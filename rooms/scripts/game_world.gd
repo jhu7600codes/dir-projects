@@ -93,8 +93,8 @@ func _ready() -> void:
 	else:
 		var names := []
 		for m in Game.modifiers:
-			names.append(Game.MODIFIERS[m][0])
-		hud.notify("modifiers: " + ", ".join(names))
+			names.append(Loc.t(Game.MODIFIERS[m][0]))
+		hud.notify(Loc.t("modifiers: ") + ", ".join(names))
 
 
 func _on_net_left(_reason: String) -> void:
@@ -138,7 +138,7 @@ func _load_run(run: Dictionary) -> void:
 	Game.door = n
 	Game.door_changed.emit(n)
 	player.select_item(str(run.get("selected", "flashlight")))
-	hud.notify("welcome back. you're at " + Game.door_label(n))
+	hud.notify(Loc.t("welcome back. you're at ") + Game.door_label(n))
 
 
 func _make_environment() -> void:
@@ -224,7 +224,7 @@ func _apply_darkness(n: int) -> void:
 func _on_door_changed(n: int) -> void:
 	_apply_darkness(n)
 	if n == 30 and Game.floor != "city" and player.inventory.has_flashlight and not player.lights.flashlight_on:
-		hud.notify("it's getting darker. " + ("tap item" if Settings.use_touch() else "left click") + " for your flashlight")
+		hud.notify(Loc.t("it's getting darker. tap item for your flashlight") if Settings.use_touch() else Loc.t("it's getting darker. left click for your flashlight"))
 
 
 func _process(delta: float) -> void:

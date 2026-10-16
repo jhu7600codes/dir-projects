@@ -16,7 +16,7 @@ func _ready() -> void:
 	else:
 		m.rotation.y = randf() * TAU
 	add_child(m)
-	var it := Interactable.make(Vector3(0.5, 0.4, 0.5), "take " + _name())
+	var it := Interactable.make(Vector3(0.5, 0.4, 0.5), Loc.t("take %d gold") % amount if item == "gold" else Loc.t("take " + _name()))
 	it.position.y = 0.15
 	it.used.connect(_take)
 	add_child(it)

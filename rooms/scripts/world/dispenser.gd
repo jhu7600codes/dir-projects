@@ -56,7 +56,7 @@ func _ready() -> void:
 		add_child(m)
 		# the button
 		var b := _box(Vector3(0.1, 0.1, 0.04), Vector3(0.36, y, D / 2 + 0.03), Mats.get_mat(["poster_blue", "poster_yellow", "poster_green", "poster_red"][i]))
-		var it := Interactable.make(Vector3(0.2, 0.18, 0.3), "%d gold" % price)
+		var it := Interactable.make(Vector3(0.2, 0.18, 0.3), Loc.t("%d gold") % price)
 		it.position = Vector3(0.36, y, D / 2 + 0.12)
 		it.used.connect(_press.bind(item, price, b))
 		add_child(it)

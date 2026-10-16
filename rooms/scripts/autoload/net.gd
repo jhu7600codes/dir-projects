@@ -56,7 +56,7 @@ func host(player_name: String) -> String:
 	var peer = ClassDB.instantiate("ENetMultiplayerPeer")
 	var err: int = peer.create_server(PORT, MAX_PLAYERS - 1)
 	if err != OK:
-		return "couldn't host (port %d busy?)" % PORT
+		return Loc.t("couldn't host (port %d busy?)") % PORT
 	multiplayer.multiplayer_peer = peer
 	active = true
 	is_host = true
@@ -115,7 +115,7 @@ func join(ip: String, player_name: String) -> String:
 	var peer = ClassDB.instantiate("ENetMultiplayerPeer")
 	var err: int = peer.create_client(ip.strip_edges(), PORT)
 	if err != OK:
-		return "couldn't connect to " + ip
+		return Loc.t("couldn't connect to ") + ip
 	multiplayer.multiplayer_peer = peer
 	active = true
 	is_host = false

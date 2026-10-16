@@ -42,12 +42,12 @@ func setup(kind: String, cause := "") -> void:
 	var where := Game.door_label(Game.door)
 	match kind:
 		"death":
-			v.add_child(UIKit.label("you died at " + where, 30, Color(0.9, 0.2, 0.2)))
+			v.add_child(UIKit.label(Loc.t("you died at ") + where, 30, Color(0.9, 0.2, 0.2)))
 			var why := UIKit.label(CAUSES.get(cause, "the office got you."), 17)
 			why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			v.add_child(why)
 		"exit":
-			v.add_child(UIKit.label("you got out at " + where, 30, UIKit.ACCENT))
+			v.add_child(UIKit.label(Loc.t("you got out at ") + where, 30, UIKit.ACCENT))
 			v.add_child(UIKit.label("the fresh air feels weird after all those rooms.", 17))
 			if Game.starhelp_new:
 				Game.starhelp_new = false
@@ -64,7 +64,7 @@ func setup(kind: String, cause := "") -> void:
 			var t := UIKit.label("you walked all the way through, out past miles, and got on the bus. it's over. for today.", 17)
 			t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			v.add_child(t)
-	v.add_child(UIKit.label("best: " + Game.a_label(int(Save.data.best_door)) + "    gold: %d" % int(Save.data.gold), 15, Color(0.6, 0.6, 0.6)))
+	v.add_child(UIKit.label(Loc.t("best: ") + Game.a_label(int(Save.data.best_door)) + Loc.t("    gold: %d") % int(Save.data.gold), 15, Color(0.6, 0.6, 0.6)))
 	if Game.admin:
 		v.add_child(UIKit.label("admin run - saved to your admin progress", 14, Color(1, 0.6, 0.3)))
 	var fl := "offices" if Game.floor == "city" else Game.floor

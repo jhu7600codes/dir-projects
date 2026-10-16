@@ -27,6 +27,9 @@ func _ready() -> void:
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pad.add_child(v)
 	var d := Settings.data
+	UIKit.section(v, "language")
+	var langs: Array = Loc.LANGS.map(func(l): return Loc.NAMES[l])
+	v.add_child(UIKit.options("language", langs, maxi(0, Loc.LANGS.find(str(d.language))), _set_language))
 	UIKit.section(v, "audio")
 	v.add_child(UIKit.slider("master volume", d.master_volume, 0, 1, func(x): Settings.set_value("master_volume", x)))
 	v.add_child(UIKit.slider("music volume", d.music_volume, 0, 1, func(x): Settings.set_value("music_volume", x)))
@@ -52,3 +55,21 @@ func _ready() -> void:
 	outer.add_child(UIKit.button("back", func():
 		closed.emit()
 		queue_free()))
+
+
+func _set_language(i: int) -> void:
+	var lang: String = Loc.LANGS[i]
+	if lang == str(Settings.data.language):
+		return
+	Settings.set_value("language", lang)
+	Loc.use(lang)
+	# rebuild the screens so every label picks up the new language
+	if get_tree().current_scene and get_tree().current_scene.scene_file_path.ends_with("main_menu.tscn"):
+		get_tree().reload_current_scene.call_deferred()
+	else:
+		var p := get_parent()
+		queue_free()
+		var again := SettingsMenu.new()
+		for c in closed.get_connections():
+			again.closed.connect(c.callable)
+		p.add_child(again)

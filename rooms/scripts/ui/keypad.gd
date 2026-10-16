@@ -37,7 +37,7 @@ func _ready() -> void:
 		var b := UIKit.button(k, _press.bind(k), 22)
 		b.custom_minimum_size = Vector2(88, 56)
 		grid.add_child(b)
-	var hint := UIKit.label("your note: " + note if note != "" else "the code is written on a paper somewhere in this room.", 14, Color(0.7, 0.7, 0.7))
+	var hint := UIKit.label(Loc.t("your note: ") + note if note != "" else "the code is written on a paper somewhere in this room.", 14, Color(0.7, 0.7, 0.7))
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(280, 0)
 	v.add_child(hint)

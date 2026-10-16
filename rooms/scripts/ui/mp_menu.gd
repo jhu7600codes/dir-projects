@@ -24,7 +24,7 @@ func _ready() -> void:
 	var nr := HBoxContainer.new()
 	nr.add_child(UIKit.label("your name", 16))
 	_name = LineEdit.new()
-	_name.text = str(Save.data.get("mp_name", "worker %d" % randi_range(10, 99)))
+	_name.text = str(Save.data.get("mp_name", Loc.t("worker %d") % randi_range(10, 99)))
 	_name.max_length = 16
 	_name.custom_minimum_size = Vector2(260, 40)
 	_name.text_changed.connect(func(t):
@@ -91,7 +91,7 @@ func _host_online() -> void:
 		_status.text = err
 		return
 	_mode = "host"
-	_status.text = "hosting online! your code:  %s\nsend it to your friends." % Net.code
+	_status.text = Loc.t("hosting online! your code:  %s\nsend it to your friends.") % Net.code
 	_start.visible = true
 
 
@@ -102,7 +102,7 @@ func _host() -> void:
 		return
 	_mode = "host"
 	var ips := Net.local_ips()
-	_status.text = "hosting! others can join with: " + (", ".join(ips) if not ips.is_empty() else "your ip")
+	_status.text = Loc.t("hosting! others can join with: ") + (", ".join(ips) if not ips.is_empty() else Loc.t("your ip"))
 	_start.visible = true
 
 
@@ -119,7 +119,7 @@ func _join(ip: String) -> void:
 		_status.text = err
 		return
 	_mode = "join"
-	_status.text = "connecting to %s..." % ip.to_upper()
+	_status.text = Loc.t("connecting to %s...") % ip.to_upper()
 
 
 func _refresh() -> void:
@@ -142,6 +142,6 @@ func _refresh_found() -> void:
 			continue
 		if Net.is_host:
 			continue
-		_found.add_child(UIKit.button("join %s  (%d/4)  -  %s" % [h.name, h.players, ip], func(): _join(ip), 15))
+		_found.add_child(UIKit.button(Loc.t("join %s  (%d/4)  -  %s") % [h.name, h.players, ip], func(): _join(ip), 15))
 	if _found.get_child_count() == 0:
 		_found.add_child(UIKit.label("  none yet", 14, Color(0.5, 0.5, 0.5)))

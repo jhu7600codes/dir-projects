@@ -22,14 +22,14 @@ func _ready() -> void:
 	_info = UIKit.label("", 17)
 	v.add_child(_info)
 	for amount in [10, 50]:
-		v.add_child(UIKit.button("deposit %d gold" % amount, _deposit.bind(amount), 18))
+		v.add_child(UIKit.button(Loc.t("deposit %d gold") % amount, _deposit.bind(amount), 18))
 	v.add_child(UIKit.button("deposit everything", _deposit.bind(-1), 18))
 	v.add_child(UIKit.button("back", close, 18))
 	_show()
 
 
 func _show() -> void:
-	_info.text = UIKit.cap("balance: %d gold\nbank: %d gold" % [int(Save.data.gold), int(Save.data.get("bank", 0))])
+	_info.text = UIKit.cap(Loc.t("balance: %d gold\nbank: %d gold") % [int(Save.data.gold), int(Save.data.get("bank", 0))])
 
 
 func _deposit(amount: int) -> void:

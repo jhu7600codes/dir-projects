@@ -57,7 +57,7 @@ func _card(f: Array, w: float) -> Control:
 	d.custom_minimum_size = Vector2(w - 24, 0)
 	v.add_child(d)
 	if f[0] == "wires" and int(Save.data.get("wires_best", 0)) > 0:
-		v.add_child(UIKit.label("best: W-%02d" % int(Save.data.wires_best), 13, Color(0.6, 0.6, 0.6)))
+		v.add_child(UIKit.label(Loc.t("best: W-%02d") % int(Save.data.wires_best), 13, Color(0.6, 0.6, 0.6)))
 	var id: String = f[0]
 	v.add_child(UIKit.button("play", func(): Game.start_run(admin, false, id), 20))
 	return p

@@ -69,7 +69,7 @@ func _ready() -> void:
 	if models.is_empty():
 		_line(v, "none yet - everything is placeholder boxes", Color(0.5, 0.5, 0.5))
 	for m in models:
-		_line(v, "%s by %s (%s)" % [m.get("title", "?"), m.get("author", "?"), m.get("license", "unknown")])
+		_line(v, Loc.t("%s by %s (%s)") % [m.get("title", "?"), m.get("author", "?"), m.get("license", "unknown")])
 		_line(v, "  " + str(m.get("url", "")), Color(0.5, 0.5, 0.6), 13)
 		var w := license_warning(str(m.get("license", "unknown")))
 		if w != "":

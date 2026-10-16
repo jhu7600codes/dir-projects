@@ -55,9 +55,9 @@ func _refresh() -> void:
 	var floor_name: String = {"offices": "the offices", "wires": "the wires", "city": "the great city"}.get(Game.floor, Game.floor)
 	if Game.office_powered():
 		floor_name = "the fixed office"
-	var parts := [floor_name, "%d gold" % int(Save.data.gold)]
+	var parts := [Loc.t(floor_name), Loc.t("%d gold") % int(Save.data.gold)]
 	if not Game.modifiers.is_empty():
-		parts.append("%d modifiers" % Game.modifiers.size())
+		parts.append(Loc.t("%d modifiers") % Game.modifiers.size())
 	if Net.active:
-		parts.append("%d players" % Net.players.size())
+		parts.append(Loc.t("%d players") % Net.players.size())
 	_info.text = "   ·   ".join(parts)

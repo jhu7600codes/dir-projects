@@ -239,7 +239,7 @@ func _make_menu() -> void:
 	tag.add_theme_font_size_override("font_size", 30)
 	tag.add_theme_color_override("font_color", Color(0.75, 0.2, 0.2))
 	col.add_child(tag)
-	var stats := UIKit.label(("admin progress   ·   " if _admin else "") + "best %s   ·   %d gold   ·   %d deaths" % [Game.a_label(int(Save.data.best_door)), int(Save.data.gold), int(Save.data.deaths)], 15, Color(1, 0.6, 0.3) if _admin else UIKit.ACCENT)
+	var stats := UIKit.label((Loc.t("admin progress   ·   ") if _admin else "") + Loc.t("best %s   ·   %d gold   ·   %d deaths") % [Game.a_label(int(Save.data.best_door)), int(Save.data.gold), int(Save.data.deaths)], 15, Color(1, 0.6, 0.3) if _admin else UIKit.ACCENT)
 	col.add_child(stats)
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 14)
@@ -247,16 +247,16 @@ func _make_menu() -> void:
 	if Save.has_run():
 		var rd := int(Save.data.run.get("door", 0))
 		var where := ("W-%02d" % rd) if str(Save.data.run.get("floor", "offices")) == "wires" else Game.a_label(rd)
-		col.add_child(_menu_button("continue  (%s)" % where, Game.continue_run, 26))
+		col.add_child(_menu_button(Loc.t("continue  (%s)") % where, Game.continue_run, 26))
 		col.add_child(_menu_button("new run", _pick_floor))
 	else:
 		col.add_child(_menu_button("play", _pick_floor, 26))
 	col.add_child(_menu_button("multiplayer", func(): add_child(MPMenu.new())))
 	col.add_child(_menu_button("journal", func(): add_child(JournalScreen.new())))
 	var mods := Array(Save.data.get("modifiers", []))
-	var mod_text := "modifiers" if Game.modifiers_unlocked() else "modifiers  (locked)"
+	var mod_text := Loc.t("modifiers") if Game.modifiers_unlocked() else Loc.t("modifiers  (locked)")
 	if Game.modifiers_unlocked() and not mods.is_empty():
-		mod_text += "  (%d on)" % mods.size()
+		mod_text += Loc.t("  (%d on)") % mods.size()
 	col.add_child(_menu_button(mod_text, func(): add_child(ModifiersScreen.new())))
 	col.add_child(_menu_button("achievements", func(): add_child(AchievementsScreen.new())))
 	col.add_child(_menu_button("settings", func(): add_child(SettingsMenu.new())))
@@ -287,7 +287,7 @@ func _fit_menu(col: Control) -> void:
 	var need := col.get_combined_minimum_size().y
 	var k := minf(1.0, h / maxf(1.0, need))
 	col.scale = Vector2(k, k)
-	col.pivot_offset = Vector2(0, h / 2.0)
+	col.pivot_offset = Vector2.ZERO  # shrink toward the top, so the bottom lands right above the footer
 	if not get_viewport().size_changed.is_connected(_fit_menu):
 		get_viewport().size_changed.connect(_fit_menu.bind(col))
 

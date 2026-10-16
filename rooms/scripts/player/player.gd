@@ -487,7 +487,7 @@ func owns(item: String) -> bool:
 
 func select_item(item: String) -> void:
 	if not owns(item):
-		notify("you don't have " + ("any " if item in ["bandage", "vitamins"] else "a ") + item + ("s" if item == "bandage" else ""))
+		notify(Loc.t("you don't have " + ("any " if item in ["bandage", "vitamins"] else "a ") + item + ("s" if item == "bandage" else "")))
 		return
 	selected = item
 	# lights only shine while you hold them
@@ -523,7 +523,7 @@ func use_item() -> void:
 		"stardevice":
 			Save.data.stardevice_on = not bool(Save.data.get("stardevice_on", true))
 			Save.write()
-			notify("stardevice " + ("on" if Save.data.stardevice_on else "off"))
+			notify(Loc.t("stardevice " + ("on" if Save.data.stardevice_on else "off")))
 		"starjug":
 			if int(Save.data.get("starjug", 0)) > 0:
 				Save.data.starjug = int(Save.data.starjug) - 1
@@ -531,7 +531,7 @@ func use_item() -> void:
 				heal(20.0)
 				give_star(40.0, 30.0)
 				Game.play_ui("vitamins")
-				notify("starlight. %d sips left" % int(Save.data.starjug))
+				notify(Loc.t("starlight. %d sips left") % int(Save.data.starjug))
 		"starhelp":
 			if inventory.batteries > 0:
 				inventory.batteries -= 1

@@ -22,7 +22,7 @@ func add(item: String, amount := 1) -> void:
 				amount *= 2
 			Save.add_gold(amount)
 			Game.play_ui("gold")
-			p.notify("+%d gold" % amount)
+			p.notify(Loc.t("+%d gold") % amount)
 		"battery":
 			batteries += amount
 			p.notify("+ battery")

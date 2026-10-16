@@ -75,8 +75,8 @@ func _last_message(pos: Vector3, yaw: float, ink: Color) -> void:
 	line2.rotation.z = 0.04
 	# work out where "ca" sits on the second line, and scribble right over it
 	var font: Font = line2.font if line2.font else ThemeDB.fallback_font
-	var full := font.get_string_size(second, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-	var before := font.get_string_size("signal and cant ", HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var full := font.get_string_size(Loc.t(second), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var before := font.get_string_size(Loc.t("signal and cant "), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 	var x0 := (before - full / 2.0) * line2.pixel_size - 0.04
 	var x1 := (full / 2.0) * line2.pixel_size + 0.18
 	_scribble(line2, x0, x1, ink.darkened(0.35))

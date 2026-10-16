@@ -28,7 +28,7 @@ func _ready() -> void:
 		l.text = "ELEVATOR POWER"
 	else:
 		var r: Array = Game.POWER_RANGES[range_i]
-		l.text = "ENABLE ELECTRICITY FOR\n%s - %s" % [Game.a_label(r[0]), Game.a_label(r[1])]
+		l.text = Loc.t("ENABLE ELECTRICITY FOR\n%s - %s") % [Game.a_label(r[0]), Game.a_label(r[1])]
 	l.font_size = 36
 	l.pixel_size = 0.004
 	l.modulate = Color(0.95, 0.8, 0.25)
@@ -61,7 +61,7 @@ func flip() -> void:
 	if requires >= 0 and not Game.powered(Game.POWER_RANGES[requires][0]):
 		var r: Array = Game.POWER_RANGES[requires]
 		if Game.player:
-			Game.player.notify("nothing happens. power %s - %s first" % [Game.a_label(r[0]), Game.a_label(r[1])])
+			Game.player.notify(Loc.t("nothing happens. power %s - %s first") % [Game.a_label(r[0]), Game.a_label(r[1])])
 		return
 	on = true
 	_it.enabled = false
@@ -77,7 +77,7 @@ func flip() -> void:
 		Game.power[range_i] = true
 		var r: Array = Game.POWER_RANGES[range_i]
 		if Game.player:
-			Game.player.notify("power is back on for %s - %s" % [Game.a_label(r[0]), Game.a_label(r[1])])
+			Game.player.notify(Loc.t("power is back on for %s - %s") % [Game.a_label(r[0]), Game.a_label(r[1])])
 	else:
 		Game.elevator_power = true
 	Game.play_ui("power_on")

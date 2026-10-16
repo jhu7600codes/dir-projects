@@ -48,7 +48,7 @@ func _ready() -> void:
 		m.position = Vector3(x, 1.05, 0.02)
 		add_child(m)
 		_models.append(m)
-		var it := Interactable.make(Vector3(0.8, 0.8, 0.6), "%d gold" % price)
+		var it := Interactable.make(Vector3(0.8, 0.8, 0.6), Loc.t("%d gold") % price)
 		it.position = Vector3(x, 1.2, 0.2)
 		it.used.connect(_buy.bind(item, price))
 		add_child(it)

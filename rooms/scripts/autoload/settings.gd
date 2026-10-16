@@ -23,6 +23,7 @@ var data := {
 	"touch_left_handed": false, # swaps the stick and the buttons
 	"touch_scale": 1.0,
 	"touch_opacity": 0.55,
+	"language": "auto",         # auto (follows the device), en, ru
 }
 
 
@@ -30,6 +31,7 @@ func _ready() -> void:
 	_setup_input()
 	_setup_buses()
 	load_settings()
+	Loc.use(str(data.language))
 	apply()
 
 

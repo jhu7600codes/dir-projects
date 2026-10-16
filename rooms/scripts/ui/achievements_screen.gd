@@ -16,7 +16,7 @@ func _ready() -> void:
 	for id in Achievements.LIST:
 		if Achievements.has(id):
 			got += 1
-	outer.add_child(UIKit.label("achievements  %d / %d" % [got, Achievements.LIST.size()], 26, UIKit.ACCENT))
+	outer.add_child(UIKit.label(Loc.t("achievements  %d / %d") % [got, Achievements.LIST.size()], 26, UIKit.ACCENT))
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(540, minf(460, get_viewport_rect().size.y - 160))
 	outer.add_child(scroll)
@@ -27,7 +27,7 @@ func _ready() -> void:
 		var on := Achievements.has(id)
 		var a: Array = Achievements.LIST[id]
 		v.add_child(UIKit.label(a[0], 18, UIKit.ACCENT if on else Color(0.45, 0.45, 0.45)))
-		var dl := UIKit.label(a[1] if on else "??? - " + a[1], 14, Color(0.75, 0.75, 0.75) if on else Color(0.4, 0.4, 0.4))
+		var dl := UIKit.label(a[1] if on else "??? - " + Loc.t(a[1]), 14, Color(0.75, 0.75, 0.75) if on else Color(0.4, 0.4, 0.4))
 		v.add_child(dl)
 	outer.add_child(UIKit.button("back", func():
 		closed.emit()

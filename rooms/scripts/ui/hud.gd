@@ -248,7 +248,7 @@ func set_prompt(text: String, hold_progress := -1.0) -> void:
 
 ## stardevice / starhelp: a blue banner at the top when an entity shows up
 func star_warning(who: String) -> void:
-	_star_banner.text = "★  %s is coming  ★" % who.to_upper()
+	_star_banner.text = Loc.t("★  %s is coming  ★") % who.to_upper()
 	_star_banner.modulate.a = 1.0
 	var tw := create_tween()
 	tw.tween_interval(2.5)

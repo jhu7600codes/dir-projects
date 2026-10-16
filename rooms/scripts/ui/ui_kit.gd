@@ -9,6 +9,7 @@ const ACCENT := Color(0.95, 0.85, 0.4)
 static func cap(text: String) -> String:
 	if text.is_empty():
 		return text
+	text = Loc.t(text)
 	return text.substr(0, 1).to_upper() + text.substr(1)
 
 
@@ -79,7 +80,7 @@ static func section(parent: Control, text: String) -> void:
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 6)
 	parent.add_child(gap)
-	parent.add_child(label(text.to_upper(), 13, ACCENT.darkened(0.15)))
+	parent.add_child(label(Loc.t(text).to_upper(), 13, ACCENT.darkened(0.15)))
 	var line := ColorRect.new()
 	line.color = Color(1, 1, 1, 0.08)
 	line.custom_minimum_size = Vector2(0, 1)

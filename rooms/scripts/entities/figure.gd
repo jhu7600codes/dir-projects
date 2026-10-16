@@ -103,7 +103,7 @@ func _setup_puzzle(r: RoomBase) -> void:
 	it.position.y = 0.15
 	it.used.connect(func(_p):
 		note = code
-		player.notify("the paper says " + " ".join(code.split("")))
+		player.notify(Loc.t("the paper says ") + " ".join(code.split("")))
 		Game.play_ui("pickup"))
 	_paper.add_child(it)
 
