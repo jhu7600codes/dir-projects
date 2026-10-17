@@ -13,10 +13,27 @@ const NAMES := {
 	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
 	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
 	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25",
+	"a10": "a-10", "a50": "a-50", "lurkmask": "lurkmask", "w30": "w-30", "c15": "the pigeons",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
 const HINTS := {
+	"a10": {
+		"": ["it was eating the rooms behind you, and you stopped.", "it's slow. keep walking and it can't catch you. it gives up after six doors."],
+		"hid": ["you hid from it. it doesn't care about lockers.", "don't hide from the void. just keep going."],
+	},
+	"a50": {
+		"": ["you stayed hidden too long, and the dark found you.", "when it gets dark in the locker, turn your flashlight on once, or get out."],
+	},
+	"lurkmask": {
+		"": ["it threw itself at your face.", "when you hear the giggle after a door, crouch. it flies over you."],
+	},
+	"w30": {
+		"": ["the steam hit you.", "when the pipes hiss, crouch. the steam goes over your head."],
+	},
+	"c15": {
+		"": ["you scared the pigeons.", "walk slowly past them. don't run near the flock."],
+	},
 	"a60": {
 		"": ["it comes from behind, right after you walk into a room with lockers.", "when the lights flicker and you hear crackling, get into a locker right away."],
 		"left_early": ["you got out of the locker too early.", "wait until the hissing is completely gone before you come out."],

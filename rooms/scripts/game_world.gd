@@ -242,6 +242,7 @@ func _process(delta: float) -> void:
 	if Game.minigame != "":
 		_minigame_tick(delta)
 		return
+	_darkness_check(delta)
 	# fake crackles after a-60 to keep you on your toes. they start without a door opening,
 	# so a careful listener can tell them apart from the real a-60
 	if Game.door < 60 or entities.active.size() > 0 or _ended:
@@ -488,3 +489,26 @@ func _minigame_over() -> void:
 	var mr := MinigameResult.new()
 	add_child(mr)
 	mr.setup(Game.minigame, {Net.my_name if Net.my_name != "" else "you": score}, best)
+
+
+# a-50, the darkness: hiding for a long time while nothing is coming brings the dark
+const HIDE_LIMIT := 18.0
+var _hide_t := 0.0
+
+
+func _darkness_check(delta: float) -> void:
+	if player == null or player.dead or not entities.natural_spawns or Game.office_powered():
+		_hide_t = 0.0
+		return
+	var ok_floor := Game.floor == "city" or (Game.floor == "offices" and Game.door >= 50)
+	if not player.hidden or not ok_floor or entities.active.has("a50"):
+		_hide_t = 0.0
+		return
+	# hiding from something real doesn't count
+	if not entities.active.is_empty():
+		_hide_t = 0.0
+		return
+	_hide_t += delta
+	if _hide_t > HIDE_LIMIT:
+		_hide_t = 0.0
+		entities.spawn("a50")

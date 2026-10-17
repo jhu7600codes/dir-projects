@@ -1162,6 +1162,91 @@
     "volume": 0.6
    },
    "loop": true
+  },
+  "a10_far": {
+   "path": "res://assets/local/sounds/a10_far.ogg",
+   "placeholder": {
+    "kind": "hum",
+    "length": 2.0,
+    "volume": 0.35
+   },
+   "loop": true
+  },
+  "a10_near": {
+   "path": "res://assets/local/sounds/a10_near.ogg",
+   "placeholder": {
+    "kind": "static",
+    "length": 1.5,
+    "volume": 0.5
+   },
+   "loop": true
+  },
+  "a50_whisper": {
+   "path": "res://assets/local/sounds/a50_whisper.ogg",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 2.0,
+    "volume": 0.35
+   },
+   "loop": true
+  },
+  "lurkmask_giggle": {
+   "path": "res://assets/local/sounds/lurkmask_giggle.ogg",
+   "placeholder": {
+    "kind": "chime",
+    "length": 0.8,
+    "volume": 0.5,
+    "freq": 880.0
+   }
+  },
+  "lurkmask_scream": {
+   "path": "res://assets/local/sounds/lurkmask_scream.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.5,
+    "volume": 0.9
+   }
+  },
+  "lurkmask_whoosh": {
+   "path": "res://assets/local/sounds/lurkmask_whoosh.ogg",
+   "placeholder": {
+    "kind": "whoosh",
+    "length": 0.5,
+    "volume": 0.6
+   }
+  },
+  "w30_hiss": {
+   "path": "res://assets/local/sounds/w30_hiss.ogg",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 2.2,
+    "volume": 0.6
+   }
+  },
+  "w30_blast": {
+   "path": "res://assets/local/sounds/w30_blast.ogg",
+   "placeholder": {
+    "kind": "whoosh",
+    "length": 1.2,
+    "volume": 0.9
+   }
+  },
+  "c15_coo": {
+   "path": "res://assets/local/sounds/c15_coo.ogg",
+   "placeholder": {
+    "kind": "tone",
+    "length": 0.6,
+    "volume": 0.25,
+    "freq": 280.0
+   }
+  },
+  "c15_flap": {
+   "path": "res://assets/local/sounds/c15_flap.ogg",
+   "placeholder": {
+    "kind": "rattle",
+    "length": 1.5,
+    "volume": 0.8
+   }
   }
  },
  "music": {

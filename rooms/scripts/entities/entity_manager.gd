@@ -29,6 +29,14 @@ const SCRIPTS := {
 	# the great city
 	"headlights": preload("res://scripts/entities/headlights.gd"),
 	"billboard": preload("res://scripts/entities/billboard.gd"),
+	"c15": preload("res://scripts/entities/c15.gd"),
+	# the wires
+	"w30": preload("res://scripts/entities/w30.gd"),
+	# from rooms & doors
+	"a10": preload("res://scripts/entities/a10.gd"),
+	"a50": preload("res://scripts/entities/a50.gd"),
+	# cut from rooms: revisited
+	"lurkmask": preload("res://scripts/entities/lurkmask.gd"),
 }
 ## chance that a-90 joins when a-60 or a-120 spawns (a-60 is slowed down when it does)
 const A90_JOIN_CHANCE := 0.2
@@ -48,8 +56,15 @@ func _ready() -> void:
 			_timers[id] = _roll_timer(id)
 
 
+var _rules_cache := {}
+
+
+## an entity's RULES. a script that extends another entity uses OWN_RULES instead
 func rules(id: String) -> Dictionary:
-	return SCRIPTS[id].RULES
+	if not _rules_cache.has(id):
+		var c: Dictionary = SCRIPTS[id].get_script_constant_map()
+		_rules_cache[id] = c.get("OWN_RULES", c.get("RULES", SCRIPTS[id].RULES))
+	return _rules_cache[id]
 
 
 func _roll_timer(id: String) -> float:
@@ -160,7 +175,7 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 
 
 ## entities that only concern one player (your own staring, your own fake locker)
-const LOCAL_IDS := ["a70", "worker"]
+const LOCAL_IDS := ["a70", "worker", "a50", "lurkmask"]
 
 
 func spawn(id: String, opts := {}) -> Entity:
