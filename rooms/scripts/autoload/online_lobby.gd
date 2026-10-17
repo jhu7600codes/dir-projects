@@ -6,7 +6,7 @@ extends RefCounted
 ## leaves, or hasn't been heard from in 8 seconds.
 
 const TOPIC := "realtime:rooms-lobby"
-const VERSION := 1      # only hosts on the same version show up (so nobody joins an incompatible game)
+const VERSION := 2      # only hosts on the same version show up (so nobody joins an incompatible game)
 const AD_EVERY := 3.0
 const FORGET := 8.0
 

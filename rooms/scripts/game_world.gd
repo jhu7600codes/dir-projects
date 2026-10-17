@@ -88,13 +88,24 @@ func _ready() -> void:
 
 	if not Settings.use_touch():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	if Game.modifiers.is_empty():
+	if Game.minigame != "":
+		_start_minigame.call_deferred()
+	elif Game.modifiers.is_empty():
 		hud.notify("open the door to start. hide in lockers when you hear something.")
 	else:
 		var names := []
 		for m in Game.modifiers:
 			names.append(Loc.t(Game.MODIFIERS[m][0]))
 		hud.notify(Loc.t("modifiers: ") + ", ".join(names))
+	# "charge your phone": w-10 tags along through every room of the offices and the city
+	if Game.mod("charge_phone") and Game.floor != "wires":
+		var ct := Timer.new()
+		ct.wait_time = 3.0
+		ct.autostart = true
+		ct.timeout.connect(func():
+			if entities and player and not player.dead and not entities.active.has("w10"):
+				entities.spawn("w10", {"follow": true}))
+		add_child(ct)
 
 
 func _on_net_left(_reason: String) -> void:
@@ -228,6 +239,9 @@ func _on_door_changed(n: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if Game.minigame != "":
+		_minigame_tick(delta)
+		return
 	# fake crackles after a-60 to keep you on your toes. they start without a door opening,
 	# so a careful listener can tell them apart from the real a-60
 	if Game.door < 60 or entities.active.size() > 0 or _ended:
@@ -250,6 +264,9 @@ func _on_died(cause: String) -> void:
 	if _ended:
 		return
 	_ended = true
+	if Game.minigame != "":
+		_minigame_over()
+		return
 	Save.clear_run()
 	Save.data.deaths = int(Save.data.deaths) + 1
 	Save.write()
@@ -305,6 +322,10 @@ func net_finished(reason: String) -> void:
 			Achievements.unlock("wired_up")
 			if Net.is_host:
 				Net.host_start("offices", true)
+		"all_dead" when Game.minigame != "":
+			var mr := MinigameResult.new()
+			add_child(mr)
+			mr.setup(Game.minigame, Net.mg_scores)
 		"all_dead":
 			var es := EndScreen.new()
 			add_child(es)
@@ -391,3 +412,79 @@ func _exit_tree() -> void:
 	Game.forced_sprint = false
 	Game.touch_move = Vector2.ZERO
 	Game.touch_count = 0
+
+
+# ---------- minigames ----------
+# a normal game scene, locked in the lobby: the door doesn't open, nothing spawns by itself,
+# and the minigame keeps throwing its thing at you until you're dead
+
+var _mg_t := 0.0      # seconds survived
+var _mg_count := 0    # a-90s survived
+var _mg_label: Label
+var _mg_next := 6.0
+var _mg_a90_on := false
+
+
+func _start_minigame() -> void:
+	entities.natural_spawns = false
+	var d: Door = generator.room(0).exit_door
+	if d:
+		d.code_lock(func(): hud.notify("no way out. survive."), "locked", false)
+	var cl := CanvasLayer.new()
+	cl.layer = 30
+	add_child(cl)
+	_mg_label = UIKit.label("", 26, UIKit.ACCENT)
+	_mg_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_mg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mg_label.offset_top = 14
+	_mg_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	cl.add_child(_mg_label)
+	hud.notify(Game.MINIGAMES[Game.minigame][1])
+	if Game.minigame == "w10" and (not Net.active or Net.is_host):
+		entities.spawn("w10", {"follow": true, "endless": 0.01})
+
+
+func _minigame_tick(delta: float) -> void:
+	if _mg_label == null or player == null or player.dead:
+		return
+	_mg_t += delta
+	match Game.minigame:
+		"w10":
+			_mg_label.text = "%d:%02d" % [int(_mg_t) / 60, int(_mg_t) % 60]
+			# something might clear it (a glitch): bring it back, as fast as it was
+			if (not Net.active or Net.is_host) and not entities.active.has("w10"):
+				entities.spawn("w10", {"follow": true, "endless": maxf(0.01, _mg_t)})
+		"a90":
+			_mg_label.text = Loc.t("a-90s survived: %d") % _mg_count
+			var on := entities.active.has("a90")
+			if _mg_a90_on and not on:
+				_mg_count += 1  # it left and you're still here
+			_mg_a90_on = on
+			if not on:
+				_mg_next -= delta
+				if _mg_next <= 0.0:
+					_mg_next = maxf(2.5, 8.0 - _mg_count * 0.25) * randf_range(0.8, 1.3)
+					if not Net.active or Net.is_host:
+						entities.spawn("a90")
+
+
+func mg_score() -> int:
+	return int(_mg_t) if Game.minigame == "w10" else _mg_count
+
+
+func _minigame_over() -> void:
+	Game.play_ui("death")
+	entities.clear_all()
+	var score := mg_score()
+	var key := "mg_best_" + Game.minigame
+	var best := int(Save.data.get(key, 0))
+	if score > best:
+		Save.data[key] = score
+		Save.write()
+	if Net.active:
+		Net.mg_score(score)
+		_spectate()
+		return
+	var mr := MinigameResult.new()
+	add_child(mr)
+	mr.setup(Game.minigame, {Net.my_name if Net.my_name != "" else "you": score}, best)

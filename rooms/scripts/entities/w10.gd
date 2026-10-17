@@ -10,6 +10,8 @@ const DAMAGE := 25.0
 const LUNGE_SPEED := 13.0
 
 var room_n := 0
+var endless := 0.0  # the w-10 minigame: seconds since it started, things speed up
+var follow := false  # "charge your phone": comes along through every door instead of guarding one room
 var _next := 2.0
 var _outlets: Array = []  # [sprite, light, state, timer, target]
 static var _tex: Texture2D
@@ -24,12 +26,19 @@ func begin() -> void:
 func _process(delta: float) -> void:
 	if _done or is_frozen() or player == null or player.dead:
 		return
-	if Game.door != room_n:
+	if not follow and Game.door != room_n:
 		finish()
 		return
 	_next -= delta
-	if _next <= 0.0 and _outlets.size() < 2:
-		_next = randf_range(2.5, 4.5)
+	var most := 1 if follow else 2
+	if endless > 0.0:
+		endless += delta
+		most = mini(5, 1 + int(endless / 25.0))
+	if _next <= 0.0 and _outlets.size() < most and not player.hidden:
+		if endless > 0.0:
+			_next = maxf(0.6, 3.0 - endless * 0.025) * randf_range(0.8, 1.2)
+		else:
+			_next = randf_range(4.0, 7.0) if follow else randf_range(2.5, 4.5)
 		_spawn_outlet()
 	for o in _outlets.duplicate():
 		_tick(o, delta)
@@ -90,7 +99,7 @@ func _tick(o: Array, delta: float) -> void:
 			au.play()
 	elif o[2] == "lunge":
 		var to: Vector3 = o[4] - s.global_position
-		var step := LUNGE_SPEED * delta
+		var step := LUNGE_SPEED * (1.0 + minf(endless, 180.0) / 360.0) * delta
 		# keeps flying past the spot you were at, so it can't turn to follow you
 		var dir := to.normalized() if to.length() > 0.05 else Vector3.ZERO
 		s.global_position += dir * step

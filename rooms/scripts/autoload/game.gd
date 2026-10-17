@@ -31,6 +31,12 @@ var carry := {}             # health + items brought along when you switch floor
 var has_key := false        # the management key from a drawer at a-240
 var power := [false, false, false, false, false]  # wires switches flipped this run (a-001..a-200, ..)
 var elevator_power := false
+## minigames (title screen, arcade, multiplayer party): "" in a normal run
+const MINIGAMES := {
+	"w10": ["w-10 forever", "outlets pop out of the walls faster and faster. dodge them as long as you can"],
+	"a90": ["a-90 forever", "a-90 keeps showing up. freeze every time. how many can you take?"],
+}
+var minigame := ""
 var fixed_office := false   # this run is the office after the wires: lit, people, no entities
 
 ## unlocked by the "welp, thats been a long walk." achievement (leave through an exit door).
@@ -47,6 +53,7 @@ const MODIFIERS := {
 	"out_of_shape": ["out of shape", "running wears you out twice as fast"],
 	"empty_pockets": ["empty pockets", "drawers are mostly empty and there's less loot lying around"],
 	"inflation": ["inflation", "everything in the shops costs twice as much"],
+	"charge_phone": ["charge your phone", "w-10 follows you from a-000 all the way to c-30. outlets keep popping out of the walls, dodge them"],
 	"more_doors": ["got any more doors?", "\"They're for my friends Rush, Ambush, Eyes, Screech, Figure and Seek.\" the entities from doors' hotel move into the office"],
 }
 
@@ -107,11 +114,12 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 		pending_run = {}
 	floor = str(pending_run.get("floor", "offices")) if continuing else floor_id
 	carry = carry_over
+	minigame = "" if continuing else str(carry_over.get("minigame", ""))
 	admin = with_admin
 	# admin runs keep their own progress (user://save_admin.json)
 	Save.use_profile("admin" if admin else "main")
-	if not continuing:
-		Save.clear_run()
+	if not continuing and minigame == "":
+		Save.clear_run()  # (a minigame keeps your saved run for "continue")
 	for k in admin_flags:
 		admin_flags[k] = false
 	door = 0
@@ -127,10 +135,12 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 	death_details = {}
 	if continuing:
 		modifiers = Array(pending_run.get("modifiers", []))
+	elif minigame != "":
+		modifiers = []
 	else:
 		modifiers = Array(Save.data.get("modifiers", [])) if modifiers_unlocked() else []
 	tracked_entity = null
-	if not continuing:
+	if not continuing and minigame == "":
 		Save.data.runs = int(Save.data.runs) + 1
 		Save.write()
 	Achievements.unlock("first_run")
@@ -144,6 +154,7 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 
 func to_menu() -> void:
 	save_run()
+	minigame = ""
 	floor = "offices"
 	get_tree().paused = false
 	Settings.set_world_audio_muted(false)
@@ -162,7 +173,7 @@ func set_door(n: int) -> void:
 		if n > int(Save.data.get("wires_best", 0)):
 			Save.data.wires_best = n
 			Save.write()
-	else:
+	elif minigame == "":
 		Save.record_door(n)
 	save_run()
 	if n >= 150 and floor == "offices":
@@ -195,7 +206,7 @@ func carry_state() -> Dictionary:
 ## remember the run in progress (door, seed, health and items)
 func save_run() -> void:
 	# multiplayer runs can't be continued later
-	if Net.active or player == null or generator == null or player.dead or door <= 0:
+	if Net.active or minigame != "" or player == null or generator == null or player.dead or door <= 0:
 		return
 	var inv = player.inventory
 	Save.save_run({

@@ -106,6 +106,16 @@ func _populate() -> void:
 
 
 ## put an atm against a wall (only in the powered office)
+## an OUTLET DODGE arcade cabinet (break room, cafeteria). not in minigames
+func add_arcade(pos: Vector3, yaw: float) -> void:
+	if Game.minigame != "":
+		return
+	var a := ArcadeMachine.new()
+	a.position = pos
+	a.rotation.y = yaw
+	add_child(a)
+
+
 func add_atm(pos: Vector3, yaw: float) -> void:
 	if not Game.office_powered():
 		return

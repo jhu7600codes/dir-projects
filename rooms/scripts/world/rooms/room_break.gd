@@ -18,4 +18,6 @@ func build() -> void:
 	add_cabinet(Vector3(-w / 2 + 0.27, 0, length * 0.75), PI / 2)
 	scatter_loot([Vector3(w / 2 - 0.35, Props.COUNTER_H + 0.02, length * 0.4), c + Vector3(0, Props.TABLE_H + 0.02, 0)])
 	add_atm(Vector3(-w / 2 + 0.3, 0, 1.5), PI / 2)
+	if rng.randf() < 0.5:
+		add_arcade(Vector3(-w / 2 + 0.35, 0, length * 0.42), PI / 2)
 	make_path([Vector3(0.6, 0, length * 0.4), Vector3(-1.5, 0, length - 1.2)])

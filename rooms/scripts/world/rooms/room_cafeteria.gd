@@ -42,6 +42,7 @@ func build() -> void:
 		var p := Vector3(-w / 2 + 0.55 + i * 1.0, 0, length - 0.6)
 		box(Vector3(0.9, 1.9, 0.8), p + Vector3(0, 0.95, 0), Mats.get_mat("car_red" if i == 0 else "car_blue"), true)
 		box(Vector3(0.6, 1.2, 0.02), p + Vector3(-0.08, 1.1, -0.41), Mats.get_mat("white_glow"), false)
+	add_arcade(Vector3(-w / 2 + 2.7, 0, length - 0.35), PI)
 	add_locker(Vector3(w / 2 - 0.4, 0, length - 1.5), -PI / 2)
 	add_locker(Vector3(w / 2 - 0.4, 0, length - 2.5), -PI / 2)
 	scatter_loot([Vector3(w / 2 - 0.45, Props.COUNTER_H + 0.02, length * 0.35), Vector3(0.6, 0.8, 3.0)])

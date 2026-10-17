@@ -55,10 +55,10 @@ func _box(size: Vector3, pos: Vector3, mat: String) -> MeshInstance3D:
 	return mi
 
 
-func flip() -> void:
+func flip(from_net := false) -> void:
 	if on:
 		return
-	if requires >= 0 and not Game.powered(Game.POWER_RANGES[requires][0]):
+	if not from_net and requires >= 0 and not Game.powered(Game.POWER_RANGES[requires][0]):
 		var r: Array = Game.POWER_RANGES[requires]
 		if Game.player:
 			Game.player.notify(Loc.t("nothing happens. power %s - %s first") % [Game.a_label(r[0]), Game.a_label(r[1])])
@@ -82,3 +82,11 @@ func flip() -> void:
 		Game.elevator_power = true
 	Game.play_ui("power_on")
 	flipped.emit()
+	if not from_net:
+		Net.send_event(self, "flip")  # multiplayer: the power comes on for everyone
+
+
+## multiplayer: someone else flipped this switch
+func net_event(what: String, _arg) -> void:
+	if what == "flip":
+		flip(true)

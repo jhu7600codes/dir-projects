@@ -30,7 +30,8 @@ var my_name := "worker"
 var players := {}  # peer id -> {name, dead}
 var hosts_found := {}  # ip -> {name, players, t}
 var public_game := false  # online host: listed in everyone's "games to join"
-var lobby := OnlineLobby.new()  # the public games list (see online_lobby.gd)
+var lobby := OnlineLobby.new()
+var mg_scores := {}  # party minigame: name -> score, filled in as people die  # the public games list (see online_lobby.gd)
 var remotes := {}  # peer id -> RemotePlayer (in the game scene)
 var _send_t := 0.0
 var _shout_t := 0.0
@@ -243,18 +244,20 @@ func _in_game() -> bool:
 # ---------- starting a run together ----------
 
 ## host: everybody starts the same run. each player keeps their own items (carry)
-func host_start(floor_id: String, fixed := false) -> void:
+func host_start(floor_id: String, fixed := false, minigame := "") -> void:
 	if not is_host:
 		return
 	var s := randi()
 	for id in players:
 		players[id]["dead"] = false
-	rpc("_start", s, floor_id, fixed, Game.modifiers)
-	_start(s, floor_id, fixed, Game.modifiers)
+	var mods: Array = [] if minigame != "" else Game.modifiers
+	rpc("_start", s, floor_id, fixed, mods, minigame)
+	_start(s, floor_id, fixed, mods, minigame)
 
 
 @rpc("authority", "reliable")
-func _start(seed_value: int, floor_id: String, fixed: bool, mods: Array) -> void:
+func _start(seed_value: int, floor_id: String, fixed: bool, mods: Array, minigame := "") -> void:
+	mg_scores.clear()
 	for id in players:
 		players[id]["dead"] = false
 	remotes.clear()
@@ -268,6 +271,8 @@ func _start(seed_value: int, floor_id: String, fixed: bool, mods: Array) -> void
 		carry = Game.carry_state()
 	if fixed:
 		carry["fixed"] = true
+	if minigame != "":
+		carry = {"minigame": minigame}
 	Game.start_run(false, false, floor_id, carry)
 	Game.modifiers = mods
 
@@ -465,3 +470,19 @@ func _event(ref: Array, what: String, arg) -> void:
 func next_drop_name() -> String:
 	_drop_n += 1
 	return "drop_%d" % _drop_n
+
+
+# ---------- party minigames ----------
+
+## you're out: tell everyone your score (the results list fills in as people die)
+func mg_score(score: int) -> void:
+	if not active:
+		return
+	rpc("_mg_score", my_name, score)
+	_mg_score(my_name, score)
+	i_died()
+
+
+@rpc("any_peer", "reliable")
+func _mg_score(who: String, score: int) -> void:
+	mg_scores[who] = score

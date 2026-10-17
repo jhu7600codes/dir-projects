@@ -8,7 +8,7 @@ var _ip: LineEdit
 var _status: Label
 var _list: VBoxContainer
 var _found: VBoxContainer
-var _start: Button
+var _start: Control
 var _mode := ""  # "", "host", "join"
 var _public: CheckBox
 
@@ -60,7 +60,18 @@ func _ready() -> void:
 	v.add_child(_status)
 	_list = UIKit.vbox(4)
 	v.add_child(_list)
-	_start = UIKit.button("start the run", func(): Net.host_start("offices"), 20)
+	var sr := HBoxContainer.new()
+	sr.add_theme_constant_override("separation", 10)
+	sr.add_child(UIKit.button("start: the offices", func(): Net.host_start("offices"), 18))
+	sr.add_child(UIKit.button("start: the wires", func(): Net.host_start("wires"), 18))
+	var pr := HBoxContainer.new()
+	pr.add_theme_constant_override("separation", 10)
+	for mg in Game.MINIGAMES:
+		pr.add_child(UIKit.button(Loc.t("party: ") + Loc.t(Game.MINIGAMES[mg][0]), func(): Net.host_start("offices", false, mg), 16))
+	var both := UIKit.vbox(8)
+	both.add_child(sr)
+	both.add_child(pr)
+	_start = both
 	_start.visible = false
 	v.add_child(_start)
 	v.add_child(UIKit.button("back", func():
