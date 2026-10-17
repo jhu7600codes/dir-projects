@@ -29,6 +29,8 @@ var code := ""
 var my_name := "worker"
 var players := {}  # peer id -> {name, dead}
 var hosts_found := {}  # ip -> {name, players, t}
+var public_game := false  # online host: listed in everyone's "games to join"
+var lobby := OnlineLobby.new()  # the public games list (see online_lobby.gd)
 var remotes := {}  # peer id -> RemotePlayer (in the game scene)
 var _send_t := 0.0
 var _shout_t := 0.0
@@ -68,9 +70,12 @@ func host(player_name: String) -> String:
 
 
 ## online: host a game through supabase, others join with the code
-func host_online(player_name: String) -> String:
+func host_online(player_name: String, make_public := false) -> String:
 	stop("")
 	my_name = player_name
+	public_game = make_public
+	if make_public:
+		lobby.open()
 	var letters := "ABCDEFGHJKLMNPQRSTUVWXYZ"
 	code = ""
 	for i in 5:
@@ -127,6 +132,7 @@ func stop(reason: String) -> void:
 	active = false
 	is_host = false
 	online = false
+	public_game = false
 	players.clear()
 	remotes.clear()
 	if multiplayer.multiplayer_peer and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
@@ -141,6 +147,7 @@ func stop(reason: String) -> void:
 
 
 func start_listening() -> void:
+	lobby.open()
 	if _listen or OS.has_feature("web"):
 		return
 	_listen = PacketPeerUDP.new()
@@ -149,6 +156,7 @@ func start_listening() -> void:
 
 
 func stop_listening() -> void:
+	lobby.close()
 	if _listen:
 		_listen.close()
 	_listen = null
@@ -198,6 +206,12 @@ func _players(p: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	# a public online host shows up in the list until the run starts (or it fills up)
+	if active and is_host and online and public_game and not _in_game() and players.size() < MAX_PLAYERS:
+		lobby.advertise(code, my_name, players.size())
+	else:
+		lobby.stop_advertising()
+	lobby.poll(delta)
 	if _listen:
 		while _listen.get_available_packet_count() > 0:
 			var pkt := _listen.get_packet().get_string_from_utf8()
@@ -245,6 +259,7 @@ func _start(seed_value: int, floor_id: String, fixed: bool, mods: Array) -> void
 		players[id]["dead"] = false
 	remotes.clear()
 	_drop_n = 0
+	lobby.close()  # the run started: off the public list, no more listening
 	Game.net_seed = seed_value
 	# going on to the next floor keeps your health and items (if you're still alive)
 	var carry := {}

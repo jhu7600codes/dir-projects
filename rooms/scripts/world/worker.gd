@@ -17,6 +17,7 @@ var head_texture: Texture2D = null  # entity workers get an entity face for a he
 var _arms: Array[Node3D] = []
 var dead := false
 var face_key := "a60_face_1"  # what their face looks like when they come after you
+var can_overreact := true      # off for other players' avatars: you can look at your friends
 var look_time := 1.5          # how long you can stare before they snap
 var look_range := 8.0
 var _home := Transform3D.IDENTITY
@@ -218,7 +219,7 @@ func _part(size: Vector3, pos: Vector3, c: Color, parent: Node3D = null) -> Mesh
 
 
 func _physics_process(delta: float) -> void:
-	if dead or Game.player == null or Game.player.dead or Game.player.hidden:
+	if not can_overreact or dead or Game.player == null or Game.player.dead or Game.player.hidden:
 		return
 	_calm_t -= delta
 	_check_t -= delta

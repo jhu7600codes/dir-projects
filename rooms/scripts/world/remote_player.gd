@@ -18,7 +18,7 @@ var _first := true
 func _ready() -> void:
 	_avatar = Worker.new()
 	_avatar.seated = false
-	_avatar.set_physics_process(false)  # other players don't overreact
+	_avatar.can_overreact = false  # your friends don't overreact when you look at them
 	add_child(_avatar)
 	_tag = Label3D.new()
 	_tag.text = player_name

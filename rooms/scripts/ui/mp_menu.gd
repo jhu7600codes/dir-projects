@@ -10,6 +10,7 @@ var _list: VBoxContainer
 var _found: VBoxContainer
 var _start: Button
 var _mode := ""  # "", "host", "join"
+var _public: CheckBox
 
 
 func _ready() -> void:
@@ -38,6 +39,10 @@ func _ready() -> void:
 	if not OS.has_feature("web"):
 		row.add_child(UIKit.button("host on wifi", _host, 16))
 	v.add_child(row)
+	_public = UIKit.check("public game (anyone can join from the list)", bool(Save.data.get("mp_public", true)), func(on):
+		Save.data.mp_public = on
+		Save.write())
+	v.add_child(_public)
 	row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	_ip = LineEdit.new()
@@ -47,7 +52,7 @@ func _ready() -> void:
 	row.add_child(_ip)
 	row.add_child(UIKit.button("join", func(): _join(_ip.text), 18))
 	v.add_child(row)
-	v.add_child(UIKit.label("games on your wifi:", 15, Color(0.7, 0.7, 0.7)))
+	v.add_child(UIKit.label("games to join:", 15, Color(0.7, 0.7, 0.7)))
 	_found = UIKit.vbox(4)
 	v.add_child(_found)
 	_status = UIKit.label("", 15, UIKit.ACCENT)
@@ -86,7 +91,7 @@ func _on_left(reason: String) -> void:
 
 
 func _host_online() -> void:
-	var err := Net.host_online(_name.text)
+	var err := Net.host_online(_name.text, _public.button_pressed)
 	if err != "":
 		_status.text = err
 		return
@@ -143,5 +148,10 @@ func _refresh_found() -> void:
 		if Net.is_host:
 			continue
 		_found.add_child(UIKit.button(Loc.t("join %s  (%d/4)  -  %s") % [h.name, h.players, ip], func(): _join(ip), 15))
+	# public online games (from anywhere)
+	if not Net.active:
+		for c in Net.lobby.games.keys():
+			var g: Dictionary = Net.lobby.games[c]
+			_found.add_child(UIKit.button(Loc.t("join %s  (%d/4)  -  online") % [g.name, g.players], func(): _join(c), 15))
 	if _found.get_child_count() == 0:
 		_found.add_child(UIKit.label("  none yet", 14, Color(0.5, 0.5, 0.5)))
