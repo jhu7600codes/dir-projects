@@ -23,9 +23,6 @@ const CAUSES := {
 	"screech": "Screech bit you. look at it when it whispers.",
 	"figure": "Figure heard you.",
 	"seek": "Seek caught you. keep running.",
-	"a10": "the void caught up with you. keep moving.",
-	"a50": "the dark got you. don't hide too long.",
-	"lurkmask": "lurkmask got you. crouch when it giggles.",
 	"w30": "the steam got you. crouch when the pipes hiss.",
 	"c15": "the pigeons got you. don't run near them.",
 }
