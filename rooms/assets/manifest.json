@@ -215,15 +215,15 @@
    }
   },
   "a200_face": {
-   "path": "res://assets/local/textures/a200_face.webp",
+   "path": "res://assets/local/textures/a200_face.png",
    "placeholder": {
     "kind": "face",
     "color": "#ffffff",
     "style": "scribble"
    },
    "source": {
-    "wiki": "rooms-revisited",
-    "file": "A-200.webp"
+    "wiki": "r-rooms",
+    "file": "A-200-6.png"
    }
   },
   "star_marker": {
