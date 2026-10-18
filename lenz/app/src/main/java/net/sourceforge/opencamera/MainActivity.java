@@ -5103,9 +5103,8 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
                 setZoomSeekbar();
 
                 if( sharedPreferences.getBoolean(PreferenceKeys.ShowZoomSliderControlsPreferenceKey, true) ) {
-                    if( !mainUI.inImmersiveMode() ) {
-                        zoomSeekBar.setVisibility(View.VISIBLE);
-                    }
+                    // Lenz: the slider only appears while pinch zooming, see MainUI.flashZoomSeekbar()
+                    zoomSeekBar.setVisibility(View.INVISIBLE);
                 }
                 else {
                     zoomSeekBar.setVisibility(View.INVISIBLE); // should be INVISIBLE not GONE, as the focus_seekbar is aligned to be left to this; in future we might want this similarly for exposure panel

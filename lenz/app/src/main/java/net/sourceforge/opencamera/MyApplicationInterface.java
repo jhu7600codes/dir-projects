@@ -2978,6 +2978,7 @@ public class MyApplicationInterface extends BasicApplicationInterface {
     @Override
     public void multitouchZoom(int new_zoom) {
         main_activity.getMainUI().setSeekbarZoom(new_zoom);
+        main_activity.getMainUI().flashZoomSeekbar();
     }
 
     @Override

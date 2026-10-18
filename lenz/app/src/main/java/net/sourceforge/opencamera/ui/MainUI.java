@@ -697,8 +697,8 @@ public class MainUI {
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, 0);
                 int bar_size = (int) ((system_orientation_portrait ? 48 : 110) * scale + 0.5f);
-                // leave room for the zoom slider that sits next to the shutter
-                int gap = (int) (56 * scale + 0.5f);
+                // sits right next to the shutter, on the black bar outside the preview
+                int gap = 0;
                 if( system_orientation_portrait ) {
                     layoutParams.width = RelativeLayout.LayoutParams.MATCH_PARENT;
                     layoutParams.height = bar_size;
@@ -1299,7 +1299,7 @@ public class MainUI {
                     Log.d(TAG, "has_zoom: " + main_activity.getPreview().supportsZoom());
                 }
                 if( main_activity.getPreview().supportsZoom() && sharedPreferences.getBoolean(PreferenceKeys.ShowZoomSliderControlsPreferenceKey, true) ) {
-                    zoomSeekBar.setVisibility(visibility);
+                    zoomSeekBar.setVisibility(View.INVISIBLE); // Lenz: only shown while pinch zooming
                 }
                 if( main_activity.showManualFocusSeekbar(false) )
                     focusSeekBar.setVisibility(visibility);
@@ -3150,5 +3150,30 @@ public class MainUI {
 
     public int testGetExposureLine() {
         return mExposureLine;
+    }
+
+    private final Runnable hideZoomSeekbarRunnable = new Runnable() {
+        @Override
+        public void run() {
+            final View zoomSeekBar = main_activity.findViewById(R.id.zoom_seekbar);
+            zoomSeekBar.animate().alpha(0.0f).setDuration(300).withEndAction(() -> {
+                zoomSeekBar.setVisibility(View.INVISIBLE);
+                zoomSeekBar.setAlpha(1.0f);
+            }).start();
+        }
+    };
+
+    /** Lenz: shows the zoom slider while the user pinch zooms, then fades it out.
+     */
+    public void flashZoomSeekbar() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(main_activity);
+        if( !sharedPreferences.getBoolean(PreferenceKeys.ShowZoomSliderControlsPreferenceKey, true) || inImmersiveMode() )
+            return;
+        View zoomSeekBar = main_activity.findViewById(R.id.zoom_seekbar);
+        zoomSeekBar.removeCallbacks(hideZoomSeekbarRunnable);
+        zoomSeekBar.animate().cancel();
+        zoomSeekBar.setAlpha(1.0f);
+        zoomSeekBar.setVisibility(View.VISIBLE);
+        zoomSeekBar.postDelayed(hideZoomSeekbarRunnable, 1500);
     }
 }
