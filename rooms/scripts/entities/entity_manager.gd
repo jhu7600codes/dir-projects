@@ -24,6 +24,8 @@ const SCRIPTS := {
 	# from rooms: revisited
 	"a70": preload("res://scripts/entities/a70.gd"),
 	"a25": preload("res://scripts/entities/a25.gd"),
+	# nico's unreleased star from rooms
+	"a150": preload("res://scripts/entities/a150.gd"),
 	# the coworkers, when you stare at one (spawned by the worker itself)
 	"worker": preload("res://scripts/entities/overreact.gd"),
 	# the great city

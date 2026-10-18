@@ -426,6 +426,18 @@
     "color": "#8c4dff",
     "style": "dots"
    }
+  },
+  "a150_face": {
+   "path": "res://assets/local/textures/a150_face.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#e8d040",
+    "style": "smile"
+   },
+   "source": {
+    "wiki": "r-rooms",
+    "file": "Starimagecrop.png"
+   }
   }
  },
  "sounds": {
@@ -1194,6 +1206,24 @@
     "kind": "rattle",
     "length": 1.5,
     "volume": 0.8
+   }
+  },
+  "a150_hum": {
+   "path": "res://assets/local/sounds/a150_hum.ogg",
+   "placeholder": {
+    "kind": "chime",
+    "length": 1.6,
+    "volume": 0.45,
+    "freq": 660.0
+   },
+   "loop": true
+  },
+  "a150_kill": {
+   "path": "res://assets/local/sounds/a150_kill.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.6,
+    "volume": 0.9
    }
   }
  },

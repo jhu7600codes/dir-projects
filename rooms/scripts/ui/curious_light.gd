@@ -12,12 +12,15 @@ const LINE_TIME := 3.2  # each line stays this long unless you skip it
 const NAMES := {
 	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
 	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
-	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25",
+	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25", "a150": "a-150",
 	"w30": "w-30", "c15": "the pigeons",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
 const HINTS := {
+	"a150": {
+		"": ["your light was on while it was watching.", "when the star shows up, switch your flashlight off and wait in the dark until it leaves."],
+	},
 	"w30": {
 		"": ["the steam hit you.", "when the pipes hiss, crouch. the steam goes over your head."],
 	},

@@ -23,6 +23,7 @@ const CAUSES := {
 	"screech": "Screech bit you. look at it when it whispers.",
 	"figure": "Figure heard you.",
 	"seek": "Seek caught you. keep running.",
+	"a150": "a-150 saw your light. turn it off when the star shows up.",
 	"w30": "the steam got you. crouch when the pipes hiss.",
 	"c15": "the pigeons got you. don't run near them.",
 }
