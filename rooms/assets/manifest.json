@@ -438,6 +438,14 @@
     "wiki": "r-rooms",
     "file": "Starimagecrop.png"
    }
+  },
+  "a220_face": {
+   "path": "res://assets/art/a220.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#600010",
+    "style": "smile"
+   }
   }
  },
  "sounds": {
@@ -1225,6 +1233,15 @@
     "length": 0.6,
     "volume": 0.9
    }
+  },
+  "a220_march": {
+   "path": "res://assets/local/sounds/a220_march.ogg",
+   "placeholder": {
+    "kind": "knock",
+    "length": 1.0,
+    "volume": 0.8
+   },
+   "loop": true
   }
  },
  "music": {

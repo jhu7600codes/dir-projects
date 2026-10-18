@@ -11,6 +11,8 @@ const SCRIPTS := {
 	"a90b": preload("res://scripts/entities/a90b.gd"),
 	"a120": preload("res://scripts/entities/a120.gd"),
 	"a200": preload("res://scripts/entities/a200.gd"),
+	# made by jhu for this game: a-200's husband
+	"a220": preload("res://scripts/entities/a220.gd"),
 	# doors' hotel entities, only with the "got any more doors?" modifier
 	"rush": preload("res://scripts/entities/rush.gd"),
 	"ambush": preload("res://scripts/entities/ambush.gd"),
