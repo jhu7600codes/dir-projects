@@ -63,6 +63,7 @@ public class LenzUI {
     private final OrientationEventListener orientationListener;
     private int iconRotation = 0;
     private final List<Float> zoomStops = new ArrayList<>();
+    private int statusBarTop = 0;
 
     private final Runnable recTick = new Runnable() {
         @Override
@@ -102,6 +103,17 @@ public class LenzUI {
         gridButton.setOnClickListener(v -> toggleGrid());
         settingsButton.setOnClickListener(v -> main_activity.openSettings());
 
+        // keep the top bar below the status bar, and the preview below the top bar
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int top = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars() | androidx.core.view.WindowInsetsCompat.Type.displayCutout()).top;
+            if( top != statusBarTop ) {
+                statusBarTop = top;
+                applyTopInset();
+            }
+            return insets;
+        });
+        applyTopInset();
+
         // keep the engine's own controls hidden whatever it does with them
         View content = main_activity.findViewById(android.R.id.content);
         content.getViewTreeObserver().addOnGlobalLayoutListener(this::hideLegacyViews);
@@ -121,6 +133,28 @@ public class LenzUI {
                 }
             }
         };
+    }
+
+    private int dp(float value) {
+        return (int)(value * main_activity.getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private void applyTopInset() {
+        View topBar = main_activity.findViewById(R.id.lenz_top_bar);
+        topBar.setPadding(topBar.getPaddingLeft(), statusBarTop + dp(6), topBar.getPaddingRight(), dp(6));
+        View rec = recChip;
+        android.widget.FrameLayout.LayoutParams params = (android.widget.FrameLayout.LayoutParams)rec.getLayoutParams();
+        params.topMargin = getTopBarBottom() + dp(12);
+        rec.setLayoutParams(params);
+        if( main_activity.getMainUI() != null && main_activity.getPreview() != null )
+            main_activity.getMainUI().layoutUI();
+    }
+
+    /** Where the top bar ends; the preview starts here.
+     */
+    public int getTopBarBottom() {
+        // padding above and below plus the 48dp icons
+        return statusBarTop + dp(6 + 48 + 6);
     }
 
     private void hideLegacyViews() {

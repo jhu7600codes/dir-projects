@@ -683,8 +683,8 @@ public class MainUI {
             view.setLayoutParams(layoutParams);
             setViewRotation(view, ui_rotation);
 
-            // Lenz: push the preview to the top (gcam style) so the mode bar and shutter
-            // get a proper black bar below it instead of overlapping the preview
+            // Lenz: the preview starts right under the top bar (gcam style); a taller
+            // preview (e.g. 16:9 video) runs down behind the bottom controls
             view = main_activity.findViewById(R.id.preview);
             layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
             layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, 0);
@@ -696,6 +696,8 @@ public class MainUI {
             if( system_orientation_portrait ) {
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
                 layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
+                net.sourceforge.opencamera.LenzUI lenzUI = main_activity.getLenzUI();
+                layoutParams.setMargins(0, lenzUI != null ? lenzUI.getTopBarBottom() : 0, 0, 0);
             }
             else {
                 layoutParams.addRule(system_orientation_reversed_landscape ? RelativeLayout.ALIGN_PARENT_RIGHT : RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
