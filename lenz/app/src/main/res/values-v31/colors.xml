@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lenz: Material You dynamic colors, taken from the wallpaper on Android 12+ -->
+<resources>
+    <color name="shutter_icon">@android:color/system_accent1_300</color>
+    <color name="shutter_icon_pressed">@android:color/system_accent1_200</color>
+</resources>

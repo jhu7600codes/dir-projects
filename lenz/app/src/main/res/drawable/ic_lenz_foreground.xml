@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- lens ring -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M54,30a24,24 0,1 1,0 48a24,24 0,1 1,0 -48zM54,36a18,18 0,1 0,0 36a18,18 0,1 0,0 -36z"/>
+    <!-- aperture -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M54,44a10,10 0,1 1,0 20a10,10 0,1 1,0 -20z"/>
+    <!-- glint -->
+    <path android:fillColor="#7FFFFFFF"
+        android:pathData="M50,47a3,3 0,1 1,0 6a3,3 0,1 1,0 -6z"/>
+</vector>

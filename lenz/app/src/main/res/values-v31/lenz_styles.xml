@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="image_button" parent="@android:style/Widget.Material.ImageButton">
+        <item name="android:backgroundTint">#d0303030</item>
+    </style>
+</resources>
