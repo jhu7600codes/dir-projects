@@ -1242,6 +1242,41 @@
     "volume": 0.8
    },
    "loop": true
+  },
+  "gate_beep": {
+   "path": "res://assets/local/sounds/gate_beep.ogg",
+   "placeholder": {
+    "kind": "tone",
+    "length": 0.5,
+    "volume": 0.6,
+    "freq": 1400.0
+   }
+  },
+  "fire_alarm": {
+   "path": "res://assets/local/sounds/fire_alarm.ogg",
+   "placeholder": {
+    "kind": "buzz",
+    "length": 2.0,
+    "volume": 0.7
+   },
+   "loop": true
+  },
+  "anomaly_breath": {
+   "path": "res://assets/local/sounds/anomaly_breath.ogg",
+   "placeholder": {
+    "kind": "hiss",
+    "length": 2.0,
+    "volume": 0.3
+   },
+   "loop": true
+  },
+  "anomaly_scream": {
+   "path": "res://assets/local/sounds/anomaly_scream.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.7,
+    "volume": 0.9
+   }
   }
  },
  "music": {

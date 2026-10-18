@@ -1,6 +1,6 @@
 extends RoomBase
-## the great city: what's outside after a-1000. you walk out of the glass doors of the miles
-## building (the office you were trapped in: the company is called miles, its logo is on the
+## the great city: what's outside after a-1000. you walk out of the glass doors of the Morse
+## building (the office you were trapped in: the company is called Morse, its logo is on the
 ## tower) into a city at dusk. the avenue is split into blocks by metal gates, c-01 to c-30.
 ## entities still find you out here: hide in the phone booths. if you powered the office in
 ## the wires, your coworkers walk the sidewalks too. at the end a bus takes you home.
@@ -20,7 +20,7 @@ func build() -> void:
 	length = 40.0 if number == 0 else rng.randf_range(38.0, 56.0)
 	_ground()
 	if number == 0:
-		_miles_tower()
+		_morse_tower()
 	_sides()
 	_lamps_and_lights()
 	_cars()
@@ -111,8 +111,8 @@ func _booths() -> void:
 	entity_spawn_ok = true
 
 
-## the building you came out of. MILES on the front, the logo up high
-func _miles_tower() -> void:
+## the building you came out of. MORSE on the front, the logo up high
+func _morse_tower() -> void:
 	var h := 72.0
 	box(Vector3(36, h, 40), Vector3(0, h / 2, -20.5), Mats.get_mat("facade_b"))
 	box(Vector3(37, 0.6, 41), Vector3(0, h + 0.3, -20.5), Mats.get_mat("roof"), false)
@@ -122,7 +122,7 @@ func _miles_tower() -> void:
 	box(Vector3(0.1, 4.0, 0.25), Vector3(0, 2.0, -0.38), Mats.get_mat("metal"), false)
 	box(Vector3(14, 2.6, 0.3), Vector3(0, 8.0, -0.4), Mats.get_mat("dark"), false)
 	var name_sign := Label3D.new()
-	name_sign.text = "MILES"
+	name_sign.text = "MORSE"
 	name_sign.font_size = 160
 	name_sign.pixel_size = 0.02
 	name_sign.modulate = Color(0.95, 0.95, 0.92)

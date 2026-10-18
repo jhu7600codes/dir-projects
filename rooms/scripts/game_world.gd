@@ -234,7 +234,7 @@ func _apply_darkness(n: int) -> void:
 
 func _on_door_changed(n: int) -> void:
 	_apply_darkness(n)
-	if n == 30 and Game.floor != "city" and player.inventory.has_flashlight and not player.lights.flashlight_on:
+	if n == 30 and Game.floor in ["offices", "wires"] and player.inventory.has_flashlight and not player.lights.flashlight_on:
 		hud.notify(Loc.t("it's getting darker. tap item for your flashlight") if Settings.use_touch() else Loc.t("it's getting darker. left click for your flashlight"))
 
 
@@ -322,6 +322,10 @@ func net_finished(reason: String) -> void:
 			Achievements.unlock("wired_up")
 			if Net.is_host:
 				Net.host_start("offices", true)
+		"city":
+			Achievements.unlock("going_home")
+			if Net.is_host:
+				Net.host_start("complex")
 		"all_dead" when Game.minigame != "":
 			var mr := MinigameResult.new()
 			add_child(mr)
@@ -365,10 +369,19 @@ func _end_run(reason: String) -> void:
 			Game.start_run.call_deferred(adm, false, "city", c)
 		return
 	if reason == "city":
+		# the bus drops you off at your apartment complex. 150 floors up to your flat
 		Achievements.unlock("going_home")
+		var cc := Game.carry_state()
+		var adm3 := Game.admin
 		if Game.use_cutscenes():
-			Game.play_cutscene.call_deferred("bus", Game.to_menu)
-			return
+			Game.play_cutscene.call_deferred("bus", func(): Game.start_run(adm3, false, "complex", cc))
+		else:
+			Game.start_run.call_deferred(adm3, false, "complex", cc)
+		return
+	if reason == "complex":
+		# home. you lie down... and that's not the end of it
+		Game.play_cutscene.call_deferred("ending", Game.to_menu)
+		return
 	if reason == "wires":
 		# the whole office has power again, and the elevator takes you back up
 		Save.data.wires_done = int(Save.data.get("wires_done", 0)) + 1

@@ -10,7 +10,8 @@ signal screen_tint(color: Color)      # a-200 uses this, Color(0,0,0,0) clears i
 
 const LAST_DOOR := 1000
 const WIRES_LAST := 50  # the wires subfloor: W-01 .. W-50
-const CITY_LAST := 30  # the great city: c-01 to c-30, the bus stop is at the end
+const CITY_LAST := 30
+const COMPLEX_LAST := 150  # the complex: floors 1 - 150, home at the top  # the great city: c-01 to c-30, the bus stop is at the end
 ## each wires switch powers one stretch of the office
 const POWER_RANGES := [[1, 200], [201, 400], [401, 600], [601, 800], [801, 1000]]
 
@@ -145,7 +146,7 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 		Save.write()
 	Achievements.unlock("first_run")
 	get_tree().paused = false
-	# a fresh run in the office starts with your first day at miles
+	# a fresh run in the office starts with your first day at Morse
 	if use_cutscenes() and not continuing and floor == "offices" and carry_over.is_empty():
 		play_cutscene("intro", func(): get_tree().change_scene_to_file("res://scenes/game.tscn"))
 		return
@@ -172,6 +173,10 @@ func set_door(n: int) -> void:
 	elif floor == "wires":
 		if n > int(Save.data.get("wires_best", 0)):
 			Save.data.wires_best = n
+			Save.write()
+	elif floor == "complex":
+		if n > int(Save.data.get("complex_best", 0)):
+			Save.data.complex_best = n
 			Save.write()
 	elif minigame == "":
 		Save.record_door(n)
@@ -234,6 +239,8 @@ func door_label(n: int) -> String:
 		return "C-%02d" % n
 	if floor == "wires":
 		return "W-%02d" % n
+	if floor == "complex":
+		return "F-%03d" % n
 	return "A-%03d" % n
 
 
@@ -250,6 +257,8 @@ func office_powered() -> bool:
 func last_door() -> int:
 	if floor == "city":
 		return CITY_LAST
+	if floor == "complex":
+		return COMPLEX_LAST
 	return WIRES_LAST if floor == "wires" else LAST_DOOR
 
 
@@ -275,7 +284,7 @@ func mod(id: String) -> bool:
 
 
 func darkness(n: int) -> float:
-	if floor == "city":
+	if floor == "city" or floor == "complex":
 		return 0.0
 	if floor == "wires":
 		return 0.45  # always dim down there, just the cage lamps

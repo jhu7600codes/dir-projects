@@ -52,7 +52,7 @@ func toggle() -> void:
 ## where you are right now (it used to show the door you started at)
 func _refresh() -> void:
 	_where.text = Game.door_label(Game.door)
-	var floor_name: String = {"offices": "the offices", "wires": "the wires", "city": "the great city"}.get(Game.floor, Game.floor)
+	var floor_name: String = {"offices": "the offices", "wires": "the wires", "city": "the great city", "complex": "the complex"}.get(Game.floor, Game.floor)
 	if Game.office_powered():
 		floor_name = "the fixed office"
 	var parts := [Loc.t(floor_name), Loc.t("%d gold") % int(Save.data.gold)]

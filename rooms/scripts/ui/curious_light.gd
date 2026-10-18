@@ -12,12 +12,20 @@ const LINE_TIME := 3.2  # each line stays this long unless you skip it
 const NAMES := {
 	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
 	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
-	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25", "a150": "a-150", "a220": "a-220",
+	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25", "a150": "a-150", "a220": "a-220", "fire": "the fire",
 	"w30": "w-30", "c15": "the pigeons",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
 const HINTS := {
+	"anomaly": {
+		"chaser": ["it saw you and ran you down.", "stay out of its sight. find the fire escape box and pull the alarm."],
+		"stalker": ["it moved every time you looked away.", "keep your eyes on it and back off toward the fire escape box."],
+		"lurker": ["it was hiding, and you walked right up to it.", "crouch when you walk through the apartment. it can't hear you then."],
+	},
+	"fire": {
+		"": ["you weren't standing in the fire escape square.", "the fire burns everything outside the striped square in front of the box."],
+	},
 	"a220": {
 		"": ["he looks at every locker.", "hide, but never in her locker or right next to it. her scribble glows on the door."],
 		"her_locker": ["you were hiding with his wife.", "if she sneaks into your locker, get out and find one far away from her. quick."],
@@ -130,7 +138,9 @@ func setup(cause: String, detail: String) -> void:
 		_build()
 		return
 	var by_detail: Dictionary = HINTS.get(cause, {})
-	if NAMES.has(cause):
+	if cause == "anomaly":
+		_lines.append(Loc.t("you died to what you call ") + Loc.t(str(Game.death_details.get("anomaly_name", "the tenant"))) + "...")
+	elif NAMES.has(cause):
 		_lines.append(Loc.t("you died to what you call ") + Loc.t(NAMES[cause]) + "...")
 	else:
 		_lines.append("the office got you this time...")

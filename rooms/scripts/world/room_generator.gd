@@ -10,6 +10,8 @@ signal room_entered(room: RoomBase)
 const KEEP_BEHIND := 2
 const R := "res://scripts/world/rooms/"
 const CITY := preload(R + "room_city.gd")
+const COMPLEX_LOBBY := preload(R + "complex_lobby.gd")
+const COMPLEX_FLOOR := preload(R + "complex_floor.gd")
 
 ## the pool of normal rooms. weight = how common, min = first door it can show up at
 var pool := [
@@ -100,6 +102,8 @@ func _rng_for(n: int) -> RandomNumberGenerator:
 func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
 	if Game.floor == "city":
 		return CITY
+	if Game.floor == "complex":
+		return COMPLEX_LOBBY if n == 0 else COMPLEX_FLOOR
 	if Game.floor == "wires":
 		return _pick_wires(n)
 	if _picks.has(n):

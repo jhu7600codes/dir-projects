@@ -23,6 +23,8 @@ const CAUSES := {
 	"screech": "Screech bit you. look at it when it whispers.",
 	"figure": "Figure heard you.",
 	"seek": "Seek caught you. keep running.",
+	"anomaly": "the thing in the apartment got you. pull the fire alarm.",
+	"fire": "you burned. stand in the fire escape square.",
 	"a220": "a-220 found you. never hide with his wife.",
 	"a150": "a-150 saw your light. turn it off when the star shows up.",
 	"w30": "the steam got you. crouch when the pipes hiss.",
@@ -65,7 +67,7 @@ func setup(kind: String, cause := "") -> void:
 			v.add_child(UIKit.button("ride up to the office", func(): Game.start_run(Game.admin, false, "offices", carry)))
 		"a1000", "city":
 			v.add_child(UIKit.label("going home", 34, UIKit.ACCENT))
-			var t := UIKit.label("you walked all the way through, out past miles, and got on the bus. it's over. for today.", 17)
+			var t := UIKit.label("you walked all the way through, out past Morse, and got on the bus. it's over. for today.", 17)
 			t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			v.add_child(t)
 	v.add_child(UIKit.label(Loc.t("best: ") + Game.a_label(int(Save.data.best_door)) + Loc.t("    gold: %d") % int(Save.data.gold), 15, Color(0.6, 0.6, 0.6)))

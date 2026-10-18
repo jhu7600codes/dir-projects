@@ -246,7 +246,8 @@ func _make_menu() -> void:
 	col.add_child(gap)
 	if Save.has_run():
 		var rd := int(Save.data.run.get("door", 0))
-		var where := ("W-%02d" % rd) if str(Save.data.run.get("floor", "offices")) == "wires" else Game.a_label(rd)
+		var rf := str(Save.data.run.get("floor", "offices"))
+		var where := ("W-%02d" % rd) if rf == "wires" else (("F-%03d" % rd) if rf == "complex" else Game.a_label(rd))
 		col.add_child(_menu_button(Loc.t("continue  (%s)") % where, Game.continue_run, 26))
 		col.add_child(_menu_button("new run", _pick_floor))
 	else:

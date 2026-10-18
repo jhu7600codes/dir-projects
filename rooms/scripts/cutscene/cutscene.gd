@@ -2,9 +2,9 @@ class_name Cutscene
 extends Node3D
 ## the cutscenes. each one builds a small stage out of the game's own rooms and props, moves
 ## a camera around it, shows a few lines of text and then hands over (Game.cutscene_then).
-##   intro    - your first day: you walk into the miles tower, the lobby door locks behind you
+##   intro    - your first day: you walk into the Morse tower, the lobby door locks behind you
 ##   elevator - the ride up out of the wires, past every floor from w to a, coworkers at their desks
-##   outside  - the a-1000 door opens onto the street in front of the miles tower
+##   outside  - the a-1000 door opens onto the street in front of the Morse tower
 ##   bus      - you get on the bus home, it drives off, credits
 ## once you've seen one, tap / any key skips it.
 
@@ -43,6 +43,7 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	match id:
 		"intro": _intro()
+		"ending": _ending()
 		"elevator": _elevator()
 		"outside": _outside()
 		"bus": _bus()
@@ -243,7 +244,7 @@ func _finish() -> void:
 # ---------- the cutscenes ----------
 
 func _intro() -> void:
-	# outside, morning. you walk up to the miles tower
+	# outside, morning. you walk up to the Morse tower
 	new_stage()
 	sky(Color(0.35, 0.55, 0.85), Color(0.95, 0.8, 0.6), Color(1.0, 0.9, 0.75), -25.0)
 	var city := room("room_city.gd", 0)
@@ -253,7 +254,7 @@ func _intro() -> void:
 	say("monday, 8:59 am.", 3.0)
 	dolly(Vector3(1.2, 1.7, 21.0), Vector3(0, 9.0, 0), 3.0)
 	if not await wait(2.6): return
-	say("first day at miles.", 3.2)
+	say("first day at Morse.", 3.2)
 	walk(me, Vector3(0.0, 0, 0.6), 5.0)
 	dolly(Vector3(0.9, 1.8, 8.0), Vector3(0, 1.4, 0), 4.6)
 	if not await wait(4.6): return
@@ -373,7 +374,7 @@ func _outside() -> void:
 	if not await wait(0.6): return
 	fade(true, 1.0, Color(1, 0.97, 0.9))
 	if not await wait(1.3): return
-	# the street. you step out of the glass doors of the miles tower
+	# the street. you step out of the glass doors of the Morse tower
 	new_stage()
 	sky(Color(0.12, 0.16, 0.34), Color(0.95, 0.55, 0.3), Color(1.0, 0.72, 0.5), -18.0)
 	room("room_city.gd", 0)
@@ -387,7 +388,7 @@ func _outside() -> void:
 	# turn around to see where you've been
 	dolly(Vector3(3.5, 2.0, 17.0), Vector3(0, 14.0, 0), 4.0)
 	if not await wait(3.2): return
-	say("miles. the company you work for.", 3.0)
+	say("Morse. the company you work for.", 3.0)
 	if not await wait(3.0): return
 	_finish()
 
@@ -445,9 +446,78 @@ func _bus() -> void:
 	if not await wait(3.4): return
 	fade(true, 1.2)
 	if not await wait(1.4): return
+	say("home. the complex. your flat is on floor 150.", 3.4)
+	if not await wait(3.6): return
+	_finish()
+
+
+## floor 150: you lie down in your own bed. the bed opens up under you. a long fall into
+## nothing. you wake up in a hospital, and the doctor has news. then the credits.
+func _ending() -> void:
+	new_stage()
+	indoor()
+	_env.ambient_light_energy = 0.2
+	# your bedroom
+	_cube(_stage, Vector3(6, 0.2, 6), Vector3(0, -0.1, 0), Mats.get_mat("wood"))
+	_cube(_stage, Vector3(6, 0.2, 6), Vector3(0, 2.9, 0), Mats.get_mat("ceiling"))
+	for wpos in [[Vector3(0, 1.4, -3), Vector3(6, 2.8, 0.2)], [Vector3(0, 1.4, 3), Vector3(6, 2.8, 0.2)], [Vector3(-3, 1.4, 0), Vector3(0.2, 2.8, 6)], [Vector3(3, 1.4, 0), Vector3(0.2, 2.8, 6)]]:
+		_cube(_stage, wpos[1], wpos[0], Mats.get_mat("wall"))
+	var bed := _cube(_stage, Vector3(1.8, 0.5, 2.2), Vector3(0, 0.25, 0), Mats.get_mat("fabric"))
+	_cube(_stage, Vector3(1.8, 1.0, 0.12), Vector3(0, 0.5, -1.1), Mats.get_mat("wood_dark"))
+	light(Vector3(-1.4, 1.6, -0.8), Color(1.0, 0.8, 0.55), 1.4, 5.0)
+	# lying in bed, looking at the ceiling
+	shot(Vector3(0, 0.75, -0.6), Vector3(0, 2.9, 0.2))
+	fade(false, 1.5)
+	say("home. finally.", 3.0)
+	if not await wait(3.2): return
+	say("you lie down. your eyes close.", 3.0)
+	if not await wait(3.4): return
+	# the bed opens up
+	sound("door_open", Vector3(0, 0.3, 0), 4.0, 0.5)
+	say("...the bed gives way.", 2.0)
+	var tw := create_tween()
+	tw.tween_property(bed, "position:y", -3.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	dolly(Vector3(0, -6.0, -0.6), Vector3(0, -12.0, 0.0), 1.2)
+	fade(true, 0.9)
+	if not await wait(1.5): return
+	# a long fall into something you don't know. black
+	new_stage()
+	for i in 6:
+		if not await wait(10.0): return
+	# a hospital room
+	new_stage()
+	indoor()
+	_env.ambient_light_energy = 0.55
+	_cube(_stage, Vector3(7, 0.2, 7), Vector3(0, -0.1, 0), Mats.get_mat("fridge_white"))
+	_cube(_stage, Vector3(7, 0.2, 7), Vector3(0, 2.9, 0), Mats.get_mat("ceiling"))
+	for wpos in [[Vector3(0, 1.4, -3.5), Vector3(7, 2.8, 0.2)], [Vector3(0, 1.4, 3.5), Vector3(7, 2.8, 0.2)], [Vector3(-3.5, 1.4, 0), Vector3(0.2, 2.8, 7)], [Vector3(3.5, 1.4, 0), Vector3(0.2, 2.8, 7)]]:
+		_cube(_stage, wpos[1], wpos[0], Mats.get_mat("wall"))
+	_cube(_stage, Vector3(1.0, 0.6, 2.1), Vector3(0, 0.3, 0), Mats.get_mat("fridge_white"))
+	_cube(_stage, Vector3(0.05, 1.8, 0.05), Vector3(0.8, 0.9, -0.8), Mats.get_mat("metal"))
+	light(Vector3(0, 2.6, 0), Color(0.92, 0.97, 1.0), 1.6, 8.0)
+	var doctor := avatar(Vector3(0.9, 0, 1.6))
+	doctor.rotation.y = PI * 0.8
+	shot(Vector3(0, 1.0, -0.8), Vector3(0.9, 1.5, 1.6))
+	fade(false, 2.0)
+	if not await wait(2.4): return
+	var talk := [
+		"doctor: you're awake. good.",
+		"doctor: there is a deadly virus going around inside your company.",
+		"doctor: your best coworkers, Greg and Den, have already mutated from it. we have put them inside containment.",
+		"doctor: the CEO, Julian, and his wife Alexandra have also been infected.",
+		"doctor: they still try to work together as the CEO and co-founder... but they can't speak normally.",
+		"doctor: we are calling the virus \"Avirus\". (ah-vee-rus)",
+		"doctor: you're the first ever survivor.",
+		"doctor: can you tell us what you have felt?",
+	]
+	for t in talk:
+		say(t, 4.6)
+		if not await wait(4.8): return
+	fade(true, 1.5)
+	if not await wait(1.8): return
 	# credits
 	var lines := [
-		"going home",
+		"the end. for now.",
 		"The ROOMS",
 		"a fan game by jhu",
 		"based on rooms by nicorocks5555\nand the rooms in doors by lsplash",
