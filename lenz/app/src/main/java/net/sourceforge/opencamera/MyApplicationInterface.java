@@ -1965,6 +1965,7 @@ public class MyApplicationInterface extends BasicApplicationInterface {
     @Override
     public void cameraSetup() {
         main_activity.cameraSetup();
+        main_activity.getModeController().refresh();
         drawPreview.clearContinuousFocusMove();
         // Need to cause drawPreview.updateSettings(), otherwise icons like HDR won't show after force-restart, because we only
         // know that HDR is supported after the camera is opened
@@ -2133,6 +2134,11 @@ public class MyApplicationInterface extends BasicApplicationInterface {
         if( main_activity.usingKitKatImmersiveMode() ) {
             main_activity.setImmersiveMode(false);
         }
+    }
+
+    @Override
+    public void previewSwiped(float dx, float dy) {
+        main_activity.getModeController().onPreviewSwipe(dx, dy);
     }
 
     @Override

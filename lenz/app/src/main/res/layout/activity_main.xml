@@ -99,6 +99,13 @@
         android:alpha="0.61"
         android:onClick="clickedSwitchVideo"
         android:background="@null"
+        android:visibility="gone"
+        />
+
+    <net.sourceforge.opencamera.ui.ModeBarView
+        android:id="@+id/mode_bar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
         />
 
     <!-- need large padding than pause_video, to reflect that pause_video icon has padding built into the png image -->

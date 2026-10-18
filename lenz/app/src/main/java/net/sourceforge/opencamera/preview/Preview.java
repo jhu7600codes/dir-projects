@@ -685,6 +685,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
             if( dist2 > tol*tol ) {
                 if( MyDebug.LOG )
                     Log.d(TAG, "touch was a swipe");
+                applicationInterface.previewSwiped(diff_x, diff_y);
                 return true;
             }
         }

@@ -689,4 +689,8 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     public void onContinuousFocusMove(boolean start) {
 
     }
+
+    @Override
+    public void previewSwiped(float dx, float dy) {
+    }
 }

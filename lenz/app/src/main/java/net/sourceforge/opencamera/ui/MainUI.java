@@ -683,6 +683,40 @@ public class MainUI {
             view.setLayoutParams(layoutParams);
             setViewRotation(view, ui_rotation);
 
+            view = main_activity.findViewById(R.id.mode_bar);
+            layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
+            {
+                // Lenz mode bar: a strip next to the shutter, along the long side of the screen
+                ModeBarView modeBar = (ModeBarView)view;
+                modeBar.setHorizontal(system_orientation_portrait);
+                layoutParams.addRule(RelativeLayout.ABOVE, 0);
+                layoutParams.addRule(RelativeLayout.LEFT_OF, 0);
+                layoutParams.addRule(RelativeLayout.RIGHT_OF, 0);
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, 0);
+                int bar_size = (int) ((system_orientation_portrait ? 48 : 110) * scale + 0.5f);
+                // leave room for the zoom slider that sits next to the shutter
+                int gap = (int) (56 * scale + 0.5f);
+                if( system_orientation_portrait ) {
+                    layoutParams.width = RelativeLayout.LayoutParams.MATCH_PARENT;
+                    layoutParams.height = bar_size;
+                    layoutParams.addRule(RelativeLayout.ABOVE, R.id.take_photo);
+                    layoutParams.setMargins(0, 0, 0, gap);
+                }
+                else {
+                    layoutParams.width = bar_size;
+                    layoutParams.height = RelativeLayout.LayoutParams.MATCH_PARENT;
+                    layoutParams.addRule(system_orientation_reversed_landscape ? RelativeLayout.RIGHT_OF : RelativeLayout.LEFT_OF, R.id.take_photo);
+                    if( system_orientation_reversed_landscape )
+                        layoutParams.setMargins(gap, 0, 0, 0);
+                    else
+                        layoutParams.setMargins(0, 0, gap, 0);
+                }
+                view.setLayoutParams(layoutParams);
+            }
+
             view = main_activity.findViewById(R.id.take_photo_when_video_recording);
             layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
             layoutParams.addRule(align_parent_left, 0);
@@ -1253,7 +1287,8 @@ public class MainUI {
                     switchCameraButton.setVisibility(visibility);
                 if( main_activity.showSwitchMultiCamIcon() )
                     switchMultiCameraButton.setVisibility(visibility);
-                switchVideoButton.setVisibility(visibility);
+                switchVideoButton.setVisibility(View.GONE); // Lenz: replaced by the mode bar
+                main_activity.findViewById(R.id.mode_bar).setVisibility(visibility);
                 if( main_activity.supportsExposureButton() )
                     exposureButton.setVisibility(visibility);
                 onScreenIcons.setVisibility(visibility, visibility);
@@ -1341,7 +1376,8 @@ public class MainUI {
                     switchCameraButton.setVisibility(visibility);
                 if( main_activity.showSwitchMultiCamIcon() )
                     switchMultiCameraButton.setVisibility(visibility);
-                switchVideoButton.setVisibility(visibility);
+                switchVideoButton.setVisibility(View.GONE); // Lenz: replaced by the mode bar
+                main_activity.findViewById(R.id.mode_bar).setVisibility(visibility);
                 if( main_activity.supportsExposureButton() )
                     exposureButton.setVisibility(visibility_video); // still allow exposure when recording video
                 onScreenIcons.setVisibility(visibility, visibility_video);

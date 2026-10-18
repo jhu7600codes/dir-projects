@@ -6,15 +6,18 @@ package: `com.lenz.camera`. it installs next to the real Open Camera.
 
 ## what's different from Open Camera
 
-- new name and icon
-- Material You: the shutter button and accents use your wallpaper colors (Android 12+)
-- NR (multi-frame noise reduction, HDR+-style stacking) is the default photo mode when the camera supports it
-- default JPEG quality is 95 instead of 90
+- **mode bar like gcam**: swipe across the viewfinder (or the bar) to switch between
+  Photo Sphere, Panorama, Night, Portrait, Photo, Video, Slow Motion and Time Lapse.
+  modes your phone can't do are hidden
+- **night mode**: Open Camera's low-light noise reduction, which stacks a burst of long exposures
+- **photo**: multi-frame noise reduction (HDR+-style stacking) by default, JPEG quality 95
+- **photo sphere**: follow the dots and it shoots by itself, then stitches a 360 photo
+  (equirectangular with GPano metadata, so Google Photos shows it as a sphere). saved to DCIM/Lenz
+- **Material You**: shutter, mode bar, settings and dialogs use your wallpaper colors (Android 12+)
+- new name and icon, installs next to the real Open Camera (`com.lenz.camera`)
 
-## already in Open Camera
-
-HDR, DRO, panorama, slow motion (high-speed video), time lapse, expo/focus bracketing, fast burst, RAW/DNG,
-manual ISO/exposure/focus/white balance, and the camera extensions your phone supports (night, bokeh, etc).
+portrait only shows up if the phone has a camera extension for bokeh.
+photo sphere places shots using the gyro, not feature matching, so seams can be a bit visible.
 
 ## build
 

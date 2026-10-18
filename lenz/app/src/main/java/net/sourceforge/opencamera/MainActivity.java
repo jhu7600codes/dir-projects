@@ -140,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
     private boolean saf_dialog_from_preferences; // if a SAF dialog is opened, this records whether we opened it from the Preferences
     private boolean camera_in_background; // whether the camera is covered by a fragment/dialog (such as settings or folder picker)
     private GestureDetector gestureDetector;
+    private ModeController modeController;
     private boolean screen_is_locked; // whether screen is "locked" - this is Open Camera's own lock to guard against accidental presses, not the standard Android lock
     private final Map<Integer, Bitmap> preloaded_bitmap_resources = new Hashtable<>();
     private ValueAnimator gallery_save_anim;
@@ -308,6 +309,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         permissionHandler = new PermissionHandler(this);
         settingsManager = new SettingsManager(this);
         mainUI = new MainUI(this);
+        modeController = new ModeController(this);
         manualSeekbars = new ManualSeekbars();
         applicationInterface = new MyApplicationInterface(this, savedInstanceState);
         if( MyDebug.LOG )
@@ -5668,6 +5670,10 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
 
     public SettingsManager getSettingsManager() {
         return settingsManager;
+    }
+
+    public ModeController getModeController() {
+        return modeController;
     }
 
     public MainUI getMainUI() {

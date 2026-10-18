@@ -1,5 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Lenz: Material You theme for Android 12+, using the wallpaper-based system colors -->
 <resources>
+    <style name="AppBaseTheme" parent="@style/Theme.AppCompat.NoActionBar">
+        <item name="android:imageButtonStyle">@style/image_button</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+
+        <item name="colorPrimary">@android:color/system_accent1_200</item>
+        <item name="colorPrimaryDark">@android:color/system_neutral1_900</item>
+        <item name="colorAccent">@android:color/system_accent1_200</item>
+        <item name="colorControlActivated">@android:color/system_accent1_200</item>
+        <item name="colorControlHighlight">#33ffffff</item>
+        <item name="android:colorPrimary">@android:color/system_accent1_200</item>
+        <item name="android:colorAccent">@android:color/system_accent1_200</item>
+        <item name="android:colorControlActivated">@android:color/system_accent1_200</item>
+        <item name="android:colorBackground">@android:color/system_neutral1_900</item>
+        <item name="android:windowBackground">@android:color/system_neutral1_900</item>
+        <item name="android:textColorPrimary">@android:color/system_neutral1_50</item>
+        <item name="android:textColorSecondary">@android:color/system_neutral2_200</item>
+        <item name="android:alertDialogTheme">@style/LenzDialog</item>
+        <item name="alertDialogTheme">@style/LenzDialogCompat</item>
+        <item name="android:dialogCornerRadius">28dp</item>
+    </style>
+
+    <style name="LenzDialog" parent="@android:style/Theme.DeviceDefault.Dialog.Alert">
+        <item name="android:colorAccent">@android:color/system_accent1_200</item>
+        <item name="android:colorBackground">@android:color/system_neutral1_800</item>
+        <item name="android:dialogCornerRadius">28dp</item>
+    </style>
+
+    <style name="LenzDialogCompat" parent="@style/Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@android:color/system_accent1_200</item>
+        <item name="android:colorBackground">@android:color/system_neutral1_800</item>
+        <item name="android:dialogCornerRadius">28dp</item>
+    </style>
+
     <style name="image_button" parent="@android:style/Widget.Material.ImageButton">
         <item name="android:backgroundTint">#d0303030</item>
     </style>

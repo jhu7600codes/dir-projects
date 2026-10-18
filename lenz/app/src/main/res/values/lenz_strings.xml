@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lenz_mode_photo_sphere">Photo Sphere</string>
+    <string name="lenz_mode_panorama">Panorama</string>
+    <string name="lenz_mode_night">Night</string>
+    <string name="lenz_mode_portrait">Portrait</string>
+    <string name="lenz_mode_photo">Photo</string>
+    <string name="lenz_mode_video">Video</string>
+    <string name="lenz_mode_slow_motion">Slow Motion</string>
+    <string name="lenz_mode_time_lapse">Time Lapse</string>
+
+    <string name="sphere_hint">Point the circle at the dots. Hold still and it shoots by itself.</string>
+    <string name="sphere_done">Done</string>
+    <string name="sphere_undo">Undo</string>
+    <string name="sphere_progress">%1$d / %2$d</string>
+    <string name="sphere_stitching">Stitching your Photo Sphere…</string>
+    <string name="sphere_saved">Photo Sphere saved</string>
+    <string name="sphere_failed">Couldn\'t save the Photo Sphere</string>
+    <string name="sphere_need_more">Take a few more shots first</string>
+    <string name="sphere_no_camera">Couldn\'t open the camera</string>
+    <string name="sphere_hold_level">Hold the phone upright</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="lenz_accent">#FF8AB4F8</color>
+    <color name="lenz_on_accent">#FF0B1D36</color>
+    <color name="lenz_surface">#E61F2125</color>
+    <color name="lenz_on_surface">#FFE3E3E8</color>
+</resources>
