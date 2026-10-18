@@ -3243,7 +3243,15 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
                     // supported by any standard video sizes, but it is supported by a high speed video size. If
                     // best_video_size==null, then we must have an incompatible size for this fps.
                     // So try falling back to one of the supported high speed resolutions.
-                    CameraController.Size requested_size = video_quality_handler.getMaxSupportedVideoSizeHighSpeed();
+                    // Lenz: pick the largest high speed size that actually supports this fps (e.g. Pixel 3a
+                    // only does 240fps at 720p, so falling back to the largest high speed size, 1080p, fails)
+                    CameraController.Size requested_size = null;
+                    for(CameraController.Size size : video_quality_handler.getSupportedVideoSizesHighSpeed()) {
+                        if( size.supportsFrameRate(capture_rate) && (requested_size == null || size.width*size.height > requested_size.width*requested_size.height) )
+                            requested_size = size;
+                    }
+                    if( requested_size == null )
+                        requested_size = video_quality_handler.getMaxSupportedVideoSizeHighSpeed();
                     profile.videoFrameWidth = requested_size.width;
                     profile.videoFrameHeight = requested_size.height;
                     // now try again
