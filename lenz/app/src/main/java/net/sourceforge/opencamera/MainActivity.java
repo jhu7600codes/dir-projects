@@ -539,9 +539,9 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         if( MyDebug.LOG )
             Log.d(TAG, "onCreate: time after setting system ui visibility listener: " + (System.currentTimeMillis() - debug_time));
 
-        // show "about" dialog for first time use
+        // Lenz: no intro dialog on first run
         if( !has_done_first_time ) {
-            if( !is_test ) {
+            if( false ) {
                 AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
                 alertDialog.setTitle(R.string.app_name);
                 alertDialog.setMessage(R.string.intro_text);
@@ -591,7 +591,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
                     }
                     final boolean force_whats_new = false;
                     //final boolean force_whats_new = true; // for testing
-                    boolean allow_show_whats_new = sharedPreferences.getBoolean(PreferenceKeys.ShowWhatsNewPreferenceKey, true);
+                    boolean allow_show_whats_new = sharedPreferences.getBoolean(PreferenceKeys.ShowWhatsNewPreferenceKey, false);
                     if( MyDebug.LOG )
                         Log.d(TAG, "allow_show_whats_new: " + allow_show_whats_new);
                     // don't show What's New if this is the first time the user has run

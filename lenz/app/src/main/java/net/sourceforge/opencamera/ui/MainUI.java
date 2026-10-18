@@ -717,6 +717,26 @@ public class MainUI {
                 view.setLayoutParams(layoutParams);
             }
 
+            // Lenz: push the preview to the top (gcam style) so the mode bar and shutter
+            // get a proper black bar below it instead of overlapping the preview
+            view = main_activity.findViewById(R.id.preview);
+            layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
+            layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, 0);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+            layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, 0);
+            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, 0);
+            if( system_orientation_portrait ) {
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+                layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
+            }
+            else {
+                layoutParams.addRule(system_orientation_reversed_landscape ? RelativeLayout.ALIGN_PARENT_RIGHT : RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+                layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            }
+            view.setLayoutParams(layoutParams);
+
             view = main_activity.findViewById(R.id.take_photo_when_video_recording);
             layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
             layoutParams.addRule(align_parent_left, 0);

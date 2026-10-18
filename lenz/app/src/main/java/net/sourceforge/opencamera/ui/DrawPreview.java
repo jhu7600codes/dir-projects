@@ -255,6 +255,8 @@ public class DrawPreview {
         // no longer bother with a focus bracketing icon - hard to come up with a clear icon, and should be obvious from the two on-screen seekbars
     private Bitmap burst_bitmap;
     private Bitmap nr_bitmap;
+    /** Lenz: the mode bar already shows the mode, so no badges on the viewfinder. */
+    private static final boolean lenz_show_photo_mode_icons = false;
     private Bitmap x_night_bitmap;
     private Bitmap x_bokeh_bitmap;
     private Bitmap x_beauty_bitmap;
@@ -661,7 +663,7 @@ public class DrawPreview {
         if( MyDebug.LOG )
             Log.d(TAG, "photoMode: " + photoMode);
 
-        show_time_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowTimePreferenceKey, true);
+        show_time_pref = false /* Lenz: clean viewfinder */;
         // reset in case user changes the preference:
         dateFormatTimeInstance = DateFormat.getTimeInstance();
         current_time_string = null;
@@ -670,11 +672,11 @@ public class DrawPreview {
 
         show_camera_id_pref = main_activity.isMultiCam() && sharedPreferences.getBoolean(PreferenceKeys.ShowCameraIDPreferenceKey, true);
         //show_camera_id_pref = true; // test
-        show_free_memory_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowFreeMemoryPreferenceKey, true);
-        show_iso_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowISOPreferenceKey, false);
+        show_free_memory_pref = false /* Lenz: clean viewfinder */;
+        show_iso_pref = false /* Lenz: clean viewfinder */;
         show_video_max_amp_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowVideoMaxAmpPreferenceKey, false);
         show_zoom_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowZoomPreferenceKey, true);
-        show_battery_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowBatteryPreferenceKey, true);
+        show_battery_pref = false /* Lenz: clean viewfinder */;
 
         show_angle_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowAnglePreferenceKey, false);
         String angle_highlight_color = sharedPreferences.getString(PreferenceKeys.ShowAngleHighlightColorPreferenceKey, "#14e715");
@@ -1544,7 +1546,7 @@ public class DrawPreview {
                 }
             }
 
-            if( (
+            if( lenz_show_photo_mode_icons && (
                     photoMode == MyApplicationInterface.PhotoMode.DRO ||
                             photoMode == MyApplicationInterface.PhotoMode.HDR ||
                             photoMode == MyApplicationInterface.PhotoMode.Panorama ||

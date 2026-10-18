@@ -105,7 +105,7 @@
         android:title="@string/preference_show_exposure_lock"
         android:summary="@string/preference_show_exposure_lock_summary"
         android:icon="@drawable/exposure_unlocked"
-        android:defaultValue="true"
+        android:defaultValue="false"
         />
 
     <!--  if we move this to another PreferenceGroup, we should update code to remove this Preference -->

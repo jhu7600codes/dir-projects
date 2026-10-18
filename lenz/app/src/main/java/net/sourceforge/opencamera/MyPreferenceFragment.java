@@ -354,6 +354,10 @@ public class MyPreferenceFragment extends PreferenceFragment implements OnShared
                     return false;
                 }
             });
+            // Lenz: the online help is Open Camera's website
+            PreferenceGroup pg = (PreferenceGroup)this.findPreference("preference_category_online");
+            if( pg != null )
+                pg.removePreference(pref);
         }
 
         {

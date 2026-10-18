@@ -8236,6 +8236,10 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
         if( !applicationInterface.getShowToastsPref() ) {
             return;
         }
+        if( use_fake_toast ) {
+            // Lenz: no info text popping up over the viewfinder
+            return;
+        }
 
         if( MyDebug.LOG ) {
             Log.d(TAG, "showToast: " + message);
