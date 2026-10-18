@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.lenz.camera"
-        versionCode 98
-        versionName "0.3"
+        versionCode 99
+        versionName "0.4"
         minSdkVersion 23
         targetSdkVersion 36
         //compileSdkVersion 31 // needed to support appcompat:1.4.0 (which we need for emoji policy support, and not yet ready to target SDK 30)
@@ -54,6 +54,8 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     implementation 'androidx.exifinterface:exifinterface:1.4.2'
+
+    implementation 'androidx.preference:preference:1.2.1'
 
     // Lenz: CameraX for Photo Sphere
     def camerax_version = '1.4.2'

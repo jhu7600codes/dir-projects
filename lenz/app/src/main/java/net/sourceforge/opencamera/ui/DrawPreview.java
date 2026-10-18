@@ -257,6 +257,8 @@ public class DrawPreview {
     private Bitmap nr_bitmap;
     /** Lenz: the mode bar already shows the mode, so no badges on the viewfinder. */
     private static final boolean lenz_show_photo_mode_icons = false;
+    /** Lenz: the record time is shown by Lenz's own UI. */
+    private static final boolean lenz_show_engine_video_info = false;
     private Bitmap x_night_bitmap;
     private Bitmap x_bokeh_bitmap;
     private Bitmap x_beauty_bitmap;
@@ -675,7 +677,7 @@ public class DrawPreview {
         show_free_memory_pref = false /* Lenz: clean viewfinder */;
         show_iso_pref = false /* Lenz: clean viewfinder */;
         show_video_max_amp_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowVideoMaxAmpPreferenceKey, false);
-        show_zoom_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowZoomPreferenceKey, true);
+        show_zoom_pref = false /* Lenz: zoom shown on the zoom chips */;
         show_battery_pref = false /* Lenz: clean viewfinder */;
 
         show_angle_pref = sharedPreferences.getBoolean(PreferenceKeys.ShowAnglePreferenceKey, false);
@@ -2053,10 +2055,15 @@ public class DrawPreview {
                     else {
                         time_s = getTimeStringFromSeconds(remaining_time);
                     }
-                    applicationInterface.drawTextWithBackground(canvas, p, time_s, Color.rgb(244, 67, 54), Color.BLACK, canvas.getWidth() / 2, canvas.getHeight() / 2); // Red 500
+                    // Lenz: big plain countdown
+                    p.setTextSize(96 * scale_font + 0.5f);
+                    p.setColor(Color.WHITE);
+                    p.setShadowLayer(8 * scale_font, 0, 0, Color.argb(128, 0, 0, 0));
+                    canvas.drawText(time_s, canvas.getWidth() / 2.0f, canvas.getHeight() / 2.0f, p);
+                    p.clearShadowLayer();
                 }
             }
-            else if( preview.isVideoRecording() && !is_preview_paused ) {
+            else if( lenz_show_engine_video_info && preview.isVideoRecording() && !is_preview_paused ) {
                 long video_time = preview.getVideoTime(false);
                 String time_s = getTimeStringFromSeconds(video_time/1000);
             	/*if( MyDebug.LOG )
@@ -2797,14 +2804,11 @@ public class DrawPreview {
             }
             int size = (int)radius;
 
-            if( preview.isFocusRecentSuccess() )
-                p.setColor(Color.rgb(20, 231, 21)); // Green A400
-            else if( preview.isFocusRecentFailure() )
-                p.setColor(Color.rgb(244, 67, 54)); // Red 500
-            else
-                p.setColor(Color.WHITE);
+            // Lenz: a plain white focus ring
+            p.setColor(Color.WHITE);
+            p.setAlpha(preview.isFocusRecentFailure() ? 128 : 230);
             p.setStyle(Paint.Style.STROKE);
-            p.setStrokeWidth(stroke_width);
+            p.setStrokeWidth(2 * stroke_width);
             int pos_x;
             int pos_y;
             if( preview.hasFocusArea() ) {
@@ -2816,17 +2820,8 @@ public class DrawPreview {
                 pos_x = canvas.getWidth() / 2;
                 pos_y = canvas.getHeight() / 2;
             }
-            float frac = 0.5f;
-            // horizontal strokes
-            canvas.drawLine(pos_x - size, pos_y - size, pos_x - frac*size, pos_y - size, p);
-            canvas.drawLine(pos_x + frac*size, pos_y - size, pos_x + size, pos_y - size, p);
-            canvas.drawLine(pos_x - size, pos_y + size, pos_x - frac*size, pos_y + size, p);
-            canvas.drawLine(pos_x + frac*size, pos_y + size, pos_x + size, pos_y + size, p);
-            // vertical strokes
-            canvas.drawLine(pos_x - size, pos_y - size, pos_x - size, pos_y - frac*size, p);
-            canvas.drawLine(pos_x - size, pos_y + frac*size, pos_x - size, pos_y + size, p);
-            canvas.drawLine(pos_x + size, pos_y - size, pos_x + size, pos_y - frac*size, p);
-            canvas.drawLine(pos_x + size, pos_y + frac*size, pos_x + size, pos_y + size, p);
+            canvas.drawCircle(pos_x, pos_y, size, p);
+            p.setAlpha(255);
             p.setStyle(Paint.Style.FILL); // reset
         }
     }

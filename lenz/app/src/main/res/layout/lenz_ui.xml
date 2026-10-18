@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lenz camera UI, drawn on top of the camera engine's preview -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lenz_ui"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/lenz_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:orientation="horizontal"
+        android:paddingTop="10dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/lenz_flash"
+            style="@style/LenzTopIcon"
+            android:contentDescription="@string/lenz_flash"
+            android:src="@drawable/ic_lenz_flash_auto" />
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1">
+            <ImageButton
+                android:id="@+id/lenz_timer"
+                style="@style/LenzTopIcon"
+                android:layout_width="match_parent"
+                android:layout_weight="0"
+                android:contentDescription="@string/lenz_timer"
+                android:src="@drawable/ic_lenz_timer" />
+            <TextView
+                android:id="@+id/lenz_timer_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="22dp"
+                android:layout_marginTop="10dp"
+                android:textColor="#FFFFFFFF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:shadowColor="#99000000"
+                android:shadowRadius="3" />
+        </FrameLayout>
+
+        <ImageButton
+            android:id="@+id/lenz_grid"
+            style="@style/LenzTopIcon"
+            android:contentDescription="@string/lenz_grid"
+            android:src="@drawable/ic_lenz_grid" />
+
+        <ImageButton
+            android:id="@+id/lenz_settings"
+            style="@style/LenzTopIcon"
+            android:contentDescription="@string/lenz_settings"
+            android:src="@drawable/ic_lenz_tune" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/lenz_rec"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="70dp"
+        android:background="@drawable/lenz_rec_bg"
+        android:gravity="center"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:textColor="#FFFFFFFF"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-medium"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/lenz_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingBottom="20dp">
+
+        <LinearLayout
+            android:id="@+id/lenz_zoom_chips"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/lenz_chip_bg"
+            android:orientation="horizontal"
+            android:padding="4dp" />
+
+        <net.sourceforge.opencamera.ui.ModeBarView
+            android:id="@+id/mode_bar"
+            android:layout_width="match_parent"
+            android:layout_height="48dp" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="104dp"
+            android:layout_marginTop="6dp">
+
+            <ImageView
+                android:id="@+id/lenz_thumbnail"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center_vertical|left"
+                android:layout_marginLeft="36dp"
+                android:background="@drawable/lenz_round_button"
+                android:contentDescription="@string/gallery"
+                android:scaleType="centerCrop" />
+
+            <net.sourceforge.opencamera.ui.ShutterButton
+                android:id="@+id/lenz_shutter"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/take_photo" />
+
+            <ImageButton
+                android:id="@+id/lenz_flip"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center_vertical|right"
+                android:layout_marginRight="36dp"
+                android:background="@drawable/lenz_round_button"
+                android:contentDescription="@string/switch_to_front_camera"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_lenz_flip" />
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

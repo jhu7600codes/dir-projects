@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/lenz_settings_photo" app:iconSpaceReserved="false">
+        <ListPreference
+            app:key="preference_quality"
+            app:title="@string/lenz_settings_quality"
+            app:entries="@array/lenz_quality_entries"
+            app:entryValues="@array/lenz_quality_values"
+            app:defaultValue="95"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+        <ListPreference
+            app:key="preference_raw"
+            app:title="@string/lenz_settings_raw"
+            app:entries="@array/preference_raw_entries"
+            app:entryValues="@array/preference_raw_values"
+            app:defaultValue="preference_raw_no"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            app:key="preference_face_detection"
+            app:title="@string/lenz_settings_faces"
+            app:summary="@string/lenz_settings_faces_summary"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/lenz_settings_video" app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            app:key="preference_video_stabilization"
+            app:title="@string/lenz_settings_stabilization"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            app:key="preference_record_audio"
+            app:title="@string/lenz_settings_audio"
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/lenz_settings_general" app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            app:key="preference_shutter_sound"
+            app:title="@string/lenz_settings_sound"
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
+        <SwitchPreferenceCompat
+            app:key="preference_location"
+            app:title="@string/lenz_settings_location"
+            app:summary="@string/lenz_settings_location_summary"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+        <ListPreference
+            app:key="preference_volume_keys"
+            app:title="@string/lenz_settings_volume"
+            app:entries="@array/preference_volume_keys_entries"
+            app:entryValues="@array/preference_volume_keys_values"
+            app:defaultValue="volume_take_photo"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+        <EditTextPreference
+            app:key="preference_save_location"
+            app:title="@string/lenz_settings_folder"
+            app:defaultValue="Lenz"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/lenz_settings_about" app:iconSpaceReserved="false">
+        <Preference
+            app:key="lenz_version"
+            app:title="Lenz"
+            app:iconSpaceReserved="false" />
+        <Preference
+            app:key="lenz_source"
+            app:title="@string/lenz_settings_source"
+            app:summary="@string/lenz_settings_source_summary"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+</PreferenceScreen>

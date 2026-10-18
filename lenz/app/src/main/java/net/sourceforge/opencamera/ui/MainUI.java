@@ -683,40 +683,6 @@ public class MainUI {
             view.setLayoutParams(layoutParams);
             setViewRotation(view, ui_rotation);
 
-            view = main_activity.findViewById(R.id.mode_bar);
-            layoutParams = (RelativeLayout.LayoutParams)view.getLayoutParams();
-            {
-                // Lenz mode bar: a strip next to the shutter, along the long side of the screen
-                ModeBarView modeBar = (ModeBarView)view;
-                modeBar.setHorizontal(system_orientation_portrait);
-                layoutParams.addRule(RelativeLayout.ABOVE, 0);
-                layoutParams.addRule(RelativeLayout.LEFT_OF, 0);
-                layoutParams.addRule(RelativeLayout.RIGHT_OF, 0);
-                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
-                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
-                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
-                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, 0);
-                int bar_size = (int) ((system_orientation_portrait ? 48 : 110) * scale + 0.5f);
-                // sits right next to the shutter, on the black bar outside the preview
-                int gap = 0;
-                if( system_orientation_portrait ) {
-                    layoutParams.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-                    layoutParams.height = bar_size;
-                    layoutParams.addRule(RelativeLayout.ABOVE, R.id.take_photo);
-                    layoutParams.setMargins(0, 0, 0, gap);
-                }
-                else {
-                    layoutParams.width = bar_size;
-                    layoutParams.height = RelativeLayout.LayoutParams.MATCH_PARENT;
-                    layoutParams.addRule(system_orientation_reversed_landscape ? RelativeLayout.RIGHT_OF : RelativeLayout.LEFT_OF, R.id.take_photo);
-                    if( system_orientation_reversed_landscape )
-                        layoutParams.setMargins(gap, 0, 0, 0);
-                    else
-                        layoutParams.setMargins(0, 0, gap, 0);
-                }
-                view.setLayoutParams(layoutParams);
-            }
-
             // Lenz: push the preview to the top (gcam style) so the mode bar and shutter
             // get a proper black bar below it instead of overlapping the preview
             view = main_activity.findViewById(R.id.preview);

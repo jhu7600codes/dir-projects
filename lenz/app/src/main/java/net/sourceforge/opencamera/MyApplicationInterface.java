@@ -1966,6 +1966,7 @@ public class MyApplicationInterface extends BasicApplicationInterface {
     public void cameraSetup() {
         main_activity.cameraSetup();
         main_activity.getModeController().refresh();
+        main_activity.getLenzUI().refresh();
         drawPreview.clearContinuousFocusMove();
         // Need to cause drawPreview.updateSettings(), otherwise icons like HDR won't show after force-restart, because we only
         // know that HDR is supported after the camera is opened
@@ -2430,6 +2431,7 @@ public class MyApplicationInterface extends BasicApplicationInterface {
     public void startedVideo() {
         if( MyDebug.LOG )
             Log.d(TAG, "startedVideo()");
+        main_activity.getLenzUI().refresh();
         if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ) {
             if( !( main_activity.getMainUI().inImmersiveMode() && main_activity.usingKitKatImmersiveModeEverything() ) ) {
                 View pauseVideoButton = main_activity.findViewById(R.id.pause_video);
@@ -2474,6 +2476,7 @@ public class MyApplicationInterface extends BasicApplicationInterface {
 
     @Override
     public void stoppedVideo(final VideoMethod video_method, final Uri uri, final String filename) {
+        main_activity.getLenzUI().refresh();
         if( MyDebug.LOG ) {
             Log.d(TAG, "stoppedVideo");
             Log.d(TAG, "video_method " + video_method);
@@ -2978,7 +2981,7 @@ public class MyApplicationInterface extends BasicApplicationInterface {
     @Override
     public void multitouchZoom(int new_zoom) {
         main_activity.getMainUI().setSeekbarZoom(new_zoom);
-        main_activity.getMainUI().flashZoomSeekbar();
+        main_activity.getLenzUI().updateZoom();
     }
 
     @Override

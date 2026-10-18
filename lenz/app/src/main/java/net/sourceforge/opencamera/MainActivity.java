@@ -141,6 +141,8 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
     private boolean camera_in_background; // whether the camera is covered by a fragment/dialog (such as settings or folder picker)
     private GestureDetector gestureDetector;
     private ModeController modeController;
+    private LenzUI lenzUI;
+    private static final int LENZ_SETTINGS_CODE = 4242;
     private boolean screen_is_locked; // whether screen is "locked" - this is Open Camera's own lock to guard against accidental presses, not the standard Android lock
     private final Map<Integer, Bitmap> preloaded_bitmap_resources = new Hashtable<>();
     private ValueAnimator gallery_save_anim;
@@ -310,6 +312,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         settingsManager = new SettingsManager(this);
         mainUI = new MainUI(this);
         modeController = new ModeController(this);
+        lenzUI = new LenzUI(this);
         manualSeekbars = new ManualSeekbars();
         applicationInterface = new MyApplicationInterface(this, savedInstanceState);
         if( MyDebug.LOG )
@@ -1308,6 +1311,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         }
         super.onResume();
         this.app_is_paused = false; // must be set before initLocation() at least
+        lenzUI.onResume();
 
         // this is intentionally true, not false, as the uncovering happens in DrawPreview when we receive frames from the camera after it's opened
         // (this should already have been set from the call in onPause(), but we set it here again just in case)
@@ -1496,6 +1500,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
             debug_time = System.currentTimeMillis();
         }
         super.onPause(); // docs say to call this before freeing other things
+        lenzUI.onPause();
         this.app_is_paused = true;
 
         mainUI.destroyPopup(); // important as user could change/reset settings from Android settings when pausing
@@ -2642,6 +2647,12 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         this.enablePopupOnBackPressedCallback(false);
         this.enablePausePreviewOnBackPressedCallback(false);
         this.enableScreenLockOnBackPressedCallback(false);
+
+        // Lenz has its own settings screen
+        if( !is_test ) {
+            startActivityForResult(new Intent(this, LenzSettingsActivity.class), LENZ_SETTINGS_CODE);
+            return;
+        }
 
         Bundle bundle = new Bundle();
         bundle.putBoolean("edge_to_edge_mode", edge_to_edge_mode);
@@ -3828,8 +3839,8 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
             //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE); // testing for devices with unusual sensor orientation (e.g., Nexus 5X)
         }
         else {
-            // allow orientation to change for camera, even if user has locked orientation
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            // Lenz: the UI stays portrait like Gcam, icons rotate instead (photos still use the real orientation)
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         if( preview != null ) {
             // also need to call preview.setCameraDisplayOrientation, as this handles if the user switched from portrait to reverse landscape whilst in settings/etc
@@ -4092,6 +4103,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         // workaround for setImageResource also resetting padding, Android bug
         galleryButton.setPadding(left, top, right, bottom);
         gallery_bitmap = null;
+        lenzUI.setThumbnail(null);
     }
 
     /** Shows a thumbnail for the gallery icon.
@@ -4111,6 +4123,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         ImageButton galleryButton = this.findViewById(R.id.gallery);
         galleryButton.setImageBitmap(thumbnail);
         gallery_bitmap = thumbnail;
+        lenzUI.setThumbnail(thumbnail);
     }
 
     /** Updates the gallery icon by searching for the most recent photo.
@@ -4456,6 +4469,17 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
             Log.d(TAG, "onActivityResult: " + requestCode);
 
         super.onActivityResult(requestCode, resultCode, resultData);
+
+        if( requestCode == LENZ_SETTINGS_CODE ) {
+            // apply the new settings once the camera has reopened
+            new Handler().postDelayed(() -> {
+                if( !app_is_paused ) {
+                    applicationInterface.getDrawPreview().updateSettings();
+                    updateForSettings(true);
+                }
+            }, 300);
+            return;
+        }
 
         switch( requestCode ) {
             case CHOOSE_SAVE_FOLDER_SAF_CODE:
@@ -5673,6 +5697,10 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
 
     public ModeController getModeController() {
         return modeController;
+    }
+
+    public LenzUI getLenzUI() {
+        return lenzUI;
     }
 
     public MainUI getMainUI() {
