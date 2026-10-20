@@ -1,7 +1,11 @@
 package app.stash.ui.screens
 
 import android.content.Context
-import androidx.browser.customtabs.CustomTabsIntent
+import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -62,12 +66,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stash.R
-import app.stash.data.prefs.Settings
 import app.stash.importer.AppleMusic
+import app.stash.importer.ExportifyCsv
+import app.stash.importer.SpotifyLink
+import dagger.hilt.android.qualifiers.ApplicationContext
 import app.stash.importer.ImportManager
-import app.stash.importer.RemotePlaylistInfo
-import app.stash.importer.SourcePlaylist
-import app.stash.importer.Spotify
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
@@ -80,41 +83,44 @@ import javax.inject.Inject
 @HiltViewModel
 class ImportViewModel @Inject constructor(
     val manager: ImportManager,
-    private val spotify: Spotify,
+    private val spotify: SpotifyLink,
     private val apple: AppleMusic,
-    private val settings: Settings,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
-    val spotifyPlaylists = MutableStateFlow<List<RemotePlaylistInfo>?>(null)
     val error = MutableStateFlow<String?>(null)
 
-    fun loginSpotify(context: Context) = viewModelScope.launch {
-        error.value = null
-        runCatching { spotify.authorizeUri() }
-            .onSuccess { CustomTabsIntent.Builder().build().launchUrl(context, it) }
-            .onFailure { error.value = it.message }
-    }
+    /** a spotify or apple music link (or any shared text containing one) */
+    fun cleanLink(text: String) = spotify.findLink(text) ?: apple.findLink(text) ?: text.trim()
 
-    fun loadSpotify() = viewModelScope.launch {
+    fun importLink(link: String): Boolean {
         error.value = null
-        if (!settings.current().spotifyConnected) return@launch
-        runCatching { spotify.playlists() }
-            .onSuccess { spotifyPlaylists.value = it }
-            .onFailure { error.value = it.message }
-    }
-
-    fun importSpotify(selected: List<RemotePlaylistInfo>, liked: Boolean) {
-        val loaders = buildList<suspend () -> SourcePlaylist> {
-            if (liked) add { spotify.likedSongs() }
-            selected.forEach { info -> add { spotify.playlist(info) } }
+        return when {
+            "spotify" in link -> { manager.start(listOf { spotify.playlist(link) }, "spotify"); true }
+            "music.apple.com" in link -> { manager.start(listOf { apple.playlist(link) }, "apple music"); true }
+            else -> { error.value = "paste a spotify or apple music playlist link"; false }
         }
-        manager.start(loaders, "spotify")
     }
 
-    fun importApple(link: String) {
-        manager.start(listOf { apple.playlist(link) }, "apple music")
+    /** reads the picked exportify csv / zip files up front, then imports each playlist in turn */
+    fun importFiles(uris: List<Uri>): Boolean {
+        error.value = null
+        val playlists = uris.flatMap { uri ->
+            runCatching {
+                context.contentResolver.openInputStream(uri)!!.use { ExportifyCsv.read(displayName(uri), it) }
+            }.onFailure { error.value = "couldn't read ${displayName(uri)}: ${it.message}" }.getOrDefault(emptyList())
+        }
+        if (playlists.isEmpty()) {
+            if (error.value == null) error.value = "no songs found, is that an exportify csv?"
+            return false
+        }
+        manager.start(playlists.map { p -> suspend { p } }, "spotify")
+        return true
     }
 
-    fun findAppleLink(text: String) = apple.findLink(text)
+    private fun displayName(uri: Uri): String =
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+            if (c.moveToFirst()) c.getString(0) else null
+        } ?: uri.lastPathSegment?.substringAfterLast('/') ?: "playlist.csv"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,9 +129,12 @@ fun ImportScreen(sharedLink: String?) {
     val vm: ImportViewModel = hiltViewModel()
     val nav = LocalNav.current
     val context = LocalContext.current
-    val settings by LocalActions.current.settings.collectAsState()
     val error by vm.error.collectAsState()
-    var link by remember { mutableStateOf(sharedLink?.let(vm::findAppleLink) ?: sharedLink ?: "") }
+    var link by remember { mutableStateOf(sharedLink?.let(vm::cleanLink) ?: "") }
+    val pickFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty() && vm.importFiles(uris)) nav.navigate(Routes.IMPORT_PROGRESS)
+    }
+    val busy by vm.manager.progress.collectAsState()
 
     Scaffold(
         topBar = {
@@ -146,37 +155,54 @@ fun ImportScreen(sharedLink: String?) {
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            item {
-                ServiceCard(R.drawable.ic_spotify, "spotify", Color(0xFF1DB954)) {
-                    val s = settings
-                    when {
-                        s == null -> Unit
-                        s.spotifyClientId.isBlank() -> {
-                            Text("needs your own spotify app's client id first (free, developer.spotify.com). set the redirect uri to stash://spotify-callback.",
-                                style = MaterialTheme.typography.bodySmall)
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedButton(onClick = { nav.navigate(Routes.SETTINGS) }) { Text("open settings") }
-                        }
-                        !s.spotifyConnected -> FilledTonalButton(onClick = { vm.loginSpotify(context) }) { Text("log in with spotify") }
-                        else -> FilledTonalButton(onClick = { nav.navigate(Routes.IMPORT_SPOTIFY) }) { Text("pick playlists") }
-                    }
+            if (busy.running) item {
+                FilledTonalButton(onClick = { nav.navigate(Routes.IMPORT_PROGRESS) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("an import is running, see progress")
                 }
             }
             item {
-                ServiceCard(R.drawable.ic_apple_music, "apple music", Color(0xFFFA243C)) {
-                    Text("paste a playlist link (share → copy link in apple music), or share it straight to stash.",
-                        style = MaterialTheme.typography.bodySmall)
+                ServiceCard(R.drawable.ic_spotify, "playlist link", Color(0xFF1DB954)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(painterResource(R.drawable.ic_apple_music), null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("spotify or apple music, the playlist has to be public. share → copy link, or share it straight to stash.",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = link, onValueChange = { link = it }, singleLine = true,
-                        placeholder = { Text("https://music.apple.com/…/playlist/…") },
+                        placeholder = { Text("https://open.spotify.com/playlist/…") },
                         shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(Modifier.height(8.dp))
                     FilledTonalButton(
-                        enabled = link.contains("music.apple.com"),
-                        onClick = { vm.importApple(link.trim()); nav.navigate(Routes.IMPORT_PROGRESS) },
+                        enabled = link.isNotBlank() && !busy.running,
+                        onClick = { if (vm.importLink(vm.cleanLink(link))) nav.navigate(Routes.IMPORT_PROGRESS) },
                     ) { Text("import") }
+                    Text(
+                        "spotify links stop at the first 100 songs, use exportify below for bigger ones.",
+                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+            }
+            item {
+                ServiceCard(R.drawable.ic_spotify, "exportify", Color(0xFF1DB954)) {
+                    Text(
+                        "for private playlists, liked songs, or everything at once: open exportify.net, log in with spotify, " +
+                            "hit export (or export all for a zip), then pick the files here.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://exportify.net")))
+                        }) { Text("open exportify") }
+                        FilledTonalButton(
+                            enabled = !busy.running,
+                            onClick = { pickFiles.launch(arrayOf("text/*", "application/zip", "application/octet-stream")) },
+                        ) { Text("pick csv / zip") }
+                    }
                 }
             }
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
@@ -204,73 +230,6 @@ private fun ServiceCard(logo: Int, name: String, brand: Color, content: @Composa
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SpotifyPlaylistsScreen() {
-    val vm: ImportViewModel = hiltViewModel()
-    val nav = LocalNav.current
-    val playlists by vm.spotifyPlaylists.collectAsState()
-    val error by vm.error.collectAsState()
-    var selected by remember { mutableStateOf(setOf<String>()) }
-    var liked by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) { vm.loadSpotify() }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("spotify playlists") },
-                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "back") } },
-            )
-        },
-        bottomBar = {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-                Button(
-                    enabled = selected.isNotEmpty() || liked,
-                    onClick = {
-                        vm.importSpotify(playlists.orEmpty().filter { it.id in selected }, liked)
-                        nav.navigate(Routes.IMPORT_PROGRESS) { popUpTo(Routes.IMPORT_SPOTIFY) { inclusive = true } }
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp),
-                ) { Text("import ${selected.size + if (liked) 1 else 0}") }
-            }
-        },
-    ) { padding ->
-        val list = playlists
-        when {
-            error != null -> Box(Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-                Text(error!!, color = MaterialTheme.colorScheme.error)
-            }
-            list == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            else -> LazyColumn(contentPadding = padding) {
-                item {
-                    ListItem(
-                        headlineContent = { Text("liked songs") },
-                        leadingContent = {
-                            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.small, modifier = Modifier.size(52.dp)) {
-                                Icon(Icons.Rounded.Favorite, null, Modifier.padding(14.dp))
-                            }
-                        },
-                        trailingContent = { Checkbox(checked = liked, onCheckedChange = { liked = it }) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable { liked = !liked },
-                    )
-                }
-                items(list, key = { it.id }) { p ->
-                    val on = p.id in selected
-                    ListItem(
-                        headlineContent = { Text(p.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        supportingContent = { Text(listOfNotNull("${p.trackCount} songs", p.owner).joinToString(" · ")) },
-                        leadingContent = { Artwork(p.coverUrl, Modifier.size(52.dp)) },
-                        trailingContent = { Checkbox(checked = on, onCheckedChange = { selected = if (it) selected + p.id else selected - p.id }) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable { selected = if (on) selected - p.id else selected + p.id },
-                    )
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

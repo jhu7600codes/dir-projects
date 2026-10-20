@@ -47,7 +47,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stash.data.prefs.Settings
 import app.stash.data.prefs.ThemeMode
-import app.stash.importer.Spotify
 import app.stash.providers.ProviderRegistry
 import app.stash.providers.YtDlp
 import app.stash.ui.LocalActions
@@ -63,7 +62,6 @@ class SettingsViewModel @Inject constructor(
     val settings: Settings,
     val registry: ProviderRegistry,
     private val ytDlp: YtDlp,
-    private val spotify: Spotify,
 ) : ViewModel() {
     val ytStatus = ytDlp.status
     val updateResult = MutableStateFlow<String?>(null)
@@ -74,7 +72,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun set(block: suspend Settings.() -> Unit) = viewModelScope.launch { settings.block() }
-    fun logoutSpotify() = viewModelScope.launch { spotify.logout() }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -170,17 +167,6 @@ fun SettingsScreen() {
             }
 
             item { SectionHeader("playlist import") }
-            item {
-                KeyField("spotify client id", settings.spotifyClientId,
-                    "from developer.spotify.com, redirect uri stash://spotify-callback") { vm.set { setSpotifyClientId(it) } }
-            }
-            if (settings.spotifyConnected) item {
-                ListItem(
-                    headlineContent = { Text("spotify connected") },
-                    trailingContent = { FilledTonalButton(onClick = { vm.logoutSpotify() }) { Text("log out") } },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
-            }
             item {
                 KeyField("apple musickit developer token (optional)", settings.appleDeveloperToken,
                     "without it, public playlist links are read from the web page", secret = true) { vm.set { setAppleDeveloperToken(it) } }

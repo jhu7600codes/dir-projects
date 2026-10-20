@@ -10,7 +10,7 @@ All six milestones from the plan are in this first build:
 2. **Library**: Room db with saved songs, liked songs, playlists, and albums/artists grouped from your saved songs.
 3. **Downloads**: a download button on every song, album and playlist. They run on a WorkManager queue with resume, retries (3 tries with exponential backoff), a wi-fi only toggle and a foreground progress notification. Files go to app storage (`files/music/`). The player always uses the local file if there is one.
 4. **Fallback providers**: youtube → soundcloud → bandcamp → jamendo → internet archive → free music archive.
-5. **Playlist import**: Spotify (OAuth PKCE login, pick playlists + liked songs) and Apple Music (public playlist link, or the catalog API if you add a MusicKit token). There's a progress screen and a "couldn't match" list you can fix by hand.
+5. **Playlist import**: Spotify (public playlist/album link, or CSV/zip files from exportify.net) and Apple Music (public playlist link, or the catalog API if you add a MusicKit token). There's a progress screen and a "couldn't match" list you can fix by hand.
 6. **Polish**: Material You dynamic color (wallpaper colors on Android 12+, lavender fallback below that), light/dark/system theme, and an adaptive icon with a monochrome layer for themed icons.
 
 ## UI
@@ -40,7 +40,7 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 ## Setup on the phone
 
 - **Jamendo**: get a free client id at devportal.jamendo.com and paste it in settings. Until you do, Jamendo is skipped.
-- **Spotify import**: create an app at developer.spotify.com, add the redirect uri `stash://spotify-callback`, and paste its client id in settings. Then go to library → import → log in with Spotify. Heads up: Spotify's developer-mode rules changed in 2026. If the playlist calls start returning 403, it's on their side.
+- **Spotify import**: no Spotify developer app needed (their Web API went premium-only in 2026). Either paste or share a public playlist/album link (read from Spotify's embed page, which only has the first 100 songs), or export from exportify.net and pick the CSVs or the "export all" zip in the importer. Exportify also covers private playlists and liked songs.
 - **Apple Music import**: in Apple Music, share a playlist → copy link, then paste it in the importer (or share it straight to stash). A MusicKit developer token in settings is optional.
 
 ## Known limits / things to test

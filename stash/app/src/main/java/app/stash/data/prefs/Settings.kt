@@ -25,9 +25,7 @@ data class AppSettings(
     val wifiOnlyDownloads: Boolean = false,
     val disabledProviders: Set<String> = emptySet(),
     val jamendoClientId: String = "",
-    val spotifyClientId: String = "",
     val appleDeveloperToken: String = "",
-    val spotifyConnected: Boolean = false,
     val lastYtDlpUpdate: Long = 0,
     val ytDlpVersion: String = "",
 )
@@ -40,12 +38,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val wifiOnly = booleanPreferencesKey("wifi_only")
         val disabled = stringSetPreferencesKey("disabled_providers")
         val jamendo = stringPreferencesKey("jamendo_client_id")
-        val spotifyClient = stringPreferencesKey("spotify_client_id")
         val apple = stringPreferencesKey("apple_dev_token")
-        val spotifyAccess = stringPreferencesKey("spotify_access")
-        val spotifyRefresh = stringPreferencesKey("spotify_refresh")
-        val spotifyExpiry = longPreferencesKey("spotify_expiry")
-        val spotifyVerifier = stringPreferencesKey("spotify_verifier")
         val ytUpdated = longPreferencesKey("ytdlp_updated")
         val ytVersion = stringPreferencesKey("ytdlp_version")
     }
@@ -62,9 +55,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         wifiOnlyDownloads = this[Keys.wifiOnly] ?: false,
         disabledProviders = this[Keys.disabled] ?: emptySet(),
         jamendoClientId = this[Keys.jamendo] ?: "",
-        spotifyClientId = this[Keys.spotifyClient] ?: "",
         appleDeveloperToken = this[Keys.apple] ?: "",
-        spotifyConnected = !this[Keys.spotifyRefresh].isNullOrEmpty(),
         lastYtDlpUpdate = this[Keys.ytUpdated] ?: 0,
         ytDlpVersion = this[Keys.ytVersion] ?: "",
     )
@@ -78,32 +69,9 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         it[Keys.disabled] = set
     }
     suspend fun setJamendoClientId(v: String) = store.edit { it[Keys.jamendo] = v.trim() }
-    suspend fun setSpotifyClientId(v: String) = store.edit { it[Keys.spotifyClient] = v.trim() }
     suspend fun setAppleDeveloperToken(v: String) = store.edit { it[Keys.apple] = v.trim() }
     suspend fun setYtDlpUpdated(version: String) = store.edit {
         it[Keys.ytUpdated] = System.currentTimeMillis()
         it[Keys.ytVersion] = version
     }
-
-    // spotify tokens
-    data class SpotifyTokens(val access: String, val refresh: String, val expiresAt: Long)
-
-    suspend fun spotifyTokens(): SpotifyTokens? {
-        val p = store.data.first()
-        val refresh = p[Keys.spotifyRefresh] ?: return null
-        return SpotifyTokens(p[Keys.spotifyAccess] ?: "", refresh, p[Keys.spotifyExpiry] ?: 0)
-    }
-
-    suspend fun saveSpotifyTokens(t: SpotifyTokens) = store.edit {
-        it[Keys.spotifyAccess] = t.access
-        it[Keys.spotifyRefresh] = t.refresh
-        it[Keys.spotifyExpiry] = t.expiresAt
-    }
-
-    suspend fun clearSpotify() = store.edit {
-        it.remove(Keys.spotifyAccess); it.remove(Keys.spotifyRefresh); it.remove(Keys.spotifyExpiry)
-    }
-
-    suspend fun saveSpotifyVerifier(v: String) = store.edit { it[Keys.spotifyVerifier] = v }
-    suspend fun spotifyVerifier(): String? = store.data.first()[Keys.spotifyVerifier]
 }

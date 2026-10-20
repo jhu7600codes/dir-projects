@@ -58,7 +58,6 @@ import app.stash.ui.screens.LikedScreen
 import app.stash.ui.screens.PlaylistScreen
 import app.stash.ui.screens.SearchScreen
 import app.stash.ui.screens.SettingsScreen
-import app.stash.ui.screens.SpotifyPlaylistsScreen
 import kotlinx.coroutines.flow.Flow
 
 object Routes {
@@ -72,7 +71,6 @@ object Routes {
     const val DOWNLOADS = "downloads"
     const val SETTINGS = "settings"
     const val IMPORT = "import?link={link}"
-    const val IMPORT_SPOTIFY = "import/spotify"
     const val IMPORT_PROGRESS = "import/progress"
     const val FIX = "fix/{id}?q={q}"
 
@@ -161,7 +159,6 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 composable(Routes.IMPORT, listOf(navArgument("link") { nullable = true; defaultValue = null })) {
                     ImportScreen(it.arguments?.getString("link"))
                 }
-                composable(Routes.IMPORT_SPOTIFY) { SpotifyPlaylistsScreen() }
                 composable(Routes.IMPORT_PROGRESS) { ImportProgressScreen() }
                 composable(
                     Routes.FIX,

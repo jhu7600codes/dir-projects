@@ -31,16 +31,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- spotify oauth redirect: stash://spotify-callback -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:host="spotify-callback"
-                    android:scheme="stash" />
-            </intent-filter>
-            <!-- share an apple music playlist link straight into the importer -->
+            <!-- share a spotify / apple music playlist link straight into the importer -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
