@@ -312,6 +312,7 @@ class Battle(val settings: Settings) {
             dmg >= 9f -> Assets.play("locker", 0.8f, 0.9f)
             else -> Assets.play("shakelight", 0.7f, 1.2f)
         }
+        if (v.def.id == "doorsman") Assets.play("doorsman_hurt", 0.8f)
         onHit?.invoke(v)
         return true
     }

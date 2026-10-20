@@ -10,7 +10,8 @@ the-rooms build (see [Assets](#assets)).
 
 ## Fighters
 
-There are 14 entities. They share the same shapes for normal attacks, but each
+There are 15 fighters: 14 entities plus doorsman, the player character from
+DOORS. They share the same shapes for normal attacks, but each
 one has its own reach, power, speed, weight, jumps and gravity. Every entity
 also has four specials and a super that nobody else has:
 
@@ -30,6 +31,7 @@ also has four specials and a super that nobody else has:
 | a-200 | scribble (bouncing) | voice | spring | doodle trap | happy room |
 | a-150 | star shot | smile roll | star spin | falling star | starfall |
 | a-220 | static beam | march (armored) | glitch jump | corrupt (flips controls) | system crash |
+| doorsman | crucifix (chains you, then throws) | flashlight (beam + blind) | skeleton key (door warp) | lighter (fire on the floor) | guiding light (heals, then smites everyone) |
 
 The "entities" screen in the game lists all of these, with a description for
 each move.
@@ -82,6 +84,11 @@ python3 tools/import_the_rooms.py <the-rooms.apk> <the-rooms gh-pages img/>
 - `.oggvorbisstr`: rebuilds a real Ogg file from Godot's packet sequence.
 - `.sample`: decodes QOA-compressed WAVs.
 - the zstd-packed font: pulls out the Caveat TTF.
+
+Doorsman isn't in the-rooms, so his render, his item icons (crucifix,
+flashlight, skeleton key, lighter) and his hurt and door sounds come from the
+DOORS wiki instead. They're the `doors*` files in `assets/img` and
+`assets/sfx`.
 
 Every sound longer than 6 seconds is kept twice: in full as music, and as a
 short sound-effect cut.

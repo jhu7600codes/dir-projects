@@ -64,7 +64,7 @@ class GameTest {
     @Test
     fun battleFrames() {
         val g = view()
-        g.settings.p1 = 6
+        g.settings.p1 = Roster.ALL.indexOfFirst { it.id == "doorsman" }
         g.settings.cpus = mutableListOf(4, 8, 13)
         g.settings.level = 9
         for (st in listOf(0, 2, 6)) {

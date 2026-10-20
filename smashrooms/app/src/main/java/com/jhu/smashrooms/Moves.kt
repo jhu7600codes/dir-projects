@@ -882,4 +882,81 @@ object Moves {
             }
         },
     )
+
+    // ---------- doorsman ----------
+
+    fun doorsman() = Kit(
+        n = Move("crucifix", 56, cooldown = 260, desc = "holds up the crucifix. anyone in front gets locked in place, then thrown.") { f, b, t ->
+            if (t == 6) {
+                b.ghost("doors_crucifix", f.x + f.facing * 70f, f.cy - 20f, 110f, 40)
+                b.ring(f.x + f.facing * 160f, f.cy, 180f, 0xff9fd8ff.toInt(), 24)
+                b.flash(0x339fd8ff, 10)
+                Assets.play("gold", 0.8f, 0.7f)
+                val caught = foes(f, b).filter { o ->
+                    val dx = (o.x - f.x) * f.facing
+                    dx in -20f..340f && abs(o.cy - f.cy) < 200f && o.invuln == 0 && !o.intangible
+                }
+                for (o in caught) {
+                    o.endMove(); o.hitstun = 0; o.vx = 0f; o.vy = 0f
+                    o.stun = 50; o.flash = 50
+                    b.statusHit(f, o, 6f)
+                    b.text(o.x, o.y - o.h - 30f, "chained", 0xff9fd8ff.toInt())
+                }
+                b.later(44) {
+                    for (o in caught) if (!o.dead) {
+                        b.burst(o.x, o.cy, 0xff9fd8ff.toInt(), 14, 12f)
+                        b.apply(f, o, 10f, 55f, 85f, 75f, if (o.x > f.x) 1 else -1, f.x, f.cy, false, null)
+                    }
+                }
+            }
+        },
+        s = Move("flashlight", 40, cooldown = 50, desc = "a long beam of light. hurts and blinds whoever's in it.") { f, b, t ->
+            if (t == 4) b.ghost("doors_flashlight", f.x + f.facing * 55f, f.cy - 10f, 60f, 20)
+            if (t == 8) {
+                Assets.play("flashlight_click", 1f)
+                b.beam(f.x + f.facing * f.w * 0.5f, f.cy - 10f, 540f, f.facing, 110f, 0x88fff6c8.toInt(), 14)
+                b.hit(f, f.w * 0.5f + 270f, -10f, 540f, 120f, 7f, 30f, 55f, 30f) { v -> v.stun = 30 }
+            }
+        },
+        u = Move("skeleton key", 46, helpless = true, drift = false, desc = "unlocks a door way above and steps through it, slamming whoever's there.") { f, b, t ->
+            f.noGrav = t < 22
+            if (t == 0) { b.ghost("doors_skeleton_key", f.x, f.cy - 20f, 80f, 20); Assets.play("locker", 0.5f, 1.6f) }
+            if (t < 10) { f.vx *= 0.6f; f.vy = 0f }
+            if (t == 10) {
+                Assets.play("doors_door_open", 1f)
+                warp(f, b, f.x + f.pad.x * 200f, f.y - 360f)
+                f.group = b.nextGroup()
+            }
+            if (t in 11..15) b.hit(f, 0f, 0f, f.w * 2f, f.h * 1.2f, 11f, 50f, 70f, 80f, radial = true)
+        },
+        d = Move("lighter", 36, cooldown = 160, desc = "drops fire on the floor in front of you. it keeps burning.") { f, b, t ->
+            if (t == 6) b.ghost("doors_lighter", f.x + f.facing * 50f, f.y - 40f, 60f, 20)
+            if (t == 10 || t == 16) {
+                Assets.play("shakelight", 0.6f, 0.6f)
+                val dx = if (t == 10) 90f else 190f
+                val p = Proj(f, f.x + f.facing * dx, f.y - 30f, 0f, 0f, 36f, 160, 2.5f, 12f, 12f, 80f)
+                p.color = 0xffff8a1f.toInt()
+                p.pierce = true
+                p.rehit = 14
+                p.reflectable = false
+                p.onTick = { pp, bb -> if (pp.t % 3 == 0) bb.fx.add(Fx(Fx.DOT, pp.x + (Random.nextFloat() - 0.5f) * 50f, pp.y + 20f, 0f, -3f - Random.nextFloat() * 3f, 22, if (Random.nextBoolean()) 0xffff8a1f.toInt() else 0xffffd23f.toInt(), 9f)) }
+                b.shoot(p)
+            }
+        },
+        x = Move("guiding light", 110, desc = "heals you, then blue light comes down on everyone else.") { f, b, t ->
+            if (t == 0) {
+                Assets.play("vitamins", 1f, 0.8f)
+                f.dmg = max(0f, f.dmg - 35f)
+                f.invuln = 60
+                b.flash(0x553a8bff, 20)
+                b.text(f.x, f.y - f.h - 30f, "guiding light", 0xff7fb8ff.toInt())
+            }
+            if (t == 20) for (o in foes(f, b)) b.ring(o.x, o.cy, 120f, 0xff7fb8ff.toInt(), 30)
+            if (t == 50) for (o in foes(f, b)) {
+                Assets.play("gold", 1f, 1.2f)
+                b.fx.add(Fx(Fx.BEAM, o.x - 60f, b.stage.blastT, 0f, 0f, 18, 0xcc7fb8ff.toInt(), 120f).also { it.a1 = 1f; it.a0 = o.y - b.stage.blastT })
+                b.apply(f, o, 20f, 70f, 95f, 80f, if (o.x > f.x) 1 else -1, o.x, o.y - 300f, false, null)
+            }
+        },
+    )
 }

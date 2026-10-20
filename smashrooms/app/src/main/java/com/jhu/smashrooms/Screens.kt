@@ -72,7 +72,7 @@ class SelectScreen(g: GameView) : MenuScreen(g) {
         buttons.clear()
         cells.clear()
         val s = g.s
-        val cols = 7
+        val cols = 8
         val pad = 10f * s
         val top = 70f * s
         val gw = g.w - 60f * s
@@ -231,7 +231,7 @@ class RosterScreen(g: GameView, private var sel: Int) : MenuScreen(g) {
     override fun layout() {
         buttons.clear()
         val s = g.s
-        val rows = 7
+        val rows = 8
         val bw = 140f * s
         val bh = (g.h - 140f * s) / rows - 8f * s
         for (i in Roster.ALL.indices) {

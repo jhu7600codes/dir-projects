@@ -111,5 +111,10 @@ object Roster {
             w = 120f, h = 125f, weight = 115f, speed = 6.5f, air = 6.5f, airAcc = 0.7f, jump = 19f, jumps = 2, grav = 1f, fall = 17f,
             reach = 1.15f, pow = 1.15f, spd = 1.05f, kit = Moves.a220(),
         ),
+        Def(
+            "doorsman", "doorsman", "the guy from doors. brought his whole inventory", "doorsman", Look.STILL, 0xffc0392b.toInt(),
+            w = 95f, h = 170f, weight = 100f, speed = 8.6f, air = 7.8f, airAcc = 0.9f, jump = 20f, jumps = 2, grav = 1f, fall = 16.5f,
+            reach = 1.15f, pow = 1.1f, spd = 0.88f, kit = Moves.doorsman(),
+        ),
     )
 }
