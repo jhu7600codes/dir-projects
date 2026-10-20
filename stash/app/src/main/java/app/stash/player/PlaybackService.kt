@@ -1,0 +1,149 @@
+package app.stash.player
+
+import android.app.PendingIntent
+import android.content.Intent
+import android.net.Uri
+import androidx.annotation.OptIn
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.ResolvingDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
+import app.stash.MainActivity
+import app.stash.R
+import app.stash.data.db.TrackDao
+import app.stash.providers.Resolver
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
+import java.io.IOException
+import javax.inject.Inject
+
+/**
+ * Background playback. The queue holds "stash://track/<id>" uris; the real audio url is only
+ * looked up (downloaded file, else a fresh stream url) when exoplayer opens the item, so
+ * expiring yt-dlp urls never sit in the queue.
+ */
+@AndroidEntryPoint
+@OptIn(UnstableApi::class)
+class PlaybackService : MediaSessionService() {
+    @Inject lateinit var resolver: Resolver
+    @Inject lateinit var dao: TrackDao
+    @Inject lateinit var http: OkHttpClient
+
+    private var session: MediaSession? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    override fun onCreate() {
+        super.onCreate()
+
+        val upstream = DefaultDataSource.Factory(this, OkHttpDataSource.Factory(http))
+        val resolving = ResolvingDataSource.Factory(upstream) { spec -> resolve(spec) }
+
+        val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(resolving))
+            .setAudioAttributes(
+                AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
+                true,
+            )
+            .setHandleAudioBecomingNoisy(true)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            .build()
+
+        player.addListener(object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                val id = mediaItem?.mediaId ?: return
+                scope.launch { dao.markPlayed(id) }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                // a dead stream url: forget it and move on instead of stopping the whole queue
+                player.currentMediaItem?.mediaId?.let(resolver::invalidate)
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                    player.prepare()
+                    player.play()
+                }
+            }
+        })
+
+        val openApp = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_OPEN_PLAYER, true),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this).build().apply { setSmallIcon(R.drawable.ic_stat_stash) }
+        )
+
+        session = MediaSession.Builder(this, player)
+            .setSessionActivity(openApp)
+            .setCallback(object : MediaSession.Callback {
+                // controllers strip uris off media items, so rebuild them from the id
+                override fun onAddMediaItems(
+                    mediaSession: MediaSession,
+                    controller: MediaSession.ControllerInfo,
+                    mediaItems: MutableList<MediaItem>,
+                ): ListenableFuture<MutableList<MediaItem>> =
+                    Futures.immediateFuture(mediaItems.map { it.withStashUri() }.toMutableList())
+            })
+            .build()
+    }
+
+    private fun resolve(spec: DataSpec): DataSpec {
+        val uri = spec.uri
+        if (uri.scheme != SCHEME) return spec
+        val trackId = Uri.decode(uri.lastPathSegment ?: return spec)
+        val source = try {
+            runBlocking { resolver.streamFor(trackId) }
+        } catch (e: Exception) {
+            throw IOException("couldn't play: ${e.message}", e)
+        }
+        return spec.buildUpon()
+            .setUri(Uri.parse(source.url))
+            .setHttpRequestHeaders(spec.httpRequestHeaders + source.headers)
+            .build()
+    }
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val player = session?.player
+        if (player == null || !player.playWhenReady || player.mediaItemCount == 0) stopSelf()
+    }
+
+    override fun onDestroy() {
+        session?.run {
+            player.release()
+            release()
+        }
+        session = null
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    companion object {
+        const val SCHEME = "stash"
+        fun uriFor(trackId: String): Uri = Uri.parse("$SCHEME://track/${Uri.encode(trackId)}")
+
+        fun MediaItem.withStashUri(): MediaItem = buildUpon().setUri(uriFor(mediaId)).build()
+    }
+}
