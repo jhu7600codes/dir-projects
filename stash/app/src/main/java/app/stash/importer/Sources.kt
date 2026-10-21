@@ -68,6 +68,19 @@ class SpotifyLink @Inject constructor(private val http: OkHttpClient) {
         return SourcePlaylist(name, "spotify", id, cover, tracks)
     }
 
+    /**
+     * how many songs a playlist really has, from the normal page's meta tags, since the embed
+     * stops at 100. null when it can't tell (albums, network trouble).
+     */
+    suspend fun songCount(link: String): Int? {
+        val (kind, id) = idPattern.find(expandShortLink(link))?.destructured ?: return null
+        if (kind != "playlist") return null
+        val html = runCatching {
+            httpIo { http.getText("https://open.spotify.com/playlist/$id", mapOf("User-Agent" to BROWSER_UA)) }
+        }.getOrNull() ?: return null
+        return Regex("""<meta name="music:song_count" content="(\d+)"""").find(html)?.groupValues?.get(1)?.toIntOrNull()
+    }
+
     /** spotify.link/xyz share links redirect to the real open.spotify.com url */
     private suspend fun expandShortLink(link: String): String {
         if (!link.contains("spotify.link")) return link

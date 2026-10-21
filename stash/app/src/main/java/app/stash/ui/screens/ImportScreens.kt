@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -92,12 +93,32 @@ class ImportViewModel @Inject constructor(
     /** a spotify or apple music link (or any shared text containing one) */
     fun cleanLink(text: String) = spotify.findLink(text) ?: apple.findLink(text) ?: text.trim()
 
-    fun importLink(link: String): Boolean {
+    /** a spotify link whose playlist is too big for the embed, waiting for the user to decide */
+    val cutWarning = MutableStateFlow<String?>(null)
+    val checking = MutableStateFlow(false)
+
+    fun importLink(link: String, force: Boolean = false, onStarted: () -> Unit) {
         error.value = null
-        return when {
-            "spotify" in link -> { manager.start(listOf { spotify.playlist(link) }, "spotify"); true }
-            "music.apple.com" in link -> { manager.start(listOf { apple.playlist(link) }, "apple music"); true }
-            else -> { error.value = "paste a spotify or apple music playlist link"; false }
+        cutWarning.value = null
+        when {
+            "spotify" in link -> viewModelScope.launch {
+                if (!force) {
+                    checking.value = true
+                    val count = spotify.songCount(link)
+                    checking.value = false
+                    if (count != null && count > 100) {
+                        cutWarning.value = link
+                        return@launch
+                    }
+                }
+                manager.start(listOf { spotify.playlist(link) }, "spotify")
+                onStarted()
+            }
+            "music.apple.com" in link -> {
+                manager.start(listOf { apple.playlist(link) }, "apple music")
+                onStarted()
+            }
+            else -> error.value = "paste a spotify or apple music playlist link"
         }
     }
 
@@ -135,6 +156,27 @@ fun ImportScreen(sharedLink: String?) {
         if (uris.isNotEmpty() && vm.importFiles(uris)) nav.navigate(Routes.IMPORT_PROGRESS)
     }
     val busy by vm.manager.progress.collectAsState()
+    val checking by vm.checking.collectAsState()
+    val cutWarning by vm.cutWarning.collectAsState()
+
+    cutWarning?.let { pending ->
+        AlertDialog(
+            onDismissRequest = { vm.cutWarning.value = null },
+            title = { Text("big playlist") },
+            text = { Text("detected more than 100 songs, please use exportify or the playlist will be cut.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.cutWarning.value = null
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://exportify.net")))
+                }) { Text("use exportify") }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.importLink(pending, force = true) { nav.navigate(Routes.IMPORT_PROGRESS) } }) {
+                    Text("import first 100")
+                }
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -176,9 +218,11 @@ fun ImportScreen(sharedLink: String?) {
                     )
                     Spacer(Modifier.height(8.dp))
                     FilledTonalButton(
-                        enabled = link.isNotBlank() && !busy.running,
-                        onClick = { if (vm.importLink(vm.cleanLink(link))) nav.navigate(Routes.IMPORT_PROGRESS) },
-                    ) { Text("import") }
+                        enabled = link.isNotBlank() && !busy.running && !checking,
+                        onClick = { vm.importLink(vm.cleanLink(link)) { nav.navigate(Routes.IMPORT_PROGRESS) } },
+                    ) {
+                        if (checking) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("import")
+                    }
                     Text(
                         "spotify links stop at the first 100 songs, use exportify below for bigger ones.",
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
