@@ -46,3 +46,38 @@ static func score_text(id: String, score: int) -> String:
 	if id == "w10":
 		return "%d:%02d" % [score / 60, score % 60]
 	return Loc.t("%d a-90s") % score
+
+
+## multiplayer sightings: battle (everyone's kills) or hide and seek (who won)
+func setup_sightings(reason: String, kills: Dictionary) -> void:
+	layer = 50
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var root := Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(root)
+	UIKit.full_screen_bg(root, Color(0, 0, 0, 0.8))
+	var p := UIKit.panel(Vector2(420, 0))
+	UIKit.centered(root, p)
+	var v := UIKit.vbox(10)
+	p.add_child(v)
+	var sid := "battle" if reason == "battle_over" else "hide_seek"
+	v.add_child(UIKit.label(Game.SIGHTINGS[sid][0], 30, UIKit.ACCENT))
+	if reason == "seeker_win":
+		v.add_child(UIKit.label("the entity caught everyone.", 20))
+	elif reason == "hiders_win":
+		v.add_child(UIKit.label("someone made it to the door. the hiders win.", 20))
+	else:
+		var names := kills.keys()
+		names.sort_custom(func(a, b): return int(kills[a]) > int(kills[b]))
+		if names.is_empty():
+			v.add_child(UIKit.label("nobody got anyone.", 18))
+		for i in names.size():
+			v.add_child(UIKit.label("%d.  %s  -  %s" % [i + 1, names[i], Loc.t("%d kills") % int(kills[names[i]])], 22 if i == 0 else 18))
+	if Net.is_host:
+		v.add_child(UIKit.button("play again (everyone)", func(): Net.host_start("offices", false, "", sid), 20))
+	else:
+		v.add_child(UIKit.label("waiting for the host to start again...", 15, Color(0.6, 0.6, 0.6)))
+	v.add_child(UIKit.button("title screen", func():
+		Net.stop("")
+		Game.to_menu(), 18))

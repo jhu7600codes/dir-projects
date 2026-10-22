@@ -6,6 +6,14 @@ extends Node
 
 static var instance: Glitch = null
 
+## ghlicht. he puts you back when you fall out of the world
+const LINES := [
+	"ghlicht: me kick player from void.",
+	"ghlicht: me not like that.",
+	"ghlicht: me still don't like player fall into void.",
+	"ghlicht: player go back. void is mine.",
+]
+
 var _check_t := 0.0
 
 
@@ -52,6 +60,6 @@ func teleport_player() -> void:
 		return
 	p.teleport(Game.generator.safe_spot())
 	Game.play_ui("glitch")
-	Game.subtitle.emit("...", Color(0.6, 0.9, 1.0))
+	Game.subtitle.emit(LINES[randi() % LINES.size()], Color(0.6, 0.9, 1.0))
 	if p.hud:
 		p.hud.flash(Color(0.5, 0.9, 1.0, 0.8), 0.6)

@@ -54,7 +54,7 @@ func _ready() -> void:
 	var run := Game.pending_run
 	Game.pending_run = {}
 	if run.is_empty():
-		generator.start(Game.net_seed if Net.active else randi())
+		generator.start(Game.net_seed if Net.active else (Sightings.daily_seed() if Game.sightings == "daily" else randi()))
 		player.teleport(generator.room(0).global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.1, 14.0 if Game.floor == "city" else 2.0)))
 		Game.set_door(0)
 		_apply_carry()
@@ -88,8 +88,11 @@ func _ready() -> void:
 
 	if not Settings.use_touch():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	if Game.minigame != "":
-		_start_minigame.call_deferred()
+	if Game.sightings != "":
+		add_child(Sightings.new())
+	if Game.minigame != "" or Game.sightings != "":
+		if Game.minigame != "":
+			_start_minigame.call_deferred()
 	elif Game.modifiers.is_empty():
 		hud.notify("open the door to start. hide in lockers when you hear something.")
 	else:
@@ -267,7 +270,9 @@ func _on_died(cause: String) -> void:
 	if Game.minigame != "":
 		_minigame_over()
 		return
-	Save.clear_run()
+	_post_score()
+	if not Game.sightings_unsaved():
+		Save.clear_run()
 	Save.data.deaths = int(Save.data.deaths) + 1
 	Save.write()
 	var deaths := int(Save.data.deaths)
@@ -294,6 +299,21 @@ func _on_died(cause: String) -> void:
 	var es := EndScreen.new()
 	add_child(es)
 	es.setup("death", cause)
+
+
+## the sightings boards: how far you got
+func _post_score() -> void:
+	var board := ""
+	if Game.sightings in ["daily", "endless"]:
+		board = Game.sightings
+	elif Game.sightings == "battle" and not Net.active:
+		board = "battle"
+	if board == "":
+		return
+	if board == "daily":
+		Save.data.daily_best = Game.door
+		Save.write()
+	Leaderboard.submit(get_tree(), board, Game.door, Sightings.today() if board == "daily" else "")
 
 
 func _on_finished(reason: String) -> void:
@@ -326,6 +346,10 @@ func net_finished(reason: String) -> void:
 			Achievements.unlock("going_home")
 			if Net.is_host:
 				Net.host_start("complex")
+		"battle_over", "seeker_win", "hiders_win":
+			var sr := MinigameResult.new()
+			add_child(sr)
+			sr.setup_sightings(reason, Net.points)
 		"all_dead" when Game.minigame != "":
 			var mr := MinigameResult.new()
 			add_child(mr)

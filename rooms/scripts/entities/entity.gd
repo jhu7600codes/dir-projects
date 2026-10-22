@@ -26,6 +26,8 @@ var generator: Node = null
 var hit_player := false  # did it damage the player at all (for the "survive" achievements)
 ## multiplayer: on the other players' machines the entity follows where the host has it
 var remote := false
+## ghlicht made this one: faster, and it won't hold still on screen
+var glitched := false
 var net_pos := Vector3.ZERO
 var has_net_pos := false
 var _done := false

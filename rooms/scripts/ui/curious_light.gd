@@ -14,6 +14,7 @@ const NAMES := {
 	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
 	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25", "a150": "a-150", "a220": "a-220", "fire": "the fire",
 	"w30": "w-30", "c15": "the pigeons",
+	"a10": "a-10", "a20": "a-20", "friend": "your friend", "seeker": "the seeker",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
@@ -22,6 +23,13 @@ const HINTS := {
 		"chaser": ["it saw you and ran you down.", "stay out of its sight. find the fire escape box and pull the alarm."],
 		"stalker": ["it moved every time you looked away.", "keep your eyes on it and back off toward the fire escape box."],
 		"lurker": ["it was hiding, and you walked right up to it.", "crouch when you walk through the apartment. it can't hear you then."],
+	},
+	"a10": {
+		"locker": ["it kicked the locker you were in.", "a-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
+		"table": ["it kicked the table you were under.", "a-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
+	},
+	"a20": {
+		"": ["that door wasn't a door.", "a-20 wears doors with almost the right number. remember which door you're at."],
 	},
 	"fire": {
 		"": ["you weren't standing in the fire escape square.", "the fire burns everything outside the striped square in front of the box."],

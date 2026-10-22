@@ -34,6 +34,8 @@ var theme := "office"
 ## filled by shell(): the room's box and where the door gaps are, so the dressing pass
 ## knows which wall spots are free. {x0, x1, length, height, gaps: {back/front: [x], left/right: [z]}}
 var shell_info := {}
+var side_room := {}          # the sightings: {"side": "left"/"right", "z": along the wall}
+var fake_doors: Array = []   # a-20 wearing doors
 var decor_block: Array[AABB] = []  # extra spots the dressing pass must leave alone  # "wires": concrete walls, cage lamps (set before calling shell)
 var _burst := 0.0
 var _lights_out := false
@@ -64,6 +66,10 @@ func setup(num: int, seed_value: int) -> void:
 		var lk: Locker = lockers[rng.randi() % lockers.size()]
 		lk.mimic = true
 		lockers.erase(lk)
+	if not side_room.is_empty():
+		_build_side_room()
+	if Sightings.has_extras() and theme == "office" and not is_special and not shell_info.is_empty() and num >= 20 and rng.randf() < 0.2:
+		_add_fake_doors()
 	if theme == "office" and not is_special and not shell_info.is_empty():
 		Dressing.dress(self, not Game.fixed_office)
 	if Game.office_powered():
@@ -398,6 +404,21 @@ func shell(x0: float, x1: float, length: float, height: float, exit_side: String
 			gx.left.append(exit_offset)
 		"right":
 			gx.right.append(exit_offset)
+	# the sightings: now and then a small side room off one of the side walls
+	side_room = {}
+	if Sightings.has_extras() and theme == "office" and not is_special and number > 2 and length >= 6.0 and rng.randf() < 0.3:
+		var side: String = "left" if exit_side == "right" else ("right" if exit_side == "left" else ("left" if rng.randf() < 0.5 else "right"))
+		var taken: Array = gx[side] + ([exit_offset] if exit_side == side else [])
+		for attempt in 6:
+			var z := rng.randf_range(2.2, length - 2.2)
+			if taken.all(func(g): return absf(float(g) - z) > 2.0):
+				side_room = {"side": side, "z": z}
+				gx[side].append(z)
+				side_holes = side_holes.duplicate(true)
+				if not side_holes.has(side):
+					side_holes[side] = []
+				side_holes[side].append([z, DOOR_W])
+				break
 	shell_info = {"x0": x0, "x1": x1, "length": length, "height": height, "gaps": gx}
 	# floor and ceiling end exactly at the room's edges: the next room starts right there,
 	# and any overlap would z-fight under the doorway
@@ -576,6 +597,76 @@ func add_table_hide(pos: Vector3, yaw: float) -> Locker:
 	add_child(lk)
 	tables.append(lk)
 	return lk
+
+
+## the sightings side room: a 3x3 closet behind a numberless door, with a desk to rob
+## and sometimes a locker
+func _build_side_room() -> void:
+	var info := shell_info
+	var left: bool = side_room.side == "left"
+	var sx := 1.0 if left else -1.0
+	var wx: float = info.x1 if left else info.x0
+	var z: float = side_room.z
+	var h := 2.8
+	var cx := wx + sx * 1.5
+	box(Vector3(3.0, 0.2, 3.0), Vector3(cx, -0.1, z), Mats.get_mat("carpet_blue"))
+	box(Vector3(3.0, 0.2, 3.0), Vector3(cx, h + 0.1, z), Mats.get_mat("ceiling"), false)
+	wall(Vector3(wx, 0, z - 1.5), Vector3(wx + sx * 3.0, 0, z - 1.5), h)
+	wall(Vector3(wx + sx * 3.0, 0, z - 1.5), Vector3(wx + sx * 3.0, 0, z + 1.5), h)
+	wall(Vector3(wx + sx * 3.0, 0, z + 1.5), Vector3(wx, 0, z + 1.5), h)
+	ceiling_light(Vector3(cx, h, z))
+	var d := Door.new()
+	d.kind = "side"
+	d.number = number
+	d.position = Vector3(wx, 0, z)
+	d.rotation.y = PI / 2 if left else -PI / 2
+	d.name = "side_door"
+	add_child(d)
+	add_drawer_desk(Vector3(wx + sx * 2.5, 0, z), -PI / 2 if left else PI / 2)
+	if rng.randf() < 0.5:
+		add_locker(Vector3(wx + sx * 2.5, 0, z + 1.05), -PI / 2 if left else PI / 2)
+	elif rng.randf() < 0.6:
+		add_pickup(Vector3(cx, 0.02, z - 0.9), "gold", rng.randi_range(10, 40))
+	decor_block.append(AABB(Vector3(wx - (1.2 if left else 0.0), 0, z - 1.0), Vector3(1.2, 2.5, 2.0)))
+
+
+## a-20: one or two fake doors flat against the side walls, numbered almost right
+func _add_fake_doors() -> void:
+	var info := shell_info
+	var count := 1 if rng.randf() < 0.7 else 2
+	var real := number + 1
+	var offs := [-1, 1, 2, 3, 10, -10]
+	var placed := 0
+	for attempt in 10:
+		if placed >= count:
+			break
+		var left := rng.randf() < 0.5
+		var side := "left" if left else "right"
+		var z := rng.randf_range(1.6, float(info.length) - 1.6)
+		var gaps: Array = info.gaps[side]
+		if not gaps.all(func(g): return absf(float(g) - z) > 1.8):
+			continue
+		if fake_doors.any(func(f): return absf(f.position.z - z) < 1.8 and f.get_meta("side") == side):
+			continue
+		var wx0: float = info.x1 if left else info.x0
+		var spot := Vector3(wx0 - (0.5 if left else -0.5), 1.2, z)
+		if not Dressing._free(Dressing._occupied(self), spot, Vector3(0.9, 2.3, 1.6), 0.0):
+			continue
+		var d := Door.new()
+		d.kind = "fake"
+		d.number = real
+		d.label_override = Game.door_label(maxi(1, real + int(offs[rng.randi() % offs.size()])))
+		var wx: float = info.x1 if left else info.x0
+		d.position = Vector3(wx - (WALL_T / 2 + 0.05) * (1.0 if left else -1.0), 0, z)
+		d.rotation.y = PI / 2 if left else -PI / 2
+		d.name = "fake_%d" % placed
+		d.set_meta("side", side)
+		d.on_fake = Sightings.on_fake_door
+		add_child(d)
+		fake_doors.append(d)
+		gaps.append(z)
+		decor_block.append(AABB(Vector3(wx - 1.0, 0, z - 0.9), Vector3(2.0, 2.6, 1.8)))
+		placed += 1
 
 
 func add_pickup(pos: Vector3, item: String, amount := 1) -> void:

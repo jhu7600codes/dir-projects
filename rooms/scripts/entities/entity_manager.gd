@@ -36,6 +36,8 @@ const SCRIPTS := {
 	"c15": preload("res://scripts/entities/c15.gd"),
 	# the wires
 	"w30": preload("res://scripts/entities/w30.gd"),
+	# the sightings
+	"a10": preload("res://scripts/entities/a10.gd"),
 }
 ## chance that a-90 joins when a-60 or a-120 spawns (a-60 is slowed down when it does)
 const A90_JOIN_CHANCE := 0.2
@@ -123,6 +125,11 @@ func _chance(id: String) -> float:
 	var c := _base_chance(id)
 	if Game.mod("rush_hour") and id in ["a60", "a120"]:
 		c *= 2.0
+	# endless: every 100 doors it gets a bit worse
+	if Game.sightings == "endless":
+		c *= 1.0 + float(Game.door / 100) * 0.15
+	if Game.sightings == "battle":
+		c *= 1.8
 	return minf(1.0, c)
 
 
@@ -153,6 +160,10 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 	if Game.office_powered():
 		return false  # the entities are gone. well. they work here now
 	if r.has("needs_mod") and not Game.mod(r.needs_mod):
+		return false
+	if r.get("needs_sightings", false) and not Sightings.has_extras():
+		return false
+	if Game.sightings in ["training", "hide_seek"]:
 		return false
 	if r.get("needs_dark", false) and Game.darkness(n) < 0.35:
 		return false
@@ -219,10 +230,27 @@ func _spawn(id: String, opts := {}, remote := false) -> Entity:
 	active[id] = e
 	e.finished.connect(_on_finished)
 	e.begin()
+	if e.glitched:
+		_glitch(e)
 	if Game.player and is_instance_valid(Game.player):
 		Game.player.star_warn(id)
 	print("[entities] %s spawned at %s" % [id, Game.door_label(Game.door)])
 	return e
+
+
+## ghlicht's version: faster, flickering, colours inverted now and then
+func _glitch(e: Entity) -> void:
+	if "speed" in e:
+		e.set("speed", float(e.get("speed")) * 1.45)
+	var fx := Timer.new()
+	fx.wait_time = 0.07
+	fx.autostart = true
+	fx.timeout.connect(func():
+		for c in e.get_children():
+			if c is Sprite3D:
+				c.modulate = Color(randf(), 1.0, 1.0) if randf() < 0.3 else Color(0.5, 0.9, 1.0)
+				c.offset = Vector2(randf_range(-10, 10), randf_range(-4, 4)))
+	e.add_child(fx)
 
 
 func _on_finished(e: Entity, survived: bool) -> void:

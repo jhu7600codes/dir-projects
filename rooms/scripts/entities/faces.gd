@@ -80,3 +80,77 @@ static func anomaly_tex(theme: String) -> Texture2D:
 			for x in range(22, 42):
 				img.set_pixel(x, 8, Color(0.9, 0.75, 0.2))
 	return _done(key, img)
+
+
+## a-10: a hunched, heavy figure with one huge boot up, ready to kick
+static func a10_tex() -> Texture2D:
+	if _cache.has("a10"):
+		return _cache["a10"]
+	var img := _img(96, 128)
+	var body := Color(0.16, 0.14, 0.13)
+	# torso, leaning forward
+	for y in range(30, 92):
+		var half := 16 + int((y - 30) * 0.12)
+		var lean := int((92 - y) * 0.15)
+		for x in range(40 - half + lean, 40 + half + lean):
+			img.set_pixel(clampi(x, 0, 95), y, body)
+	# head
+	for y in range(6, 36):
+		for x in range(30, 66):
+			if Vector2((x - 48) / 16.0, (y - 21) / 14.0).length() < 1.0:
+				img.set_pixel(x, y, body.darkened(0.2))
+	# angry white eyes
+	for e: Vector2 in [Vector2(41, 19), Vector2(55, 19)]:
+		for y in range(-3, 3):
+			for x in range(-4, 4):
+				if y > -2 - (x if e.x < 48 else -x) * 0.4:
+					img.set_pixel(int(e.x) + x, int(e.y) + y, Color(0.95, 0.95, 0.9))
+	# standing leg
+	for y in range(90, 126):
+		for x in range(26, 38):
+			img.set_pixel(x, y, body)
+	for y in range(118, 127):
+		for x in range(20, 42):
+			img.set_pixel(x, y, Color(0.05, 0.05, 0.05))
+	# the kicking leg, out to the side, with a huge boot
+	for i in 36:
+		var cx := 50 + i
+		var cy := 88 + int(i * 0.35)
+		for d in range(-5, 6):
+			img.set_pixel(clampi(cx, 0, 95), clampi(cy + d, 0, 127), body)
+	for y in range(92, 118):
+		for x in range(78, 96):
+			img.set_pixel(x, y, Color(0.05, 0.05, 0.05))
+	for x in range(78, 96):
+		img.set_pixel(x, 116, Color(0.5, 0.35, 0.2))
+	return _done("a10", img)
+
+
+## a-20 "the chameleon": a face the colour of a door, with a scribbled-on grin
+static func a20_tex() -> Texture2D:
+	if _cache.has("a20"):
+		return _cache["a20"]
+	var img := _img(64, 96)
+	var wood := Color(0.42, 0.26, 0.14)
+	for y in 96:
+		for x in 64:
+			var f := Vector2((x - 32) / 26.0, (y - 46) / 42.0).length()
+			if f < 1.0:
+				var grain := sin(y * 0.9 + sin(x * 0.2) * 2.0) * 0.05
+				img.set_pixel(x, y, wood.lightened(grain + 0.05))
+	# big black eyes
+	for e: Vector2 in [Vector2(22, 34), Vector2(42, 34)]:
+		for y in range(-7, 8):
+			for x in range(-5, 6):
+				if Vector2(x / 5.0, y / 7.0).length() < 1.0:
+					img.set_pixel(int(e.x) + x, int(e.y) + y, Color(0.02, 0.02, 0.02))
+	# scribbled grin: zigzag black marker lines
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20
+	for pass_i in 3:
+		var y0 := 60 + pass_i * 4
+		for x in range(12, 52):
+			var y := y0 + int(sin(x * 1.3 + pass_i) * 3.0) + rng.randi_range(-1, 1)
+			for t in 2:
+				img.set_pixel(x, clampi(y + t, 0, 95), Color(0.03, 0.03, 0.03))
+	return _done("a20", img)

@@ -140,6 +140,10 @@ func _open(player, it: Interactable) -> void:
 	var r := rng.randf()
 	if Game.mod("empty_pockets") and rng.randf() < 0.65:
 		r = 1.0  # empty
+	# the sightings: very rarely, a piece of ghlicht
+	if Sightings.has_extras() and rng.randf() < 0.012:
+		player.inventory.add("ghlicht_part", 1)
+		return
 	if r < 0.55:
 		player.inventory.add("gold", rng.randi_range(5, 30))
 	elif r < 0.7:

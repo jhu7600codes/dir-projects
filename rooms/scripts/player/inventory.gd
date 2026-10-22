@@ -23,6 +23,9 @@ func add(item: String, amount := 1) -> void:
 			Save.add_gold(amount)
 			Game.play_ui("gold")
 			p.notify(Loc.t("+%d gold") % amount)
+		"ghlicht_part":
+			p.notify("you found a GHLICHT PART")
+			Sightings.ghlicht_part()
 		"battery":
 			batteries += amount
 			p.notify("+ battery")

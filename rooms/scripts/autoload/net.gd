@@ -31,6 +31,8 @@ var players := {}  # peer id -> {name, dead}
 var hosts_found := {}  # ip -> {name, players, t}
 var public_game := false  # online host: listed in everyone's "games to join"
 var lobby := OnlineLobby.new()
+var points := {}  # battle: name -> kills
+var seeker_id := 0  # hide and seek: who's the entity
 var mg_scores := {}  # party minigame: name -> score, filled in as people die  # the public games list (see online_lobby.gd)
 var remotes := {}  # peer id -> RemotePlayer (in the game scene)
 var _send_t := 0.0
@@ -244,20 +246,26 @@ func _in_game() -> bool:
 # ---------- starting a run together ----------
 
 ## host: everybody starts the same run. each player keeps their own items (carry)
-func host_start(floor_id: String, fixed := false, minigame := "") -> void:
+func host_start(floor_id: String, fixed := false, minigame := "", sightings := "") -> void:
 	if not is_host:
 		return
 	var s := randi()
 	for id in players:
 		players[id]["dead"] = false
-	var mods: Array = [] if minigame != "" else Game.modifiers
-	rpc("_start", s, floor_id, fixed, mods, minigame)
-	_start(s, floor_id, fixed, mods, minigame)
+	var mods: Array = [] if minigame != "" or sightings != "" else Game.modifiers
+	var seek := 0
+	if sightings == "hide_seek":
+		var ids := players.keys()
+		seek = int(ids[randi() % ids.size()])
+	rpc("_start", s, floor_id, fixed, mods, minigame, sightings, seek)
+	_start(s, floor_id, fixed, mods, minigame, sightings, seek)
 
 
 @rpc("authority", "reliable")
-func _start(seed_value: int, floor_id: String, fixed: bool, mods: Array, minigame := "") -> void:
+func _start(seed_value: int, floor_id: String, fixed: bool, mods: Array, minigame := "", sightings := "", seek := 0) -> void:
 	mg_scores.clear()
+	points.clear()
+	seeker_id = seek
 	for id in players:
 		players[id]["dead"] = false
 	remotes.clear()
@@ -273,6 +281,8 @@ func _start(seed_value: int, floor_id: String, fixed: bool, mods: Array, minigam
 		carry["fixed"] = true
 	if minigame != "":
 		carry = {"minigame": minigame}
+	if sightings != "":
+		carry = {"sightings": sightings, "seeker": seek == multiplayer.get_unique_id()}
 	Game.start_run(false, false, floor_id, carry)
 	Game.modifiers = mods
 
@@ -336,6 +346,19 @@ func _died(id: int) -> void:
 func _check_all_dead() -> void:
 	if not is_host or not _in_game() or players.is_empty():
 		return
+	# battle: the last one standing ends it. hide and seek: the seeker got everyone
+	if Game.sightings == "battle" and players.size() > 1:
+		var alive := players.keys().filter(func(id): return not players[id].get("dead", false))
+		if alive.size() <= 1:
+			rpc("_finish", "battle_over")
+			_finish("battle_over")
+		return
+	if Game.sightings == "hide_seek":
+		var hiders := players.keys().filter(func(id): return id != seeker_id and not players[id].get("dead", false))
+		if hiders.is_empty():
+			rpc("_finish", "seeker_win")
+			_finish("seeker_win")
+		return
 	for id in players:
 		if not players[id].get("dead", false):
 			return
@@ -354,6 +377,33 @@ func finish(reason: String) -> void:
 func _finish(reason: String) -> void:
 	if _in_game():
 		Game.player.get_parent().net_finished(reason)
+
+
+# ---------- battle / hide and seek ----------
+
+## you hit another player (battle), or caught them (hide and seek)
+func hit_player(peer: int, damage: float, cause: String) -> void:
+	if not active:
+		return
+	rpc_id(peer, "_hit", damage, cause, my_name)
+
+
+@rpc("any_peer", "reliable")
+func _hit(damage: float, cause: String, from_name: String) -> void:
+	var p: Player = Game.player
+	if p == null or p.dead:
+		return
+	Game.death_details[cause] = from_name
+	p.take_damage(damage, cause)
+	if p.dead:
+		rpc("_kill_credit", from_name)
+		_kill_credit(from_name)
+
+
+@rpc("any_peer", "reliable")
+func _kill_credit(who: String) -> void:
+	points[who] = int(points.get(who, 0)) + 1
+	mg_scores = points.duplicate()
 
 
 # ---------- doors ----------

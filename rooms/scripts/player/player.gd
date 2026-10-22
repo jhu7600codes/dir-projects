@@ -258,6 +258,10 @@ func _physics_process(delta: float) -> void:
 		speed = CROUCH
 	elif sprinting:
 		speed = SPRINT
+	if Game.sightings == "battle":
+		speed *= 1.5  # battle: everything goes way faster
+	if Game.seeker:
+		speed *= 1.25  # hide and seek: the entity is a bit faster than you
 	if star_t > 0.0:
 		star_t -= delta
 		if star_t <= 0.0:
@@ -366,6 +370,15 @@ func press_interact() -> void:
 
 
 func enter_locker(lk: Locker) -> void:
+	# hide and seek: the seeker opens an occupied hiding spot and catches whoever's in it
+	if Game.seeker and lk.occupied and not hidden:
+		for r in Net.alive_remotes():
+			if r.global_position.distance_to(lk.global_position) < 1.6:
+				Net.hit_player(r.peer, 999.0, "seeker")
+				lk.play_door()
+				return
+	if Game.seeker:
+		return  # the entity doesn't hide
 	if hidden or _busy or dead or lk.occupied or lk.broken:
 		return
 	if lk.mimic:
@@ -462,6 +475,9 @@ func take_damage(amount: float, cause: String) -> void:
 	if hud:
 		hud.flash(Color(0.8, 0, 0, 0.6), 0.5)
 	Game.play_ui("hurt")
+	if health <= 0.0 and Game.sightings == "training":
+		Sightings.training_save(cause)
+		return
 	if health <= 0.0:
 		health = 0.0
 		die(cause)

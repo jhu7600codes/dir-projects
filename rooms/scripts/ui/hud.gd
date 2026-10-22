@@ -148,7 +148,7 @@ func _ready() -> void:
 	_star.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_star)
 
-	Game.door_changed.connect(func(n): _door.text = Game.door_label(n))
+	Game.door_changed.connect(func(n): _door.text = Game.counter_label(n))
 	Game.subtitle.connect(show_subtitle)
 	Game.screen_tint.connect(func(c): _tint.material.set_shader_parameter("tint", c))
 

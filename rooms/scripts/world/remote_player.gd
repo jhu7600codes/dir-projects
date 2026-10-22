@@ -13,6 +13,9 @@ var _avatar: Worker
 var _tag: Label3D
 var _light: SpotLight3D
 var _first := true
+var _it: Interactable
+var _hit_t := 0.0
+var _seeker_look: Sprite3D
 
 
 func _ready() -> void:
@@ -37,6 +40,43 @@ func _ready() -> void:
 	_light.light_energy = 2.0
 	_light.light_color = Color(1.0, 0.95, 0.82)
 	add_child(_light)
+	# battle: you can hit your friends. hide and seek: the seeker can catch you
+	var mine := ""
+	if Game.sightings == "battle":
+		mine = Loc.t("hit ") + player_name
+	elif Game.sightings == "hide_seek" and Game.seeker:
+		mine = Loc.t("catch ") + player_name
+	if mine != "":
+		_it = Interactable.make(Vector3(0.8, 1.8, 0.8), mine)
+		_it.position = Vector3(0, 0.9, 0)
+		_it.used.connect(_on_hit)
+		add_child(_it)
+	# hide and seek: the seeker looks like an entity to everyone else
+	if Game.sightings == "hide_seek" and peer == Net.seeker_id:
+		_avatar.visible = false
+		_tag.modulate = Color(1, 0.3, 0.25)
+		_seeker_look = Sprite3D.new()
+		_seeker_look.texture = Assets.glow_texture("a60_face_1")
+		_seeker_look.pixel_size = 2.2 / maxf(1.0, _seeker_look.texture.get_height())
+		_seeker_look.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_seeker_look.shaded = false
+		_seeker_look.position = Vector3(0, 1.2, 0)
+		add_child(_seeker_look)
+		_light.light_color = Color(1, 0.2, 0.15)
+
+
+func _on_hit(_player) -> void:
+	if dead or _hit_t > 0.0 or Game.player == null or Game.player.dead:
+		return
+	_hit_t = 0.6
+	if Game.sightings == "hide_seek":
+		Net.hit_player(peer, 999.0, "seeker")
+	else:
+		Net.hit_player(peer, 25.0, "friend")
+	Game.play_ui("hurt")
+	var tw := create_tween()
+	tw.tween_property(_avatar, "position:z", 0.25, 0.06)
+	tw.tween_property(_avatar, "position:z", 0.0, 0.15)
 
 
 func apply(s: Array) -> void:
@@ -47,7 +87,9 @@ func apply(s: Array) -> void:
 	dead = s[5]
 	door = int(s[7])
 	_light.visible = s[6] and not dead and not hidden
-	_avatar.visible = not hidden
+	_avatar.visible = not hidden and _seeker_look == null
+	if _it:
+		_it.enabled = not dead and not hidden
 	_tag.visible = not hidden and not dead
 	_avatar.scale.y = 0.7 if crouch else 1.0
 	if dead and not _avatar.dead:
@@ -59,6 +101,7 @@ func apply(s: Array) -> void:
 
 
 func _process(delta: float) -> void:
+	_hit_t -= delta
 	var k := minf(1.0, (6.0 if Net.online else 12.0) * delta)
 	global_position = global_position.lerp(_target, k)
 	rotation.y = lerp_angle(rotation.y, _yaw, k)

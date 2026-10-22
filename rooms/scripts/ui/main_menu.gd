@@ -253,6 +253,7 @@ func _make_menu() -> void:
 	else:
 		col.add_child(_menu_button("play", _pick_floor, 26))
 	col.add_child(_menu_button("multiplayer", func(): add_child(MPMenu.new())))
+	col.add_child(_menu_button("sightings", func(): add_child(SightingsScreen.new())))
 	col.add_child(_menu_button("minigames", func(): add_child(MinigamesScreen.new())))
 	col.add_child(_menu_button("journal", func(): add_child(JournalScreen.new())))
 	var mods := Array(Save.data.get("modifiers", []))

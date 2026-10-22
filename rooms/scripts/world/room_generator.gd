@@ -120,7 +120,8 @@ func _pick_script(n: int, _rng: RandomNumberGenerator) -> Script:
 
 func _decide(n: int) -> Script:
 	# the office library only exists in the fixed office
-	if special.has(n) and (n != 50 or Game.fixed_office):
+	# endless: there is no a-1000 bridge, the doors just keep going
+	if special.has(n) and (n != 50 or Game.fixed_office) and not (n == 1000 and Game.sightings == "endless"):
 		return special[n]
 	if _is_exit_room(n):
 		return EXIT_ROOM
@@ -167,6 +168,8 @@ func _is_exit_room(n: int) -> bool:
 		return false
 	if n <= 200 or n >= Game.last_door() - 5:
 		return false
+	if Game.sightings in ["battle", "training"]:
+		return false
 	var block := (n - 201) / 75
 	var offset := _rng_for(-1000 - block).randi_range(25, 50)
 	if (n - 201) % 75 == offset:
@@ -179,7 +182,7 @@ func _weighted_pick(n: int, attempt: int, lockers_only := false) -> Script:
 	var total := 0
 	var options := []
 	for p in pool:
-		if p.get("after_wires", false) and not Game.fixed_office:
+		if p.get("after_wires", false) and not Game.fixed_office and Game.sightings == "":
 			continue  # the newer office rooms only show up after the wires
 		if n >= p.min and (not lockers_only or p.get("lockers", false)):
 			options.append(p)

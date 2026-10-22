@@ -10,6 +10,11 @@ var number := 1
 var is_open := false
 var locked := false  # used for the decorative locked door in some rooms
 var lock_handler := Callable()
+## "" the real next door, "side": a side room (no number), "fake": a-20 wearing a door
+var kind := ""
+var label_override := ""
+var on_fake := Callable()
+var plate_label: Label3D
 var _from_net := false  # figure's code lock: called instead of the "locked" sound
 
 var _hinge: Node3D
@@ -72,22 +77,8 @@ func _ready() -> void:
 	_panel_shape.position = Vector3(w / 2, h / 2, 0)
 	body.add_child(_panel_shape)
 	# number plate, readable from the room you're standing in (-z side)
-	var plate := MeshInstance3D.new()
-	var pm := BoxMesh.new()
-	pm.size = Vector3(0.62, 0.22, 0.03)
-	plate.mesh = pm
-	plate.material_override = Mats.get_mat("sign")
-	plate.position = Vector3(0, h + 0.28, -0.14)
-	add_child(plate)
-	var lbl := Label3D.new()
-	lbl.text = Game.door_label(number)
-	lbl.font_size = 48
-	lbl.pixel_size = 0.0035
-	lbl.modulate = Color(0.08, 0.08, 0.08)
-	lbl.outline_size = 0
-	lbl.position = Vector3(0, h + 0.28, -0.175)
-	lbl.rotation.y = PI
-	add_child(lbl)
+	if kind != "side":
+		_plate(h)
 	# interaction area on the room side
 	_it = Interactable.make(Vector3(w, h, 0.5), "open door")
 	_it.position = Vector3(0, h / 2, -0.15)
@@ -99,6 +90,26 @@ func _ready() -> void:
 	add_child(_audio)
 	if locked:
 		_it.prompt = "locked"
+
+
+func _plate(h: float) -> void:
+	var plate := MeshInstance3D.new()
+	var pm := BoxMesh.new()
+	pm.size = Vector3(0.62, 0.22, 0.03)
+	plate.mesh = pm
+	plate.material_override = Mats.get_mat("sign")
+	plate.position = Vector3(0, h + 0.28, -0.14)
+	add_child(plate)
+	var lbl := Label3D.new()
+	lbl.text = label_override if label_override != "" else Game.door_label(number)
+	lbl.font_size = 48
+	lbl.pixel_size = 0.0035
+	lbl.modulate = Color(0.08, 0.08, 0.08)
+	lbl.outline_size = 0
+	lbl.position = Vector3(0, h + 0.28, -0.175)
+	lbl.rotation.y = PI
+	add_child(lbl)
+	plate_label = lbl
 
 
 ## raised panels, lever handles on both sides, a kick plate and hinges
@@ -138,6 +149,10 @@ func _frame_box(size: Vector3, pos: Vector3) -> void:
 
 
 func _on_used(_player) -> void:
+	if kind == "fake":
+		if on_fake.is_valid():
+			on_fake.call(self)
+		return
 	if locked and lock_handler.is_valid():
 		lock_handler.call()
 		return
@@ -176,6 +191,26 @@ func unlock() -> void:
 
 
 ## multiplayer: someone else opened it
+func net_event(what: String, _arg) -> void:
+	if what == "open":
+		open_remote()
+
+
+## a-20 scribbled the number out (or let go of it again)
+func scribble(on: bool) -> void:
+	if plate_label == null:
+		return
+	if on:
+		plate_label.set_meta("real", plate_label.text)
+		plate_label.text = "XXXXX"
+		plate_label.modulate = Color(0.05, 0.05, 0.05)
+		plate_label.font = Assets.font("handwriting")
+	else:
+		plate_label.text = str(plate_label.get_meta("real", plate_label.text))
+		plate_label.modulate = Color(0.08, 0.08, 0.08)
+		plate_label.font = null
+
+
 func open_remote() -> void:
 	_from_net = true
 	open()
@@ -186,7 +221,10 @@ func open() -> void:
 		return
 	is_open = true
 	if not _from_net:
-		Net.door_opened(number)
+		if kind == "":
+			Net.door_opened(number)
+		else:
+			Net.send_event(self, "open")
 	_it.enabled = false
 	_it.queue_free()
 	_panel_shape.set_deferred("disabled", true)

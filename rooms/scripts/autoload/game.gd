@@ -38,6 +38,19 @@ const MINIGAMES := {
 	"a90": ["a-90 forever", "a-90 keeps showing up. freeze every time. how many can you take?"],
 }
 var minigame := ""
+## the sightings (title screen tab): ghlicht's versions of the office. "" in a normal run
+## id -> [name, what it is]
+const SIGHTINGS := {
+	"office": ["the office", "the rooms, the way ghlicht sees them. side rooms, a-10, a-20 and ghlicht parts."],
+	"training": ["training", "learn every entity one by one. you can't die here, ghlicht puts you back."],
+	"daily": ["daily run", "the same rooms for everyone today. one try. how far can you get?"],
+	"endless": ["endless", "no a-1000. the doors keep going and it gets worse every 100."],
+	"battle": ["battle", "the rooms go by way faster. with friends: kill them for points, nobody revives. alone: you against the entities."],
+	"hide_seek": ["hide and seek", "multiplayer. one of you is the entity. everyone else has to make it to the door."],
+}
+var sightings := ""
+var scribbled := false
+var seeker := false     # hide and seek: you're the entity  # a-20 scribbled the door counter out
 var fixed_office := false   # this run is the office after the wires: lit, people, no entities
 
 ## unlocked by the "welp, thats been a long walk." achievement (leave through an exit door).
@@ -116,10 +129,13 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 	floor = str(pending_run.get("floor", "offices")) if continuing else floor_id
 	carry = carry_over
 	minigame = "" if continuing else str(carry_over.get("minigame", ""))
+	scribbled = false
+	seeker = bool(carry_over.get("seeker", false)) and not continuing
+	sightings = str(pending_run.get("sightings", "")) if continuing else str(carry_over.get("sightings", ""))
 	admin = with_admin
 	# admin runs keep their own progress (user://save_admin.json)
 	Save.use_profile("admin" if admin else "main")
-	if not continuing and minigame == "":
+	if not continuing and minigame == "" and not sightings_unsaved():
 		Save.clear_run()  # (a minigame keeps your saved run for "continue")
 	for k in admin_flags:
 		admin_flags[k] = false
@@ -136,7 +152,7 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 	death_details = {}
 	if continuing:
 		modifiers = Array(pending_run.get("modifiers", []))
-	elif minigame != "":
+	elif minigame != "" or sightings != "":
 		modifiers = []
 	else:
 		modifiers = Array(Save.data.get("modifiers", [])) if modifiers_unlocked() else []
@@ -147,7 +163,7 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 	Achievements.unlock("first_run")
 	get_tree().paused = false
 	# a fresh run in the office starts with your first day at Morse
-	if use_cutscenes() and not continuing and floor == "offices" and carry_over.is_empty():
+	if use_cutscenes() and not continuing and floor == "offices" and carry_over.is_empty() and sightings == "":
 		play_cutscene("intro", func(): get_tree().change_scene_to_file("res://scenes/game.tscn"))
 		return
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
@@ -156,6 +172,7 @@ func start_run(with_admin: bool, continuing := false, floor_id := "offices", car
 func to_menu() -> void:
 	save_run()
 	minigame = ""
+	sightings = ""
 	floor = "offices"
 	get_tree().paused = false
 	Settings.set_world_audio_muted(false)
@@ -177,6 +194,11 @@ func set_door(n: int) -> void:
 	elif floor == "complex":
 		if n > int(Save.data.get("complex_best", 0)):
 			Save.data.complex_best = n
+			Save.write()
+	elif sightings != "":
+		var key := "s_best_" + sightings
+		if n > int(Save.data.get(key, 0)):
+			Save.data[key] = n
 			Save.write()
 	elif minigame == "":
 		Save.record_door(n)
@@ -211,7 +233,7 @@ func carry_state() -> Dictionary:
 ## remember the run in progress (door, seed, health and items)
 func save_run() -> void:
 	# multiplayer runs can't be continued later
-	if Net.active or minigame != "" or player == null or generator == null or player.dead or door <= 0:
+	if Net.active or minigame != "" or sightings_unsaved() or player == null or generator == null or player.dead or door <= 0:
 		return
 	var inv = player.inventory
 	Save.save_run({
@@ -225,6 +247,7 @@ func save_run() -> void:
 		"elevator_power": elevator_power,
 		"fixed_office": fixed_office,
 		"modifiers": modifiers,
+		"sightings": sightings,
 		"selected": player.selected,
 		"items": {
 			"has_flashlight": inv.has_flashlight, "has_shakelight": inv.has_shakelight,
@@ -232,6 +255,11 @@ func save_run() -> void:
 			"batteries": inv.batteries, "bandages": inv.bandages, "vitamins": inv.vitamins,
 		},
 	})
+
+
+## sightings runs that can't be continued later (and don't touch the saved run)
+func sightings_unsaved() -> bool:
+	return sightings in ["training", "daily", "battle", "hide_seek"]
 
 
 func door_label(n: int) -> String:
@@ -242,6 +270,11 @@ func door_label(n: int) -> String:
 	if floor == "complex":
 		return "F-%03d" % n
 	return "A-%03d" % n
+
+
+## the door counter in the hud and the pause menu (a-20 can scribble it out)
+func counter_label(n: int) -> String:
+	return "XXXXX" if scribbled else door_label(n)
 
 
 ## always the office numbering (best door, journal pages)
@@ -259,6 +292,8 @@ func last_door() -> int:
 		return CITY_LAST
 	if floor == "complex":
 		return COMPLEX_LAST
+	if sightings == "endless" and floor == "offices":
+		return 100000
 	return WIRES_LAST if floor == "wires" else LAST_DOOR
 
 

@@ -446,6 +446,14 @@
     "color": "#600010",
     "style": "smile"
    }
+  },
+  "a10_face": {
+   "path": "res://assets/art/a10.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#2a2420",
+    "style": "smile"
+   }
   }
  },
  "sounds": {
@@ -1276,6 +1284,30 @@
     "kind": "scream",
     "length": 0.7,
     "volume": 0.9
+   }
+  },
+  "a10_kick": {
+   "path": "res://assets/local/sounds/a10_kick.ogg",
+   "placeholder": {
+    "kind": "knock",
+    "length": 0.35,
+    "volume": 1.0
+   }
+  },
+  "a20_burst": {
+   "path": "res://assets/local/sounds/a20_burst.ogg",
+   "placeholder": {
+    "kind": "scream",
+    "length": 0.6,
+    "volume": 0.9
+   }
+  },
+  "ghlicht_part": {
+   "path": "res://assets/local/sounds/ghlicht_part.ogg",
+   "placeholder": {
+    "kind": "glitch",
+    "length": 0.8,
+    "volume": 0.7
    }
   }
  },

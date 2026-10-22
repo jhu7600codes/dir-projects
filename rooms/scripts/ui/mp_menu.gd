@@ -68,9 +68,14 @@ func _ready() -> void:
 	pr.add_theme_constant_override("separation", 10)
 	for mg in Game.MINIGAMES:
 		pr.add_child(UIKit.button(Loc.t("party: ") + Loc.t(Game.MINIGAMES[mg][0]), func(): Net.host_start("offices", false, mg), 16))
+	var sg := HBoxContainer.new()
+	sg.add_theme_constant_override("separation", 10)
+	for sid in ["office", "battle", "hide_seek"]:
+		sg.add_child(UIKit.button(Loc.t("sightings: ") + Loc.t(Game.SIGHTINGS[sid][0]), func(): Net.host_start("offices", false, "", sid), 16))
 	var both := UIKit.vbox(8)
 	both.add_child(sr)
 	both.add_child(pr)
+	both.add_child(sg)
 	_start = both
 	_start.visible = false
 	v.add_child(_start)
