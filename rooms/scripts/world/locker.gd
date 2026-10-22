@@ -97,12 +97,17 @@ func _booth() -> void:
 
 func _placeholder() -> void:
 	_mesh(Vector3(0.9, 2.1, 0.62), Vector3(0, 1.05, -0.04), Mats.get_mat("locker"), self)
+	_mesh(Vector3(0.92, 0.08, 0.64), Vector3(0, 0.04, -0.04), Mats.get_mat("dark"), self)
+	_mesh(Vector3(0.94, 0.04, 0.66), Vector3(0, 2.12, -0.04), Mats.get_mat("locker"), self)
 	_door = Node3D.new()
 	_door.position = Vector3(-0.43, 0, 0.3)
 	add_child(_door)
 	var mi := MeshInstance3D.new()
 	mi.mesh = _door_mesh()
 	_door.add_child(mi)
+	# handle and a little number tag on the door
+	_mesh(Vector3(0.04, 0.2, 0.04), Vector3(0.78, 1.05, 0.04), Mats.get_mat("metal"), _door)
+	_mesh(Vector3(0.14, 0.06, 0.01), Vector3(0.43, 1.82, 0.025), Mats.get_mat("plastic"), _door)
 
 
 ## the door + its vent slits as one shared mesh (2 surfaces), built once for all lockers

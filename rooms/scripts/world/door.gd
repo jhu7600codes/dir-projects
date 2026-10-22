@@ -64,6 +64,7 @@ func _ready() -> void:
 		mi.material_override = Mats.get_mat("door_metal" if Game.floor == "wires" else "door")
 		mi.position = Vector3(w / 2, h / 2, 0)
 		_hinge.add_child(mi)
+		_details(w, h)
 	_panel_shape = CollisionShape3D.new()
 	var sh := BoxShape3D.new()
 	sh.size = Vector3(w, h, 0.08)
@@ -98,6 +99,32 @@ func _ready() -> void:
 	add_child(_audio)
 	if locked:
 		_it.prompt = "locked"
+
+
+## raised panels, lever handles on both sides, a kick plate and hinges
+func _details(w: float, h: float) -> void:
+	var metal := Mats.get_mat("metal")
+	var base := Mats.get_mat("door_metal" if Game.floor == "wires" else "door")
+	for side: float in [-1.0, 1.0]:
+		var z := side * 0.04
+		for py: float in [h * 0.68, h * 0.27]:
+			_hinge_box(Vector3(w * 0.62, h * 0.32, 0.012), Vector3(w / 2, py, z), base)
+		# lever handle on the far side from the hinge
+		_hinge_box(Vector3(0.07, 0.07, 0.03), Vector3(w - 0.13, 1.0, z + side * 0.01), metal)
+		_hinge_box(Vector3(0.15, 0.025, 0.025), Vector3(w - 0.17, 1.0, z + side * 0.04), metal)
+		_hinge_box(Vector3(w - 0.12, 0.2, 0.006), Vector3(w / 2, 0.12, z), metal)
+	for hy: float in [0.25, h / 2, h - 0.25]:
+		_hinge_box(Vector3(0.03, 0.1, 0.09), Vector3(0.0, hy, 0), metal)
+
+
+func _hinge_box(size: Vector3, pos: Vector3, mat: Material) -> void:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = size
+	mi.mesh = bm
+	mi.material_override = mat
+	mi.position = pos
+	_hinge.add_child(mi)
 
 
 func _frame_box(size: Vector3, pos: Vector3) -> void:

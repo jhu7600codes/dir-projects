@@ -26,11 +26,18 @@ static func table(room: RoomBase, pos: Vector3, yaw := 0.0, size := Vector3(1.6,
 	if _model(room, "table", pos, yaw):
 		room.box(Vector3(size.x, size.y, size.z), pos + Vector3(0, size.y / 2, 0), Mats.get_mat("wood"), true, yaw).visible = false
 		return
+	var b := Basis(Vector3.UP, yaw)
 	var top := room.box(Vector3(size.x, 0.05, size.z), pos + Vector3(0, size.y, 0), Mats.get_mat("wood"), true, yaw)
+	# a dark edge band around the top and a metal apron under it
+	room.box(Vector3(size.x + 0.02, 0.03, size.z + 0.02), pos + Vector3(0, size.y - 0.01, 0), Mats.get_mat("dark"), false, yaw)
+	for sz in [-1, 1]:
+		room.box(Vector3(size.x - 0.14, 0.08, 0.025), pos + b * Vector3(0, size.y - 0.08, sz * (size.z / 2 - 0.07)), Mats.get_mat("metal"), false, yaw)
 	for sx in [-1, 1]:
+		room.box(Vector3(0.025, 0.08, size.z - 0.14), pos + b * Vector3(sx * (size.x / 2 - 0.07), size.y - 0.08, 0), Mats.get_mat("metal"), false, yaw)
 		for sz in [-1, 1]:
-			var off := Basis(Vector3.UP, yaw) * Vector3(sx * (size.x / 2 - 0.06), 0, sz * (size.z / 2 - 0.06))
+			var off := b * Vector3(sx * (size.x / 2 - 0.06), 0, sz * (size.z / 2 - 0.06))
 			room.box(Vector3(0.05, size.y, 0.05), pos + off + Vector3(0, size.y / 2, 0), Mats.get_mat("metal"), false)
+			room.box(Vector3(0.08, 0.02, 0.08), pos + off + Vector3(0, 0.01, 0), Mats.get_mat("dark"), false)
 	top.name = "table"
 
 

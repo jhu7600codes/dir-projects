@@ -6,11 +6,13 @@ class_name Dressing
 ## dark rooms get stains on the carpet and missing ceiling tiles.
 ## everything is static, so it all ends up in the room's merged mesh (cheap to draw).
 ## nothing is placed in front of doors or on top of lockers / furniture.
+## `abandoned` (the normal office, not the fixed one): less of everything, and what's
+## left hangs crooked.
 
 const POSTERS := ["poster_red", "poster_blue", "poster_green", "poster_yellow", "poster_grey"]
 
 
-static func dress(room: RoomBase) -> void:
+static func dress(room: RoomBase, abandoned := false) -> void:
 	var info: Dictionary = room.shell_info
 	var x0: float = info.x0
 	var x1: float = info.x1
@@ -38,9 +40,11 @@ static func dress(room: RoomBase) -> void:
 			for g in gaps:
 				if absf(float(g) - along) < 1.15:
 					near_gap = true
+			if abandoned and rng.randf() < 0.45:
+				near_gap = true  # (just a bare stretch of wall)
 			if not near_gap:
 				var base: Vector3 = wl[1] + wl[2] * s
-				_wall_item(room, rng, base, wl[3], wl[5], height, taken, once)
+				_wall_item(room, rng, base, wl[3], wl[5], height, taken, once, abandoned)
 				if not narrow and rng.randf() < 0.22:
 					_floor_item(room, rng, base, wl[3], wl[5], taken, once)
 			s += rng.randf_range(1.8, 3.2)
@@ -65,7 +69,7 @@ static func dress(room: RoomBase) -> void:
 
 
 ## something flat on the wall at this spot (if it's free)
-static func _wall_item(room: RoomBase, rng: RandomNumberGenerator, base: Vector3, n: Vector3, yaw: float, height: float, taken: Array, once: Dictionary) -> void:
+static func _wall_item(room: RoomBase, rng: RandomNumberGenerator, base: Vector3, n: Vector3, yaw: float, height: float, taken: Array, once: Dictionary, abandoned := false) -> void:
 	var r := rng.randf()
 	if r < 0.36:
 		# a poster or framed picture
@@ -74,6 +78,10 @@ static func _wall_item(room: RoomBase, rng: RandomNumberGenerator, base: Vector3
 		var y := rng.randf_range(1.45, minf(1.85, height - h / 2 - 0.3))
 		var at := base + n * 0.12 + Vector3.UP * y
 		if _free(taken, at, Vector3(w, h, 0.08), yaw):
+			if abandoned and rng.randf() < 0.4:
+				# hanging crooked off one nail
+				_crooked(room, rng, at, n, yaw, w, h)
+				return
 			room.box(_sz(w + 0.06, h + 0.06, 0.03, yaw), at, Mats.get_mat("dark" if rng.randf() < 0.5 else "wood_dark"), false)
 			room.box(_sz(w, h, 0.035, yaw), at + n * 0.005, Mats.get_mat(POSTERS[rng.randi() % POSTERS.size()]), false)
 			# a few lines of "text"
@@ -106,6 +114,17 @@ static func _wall_item(room: RoomBase, rng: RandomNumberGenerator, base: Vector3
 			for k in rng.randi_range(3, 6):
 				var off := _along(yaw) * rng.randf_range(-0.38, 0.38) + Vector3.UP * rng.randf_range(-0.25, 0.25)
 				room.box(_sz(0.14, 0.18, 0.035, yaw), at + off + n * 0.005, Mats.get_mat("paper" if rng.randf() < 0.7 else "poster_yellow"), false)
+
+
+## a tilted picture: rotated around the wall's normal
+static func _crooked(room: RoomBase, rng: RandomNumberGenerator, at: Vector3, n: Vector3, yaw: float, w: float, h: float) -> void:
+	var tilt := rng.randf_range(0.12, 0.3) * (1.0 if rng.randf() < 0.5 else -1.0)
+	var holder := Node3D.new()
+	holder.position = at
+	holder.basis = Basis(n, tilt) * Basis(Vector3.UP, yaw)
+	room.add_child(holder)
+	room.box(Vector3(w + 0.06, h + 0.06, 0.03), Vector3.ZERO, Mats.get_mat("dark"), false, 0.0, holder)
+	room.box(Vector3(w, h, 0.035), holder.basis.inverse() * (n * 0.008), Mats.get_mat(POSTERS[rng.randi() % POSTERS.size()]), false, 0.0, holder)
 
 
 ## something standing against the wall at this spot (if it's free)

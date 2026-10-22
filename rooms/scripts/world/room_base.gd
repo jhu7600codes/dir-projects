@@ -64,8 +64,8 @@ func setup(num: int, seed_value: int) -> void:
 		var lk: Locker = lockers[rng.randi() % lockers.size()]
 		lk.mimic = true
 		lockers.erase(lk)
-	if theme == "office" and not is_special and not shell_info.is_empty() and Game.fixed_office:
-		Dressing.dress(self)
+	if theme == "office" and not is_special and not shell_info.is_empty():
+		Dressing.dress(self, not Game.fixed_office)
 	if Game.office_powered():
 		_populate()
 
