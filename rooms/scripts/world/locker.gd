@@ -13,6 +13,9 @@ var _it: Interactable
 
 
 func _ready() -> void:
+	if style == "table":
+		_table()
+		return
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
@@ -41,6 +44,19 @@ func _ready() -> void:
 	_audio = AudioStreamPlayer3D.new()
 	_audio.bus = "SFX"
 	_audio.position = Vector3(0, 1.2, 0.3)
+	add_child(_audio)
+
+
+## hiding under a table: the table itself (and its collision) is built by Props.table,
+## this is only the spot under it. you crawl in from the +z side
+func _table() -> void:
+	_it = Interactable.make(Vector3(1.4, 0.9, 0.5), "hide under")
+	_it.position = Vector3(0, 0.5, 0.45)
+	_it.used.connect(func(player): player.enter_locker(self))
+	add_child(_it)
+	_audio = AudioStreamPlayer3D.new()
+	_audio.bus = "SFX"
+	_audio.position = Vector3(0, 0.4, 0.3)
 	add_child(_audio)
 
 
@@ -128,6 +144,8 @@ func _mesh(size: Vector3, pos: Vector3, mat: Material, parent: Node3D) -> void:
 
 ## where the player stands while hiding / after leaving, in global space
 func inside_transform() -> Transform3D:
+	if style == "table":
+		return global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.02, 0.05))
 	# player faces -z by default, so turn around to look out of the door (+z)
 	return global_transform * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.02, -0.02))
 
@@ -150,6 +168,11 @@ func creak_open() -> void:
 
 
 func play_door() -> void:
+	if style == "table":
+		_audio.stream = Assets.sound("step")
+		_audio.pitch_scale = 0.7
+		_audio.play()
+		return
 	_audio.stream = Assets.sound("locker")
 	_audio.play()
 	if _door:

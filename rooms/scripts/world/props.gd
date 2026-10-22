@@ -20,6 +20,9 @@ static func _model(room: RoomBase, key: String, pos: Vector3, yaw: float) -> boo
 
 
 static func table(room: RoomBase, pos: Vector3, yaw := 0.0, size := Vector3(1.6, TABLE_H, 0.8)) -> void:
+	# big enough tables can be hidden under
+	if size.x >= 1.2 and size.z >= 0.7 and size.y >= 0.8:
+		room.add_table_hide(pos, yaw)
 	if _model(room, "table", pos, yaw):
 		room.box(Vector3(size.x, size.y, size.z), pos + Vector3(0, size.y / 2, 0), Mats.get_mat("wood"), true, yaw).visible = false
 		return

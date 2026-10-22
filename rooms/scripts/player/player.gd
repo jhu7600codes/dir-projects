@@ -12,6 +12,7 @@ const CROUCH := 2.0
 const GRAVITY := 18.0
 const HEAD_STAND := 1.55
 const HEAD_CROUCH := 0.95
+const HEAD_TABLE := 0.45
 const STAMINA_DRAIN := 22.0
 const STAMINA_REGEN := 16.0
 const LOOK_SPEED := 0.0025
@@ -344,7 +345,7 @@ func _update_target(delta: float) -> void:
 	if hud:
 		var text := ""
 		if hidden:
-			text = "interact - leave locker"
+			text = "interact - get out" if current_locker and current_locker.style == "table" else "interact - leave locker"
 		elif _target:
 			text = _target.prompt
 		hud.set_prompt(text, (_hold_t / _target.hold_time) if _target and _target.hold_time > 0.0 else -1.0)
@@ -385,11 +386,13 @@ func enter_locker(lk: Locker) -> void:
 	var tw := create_tween().set_parallel()
 	tw.tween_property(self, "global_transform", t, dur)
 	tw.tween_property(head, "rotation", Vector3.ZERO, dur)
+	# under a table you're curled up on the floor
+	tw.tween_property(head, "position:y", HEAD_TABLE if lk.style == "table" else HEAD_STAND, dur)
 	tw.chain().tween_callback(func():
 		_busy = false
 		lk.set_inside(true)
 		if hud:
-			hud.set_locker_view(true))
+			hud.set_locker_view(lk.style != "table"))
 
 
 func exit_locker() -> void:
@@ -405,6 +408,7 @@ func exit_locker() -> void:
 	var dur := 0.12 if Game.forced_sprint else 0.3
 	var tw := create_tween()
 	tw.tween_property(self, "global_transform", t, dur)
+	tw.parallel().tween_property(head, "position:y", HEAD_STAND, dur)
 	tw.tween_callback(func():
 		current_locker.occupied = false
 		Net.send_event(current_locker, "occupied", false)
@@ -427,6 +431,7 @@ func teleport(t: Transform3D) -> void:
 		hidden = false
 		if hud:
 			hud.set_locker_view(false)
+	head.position.y = HEAD_STAND
 	_busy = false
 	_shape.set_deferred("disabled", false)
 	global_transform = t

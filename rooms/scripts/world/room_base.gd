@@ -22,6 +22,7 @@ var turn := 0                    # -1, 0, 1: set by the generator for rooms that
 var exit_local := Transform3D.IDENTITY
 var path_local: Array[Vector3] = []  # line through the room that entities follow
 var exit_door: Door = null
+var tables: Array = []
 var lockers: Array = []
 var rng := RandomNumberGenerator.new()
 
@@ -563,6 +564,17 @@ func add_locker(pos: Vector3, yaw: float, style := "locker") -> Locker:
 	add_child(lk)
 	lockers.append(lk)
 	has_lockers = true
+	return lk
+
+
+## a spot under a table to hide in. kept out of `lockers` so the locker entities leave it alone
+func add_table_hide(pos: Vector3, yaw: float) -> Locker:
+	var lk := Locker.new()
+	lk.style = "table"
+	lk.position = pos
+	lk.rotation.y = yaw
+	add_child(lk)
+	tables.append(lk)
 	return lk
 
 
