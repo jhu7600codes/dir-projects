@@ -11,6 +11,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
+import app.stash.cloud.Account
+import app.stash.cloud.CloudBackup
 import app.stash.data.prefs.ThemeMode
 import app.stash.ui.AppViewModel
 import app.stash.ui.Routes
@@ -19,9 +22,14 @@ import app.stash.ui.theme.StashTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var account: Account
+    @Inject lateinit var cloud: CloudBackup
+
     private val app: AppViewModel by viewModels()
     private val navRequests = Channel<String>(Channel.BUFFERED)
     private val openPlayer = Channel<Unit>(Channel.CONFLATED)
@@ -54,8 +62,31 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // back from tapping the confirm link in the email app: finish logging in
+        if (account.hasPendingSignup) lifecycleScope.launch {
+            if (account.completePendingSignup()) afterLogin()
+        }
+    }
+
+    private suspend fun afterLogin() {
+        val added = runCatching { cloud.firstSync() }.getOrDefault(0)
+        app.toast(if (added > 0) "Logged in, restored $added playlists" else "Logged in, your library is backed up")
+        navRequests.send(Routes.SETTINGS)
+    }
+
     private fun handleIntent(intent: Intent?) {
         intent ?: return
+        val data = intent.data
+        if (intent.action == Intent.ACTION_VIEW && data?.scheme == "stash" && data.host == "auth-callback") {
+            lifecycleScope.launch {
+                runCatching { account.handleRedirect(data) }
+                    .onSuccess { afterLogin() }
+                    .onFailure { app.toast(it.message ?: "Couldn't log in from that link") }
+            }
+            return
+        }
         if (intent.getBooleanExtra(EXTRA_OPEN_PLAYER, false)) {
             openPlayer.trySend(Unit)
             return
