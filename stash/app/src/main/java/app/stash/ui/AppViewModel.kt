@@ -1,5 +1,6 @@
 package app.stash.ui
 
+import app.stash.data.calm
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,7 +40,7 @@ class AppViewModel @Inject constructor(
     val settings: StateFlow<AppSettings?> = prefs.flow.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val playlists: StateFlow<List<PlaylistWithCount>> =
-        library.playlists.observeAll().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        library.playlists.observeAll().calm().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val messages: SharedFlow<String> = _messages
@@ -68,7 +69,7 @@ class AppViewModel @Inject constructor(
 
     /** every song that couldn't be found anywhere, across all playlists and liked songs */
     val missingCount: StateFlow<Int> =
-        library.playlists.observeUnmatchedCount().stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+        library.playlists.observeUnmatchedCount().calm().stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     val rescan: StateFlow<RescanProgress?> = imports.rescan.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 

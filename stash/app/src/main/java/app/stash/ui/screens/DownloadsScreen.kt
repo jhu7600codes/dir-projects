@@ -1,5 +1,6 @@
 package app.stash.ui.screens
 
+import app.stash.data.calm
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -69,8 +70,8 @@ fun DownloadsScreen() {
     val nav = LocalNav.current
     val context = LocalContext.current
     val dao = actions.library.tracks
-    val queue by remember { dao.observeDownloadQueue() }.collectAsState(initial = emptyList())
-    val done by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
+    val queue by remember { dao.observeDownloadQueue() .calm() }.collectAsState(initial = emptyList())
+    val done by remember { dao.observeDownloaded() .calm() }.collectAsState(initial = emptyList())
     val settings by actions.settings.collectAsState()
     val currentId by actions.player.currentId.collectAsState()
     val used by produceState(0L, done.size) { value = withContext(Dispatchers.IO) { actions.downloads.usedBytes() } }

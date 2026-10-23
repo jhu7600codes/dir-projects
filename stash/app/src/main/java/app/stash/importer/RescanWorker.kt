@@ -52,6 +52,8 @@ class RescanWorker @AssistedInject constructor(
         if (missing.isEmpty()) return Result.success(workDataOf(KEY_TOTAL to 0, KEY_FOUND to 0))
         val done = AtomicInteger()
         val found = AtomicInteger()
+        // newest first, shown on the rescan screen
+        val foundNames = java.util.Collections.synchronizedList(mutableListOf<String>())
         val gate = Semaphore(4)
         runCatching { setForeground(info(0, missing.size, 0)) }
         coroutineScope {
@@ -59,15 +61,17 @@ class RescanWorker @AssistedInject constructor(
                 async {
                     gate.withPermit {
                         if (isStopped) return@withPermit
-                        val hit = runCatching { resolver.match(u.title, u.artist, u.durationMs) }.getOrNull()
+                        setProgress(progress(done.get(), missing.size, found.get(), "${u.artist} - ${u.title}", foundNames))
+                        val hit = runCatching { resolver.match(u.title, u.artist, u.durationMs, u.album) }.getOrNull()
                         if (hit != null) {
                             place(u, hit)
                             found.incrementAndGet()
+                            foundNames.add(0, "${u.artist} - ${u.title}")
                         }
                         val n = done.incrementAndGet()
                         runCatching { setForeground(info(n, missing.size, found.get())) }
                         // the app shows this live (library row, import screen, playlists)
-                        setProgress(workDataOf(KEY_DONE to n, KEY_TOTAL to missing.size, KEY_FOUND to found.get()))
+                        setProgress(progress(n, missing.size, found.get(), null, foundNames))
                     }
                 }
             }.awaitAll()
@@ -77,14 +81,21 @@ class RescanWorker @AssistedInject constructor(
                 DONE_ID,
                 NotificationCompat.Builder(applicationContext, StashApp.CHANNEL_IMPORTS)
                     .setSmallIcon(R.drawable.ic_stat_stash)
+                    .setContentIntent(openRescan())
                     .setContentTitle("Rescan done")
                     .setContentText("Found ${found.get()} of ${missing.size} missing songs")
                     .setAutoCancel(true)
                     .build(),
             )
         }
-        return Result.success(workDataOf(KEY_DONE to missing.size, KEY_TOTAL to missing.size, KEY_FOUND to found.get()))
+        return Result.success(progress(missing.size, missing.size, found.get(), null, foundNames))
     }
+
+    /** work data is capped at 10KB, so only the latest found songs ride along */
+    private fun progress(done: Int, total: Int, found: Int, current: String?, names: List<String>) = workDataOf(
+        KEY_DONE to done, KEY_TOTAL to total, KEY_FOUND to found, KEY_CURRENT to current,
+        KEY_FOUND_LIST to synchronized(names) { names.take(40).map { it.take(120) }.toTypedArray() },
+    )
 
     private suspend fun place(u: UnmatchedTrack, hit: Track) = db.withTransaction {
         // keep the name/artist the song had on spotify, like the importer does
@@ -102,9 +113,16 @@ class RescanWorker @AssistedInject constructor(
         playlists.deleteUnmatched(u.id)
     }
 
+    private fun openRescan() = android.app.PendingIntent.getActivity(
+        applicationContext, 2,
+        android.content.Intent(applicationContext, app.stash.MainActivity::class.java).putExtra(app.stash.MainActivity.EXTRA_OPEN_RESCAN, true),
+        android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
     private fun info(done: Int, total: Int, found: Int): ForegroundInfo {
         val n = NotificationCompat.Builder(applicationContext, StashApp.CHANNEL_IMPORTS)
             .setSmallIcon(R.drawable.ic_stat_stash)
+            .setContentIntent(openRescan())
             .setContentTitle("Rescanning missing songs")
             .setContentText("$done of $total checked · $found found")
             .setProgress(total, done, false)
@@ -121,6 +139,8 @@ class RescanWorker @AssistedInject constructor(
         const val KEY_DONE = "done"
         const val KEY_TOTAL = "total"
         const val KEY_FOUND = "found"
+        const val KEY_CURRENT = "current"
+        const val KEY_FOUND_LIST = "found_list"
         private const val PROGRESS_ID = 0x4200
         private const val DONE_ID = 0x4201
     }

@@ -75,7 +75,7 @@ fun TrackOptionsSheet(track: Track, onDismiss: () -> Unit) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     // the row passed in may be a stale search result, watch the db copy for liked/download state
-    val live by actions.library.tracks.observe(track.id).collectAsState(initial = null)
+    val live by remember(track.id) { actions.library.tracks.observe(track.id) }.collectAsState(initial = null)
     val t = live ?: track
     var pickPlaylist by remember { mutableStateOf(false) }
 

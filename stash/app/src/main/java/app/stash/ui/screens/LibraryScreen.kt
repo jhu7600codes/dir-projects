@@ -1,5 +1,6 @@
 package app.stash.ui.screens
 
+import app.stash.data.calm
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,11 +77,11 @@ fun LibraryScreen() {
     var filter by rememberSaveable { mutableStateOf(LibFilter.PLAYLISTS) }
     var creating by remember { mutableStateOf(false) }
     val playlists by actions.playlists.collectAsState()
-    val songs by remember { dao.observeLibrary() }.collectAsState(initial = emptyList())
-    val liked by remember { dao.observeLiked() }.collectAsState(initial = emptyList())
-    val albums by remember { dao.observeAlbums() }.collectAsState(initial = emptyList())
-    val artists by remember { dao.observeArtists() }.collectAsState(initial = emptyList())
-    val downloaded by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
+    val songs by remember { dao.observeLibrary() .calm() }.collectAsState(initial = emptyList())
+    val liked by remember { dao.observeLiked() .calm() }.collectAsState(initial = emptyList())
+    val albums by remember { dao.observeAlbums() .calm() }.collectAsState(initial = emptyList())
+    val artists by remember { dao.observeArtists() .calm() }.collectAsState(initial = emptyList())
+    val downloaded by remember { dao.observeDownloaded() .calm() }.collectAsState(initial = emptyList())
     val currentId by actions.player.currentId.collectAsState()
     val missingCount by actions.missingCount.collectAsState()
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -123,7 +124,7 @@ fun LibraryScreen() {
                             supportingContent = { RescanStatus(Modifier.fillMaxWidth().padding(top = 4.dp)) },
                             leadingContent = { PinnedIcon(Icons.Rounded.Refresh) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            modifier = Modifier.clickable { nav.navigate(Routes.IMPORT_PROGRESS) }.padding(horizontal = 4.dp),
+                            modifier = Modifier.clickable { nav.navigate(Routes.RESCAN) }.padding(horizontal = 4.dp),
                         )
                     }
                     items(playlists, key = { it.id }) { p ->

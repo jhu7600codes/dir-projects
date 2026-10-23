@@ -1,5 +1,6 @@
 package app.stash.ui.screens
 
+import app.stash.data.calm
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -99,7 +100,7 @@ class ArtistViewModel @Inject constructor(
     private val name = MutableStateFlow(fallbackName)
 
     /** your own songs by them */
-    val yours = name.flatMapLatest { tracks.observeArtist(it) }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val yours = name.flatMapLatest { tracks.observeArtist(it).calm() }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     init {
         viewModelScope.launch {

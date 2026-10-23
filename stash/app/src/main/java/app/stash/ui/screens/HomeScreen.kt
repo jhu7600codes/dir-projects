@@ -1,5 +1,6 @@
 package app.stash.ui.screens
 
+import app.stash.data.calm
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,10 +72,10 @@ fun HomeScreen() {
     val actions = LocalActions.current
     val nav = LocalNav.current
     val dao = actions.library.tracks
-    val recent by remember { dao.observeRecent(20) }.collectAsState(initial = emptyList())
-    val mostPlayed by remember { dao.observeMostPlayed(15) }.collectAsState(initial = emptyList())
-    val downloaded by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
-    val liked by remember { dao.observeLiked() }.collectAsState(initial = emptyList())
+    val recent by remember { dao.observeRecent(20) .calm() }.collectAsState(initial = emptyList())
+    val mostPlayed by remember { dao.observeMostPlayed(15) .calm() }.collectAsState(initial = emptyList())
+    val downloaded by remember { dao.observeDownloaded() .calm() }.collectAsState(initial = emptyList())
+    val liked by remember { dao.observeLiked() .calm() }.collectAsState(initial = emptyList())
     val allPlaylists by actions.playlists.collectAsState()
     val playlists = remember(allPlaylists) { allPlaylists.filter { it.origin != "mix" } }
     val allMixes = remember(allPlaylists) { allPlaylists.filter { it.origin == "mix" }.sortedBy { mixOrder(it.originId) } }

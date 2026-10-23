@@ -1,5 +1,6 @@
 package app.stash.ui.screens
 
+import app.stash.data.calm
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -232,9 +233,9 @@ fun PlaylistScreen(id: Long) {
     val actions = LocalActions.current
     val nav = LocalNav.current
     val dao = actions.library.playlists
-    val playlist by remember(id) { dao.observe(id) }.collectAsState(initial = null)
-    val entries by remember(id) { dao.observeEntries(id) }.collectAsState(initial = emptyList())
-    val unmatched by remember(id) { dao.observeUnmatched(id) }.collectAsState(initial = emptyList())
+    val playlist by remember(id) { dao.observe(id) .calm() }.collectAsState(initial = null)
+    val entries by remember(id) { dao.observeEntries(id) .calm() }.collectAsState(initial = emptyList())
+    val unmatched by remember(id) { dao.observeUnmatched(id) .calm() }.collectAsState(initial = emptyList())
     val tracks = remember(entries) { entries.map { it.track } }
     var renaming by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
@@ -282,7 +283,7 @@ fun PlaylistScreen(id: Long) {
 @Composable
 fun AlbumScreen(name: String, artist: String) {
     val dao = LocalActions.current.library.tracks
-    val tracks by remember(name, artist) { dao.observeAlbum(name, artist) }.collectAsState(initial = emptyList())
+    val tracks by remember(name, artist) { dao.observeAlbum(name, artist) .calm() }.collectAsState(initial = emptyList())
     val nav = LocalNav.current
     CollectionScreen(
         title = name, kind = "Album · $artist", tracks = tracks,
@@ -294,8 +295,8 @@ fun AlbumScreen(name: String, artist: String) {
 @Composable
 fun LikedScreen() {
     val library = LocalActions.current.library
-    val tracks by remember { library.tracks.observeLiked() }.collectAsState(initial = emptyList())
-    val unmatched by remember { library.playlists.observeUnmatched(LIKED_PLAYLIST_ID) }.collectAsState(initial = emptyList())
+    val tracks by remember { library.tracks.observeLiked() .calm() }.collectAsState(initial = emptyList())
+    val unmatched by remember { library.playlists.observeUnmatched(LIKED_PLAYLIST_ID) .calm() }.collectAsState(initial = emptyList())
     CollectionScreen(
         title = "Liked songs", kind = "Playlist", tracks = tracks, artwork = null, artIcon = Icons.Rounded.Favorite,
         missing = unmatched,

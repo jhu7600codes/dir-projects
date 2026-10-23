@@ -68,7 +68,17 @@ Any artist (from search, "go to artist", or your library) gets a full page: bann
 
 ## Rescan failed songs
 
-Songs that couldn't be found can be searched for again against all current sources, including ones added later like Audius. It first forgets old "not found" answers, runs in the background with a notification, and puts every song it finds back into its exact spot. The button is on the import screen, in playlists that have missing songs, and as a library row that only appears while something is missing.
+Songs that couldn't be found can be searched for again against all current sources, including ones added later like Audius. It first forgets old "not found" answers, runs in the background with a notification, and puts every song it finds back into its exact spot. It has its own screen: big progress bar, the song it's looking for right now, the songs it found, and what's still missing (tap one to search by hand). The button is on the import screen, in playlists that have missing songs, and as a library row that only appears while something is missing. After an update that improves matching, it runs once by itself.
+
+## How imported songs are matched
+
+`Resolver.match` searches "first artist + title" on every source in order. YouTube looks at YouTube Music's songs **and** videos together, since underground music (game soundtracks, vocaloid, SoundCloud rappers) is often only a video, and the songs tab doesn't exist in some countries. If nothing fits, it tries "title + album" on YouTube and SoundCloud. `Matcher.score` then weighs:
+
+- title words, with "cover"/"covered" style prefixes allowed
+- any credited artist, found in the artist, the channel name or the raw upload title (so "DOORS ORIGINAL SOUNDTRACK VOL. 1 - Elevator Jam" uploaded by LSPLASH counts as LSPLASH)
+- a distinctive album word ("Doors") as half an artist, only when the length also matches
+- cyrillic and japanese kana spelled in latin letters ("タカオカミズキ" = "takaokamizuki"), with kanji, kana and latin split into separate words
+- length, and a penalty for versions the original title doesn't mention (cover, remix, sped up, nightcore, piano…)
 
 ## Covers
 
@@ -112,6 +122,8 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 ```
 ./gradlew :app:assembleDebug
 ```
+
+The release build runs R8 (no renaming, stash's own classes kept whole), which makes Compose a lot smoother. Room lists on screen go through `calm()` (`data/Flows.kt`) so imports and the cover fixer writing to the database don't make every list redraw several times a second.
 
 compileSdk/targetSdk 35, minSdk 26, AGP 8.7.3, Kotlin 2.0.21 (compose compiler plugin), Hilt + KSP, Room, WorkManager, Media3 1.5.1, youtubedl-android 0.18.1. A prebuilt release apk is at `dist/stash.apk` (release build, much smoother than debug). Every build is signed with `app/stash.keystore` (the standard Android debug key, committed on purpose) so updates always install over the old app.
 

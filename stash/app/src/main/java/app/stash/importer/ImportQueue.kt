@@ -26,7 +26,16 @@ import javax.inject.Singleton
  * [ImportWorker] in the background, so 25 playlists keep going with the app closed and
  * pick up where they stopped if the phone kills it.
  */
-data class RescanProgress(val running: Boolean, val done: Int, val total: Int, val found: Int)
+data class RescanProgress(
+    val running: Boolean,
+    val done: Int,
+    val total: Int,
+    val found: Int,
+    /** "artist - title" being searched right now */
+    val current: String? = null,
+    /** latest found songs, newest first */
+    val foundNames: List<String> = emptyList(),
+)
 
 @Singleton
 class ImportQueue @Inject constructor(
@@ -68,6 +77,12 @@ class ImportQueue @Inject constructor(
     /** after a restart: if anything is still waiting, get the worker going again */
     fun resume() = scope.launch {
         if (dao.pendingCount() > 0) start()
+        // the matcher got better: try everything that was missing once more, by itself
+        val prefs = context.getSharedPreferences("stash_import", Context.MODE_PRIVATE)
+        if (prefs.getInt("matcher", 1) < ImportWorker.MATCHER_VERSION) {
+            prefs.edit().putInt("matcher", ImportWorker.MATCHER_VERSION).apply()
+            if (db.playlists().allUnmatched().isNotEmpty()) rescanMissing()
+        }
     }
 
     fun cancel(jobId: Long) = scope.launch { dao.cancel(jobId) }
@@ -88,6 +103,8 @@ class ImportQueue @Inject constructor(
             done = data.getInt(RescanWorker.KEY_DONE, 0),
             total = data.getInt(RescanWorker.KEY_TOTAL, 0),
             found = data.getInt(RescanWorker.KEY_FOUND, 0),
+            current = data.getString(RescanWorker.KEY_CURRENT),
+            foundNames = data.getStringArray(RescanWorker.KEY_FOUND_LIST)?.toList().orEmpty(),
         )
     }
 

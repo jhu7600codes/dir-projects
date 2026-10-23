@@ -122,11 +122,12 @@ class ImportWorker @AssistedInject constructor(
         val key = Matcher.normalize(t.artist.split(',').first()) + "|" + Matcher.normalize(t.title)
         val cached = dao.cached(key)
         if (cached != null) {
-            val fresh = System.currentTimeMillis() - cached.checkedAt < RETRY_MISSES_AFTER
+            // misses from an older, worse matcher are always retried
+            val fresh = System.currentTimeMillis() - cached.checkedAt < RETRY_MISSES_AFTER && cached.checkedAt > MATCHER_CHANGED_AT
             if (cached.trackId != null) tracks.get(cached.trackId)?.let { return it }
             else if (fresh) return null
         }
-        val hit = runCatching { resolver.match(t.title, t.artist, t.durationMs) }.getOrNull()
+        val hit = runCatching { resolver.match(t.title, t.artist, t.durationMs, t.album) }.getOrNull()
         // the spotify cover beats whatever thumbnail the matched source has
         val art = t.artworkUrl ?: hit?.let { covers.spotify(t.sourceUri) }
         val saved = hit?.let {
@@ -191,5 +192,8 @@ class ImportWorker @AssistedInject constructor(
         private const val PARALLEL = 4
         private const val NOTIFICATION_ID = 0x4100
         private const val RETRY_MISSES_AFTER = 3L * 24 * 60 * 60 * 1000
+        /** 1.2.0: uploader-aware, kana-aware matcher. bump when matching gets better again */
+        const val MATCHER_CHANGED_AT = 1_792_713_600_000L
+        const val MATCHER_VERSION = 2
     }
 }
