@@ -1,6 +1,8 @@
 package app.stash.providers
 
 import app.stash.data.db.Track
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -66,6 +68,33 @@ class AudiusProvider @Inject constructor(private val http: OkHttpClient) : Music
 
     override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
         api("/users/$artistId/tracks", mapOf("limit" to "$limit", "sort" to "plays")).mapNotNull { hitFrom(it)?.track }
+
+    override suspend fun artistDetails(artistId: String): ArtistDetails? = coroutineScope {
+        val user = async {
+            lenientJson.parseToJsonElement(httpIo { http.getText("$HOST/v1/users/$artistId?app_name=$APP") }).jsonObject.obj("data")
+        }
+        val tracks = async { runCatching { artistTracks(artistId, 50) }.getOrDefault(emptyList()) }
+        val related = async { runCatching { api("/users/$artistId/related", mapOf("limit" to "12")) }.getOrDefault(emptyList()) }
+        val u = user.await() ?: return@coroutineScope null
+        ArtistDetails(
+            provider = id,
+            id = artistId,
+            name = u.str("name") ?: return@coroutineScope null,
+            avatarUrl = u.obj("profile_picture")?.let { it.str("480x480") ?: it.str("1000x1000") },
+            bannerUrl = u.obj("cover_photo")?.let { it.str("2000x") ?: it.str("640x") },
+            bio = u.str("bio"),
+            followers = u.num("follower_count")?.toLong(),
+            location = u.str("location"),
+            link = u.str("handle")?.let { "https://audius.co/$it" },
+            popular = tracks.await(),
+            similar = related.await().mapNotNull { r ->
+                RemoteArtist(
+                    provider = id, id = r.str("id") ?: return@mapNotNull null, name = r.str("name") ?: return@mapNotNull null,
+                    avatarUrl = r.obj("profile_picture")?.str("480x480"), followers = r.num("follower_count")?.toLong(),
+                )
+            },
+        )
+    }
 
     override suspend fun metadata(sourceId: String): Track? =
         runCatching { api("/tracks/$sourceId").firstOrNull() }.getOrNull()?.let { hitFrom(it)?.track }

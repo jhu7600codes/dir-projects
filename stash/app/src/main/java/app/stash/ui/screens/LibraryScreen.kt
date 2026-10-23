@@ -21,9 +21,11 @@ import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,10 +56,10 @@ import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
 import app.stash.ui.components.Artwork
-import app.stash.ui.components.originName
 import app.stash.ui.components.EmptyState
 import app.stash.ui.components.NewPlaylistDialog
 import app.stash.ui.components.TrackRow
+import app.stash.ui.components.originName
 import kotlinx.coroutines.launch
 
 private enum class LibFilter(val label: String) { PLAYLISTS("Playlists"), SONGS("Songs"), ALBUMS("Albums"), ARTISTS("Artists"), DOWNLOADED("Downloaded") }
@@ -78,6 +80,7 @@ fun LibraryScreen() {
     val artists by remember { dao.observeArtists() }.collectAsState(initial = emptyList())
     val downloaded by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
     val current by actions.player.state.collectAsState()
+    val missingCount by actions.missingCount.collectAsState()
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -110,6 +113,17 @@ fun LibraryScreen() {
                             title = "Liked songs", subtitle = "${liked.size} songs", art = null,
                             onClick = { nav.navigate(Routes.LIKED) },
                         ) { PinnedIcon(Icons.Rounded.Favorite) }
+                    }
+                    // only shows up while something couldn't be found
+                    if (missingCount > 0) item {
+                        ListItem(
+                            headlineContent = { Text("$missingCount songs couldn't be found") },
+                            supportingContent = { Text("Search for them again, new sources included") },
+                            leadingContent = { PinnedIcon(Icons.Rounded.Refresh) },
+                            trailingContent = { FilledTonalButton(onClick = { actions.rescanMissing() }) { Text("Rescan") } },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            modifier = Modifier.clickable { nav.navigate(Routes.IMPORT_PROGRESS) }.padding(horizontal = 4.dp),
+                        )
                     }
                     items(playlists, key = { it.id }) { p ->
                         val sub = buildList {

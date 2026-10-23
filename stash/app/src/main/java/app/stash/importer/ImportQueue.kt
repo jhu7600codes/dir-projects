@@ -75,6 +75,14 @@ class ImportQueue @Inject constructor(
 
     fun clearFinished() = scope.launch { dao.clearFinished() }
 
+    /** search every not-found song again (see [RescanWorker]) */
+    fun rescanMissing() {
+        val request = OneTimeWorkRequestBuilder<RescanWorker>()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .build()
+        WorkManager.getInstance(context).enqueueUniqueWork("stash_rescan", ExistingWorkPolicy.KEEP, request)
+    }
+
     companion object {
         const val WORK = "stash_import"
         const val TAG = "stash_import"

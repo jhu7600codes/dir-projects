@@ -1,6 +1,8 @@
 package app.stash.providers
 
 import app.stash.data.db.Track
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -135,9 +137,10 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
 
     override suspend fun searchArtists(query: String, limit: Int) = music.searchArtists(query, limit)
 
-    /** youtube "artist ids" are names: their songs = a songs search filtered to that artist */
     override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
-        music.search(artistId, limit).filter { it.artist.contains(artistId, ignoreCase = true) }
+        music.artist(artistId)?.popular.orEmpty().take(limit)
+
+    override suspend fun artistDetails(artistId: String) = music.artist(artistId)
 
     override fun entryToTrack(o: JsonObject, fallbackUrl: String?): Track? {
         val videoId = o.str("id") ?: return super.entryToTrack(o, fallbackUrl)
@@ -186,6 +189,29 @@ class SoundCloudProvider @Inject constructor(ytDlp: YtDlp, private val api: Soun
 
     override suspend fun searchArtists(query: String, limit: Int): List<RemoteArtist> =
         api.get("/search/users", mapOf("q" to query, "limit" to "$limit"))["collection"].asObjectList().mapNotNull(api::artistFrom)
+
+    override suspend fun artistDetails(artistId: String): ArtistDetails? = coroutineScope {
+        val user = async { api.get("/users/$artistId") }
+        val top = async { runCatching { api.get("/users/$artistId/toptracks", mapOf("limit" to "10"))["collection"].asObjectList() }.getOrDefault(emptyList()) }
+        val all = async { runCatching { artistTracks(artistId, 50) }.getOrDefault(emptyList()) }
+        val related = async {
+            runCatching { api.get("/users/$artistId/relatedartists", mapOf("limit" to "12"))["collection"].asObjectList() }.getOrDefault(emptyList())
+        }
+        val u = user.await()
+        ArtistDetails(
+            provider = id,
+            id = artistId,
+            name = u.str("username") ?: return@coroutineScope null,
+            avatarUrl = u.str("avatar_url")?.replace("-large.", "-t500x500."),
+            bannerUrl = u.obj("visuals")?.get("visuals").asObjectList().firstOrNull()?.str("visual_url"),
+            bio = u.str("description"),
+            followers = u.num("followers_count")?.toLong(),
+            location = listOfNotNull(u.str("city"), u.str("country_code")).joinToString(", ").ifBlank { null },
+            link = u.str("permalink_url"),
+            popular = (top.await().mapNotNull { api.hitFrom(it)?.track } + all.await()).distinctBy { it.id },
+            similar = related.await().mapNotNull { (it.obj("user") ?: it).let(api::artistFrom) },
+        )
+    }
 
     override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
         api.get("/users/$artistId/tracks", mapOf("limit" to "$limit"))["collection"].asObjectList()

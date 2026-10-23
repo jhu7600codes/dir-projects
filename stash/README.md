@@ -62,6 +62,14 @@ The title follows the time of day, with a few variants each. With "greet me by p
 - **Audius** (independent artists, open API, plain MP3 streams) is a source now. SoundCloud search and playback go through SoundCloud's own web API (client id read from their site), which is much faster than yt-dlp. SoundCloud only serves HLS now, so its songs are queued as HLS (`stash://track/<id>.m3u8`).
 - Recent searches show when the box is empty.
 
+## Artist pages
+
+Any artist (from search, "go to artist", or your library) gets a full page: banner, round profile picture, fans, monthly listeners, location, an expandable bio, a link to them on the source, play / shuffle / artist radio, your own songs by them, their popular songs, and "fans also like". It comes from YouTube Music's artist page, SoundCloud (user, visuals, top tracks, related artists) or Audius (profile, cover photo, tracks, related). Library artists are looked up by exact name on those three, in that order.
+
+## Rescan failed songs
+
+Songs that couldn't be found can be searched for again against all current sources, including ones added later like Audius. It first forgets old "not found" answers, runs in the background with a notification, and puts every song it finds back into its exact spot. The button is on the import screen, in playlists that have missing songs, and as a library row that only appears while something is missing.
+
 ## Covers
 
 Saved songs get their real album cover instead of a YouTube video thumbnail. For Spotify imports the cover comes from Spotify itself (public oEmbed, using the track URI from the link or the CSV). Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.

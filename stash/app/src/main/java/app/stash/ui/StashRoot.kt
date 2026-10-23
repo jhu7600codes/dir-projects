@@ -49,7 +49,7 @@ import app.stash.providers.RemoteArtist
 import app.stash.ui.player.MiniPlayer
 import app.stash.ui.player.NowPlayingSheet
 import app.stash.ui.screens.AlbumScreen
-import app.stash.ui.screens.ArtistScreen
+import app.stash.ui.screens.ArtistPageScreen
 import app.stash.ui.screens.DownloadsScreen
 import app.stash.ui.screens.HomeScreen
 import app.stash.ui.screens.ImportProgressScreen
@@ -57,7 +57,6 @@ import app.stash.ui.screens.ImportScreen
 import app.stash.ui.screens.LibraryScreen
 import app.stash.ui.screens.LikedScreen
 import app.stash.ui.screens.PlaylistScreen
-import app.stash.ui.screens.RemoteArtistScreen
 import app.stash.ui.screens.SearchScreen
 import app.stash.ui.screens.SettingsScreen
 import kotlinx.coroutines.flow.Flow
@@ -155,16 +154,14 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 composable(Routes.ALBUM, listOf(navArgument("name") { defaultValue = "" }, navArgument("artist") { defaultValue = "" })) {
                     AlbumScreen(it.arguments!!.getString("name")!!, it.arguments!!.getString("artist")!!)
                 }
-                composable(Routes.ARTIST, listOf(navArgument("name") { defaultValue = "" })) {
-                    ArtistScreen(it.arguments!!.getString("name")!!)
-                }
+                composable(Routes.ARTIST, listOf(navArgument("name") { defaultValue = "" })) { ArtistPageScreen() }
                 composable(
                     Routes.REMOTE_ARTIST,
                     listOf(
                         navArgument("provider") {}, navArgument("id") {},
                         navArgument("name") { defaultValue = "" }, navArgument("art") { defaultValue = "" },
                     ),
-                ) { RemoteArtistScreen() }
+                ) { ArtistPageScreen() }
                 composable(Routes.LIKED) { LikedScreen() }
                 composable(Routes.DOWNLOADS) { DownloadsScreen() }
                 composable(Routes.SETTINGS) { SettingsScreen() }

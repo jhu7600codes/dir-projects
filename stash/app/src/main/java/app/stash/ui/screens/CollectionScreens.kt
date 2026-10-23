@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
@@ -25,10 +26,9 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Shuffle
@@ -75,12 +75,12 @@ import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
 import app.stash.ui.components.Artwork
-import app.stash.ui.components.originName
 import app.stash.ui.components.LocalExtraTrackActions
 import app.stash.ui.components.NewPlaylistDialog
 import app.stash.ui.components.SheetAction
 import app.stash.ui.components.TrackRow
 import app.stash.ui.components.formatDuration
+import app.stash.ui.components.originName
 
 data class MenuEntry(val label: String, val icon: ImageVector, val onClick: () -> Unit)
 
@@ -199,11 +199,14 @@ fun CollectionScreen(
                     }
                 }
                 if (missing.isNotEmpty()) item(key = "missing-note") {
-                    Text(
-                        "${missing.size} couldn't be found, they're greyed out below. Tap one to search for it.",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                    )
+                    Row(Modifier.padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "${missing.size} couldn't be found, they're greyed out below. Tap one to search for it.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = { actions.rescanMissing() }) { Text("Rescan") }
+                    }
                 }
                 items(rows, key = { r -> if (r is CollectionRow.Song) "s:${r.index}" else "u:${(r as CollectionRow.Missing).u.id}" }) { r ->
                     when (r) {
@@ -284,16 +287,6 @@ fun AlbumScreen(name: String, artist: String) {
         title = name, kind = "Album · $artist", tracks = tracks,
         artwork = tracks.firstNotNullOfOrNull { it.artworkUrl }, numbered = true,
         menu = listOf(MenuEntry("Go to artist", Icons.Rounded.Person) { nav.navigate(Routes.artist(artist)) }),
-    )
-}
-
-@Composable
-fun ArtistScreen(name: String) {
-    val dao = LocalActions.current.library.tracks
-    val tracks by remember(name) { dao.observeArtist(name) }.collectAsState(initial = emptyList())
-    CollectionScreen(
-        title = name, kind = "artist", tracks = tracks,
-        artwork = tracks.firstNotNullOfOrNull { it.artworkUrl }, artShape = CircleShape, artIcon = Icons.Rounded.Person,
     )
 }
 

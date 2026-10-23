@@ -43,6 +43,9 @@ interface MusicProvider {
     /** an artist's own tracks, for the artist page opened from search */
     suspend fun artistTracks(artistId: String, limit: Int = 50): List<Track> = emptyList()
 
+    /** everything for an artist page: picture, banner, bio, popular songs, similar artists */
+    suspend fun artistDetails(artistId: String): ArtistDetails? = null
+
     /** called right before playback. never cache the result for long, yt-dlp urls expire */
     suspend fun resolveStream(locator: Locator): StreamSource
 
@@ -62,6 +65,23 @@ data class RemoteArtist(
     val name: String,
     val avatarUrl: String?,
     val followers: Long?,
+)
+
+data class ArtistDetails(
+    val provider: String,
+    val id: String,
+    val name: String,
+    val avatarUrl: String?,
+    val bannerUrl: String?,
+    val bio: String?,
+    val followers: Long?,
+    /** e.g. "205M monthly audience", when the source says */
+    val listeners: String? = null,
+    val location: String? = null,
+    /** the artist's page on the source */
+    val link: String? = null,
+    val popular: List<Track> = emptyList(),
+    val similar: List<RemoteArtist> = emptyList(),
 )
 
 data class Locator(val provider: String, val sourceId: String, val streamHint: String?)

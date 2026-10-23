@@ -69,7 +69,9 @@ class Library @Inject constructor(
             if (u.likedAt > 0) tracks.importLike(saved.id, u.likedAt) else tracks.setLiked(saved.id, true)
         } else {
             // same slot the song had on spotify, so the order stays right
-            playlists.insertTrack(PlaylistTrack(u.playlistId, saved.id, u.position))
+            if (playlists.insertTrack(PlaylistTrack(u.playlistId, saved.id, u.position)) == -1L) {
+                playlists.insertTrack(PlaylistTrack(u.playlistId, saved.id, playlists.nextPosition(u.playlistId)))
+            }
             playlists.touch(u.playlistId)
         }
         playlists.deleteUnmatched(unmatchedId)

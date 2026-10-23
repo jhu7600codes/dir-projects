@@ -297,6 +297,7 @@ private fun ServiceCard(logo: Int, name: String, brand: Color, content: @Composa
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImportProgressScreen() {
+    val actions = LocalActions.current
     val vm: ImportViewModel = hiltViewModel()
     val nav = LocalNav.current
     val jobs by vm.jobs.collectAsState()
@@ -349,7 +350,10 @@ fun ImportProgressScreen() {
             if (missing.isNotEmpty()) {
                 item(key = "missing-header") {
                     Column(Modifier.padding(top = 14.dp, start = 4.dp)) {
-                        Text("Couldn't find (${missing.size})", style = MaterialTheme.typography.titleMedium)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Couldn't find (${missing.size})", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                            FilledTonalButton(onClick = { actions.rescanMissing() }) { Text("Rescan failed songs") }
+                        }
                         Text(
                             "Tap one to search for it yourself. It goes back to the same spot in the playlist.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

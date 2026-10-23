@@ -2,6 +2,7 @@ package app.stash.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -41,11 +43,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.stash.data.db.DownloadState
 import app.stash.data.db.Track
+import app.stash.providers.RemoteArtist
 import coil.compose.SubcomposeAsyncImage
 
 fun formatDuration(ms: Long): String {
@@ -260,3 +264,34 @@ fun originName(origin: String) = when (origin) {
     "soundcloud" -> "SoundCloud"
     else -> origin.replaceFirstChar { it.uppercase() }
 }
+
+fun compactCount(n: Long): String = when {
+    n >= 1_000_000_000 -> "%.1fB".format(n / 1e9)
+    n >= 1_000_000 -> "%.1fM".format(n / 1e6)
+    n >= 1_000 -> "%.0fK".format(n / 1e3)
+    else -> "$n"
+}.replace(".0", "")
+
+@Composable
+fun ArtistBubble(a: RemoteArtist, onClick: () -> Unit) {
+    Column(
+        Modifier.width(96.dp).clip(MaterialTheme.shapes.medium).clickable(onClick = onClick).padding(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box {
+            Artwork(a.avatarUrl, Modifier.size(80.dp), CircleShape, Icons.Rounded.Person)
+            if ((a.followers ?: Long.MAX_VALUE) < 20_000) Surface(
+                color = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.onTertiary,
+                shape = MaterialTheme.shapes.extraSmall, modifier = Modifier.align(Alignment.BottomCenter),
+            ) { Text("Underground", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 4.dp)) }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(a.name, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        Text(
+            listOfNotNull(a.followers?.let { "${compactCount(it)} fans" }, originName(a.provider)).joinToString(" · "),
+            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+

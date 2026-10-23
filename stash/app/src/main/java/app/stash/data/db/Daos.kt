@@ -192,11 +192,17 @@ interface PlaylistDao {
     @Query("SELECT t.* FROM tracks t JOIN playlist_tracks pt ON pt.trackId = t.id WHERE pt.playlistId = :id ORDER BY pt.position")
     suspend fun tracks(id: Long): List<Track>
 
-    @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM playlist_tracks WHERE playlistId = :id")
+    /** after the last song, counting not-found songs too so their spots stay free */
+    @Query(
+        """SELECT COALESCE(MAX(p), -1) + 1 FROM (
+             SELECT position AS p FROM playlist_tracks WHERE playlistId = :id
+             UNION ALL SELECT position AS p FROM unmatched WHERE playlistId = :id)"""
+    )
     suspend fun nextPosition(id: Long): Int
 
+    /** returns -1 when that spot was already taken */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertTrack(ref: PlaylistTrack)
+    suspend fun insertTrack(ref: PlaylistTrack): Long
 
     @Query("DELETE FROM playlist_tracks WHERE playlistId = :playlistId AND position = :position")
     suspend fun removeAt(playlistId: Long, position: Int)
@@ -209,6 +215,12 @@ interface PlaylistDao {
 
     @Query("SELECT * FROM unmatched WHERE playlistId = :id ORDER BY position")
     suspend fun unmatched(id: Long): List<UnmatchedTrack>
+
+    @Query("SELECT * FROM unmatched ORDER BY playlistId, position")
+    suspend fun allUnmatched(): List<UnmatchedTrack>
+
+    @Query("SELECT COUNT(*) FROM unmatched")
+    fun observeUnmatchedCount(): Flow<Int>
 
     @Query("SELECT * FROM playlists ORDER BY updatedAt DESC")
     suspend fun all(): List<Playlist>
@@ -322,4 +334,8 @@ interface ImportDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun cache(entry: MatchCache)
+
+    /** forget "not found" answers so a rescan really searches again */
+    @Query("DELETE FROM match_cache WHERE trackId IS NULL")
+    suspend fun forgetMisses()
 }

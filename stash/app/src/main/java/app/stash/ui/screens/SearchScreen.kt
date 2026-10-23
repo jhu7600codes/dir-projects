@@ -71,8 +71,10 @@ import app.stash.providers.SearchRanking
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
+import app.stash.ui.components.ArtistBubble
 import app.stash.ui.components.Artwork
 import app.stash.ui.components.TrackRow
+import app.stash.ui.components.compactCount
 import app.stash.ui.components.originName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -318,36 +320,6 @@ private fun hitNote(h: SearchHit, query: SearchQuery): String? {
     val plays = h.plays?.let { "${compactCount(it)} plays" }
     val tag = (h.tags.firstOrNull { it == query.tag } ?: h.tags.firstOrNull())?.let { "#${it.replace(' ', '-')}" }
     return listOfNotNull(plays, tag).joinToString(" · ").ifEmpty { null }
-}
-
-fun compactCount(n: Long): String = when {
-    n >= 1_000_000_000 -> "%.1fB".format(n / 1e9)
-    n >= 1_000_000 -> "%.1fM".format(n / 1e6)
-    n >= 1_000 -> "%.0fK".format(n / 1e3)
-    else -> "$n"
-}.replace(".0", "")
-
-@Composable
-private fun ArtistBubble(a: RemoteArtist, onClick: () -> Unit) {
-    Column(
-        Modifier.width(96.dp).clip(MaterialTheme.shapes.medium).clickable(onClick = onClick).padding(6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box {
-            Artwork(a.avatarUrl, Modifier.size(80.dp), CircleShape, Icons.Rounded.Person)
-            if ((a.followers ?: Long.MAX_VALUE) < 20_000) Surface(
-                color = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.onTertiary,
-                shape = MaterialTheme.shapes.extraSmall, modifier = Modifier.align(Alignment.BottomCenter),
-            ) { Text("Underground", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 4.dp)) }
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(a.name, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
-        Text(
-            listOfNotNull(a.followers?.let { "${compactCount(it)} fans" }, originName(a.provider)).joinToString(" · "),
-            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1, overflow = TextOverflow.Ellipsis,
-        )
-    }
 }
 
 /** recent searches, then spotify's "browse all" with tonal tiles, then an underground section */

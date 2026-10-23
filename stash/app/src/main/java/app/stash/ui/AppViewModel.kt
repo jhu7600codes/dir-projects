@@ -9,6 +9,7 @@ import app.stash.data.db.Track
 import app.stash.data.prefs.AppSettings
 import app.stash.data.prefs.Settings
 import app.stash.download.Downloads
+import app.stash.importer.ImportQueue
 import app.stash.player.PlayerConnection
 import app.stash.recs.Recommender
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,6 +31,7 @@ class AppViewModel @Inject constructor(
     val downloads: Downloads,
     val library: Library,
     private val recommender: Recommender,
+    private val imports: ImportQueue,
     val prefs: Settings,
 ) : ViewModel() {
 
@@ -61,6 +63,15 @@ class AppViewModel @Inject constructor(
             started?.join() // the song itself has to be queued before the radio goes after it
             if (similar.isEmpty()) toast("Couldn't find similar songs") else player.addToQueue(similar)
         }
+    }
+
+    /** every song that couldn't be found anywhere, across all playlists and liked songs */
+    val missingCount: StateFlow<Int> =
+        library.playlists.observeUnmatchedCount().stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    fun rescanMissing() {
+        imports.rescanMissing()
+        toast("Searching for missing songs again in the background")
     }
 
     fun playNext(track: Track) {

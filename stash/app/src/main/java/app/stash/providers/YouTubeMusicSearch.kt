@@ -32,14 +32,16 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         return songs.ifEmpty { request(query, VIDEOS).mapNotNull(::toHit) }.take(limit)
     }
 
-    /** artist results; the "id" is the artist's name, which the artist page searches by */
+    /** artist results; the id is the artist's youtube music browse id (UC…) */
     suspend fun searchArtists(query: String, limit: Int): List<RemoteArtist> =
         request(query, ARTISTS).mapNotNull { item ->
             val name = columnText(item, 0).joinToString("").ifBlank { return@mapNotNull null }
             val sub = columnText(item, 1).joinToString("")
+            val browseId = item.obj("navigationEndpoint")?.obj("browseEndpoint")?.str("browseId")
+                ?: return@mapNotNull null
             RemoteArtist(
                 provider = "youtube",
-                id = name,
+                id = browseId,
                 name = name,
                 avatarUrl = item.obj("thumbnail")?.obj("musicThumbnailRenderer")?.obj("thumbnail")?.get("thumbnails")
                     .asObjectList().lastOrNull()?.str("url")?.replace(Regex("=w\\d+-h\\d+.*$"), "=w400-h400-l90-rj"),
@@ -112,6 +114,78 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         val items = mutableListOf<JsonObject>()
         collectKey(lenientJson.parseToJsonElement(text), "playlistPanelVideoRenderer", items)
         items.mapNotNull(::radioTrack).filter { it.sourceId != watchUrl(videoId) }.distinctBy { it.id }
+    }
+
+    /** an artist's youtube music page: banner, bio, audience, top songs/videos, "fans also like" */
+    suspend fun artist(browseId: String): ArtistDetails? = httpIo {
+        val body = buildJsonObject {
+            putJsonObject("context") {
+                putJsonObject("client") {
+                    put("clientName", "WEB_REMIX")
+                    put("clientVersion", CLIENT_VERSION)
+                    put("hl", "en")
+                }
+            }
+            put("browseId", browseId)
+        }.toString()
+        val req = Request.Builder()
+            .url("https://music.youtube.com/youtubei/v1/browse?prettyPrint=false")
+            .header("User-Agent", BROWSER_UA)
+            .header("Origin", "https://music.youtube.com")
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        val text = http.newCall(req).execute().use { r ->
+            if (!r.isSuccessful) throw ProviderException("YouTube Music artist page failed (${r.code})")
+            r.body!!.string()
+        }
+        val root = lenientJson.parseToJsonElement(text).jsonObject
+        val header = root.obj("header")?.let { h -> (h.values.firstOrNull() as? JsonObject) } ?: return@httpIo null
+        val name = runsText(header.obj("title")).ifBlank { return@httpIo null }
+        val pictures = header.obj("thumbnail")?.obj("musicThumbnailRenderer")?.obj("thumbnail")?.get("thumbnails").asObjectList()
+        val banner = pictures.lastOrNull()?.str("url")
+
+        // top songs come as list rows, videos / singles as cards; both are songs to us
+        val rows = mutableListOf<JsonObject>()
+        collectKey(root.obj("contents") ?: root, "musicResponsiveListItemRenderer", rows)
+        val cards = mutableListOf<JsonObject>()
+        collectKey(root.obj("contents") ?: root, "musicTwoRowItemRenderer", cards)
+        val songs = rows.mapNotNull(::toTrack) + cards.mapNotNull { c -> cardTrack(c, name) }
+        val similar = cards.mapNotNull { c ->
+            val id = c.obj("navigationEndpoint")?.obj("browseEndpoint")?.str("browseId")?.takeIf { it.startsWith("UC") && it != browseId }
+                ?: return@mapNotNull null
+            RemoteArtist(
+                provider = "youtube", id = id, name = runsText(c.obj("title")).ifBlank { return@mapNotNull null },
+                avatarUrl = c.obj("thumbnailRenderer")?.obj("musicThumbnailRenderer")?.obj("thumbnail")?.get("thumbnails")
+                    .asObjectList().lastOrNull()?.str("url"),
+                followers = runsText(c.obj("subtitle")).substringBefore(" ").let(::parseCount),
+            )
+        }.distinctBy { it.id }
+        ArtistDetails(
+            provider = "youtube",
+            id = browseId,
+            name = name,
+            avatarUrl = banner?.replace(Regex("=w\\d+-h\\d+.*$"), "=w600-h600-p-l90-rj"),
+            bannerUrl = banner,
+            bio = runsText(header.obj("description")).ifBlank { null },
+            followers = header.obj("subscriptionButton")?.obj("subscribeButtonRenderer")?.obj("subscriberCountText")
+                ?.let(::runsText)?.let(::parseCount),
+            listeners = runsText(header.obj("monthlyListenerCount")).ifBlank { null },
+            link = "https://music.youtube.com/channel/$browseId",
+            popular = songs.distinctBy { it.id },
+            similar = similar,
+        )
+    }
+
+    /** a video/single card on an artist page ("Creep" · "Radiohead • 1.5B views") */
+    private fun cardTrack(c: JsonObject, artist: String): Track? {
+        val videoId = c.obj("navigationEndpoint")?.obj("watchEndpoint")?.str("videoId") ?: return null
+        val title = runsText(c.obj("title")).ifBlank { return null }
+        val url = watchUrl(videoId)
+        val (a, t) = YtDlpProvider.splitArtistTitle(title, artist, hasTrackField = false)
+        return Track(
+            id = Track.makeId("youtube", url), title = t, artist = a, provider = "youtube", sourceId = url,
+            artworkUrl = "https://i.ytimg.com/vi/$videoId/hqdefault.jpg",
+        )
     }
 
     private fun runsText(o: JsonObject?): String =
