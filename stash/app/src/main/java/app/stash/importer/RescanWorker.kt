@@ -10,6 +10,7 @@ import androidx.room.withTransaction
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import app.stash.R
 import app.stash.StashApp
 import app.stash.data.db.ImportDao
@@ -48,7 +49,7 @@ class RescanWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         imports.forgetMisses()
         val missing = playlists.allUnmatched()
-        if (missing.isEmpty()) return Result.success()
+        if (missing.isEmpty()) return Result.success(workDataOf(KEY_TOTAL to 0, KEY_FOUND to 0))
         val done = AtomicInteger()
         val found = AtomicInteger()
         val gate = Semaphore(4)
@@ -63,7 +64,10 @@ class RescanWorker @AssistedInject constructor(
                             place(u, hit)
                             found.incrementAndGet()
                         }
-                        runCatching { setForeground(info(done.incrementAndGet(), missing.size, found.get())) }
+                        val n = done.incrementAndGet()
+                        runCatching { setForeground(info(n, missing.size, found.get())) }
+                        // the app shows this live (library row, import screen, playlists)
+                        setProgress(workDataOf(KEY_DONE to n, KEY_TOTAL to missing.size, KEY_FOUND to found.get()))
                     }
                 }
             }.awaitAll()
@@ -79,7 +83,7 @@ class RescanWorker @AssistedInject constructor(
                     .build(),
             )
         }
-        return Result.success()
+        return Result.success(workDataOf(KEY_DONE to missing.size, KEY_TOTAL to missing.size, KEY_FOUND to found.get()))
     }
 
     private suspend fun place(u: UnmatchedTrack, hit: Track) = db.withTransaction {
@@ -114,6 +118,9 @@ class RescanWorker @AssistedInject constructor(
     }
 
     companion object {
+        const val KEY_DONE = "done"
+        const val KEY_TOTAL = "total"
+        const val KEY_FOUND = "found"
         private const val PROGRESS_ID = 0x4200
         private const val DONE_ID = 0x4201
     }

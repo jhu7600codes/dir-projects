@@ -72,18 +72,27 @@ object SearchRanking {
         return (local.map { SearchHit(it) } + sorted.map { it.hit }).distinctBy { Recommender.key(it.track) }
     }
 
-    /** artists: closest name first; underground mode prefers the smaller ones */
+    /**
+     * artists: closest name first (the one you typed always shows, however big), then the
+     * rest; underground mode drops big ones that don't match the name and prefers small ones
+     */
     fun mergeArtists(query: String, artists: List<RemoteArtist>, underground: Boolean): List<RemoteArtist> {
-        val q = Matcher.normalize(query)
+        val q = Matcher.normalize(query).replace(" ", "")
+        fun name(a: RemoteArtist) = Matcher.normalize(a.name).replace(" ", "")
+        fun closeness(a: RemoteArtist) = when {
+            name(a) == q -> 3
+            name(a).startsWith(q) || q.startsWith(name(a)) && name(a).length >= 3 -> 2
+            name(a).contains(q) -> 1
+            else -> 0
+        }
         return artists
-            .filter { !underground || (it.followers ?: 0) < 50_000 }
+            .filter { !underground || closeness(it) >= 2 || (it.followers ?: 0) < 50_000 }
             .sortedWith(
-                compareByDescending<RemoteArtist> { Matcher.normalize(it.name) == q }
-                    .thenByDescending { Matcher.normalize(it.name).contains(q) }
+                compareByDescending<RemoteArtist> { closeness(it) }
                     .thenBy { if (underground) it.followers ?: 0 else -(it.followers ?: 0) }
             )
-            .distinctBy { Matcher.normalize(it.name) + it.provider }
-            .take(12)
+            .distinctBy { it.provider + ":" + it.id }
+            .take(24)
     }
 
     private data class Ranked(val hit: SearchHit, val relevance: Double, val index: Int, val providerRank: Int)

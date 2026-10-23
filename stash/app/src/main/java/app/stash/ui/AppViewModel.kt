@@ -10,6 +10,7 @@ import app.stash.data.prefs.AppSettings
 import app.stash.data.prefs.Settings
 import app.stash.download.Downloads
 import app.stash.importer.ImportQueue
+import app.stash.importer.RescanProgress
 import app.stash.player.PlayerConnection
 import app.stash.recs.Recommender
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -68,6 +69,8 @@ class AppViewModel @Inject constructor(
     /** every song that couldn't be found anywhere, across all playlists and liked songs */
     val missingCount: StateFlow<Int> =
         library.playlists.observeUnmatchedCount().stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    val rescan: StateFlow<RescanProgress?> = imports.rescan.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun rescanMissing() {
         imports.rescanMissing()

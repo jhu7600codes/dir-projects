@@ -74,6 +74,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val autoplay = booleanPreferencesKey("autoplay")
         val quality = stringPreferencesKey("download_quality")
         val recent = stringPreferencesKey("recent_searches")
+        val scClient = stringPreferencesKey("soundcloud_client_id")
     }
 
     private val store get() = context.dataStore
@@ -114,6 +115,9 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         it[Keys.ytUpdated] = System.currentTimeMillis()
         it[Keys.ytVersion] = version
     }
+    suspend fun soundCloudClientId(): String? = store.data.first()[Keys.scClient]
+    suspend fun setSoundCloudClientId(id: String) = store.edit { it[Keys.scClient] = id }
+
     suspend fun addRecentSearch(q: String) = store.edit {
         val list = listOf(q.trim()) + (it[Keys.recent]?.split('\n').orEmpty().filter { old -> !old.equals(q.trim(), true) })
         it[Keys.recent] = list.filter { s -> s.isNotBlank() }.take(12).joinToString("\n")

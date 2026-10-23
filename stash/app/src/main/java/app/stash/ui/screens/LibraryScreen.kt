@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -58,6 +59,7 @@ import app.stash.ui.Routes
 import app.stash.ui.components.Artwork
 import app.stash.ui.components.EmptyState
 import app.stash.ui.components.NewPlaylistDialog
+import app.stash.ui.components.RescanStatus
 import app.stash.ui.components.TrackRow
 import app.stash.ui.components.originName
 import kotlinx.coroutines.launch
@@ -79,7 +81,7 @@ fun LibraryScreen() {
     val albums by remember { dao.observeAlbums() }.collectAsState(initial = emptyList())
     val artists by remember { dao.observeArtists() }.collectAsState(initial = emptyList())
     val downloaded by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
-    val current by actions.player.state.collectAsState()
+    val currentId by actions.player.currentId.collectAsState()
     val missingCount by actions.missingCount.collectAsState()
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -118,9 +120,8 @@ fun LibraryScreen() {
                     if (missingCount > 0) item {
                         ListItem(
                             headlineContent = { Text("$missingCount songs couldn't be found") },
-                            supportingContent = { Text("Search for them again, new sources included") },
+                            supportingContent = { RescanStatus(Modifier.fillMaxWidth().padding(top = 4.dp)) },
                             leadingContent = { PinnedIcon(Icons.Rounded.Refresh) },
-                            trailingContent = { FilledTonalButton(onClick = { actions.rescanMissing() }) { Text("Rescan") } },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             modifier = Modifier.clickable { nav.navigate(Routes.IMPORT_PROGRESS) }.padding(horizontal = 4.dp),
                         )
@@ -152,7 +153,7 @@ fun LibraryScreen() {
                         }
                     }
                     itemsIndexed(songs, key = { _, t -> t.id }) { i, t ->
-                        TrackRow(t, onClick = { actions.play(songs, i) }, isCurrent = current.currentId == t.id)
+                        TrackRow(t, onClick = { actions.play(songs, i) }, isCurrent = currentId == t.id)
                     }
                 }
 
@@ -182,7 +183,7 @@ fun LibraryScreen() {
                         }
                     }
                     itemsIndexed(downloaded, key = { _, t -> t.id }) { i, t ->
-                        TrackRow(t, onClick = { actions.play(downloaded, i) }, isCurrent = current.currentId == t.id)
+                        TrackRow(t, onClick = { actions.play(downloaded, i) }, isCurrent = currentId == t.id)
                     }
                 }
             }

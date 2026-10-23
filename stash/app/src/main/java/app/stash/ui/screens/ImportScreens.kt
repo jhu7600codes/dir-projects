@@ -69,24 +69,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stash.R
+import app.stash.data.db.LIKED_PLAYLIST_ID
 import app.stash.importer.AppleMusic
 import app.stash.importer.ExportifyCsv
-import app.stash.importer.SpotifyLink
-import dagger.hilt.android.qualifiers.ApplicationContext
-import app.stash.data.db.LIKED_PLAYLIST_ID
 import app.stash.importer.ImportQueue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
+import app.stash.importer.SpotifyLink
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
 import app.stash.ui.components.Artwork
+import app.stash.ui.components.RescanStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class ImportViewModel @Inject constructor(
@@ -350,10 +351,8 @@ fun ImportProgressScreen() {
             if (missing.isNotEmpty()) {
                 item(key = "missing-header") {
                     Column(Modifier.padding(top = 14.dp, start = 4.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Couldn't find (${missing.size})", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                            FilledTonalButton(onClick = { actions.rescanMissing() }) { Text("Rescan failed songs") }
-                        }
+                        Text("Couldn't find (${missing.size})", style = MaterialTheme.typography.titleMedium)
+                        RescanStatus(Modifier.fillMaxWidth().padding(vertical = 6.dp))
                         Text(
                             "Tap one to search for it yourself. It goes back to the same spot in the playlist.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

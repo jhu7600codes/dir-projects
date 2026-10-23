@@ -44,7 +44,15 @@ class AudiusProvider @Inject constructor(private val http: OkHttpClient) : Music
         )
         val tags = o.str("tags").orEmpty().split(',').map { it.trim().lowercase() }.filter { it.isNotEmpty() } +
             listOfNotNull(o.str("genre")?.lowercase(), o.str("mood")?.lowercase())
-        return SearchHit(track, o.num("play_count")?.toLong(), tags.distinct())
+        val uploader = user?.let { u ->
+            val uid = u.str("id") ?: return@let null
+            RemoteArtist(
+                provider = id, id = uid, name = u.str("name") ?: return@let null,
+                avatarUrl = u.obj("profile_picture")?.let { it.str("480x480") ?: it.str("150x150") },
+                followers = u.num("follower_count")?.toLong(),
+            )
+        }
+        return SearchHit(track, o.num("play_count")?.toLong(), tags.distinct(), uploader)
     }
 
     override suspend fun search(query: String, limit: Int) = searchHits(query, limit).map { it.track }

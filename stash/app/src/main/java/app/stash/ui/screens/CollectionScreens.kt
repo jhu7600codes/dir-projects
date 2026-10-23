@@ -77,6 +77,7 @@ import app.stash.ui.Routes
 import app.stash.ui.components.Artwork
 import app.stash.ui.components.LocalExtraTrackActions
 import app.stash.ui.components.NewPlaylistDialog
+import app.stash.ui.components.RescanStatus
 import app.stash.ui.components.SheetAction
 import app.stash.ui.components.TrackRow
 import app.stash.ui.components.formatDuration
@@ -106,13 +107,14 @@ fun CollectionScreen(
 ) {
     val actions = LocalActions.current
     val nav = LocalNav.current
-    val current by actions.player.state.collectAsState()
+    val currentId by actions.player.currentId.collectAsState()
+    val isPlaying by actions.player.isPlaying.collectAsState()
     val list = rememberLazyListState()
     val scrolled by remember { derivedStateOf { list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 600 } }
     val titleAlpha by animateFloatAsState(if (scrolled) 1f else 0f, label = "title")
     var showMenu by remember { mutableStateOf(false) }
 
-    val playingHere = tracks.any { it.id == current.currentId }
+    val playingHere = tracks.any { it.id == currentId }
     val downloaded = tracks.count { it.downloadState == DownloadState.DONE }
     val downloading = tracks.any { it.downloadState == DownloadState.QUEUED || it.downloadState == DownloadState.DOWNLOADING }
     val totalMs = tracks.sumOf { it.durationMs }
@@ -186,7 +188,7 @@ fun CollectionScreen(
                                 enabled = tracks.isNotEmpty(),
                             ) {
                                 Icon(
-                                    if (playingHere && current.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                    if (playingHere && isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                     "Play", Modifier.size(34.dp),
                                 )
                             }
@@ -199,13 +201,12 @@ fun CollectionScreen(
                     }
                 }
                 if (missing.isNotEmpty()) item(key = "missing-note") {
-                    Row(Modifier.padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) {
                         Text(
                             "${missing.size} couldn't be found, they're greyed out below. Tap one to search for it.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f),
                         )
-                        TextButton(onClick = { actions.rescanMissing() }) { Text("Rescan") }
+                        RescanStatus(Modifier.fillMaxWidth().padding(top = 6.dp))
                     }
                 }
                 items(rows, key = { r -> if (r is CollectionRow.Song) "s:${r.index}" else "u:${(r as CollectionRow.Missing).u.id}" }) { r ->
@@ -214,7 +215,7 @@ fun CollectionScreen(
                             val t = tracks[r.index]
                             CompositionLocalProvider(LocalExtraTrackActions provides { extraTrackActions(r.index, it) }) {
                                 TrackRow(
-                                    t, onClick = { actions.play(tracks, r.index) }, isCurrent = current.currentId == t.id,
+                                    t, onClick = { actions.play(tracks, r.index) }, isCurrent = currentId == t.id,
                                     index = r.index, showArt = !numbered,
                                 )
                             }

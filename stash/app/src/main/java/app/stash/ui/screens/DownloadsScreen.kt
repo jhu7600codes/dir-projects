@@ -72,7 +72,7 @@ fun DownloadsScreen() {
     val queue by remember { dao.observeDownloadQueue() }.collectAsState(initial = emptyList())
     val done by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
     val settings by actions.settings.collectAsState()
-    val current by actions.player.state.collectAsState()
+    val currentId by actions.player.currentId.collectAsState()
     val used by produceState(0L, done.size) { value = withContext(Dispatchers.IO) { actions.downloads.usedBytes() } }
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val scope = rememberCoroutineScope()
@@ -198,7 +198,7 @@ fun DownloadsScreen() {
                 EmptyState(Icons.Rounded.DownloadForOffline, "Nothing here yet", "Downloaded songs play without internet and never buffer.")
             }
             itemsIndexed(done, key = { _, t -> "d:${t.id}" }) { i, t ->
-                TrackRow(t, onClick = { actions.play(done, i) }, isCurrent = current.currentId == t.id)
+                TrackRow(t, onClick = { actions.play(done, i) }, isCurrent = currentId == t.id)
             }
         }
     }
