@@ -4,6 +4,11 @@ import android.util.Log
 import app.stash.data.db.Track
 import app.stash.data.db.TrackDao
 import app.stash.data.prefs.Settings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import java.io.File
 import java.text.Normalizer
 import java.util.concurrent.ConcurrentHashMap
@@ -104,6 +109,8 @@ class Resolver @Inject constructor(
      * every time. They're never written anywhere, they expire within hours.
      */
     private val shortCache = ConcurrentHashMap<String, Cached>()
+    private val inFlight = ConcurrentHashMap<String, Deferred<StreamSource>>()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun invalidate(trackId: String) {
         shortCache.remove(trackId)
@@ -117,7 +124,15 @@ class Resolver @Inject constructor(
         }
         shortCache[trackId]?.let { if (System.currentTimeMillis() - it.at < CACHE_MS) return it.source }
 
-        val source = resolveWithFallback(track) { provider, loc -> provider.resolveStream(loc) }
+        // the prefetch and exoplayer can ask for the same song at once; share one lookup
+        val job = inFlight.computeIfAbsent(trackId) {
+            scope.async { resolveWithFallback(track) { provider, loc -> provider.resolveStream(loc) } }
+        }
+        val source = try {
+            job.await()
+        } finally {
+            inFlight.remove(trackId, job)
+        }
         shortCache[trackId] = Cached(source, System.currentTimeMillis())
         return source
     }

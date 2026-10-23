@@ -27,6 +27,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // stash's supabase project (accounts + playlist backup). the publishable key is meant to
+        // ship in apps; row level security keeps every account to its own rows.
+        buildConfigField("String", "SUPABASE_URL", "\"https://mcmnovtqupckpylrnobp.supabase.co\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"sb_publishable_uexeqwWBLSc9xTTCDrOUog_TcUe2Or7\"")
     }
 
     buildTypes {

@@ -36,7 +36,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -63,7 +66,7 @@ fun DownloadsScreen() {
     val done by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
     val settings by actions.settings.collectAsState()
     val current by actions.player.state.collectAsState()
-    val used = remember(done.size) { actions.downloads.usedBytes() }
+    val used by produceState(0L, done.size) { value = withContext(Dispatchers.IO) { actions.downloads.usedBytes() } }
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(

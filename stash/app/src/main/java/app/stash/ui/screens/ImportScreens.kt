@@ -24,7 +24,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.AlertDialog
@@ -71,7 +73,12 @@ import app.stash.importer.AppleMusic
 import app.stash.importer.ExportifyCsv
 import app.stash.importer.SpotifyLink
 import dagger.hilt.android.qualifiers.ApplicationContext
-import app.stash.importer.ImportManager
+import app.stash.data.db.LIKED_PLAYLIST_ID
+import app.stash.importer.ImportQueue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
@@ -83,12 +90,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ImportViewModel @Inject constructor(
-    val manager: ImportManager,
+    val queue: ImportQueue,
     private val spotify: SpotifyLink,
     private val apple: AppleMusic,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     val error = MutableStateFlow<String?>(null)
+    val jobs = queue.jobs.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val missing = queue.missing.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** a spotify or apple music link (or any shared text containing one) */
     fun cleanLink(text: String) = spotify.findLink(text) ?: apple.findLink(text) ?: text.trim()
@@ -100,42 +109,51 @@ class ImportViewModel @Inject constructor(
     fun importLink(link: String, force: Boolean = false, onStarted: () -> Unit) {
         error.value = null
         cutWarning.value = null
-        when {
-            "spotify" in link -> viewModelScope.launch {
-                if (!force) {
-                    checking.value = true
+        if ("spotify" !in link && "music.apple.com" !in link) {
+            error.value = "paste a spotify or apple music playlist link"
+            return
+        }
+        viewModelScope.launch {
+            checking.value = true
+            try {
+                if ("spotify" in link && !force) {
                     val count = spotify.songCount(link)
-                    checking.value = false
                     if (count != null && count > 100) {
                         cutWarning.value = link
                         return@launch
                     }
                 }
-                manager.start(listOf { spotify.playlist(link) }, "spotify")
+                val playlist = if ("spotify" in link) spotify.playlist(link) else apple.playlist(link)
+                queue.enqueue(listOf(playlist))
                 onStarted()
+            } catch (e: Exception) {
+                error.value = e.message ?: "couldn't read that playlist"
+            } finally {
+                checking.value = false
             }
-            "music.apple.com" in link -> {
-                manager.start(listOf { apple.playlist(link) }, "apple music")
-                onStarted()
-            }
-            else -> error.value = "paste a spotify or apple music playlist link"
         }
     }
 
-    /** reads the picked exportify csv / zip files up front, then imports each playlist in turn */
-    fun importFiles(uris: List<Uri>): Boolean {
+    /** reads the picked exportify csv / zip files, then queues every playlist in them */
+    fun importFiles(uris: List<Uri>, onStarted: () -> Unit) {
         error.value = null
-        val playlists = uris.flatMap { uri ->
-            runCatching {
-                context.contentResolver.openInputStream(uri)!!.use { ExportifyCsv.read(displayName(uri), it) }
-            }.onFailure { error.value = "couldn't read ${displayName(uri)}: ${it.message}" }.getOrDefault(emptyList())
+        viewModelScope.launch {
+            checking.value = true
+            val playlists = withContext(Dispatchers.IO) {
+                uris.flatMap { uri ->
+                    runCatching {
+                        context.contentResolver.openInputStream(uri)!!.use { ExportifyCsv.read(displayName(uri), it) }
+                    }.onFailure { error.value = "couldn't read ${displayName(uri)}: ${it.message}" }.getOrDefault(emptyList())
+                }
+            }
+            checking.value = false
+            if (playlists.isEmpty()) {
+                if (error.value == null) error.value = "no songs found, is that an exportify csv?"
+                return@launch
+            }
+            queue.enqueue(playlists)
+            onStarted()
         }
-        if (playlists.isEmpty()) {
-            if (error.value == null) error.value = "no songs found, is that an exportify csv?"
-            return false
-        }
-        manager.start(playlists.map { p -> suspend { p } }, "spotify")
-        return true
     }
 
     private fun displayName(uri: Uri): String =
@@ -153,9 +171,10 @@ fun ImportScreen(sharedLink: String?) {
     val error by vm.error.collectAsState()
     var link by remember { mutableStateOf(sharedLink?.let(vm::cleanLink) ?: "") }
     val pickFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        if (uris.isNotEmpty() && vm.importFiles(uris)) nav.navigate(Routes.IMPORT_PROGRESS)
+        if (uris.isNotEmpty()) vm.importFiles(uris) { nav.navigate(Routes.IMPORT_PROGRESS) }
     }
-    val busy by vm.manager.progress.collectAsState()
+    val jobs by vm.jobs.collectAsState()
+    val running = jobs.any { it.state == "queued" || it.state == "running" }
     val checking by vm.checking.collectAsState()
     val cutWarning by vm.cutWarning.collectAsState()
 
@@ -197,9 +216,9 @@ fun ImportScreen(sharedLink: String?) {
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (busy.running) item {
+            if (running) item {
                 FilledTonalButton(onClick = { nav.navigate(Routes.IMPORT_PROGRESS) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("an import is running, see progress")
+                    Text("moving playlists in the background, see progress")
                 }
             }
             item {
@@ -218,7 +237,7 @@ fun ImportScreen(sharedLink: String?) {
                     )
                     Spacer(Modifier.height(8.dp))
                     FilledTonalButton(
-                        enabled = link.isNotBlank() && !busy.running && !checking,
+                        enabled = link.isNotBlank() && !checking,
                         onClick = { vm.importLink(vm.cleanLink(link)) { nav.navigate(Routes.IMPORT_PROGRESS) } },
                     ) {
                         if (checking) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("import")
@@ -243,7 +262,7 @@ fun ImportScreen(sharedLink: String?) {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://exportify.net")))
                         }) { Text("open exportify") }
                         FilledTonalButton(
-                            enabled = !busy.running,
+                            enabled = !checking,
                             onClick = { pickFiles.launch(arrayOf("text/*", "application/zip", "application/octet-stream")) },
                         ) { Text("pick csv / zip") }
                     }
@@ -280,17 +299,30 @@ private fun ServiceCard(logo: Int, name: String, brand: Color, content: @Composa
 fun ImportProgressScreen() {
     val vm: ImportViewModel = hiltViewModel()
     val nav = LocalNav.current
-    val p by vm.manager.progress.collectAsState()
+    val jobs by vm.jobs.collectAsState()
+    val missing by vm.missing.collectAsState()
+    var showAllMissing by remember { mutableStateOf(false) }
+    val active = jobs.filter { it.state == "queued" || it.state == "running" }
+    val done = jobs.count { it.state == "done" }
+    val songsDone = jobs.sumOf { it.done }
+    val songsTotal = jobs.filter { it.state != "cancelled" }.sumOf { it.total }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (p.finished) "import done" else "importing") },
+                title = { Text(if (active.isEmpty()) "all moved" else "moving playlists") },
                 navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "back") } },
+                actions = {
+                    if (active.isNotEmpty()) TextButton(onClick = { vm.queue.cancelAll() }) { Text("stop all") }
+                    else if (jobs.isNotEmpty()) TextButton(onClick = { vm.queue.clearFinished() }) { Text("clear") }
+                },
             )
         },
     ) { padding ->
-        LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = padding.calculateTopPadding(), bottom = 24.dp)) {
+        LazyColumn(
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding(), bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             item {
                 Card(
                     shape = MaterialTheme.shapes.extraLarge,
@@ -298,62 +330,105 @@ fun ImportProgressScreen() {
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(Modifier.padding(24.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painterResource(if (p.origin == "spotify") R.drawable.ic_spotify else R.drawable.ic_apple_music),
-                                null, Modifier.size(28.dp),
+                        Text("$done of ${jobs.count { it.state != "cancelled" }} playlists", style = MaterialTheme.typography.headlineSmall)
+                        Spacer(Modifier.height(12.dp))
+                        LinearProgressIndicator(
+                            progress = { if (songsTotal > 0) songsDone.toFloat() / songsTotal else 0f },
+                            modifier = Modifier.fillMaxWidth().height(8.dp),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text("$songsDone of $songsTotal songs checked", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "this keeps going in the background, even if you close stash. the notification shows where it's at.",
+                            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
+                }
+            }
+            // shows up by itself as soon as the first song isn't found
+            if (missing.isNotEmpty()) {
+                item(key = "missing-header") {
+                    Column(Modifier.padding(top = 14.dp, start = 4.dp)) {
+                        Text("couldn't find (${missing.size})", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "tap one to search for it yourself. it goes back to the same spot in the playlist.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                items(if (showAllMissing) missing else missing.take(5), key = { "m:${it.id}" }) { u ->
+                    val where = if (u.playlistId == LIKED_PLAYLIST_ID) "liked songs"
+                    else jobs.firstOrNull { it.playlistId == u.playlistId }?.name ?: ""
+                    ListItem(
+                        headlineContent = { Text(u.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        supportingContent = {
+                            Text(listOf(u.artist, where).filter { it.isNotBlank() }.joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        },
+                        leadingContent = { Icon(Icons.AutoMirrored.Rounded.HelpOutline, null, tint = MaterialTheme.colorScheme.outline) },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        modifier = Modifier.clickable { nav.navigate(Routes.fix(u.id, "${u.artist} ${u.title}")) },
+                    )
+                }
+                if (missing.size > 5) item(key = "missing-more") {
+                    TextButton(onClick = { showAllMissing = !showAllMissing }) {
+                        Text(if (showAllMissing) "show less" else "show all ${missing.size}")
+                    }
+                }
+            }
+            item(key = "jobs-header") {
+                Text("playlists", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 14.dp, start = 4.dp))
+            }
+            items(jobs.asReversed(), key = { it.id }) { job ->
+                val missing = job.done - job.matched
+                Card(
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    modifier = Modifier.fillMaxWidth().clickable(enabled = job.state != "cancelled") {
+                        when {
+                            job.intoLiked -> nav.navigate(Routes.LIKED)
+                            job.playlistId != null -> nav.navigate(Routes.playlist(job.playlistId))
+                        }
+                    },
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (job.intoLiked) {
+                            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.small, modifier = Modifier.size(48.dp)) {
+                                Icon(Icons.Rounded.Favorite, null, Modifier.padding(12.dp))
+                            }
+                        } else Artwork(job.coverUrl, Modifier.size(48.dp))
+                        Spacer(Modifier.width(14.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                if (job.intoLiked) "${job.name} → liked songs" else job.name,
+                                style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                             )
-                            Spacer(Modifier.width(10.dp))
-                            Text(p.playlistName.ifBlank { "…" }, style = MaterialTheme.typography.titleLarge,
-                                maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        if (p.total > 0) {
-                            LinearProgressIndicator(progress = { p.done.toFloat() / p.total }, modifier = Modifier.fillMaxWidth().height(8.dp))
-                        } else if (p.running) {
-                            LinearProgressIndicator(Modifier.fillMaxWidth().height(8.dp))
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        Text("${p.done} of ${p.total} checked · ${p.matched} found · ${p.unmatched.size} missing",
-                            style = MaterialTheme.typography.bodyMedium)
-                        if (p.current.isNotBlank()) Text(p.current, style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                        p.error?.let {
-                            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Rounded.ErrorOutline, null, tint = MaterialTheme.colorScheme.error)
-                                Spacer(Modifier.width(8.dp))
-                                Text(it, color = MaterialTheme.colorScheme.error)
+                            Text(
+                                when (job.state) {
+                                    "queued" -> "waiting · ${job.total} songs"
+                                    "running" -> "${job.done} of ${job.total} · ${job.matched} found"
+                                    "cancelled" -> "stopped"
+                                    else -> if (missing > 0) "${job.matched} found · $missing couldn't match" else "all ${job.matched} found"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (job.state == "done" && missing > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            if (job.state == "running") {
+                                Spacer(Modifier.height(6.dp))
+                                LinearProgressIndicator(
+                                    progress = { if (job.total > 0) job.done.toFloat() / job.total else 0f },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
                             }
                         }
-                        Spacer(Modifier.height(12.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (p.running) TextButton(onClick = { vm.manager.cancel() }) { Text("stop") }
-                            p.playlistId?.let { id ->
-                                FilledTonalButton(onClick = { nav.navigate(Routes.playlist(id)) }) {
-                                    if (p.finished) Icon(Icons.Rounded.CheckCircle, null, Modifier.size(18.dp))
-                                    if (p.finished) Spacer(Modifier.width(6.dp))
-                                    Text("open playlist")
-                                }
-                            }
+                        when (job.state) {
+                            "queued", "running" -> IconButton(onClick = { vm.queue.cancel(job.id) }) { Icon(Icons.Rounded.Close, "stop") }
+                            "done" -> Icon(Icons.Rounded.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                            else -> Unit
                         }
                     }
                 }
             }
-            if (p.unmatched.isNotEmpty()) {
-                item {
-                    Text("couldn't match", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 24.dp, bottom = 4.dp))
-                    Text("these are saved on the playlist page, tap them there to search by hand.",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                items(p.unmatched) { t ->
-                    ListItem(
-                        headlineContent = { Text(t.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        supportingContent = { Text(t.artist, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        leadingContent = { Artwork(t.artworkUrl, Modifier.size(44.dp)) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    )
-                }
-            }
+
         }
     }
 }

@@ -2,6 +2,7 @@ package app.stash.di
 
 import android.content.Context
 import androidx.room.Room
+import app.stash.data.db.ImportDao
 import app.stash.data.db.PlaylistDao
 import app.stash.data.db.StashDatabase
 import app.stash.data.db.TrackDao
@@ -20,13 +21,18 @@ object AppModule {
     @Provides
     @Singleton
     fun database(@ApplicationContext context: Context): StashDatabase =
-        Room.databaseBuilder(context, StashDatabase::class.java, "stash.db").build()
+        Room.databaseBuilder(context, StashDatabase::class.java, "stash.db")
+            .addMigrations(StashDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     fun trackDao(db: StashDatabase): TrackDao = db.tracks()
 
     @Provides
     fun playlistDao(db: StashDatabase): PlaylistDao = db.playlists()
+
+    @Provides
+    fun importDao(db: StashDatabase): ImportDao = db.imports()
 
     @Provides
     @Singleton

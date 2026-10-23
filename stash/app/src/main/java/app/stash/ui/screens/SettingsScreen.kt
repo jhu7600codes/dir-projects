@@ -1,6 +1,11 @@
 package app.stash.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
+import android.text.format.DateUtils
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Card
@@ -18,9 +24,11 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -39,12 +47,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.stash.cloud.Account
+import app.stash.cloud.CloudBackup
 import app.stash.data.prefs.Settings
 import app.stash.data.prefs.ThemeMode
 import app.stash.providers.ProviderRegistry
@@ -53,18 +66,45 @@ import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.components.SectionHeader
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     val settings: Settings,
     val registry: ProviderRegistry,
     private val ytDlp: YtDlp,
+    private val account: Account,
+    private val cloud: CloudBackup,
 ) : ViewModel() {
     val ytStatus = ytDlp.status
     val updateResult = MutableStateFlow<String?>(null)
+    val accountBusy = MutableStateFlow(false)
+    val accountMessage = MutableStateFlow<String?>(null)
+
+    private fun accountAction(block: suspend () -> String?) = viewModelScope.launch {
+        accountBusy.value = true
+        accountMessage.value = runCatching { block() }.getOrElse { it.message ?: "something went wrong" }
+        accountBusy.value = false
+    }
+
+    fun signIn(email: String, password: String) = accountAction {
+        account.signIn(email, password)
+        val added = cloud.firstSync()
+        if (added > 0) "logged in, restored $added playlists" else "logged in, your library is backed up"
+    }
+
+    fun signUp(email: String, password: String) = accountAction {
+        when (account.signUp(email, password)) {
+            Account.SignUpResult.CheckEmail -> "check your email and tap the confirm link, then log in here"
+            Account.SignUpResult.SignedIn -> { cloud.firstSync(); "account made, your library is backed up" }
+        }
+    }
+
+    fun backupNow() = accountAction { cloud.backup(); "backed up" }
+    fun restore() = accountAction { "restored ${cloud.restore()} playlists" }
+    fun signOut() = accountAction { account.signOut(); null }
 
     fun updateYtDlp() = viewModelScope.launch {
         updateResult.value = "checking…"
@@ -97,6 +137,9 @@ fun SettingsScreen() {
         },
     ) { padding ->
         LazyColumn(contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 32.dp)) {
+            item { SectionHeader("account") }
+            item { AccountCard(vm, settings.accountEmail, settings.lastBackupAt) }
+
             item { SectionHeader("look") }
             item {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
@@ -112,6 +155,23 @@ fun SettingsScreen() {
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) item {
                 SwitchRow("colors from wallpaper", "material you dynamic color", settings.dynamicColor) { vm.set { setDynamicColor(it) } }
+            }
+
+            item {
+                val context = LocalContext.current
+                val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
+                    if (granted.values.any { it }) vm.set { setLocationGreetings(true) }
+                }
+                SwitchRow(
+                    "greet me by place",
+                    "home says something different at the airport, a cafe, on a train… uses your location once per visit and asks openstreetmap what's nearby",
+                    settings.locationGreetings,
+                ) { on ->
+                    val has = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    if (on && !has) askLocation.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                    else vm.set { setLocationGreetings(on) }
+                }
             }
 
             item { SectionHeader("downloads") }
@@ -212,4 +272,58 @@ private fun KeyField(label: String, value: String, hint: String, secret: Boolean
         }) else null,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
     )
+}
+
+/** log in / sign up, or the backup controls once logged in */
+@Composable
+private fun AccountCard(vm: SettingsViewModel, email: String, lastBackupAt: Long) {
+    val busy by vm.accountBusy.collectAsState()
+    val message by vm.accountMessage.collectAsState()
+    var mail by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (email.isNotEmpty()) {
+                Text(email, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (lastBackupAt > 0) "playlists and liked songs backed up " +
+                        DateUtils.getRelativeTimeSpanString(lastBackupAt).toString().lowercase()
+                    else "not backed up yet",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text("it backs up by itself a few seconds after anything changes.", style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(onClick = { vm.backupNow() }, enabled = !busy) { Text("back up now") }
+                    OutlinedButton(onClick = { vm.restore() }, enabled = !busy) { Text("restore") }
+                }
+                TextButton(onClick = { vm.signOut() }, enabled = !busy) { Text("log out") }
+            } else {
+                Text("save your playlists to a stash account so they survive a reinstall or a new phone.",
+                    style = MaterialTheme.typography.bodySmall)
+                OutlinedTextField(
+                    value = mail, onValueChange = { mail = it }, label = { Text("email") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = password, onValueChange = { password = it }, label = { Text("password (6+ characters)") }, singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth(),
+                )
+                val ready = mail.contains('@') && password.length >= 6 && !busy
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(onClick = { vm.signIn(mail, password) }, enabled = ready) { Text("log in") }
+                    OutlinedButton(onClick = { vm.signUp(mail, password) }, enabled = ready) { Text("create account") }
+                }
+            }
+            if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            message?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+        }
+    }
 }

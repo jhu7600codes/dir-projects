@@ -41,8 +41,12 @@ interface TrackDao {
     @Query("UPDATE tracks SET inLibrary = 0, liked = 0 WHERE id = :id")
     suspend fun removeFromLibrary(id: String)
 
-    @Query("UPDATE tracks SET liked = :liked, inLibrary = CASE WHEN :liked THEN 1 ELSE inLibrary END, addedAt = CASE WHEN addedAt = 0 THEN :now ELSE addedAt END WHERE id = :id")
+    @Query("UPDATE tracks SET liked = :liked, likedAt = :now, inLibrary = CASE WHEN :liked THEN 1 ELSE inLibrary END, addedAt = CASE WHEN addedAt = 0 THEN :now ELSE addedAt END WHERE id = :id")
     suspend fun setLiked(id: String, liked: Boolean, now: Long = System.currentTimeMillis())
+
+    /** imported likes: [likedAt] is picked so the list keeps the source's order */
+    @Query("UPDATE tracks SET liked = 1, inLibrary = 1, likedAt = :likedAt, addedAt = CASE WHEN addedAt = 0 THEN :likedAt ELSE addedAt END WHERE id = :id")
+    suspend fun importLike(id: String, likedAt: Long)
 
     @Query("UPDATE tracks SET lastPlayedAt = :now, playCount = playCount + 1 WHERE id = :id")
     suspend fun markPlayed(id: String, now: Long = System.currentTimeMillis())
@@ -65,8 +69,17 @@ interface TrackDao {
     @Query("SELECT * FROM tracks WHERE inLibrary = 1 ORDER BY addedAt DESC")
     fun observeLibrary(): Flow<List<Track>>
 
-    @Query("SELECT * FROM tracks WHERE liked = 1 ORDER BY addedAt DESC")
+    @Query("SELECT * FROM tracks WHERE liked = 1 ORDER BY likedAt DESC")
     fun observeLiked(): Flow<List<Track>>
+
+    @Query("SELECT * FROM tracks WHERE liked = 1 ORDER BY likedAt DESC")
+    suspend fun liked(): List<Track>
+
+    @Query("SELECT * FROM tracks WHERE artist = :artist ORDER BY playCount DESC")
+    suspend fun byArtist(artist: String): List<Track>
+
+    @Query("SELECT * FROM tracks WHERE downloadState = 'DONE'")
+    suspend fun downloaded(): List<Track>
 
     @Query("SELECT * FROM tracks WHERE downloadState = 'DONE' ORDER BY title COLLATE NOCASE")
     fun observeDownloaded(): Flow<List<Track>>
@@ -156,8 +169,8 @@ interface PlaylistDao {
     )
     fun observeAll(): Flow<List<PlaylistWithCount>>
 
-    @Query("SELECT t.* FROM tracks t JOIN playlist_tracks pt ON pt.trackId = t.id WHERE pt.playlistId = :id ORDER BY pt.position")
-    fun observeTracks(id: Long): Flow<List<Track>>
+    @Query("SELECT t.*, pt.position AS position FROM tracks t JOIN playlist_tracks pt ON pt.trackId = t.id WHERE pt.playlistId = :id ORDER BY pt.position")
+    fun observeEntries(id: Long): Flow<List<PlaylistEntry>>
 
     @Query("SELECT t.* FROM tracks t JOIN playlist_tracks pt ON pt.trackId = t.id WHERE pt.playlistId = :id ORDER BY pt.position")
     suspend fun tracks(id: Long): List<Track>
@@ -168,11 +181,8 @@ interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTrack(ref: PlaylistTrack)
 
-    @Query("DELETE FROM playlist_tracks WHERE playlistId = :playlistId AND trackId = :trackId")
-    suspend fun removeTrack(playlistId: Long, trackId: String)
-
-    @Query("UPDATE playlist_tracks SET position = :position WHERE playlistId = :playlistId AND trackId = :trackId")
-    suspend fun setPosition(playlistId: Long, trackId: String, position: Int)
+    @Query("DELETE FROM playlist_tracks WHERE playlistId = :playlistId AND position = :position")
+    suspend fun removeAt(playlistId: Long, position: Int)
 
     @Insert
     suspend fun insertUnmatched(track: UnmatchedTrack): Long
@@ -180,9 +190,93 @@ interface PlaylistDao {
     @Query("SELECT * FROM unmatched WHERE playlistId = :id ORDER BY position")
     fun observeUnmatched(id: Long): Flow<List<UnmatchedTrack>>
 
+    @Query("SELECT * FROM unmatched WHERE playlistId = :id ORDER BY position")
+    suspend fun unmatched(id: Long): List<UnmatchedTrack>
+
+    @Query("SELECT * FROM playlists ORDER BY updatedAt DESC")
+    suspend fun all(): List<Playlist>
+
+    @Query("SELECT t.*, pt.position AS position FROM tracks t JOIN playlist_tracks pt ON pt.trackId = t.id WHERE pt.playlistId = :id ORDER BY pt.position")
+    suspend fun entries(id: Long): List<PlaylistEntry>
+
+    /** the artist that shows up most across all playlists */
+    @Query("SELECT t.artist FROM playlist_tracks pt JOIN tracks t ON t.id = pt.trackId WHERE t.artist != '' GROUP BY t.artist ORDER BY COUNT(*) DESC LIMIT 1")
+    suspend fun topArtist(): String?
+
+    @Query("SELECT * FROM playlists WHERE name = :name LIMIT 1")
+    suspend fun findByName(name: String): Playlist?
+
     @Query("SELECT * FROM unmatched WHERE id = :id")
     suspend fun getUnmatched(id: Long): UnmatchedTrack?
 
     @Query("DELETE FROM unmatched WHERE id = :id")
     suspend fun deleteUnmatched(id: Long)
+}
+
+@Dao
+interface ImportDao {
+    @Insert
+    suspend fun insertJob(job: ImportJob): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTracks(tracks: List<ImportJobTrack>)
+
+    @Query("SELECT * FROM import_jobs ORDER BY id")
+    fun observeJobs(): Flow<List<ImportJob>>
+
+    @Query("SELECT * FROM import_jobs WHERE state IN ('queued', 'running') ORDER BY state = 'running' DESC, id LIMIT 1")
+    suspend fun nextJob(): ImportJob?
+
+    @Query("SELECT state FROM import_jobs WHERE id = :id")
+    suspend fun state(id: Long): String?
+
+    @Query("SELECT COUNT(*) FROM import_jobs WHERE state IN ('queued', 'running')")
+    suspend fun pendingCount(): Int
+
+    @Query("SELECT * FROM import_job_tracks WHERE jobId = :jobId AND state = 'pending' ORDER BY position")
+    suspend fun pendingTracks(jobId: Long): List<ImportJobTrack>
+
+    @Query("UPDATE import_job_tracks SET state = :state WHERE jobId = :jobId AND position = :position")
+    suspend fun setTrackState(jobId: Long, position: Int, state: String)
+
+    @Query("UPDATE import_jobs SET state = :state WHERE id = :id")
+    suspend fun setState(id: Long, state: String)
+
+    @Query("UPDATE import_jobs SET playlistId = :playlistId WHERE id = :id")
+    suspend fun setPlaylist(id: Long, playlistId: Long)
+
+    @Query("UPDATE import_jobs SET done = done + 1, matched = matched + :matched WHERE id = :id")
+    suspend fun countTrack(id: Long, matched: Int)
+
+    @Query("UPDATE import_jobs SET state = 'cancelled' WHERE state IN ('queued', 'running')")
+    suspend fun cancelAll()
+
+    @Query("UPDATE import_jobs SET state = 'cancelled' WHERE id = :id AND state IN ('queued', 'running')")
+    suspend fun cancel(id: Long)
+
+    @Query("DELETE FROM import_job_tracks WHERE jobId IN (SELECT id FROM import_jobs WHERE state IN ('done', 'cancelled'))")
+    suspend fun clearFinishedTracks()
+
+    @Query("DELETE FROM import_jobs WHERE state IN ('done', 'cancelled')")
+    suspend fun clearFinishedJobs()
+
+    @Transaction
+    suspend fun clearFinished() {
+        clearFinishedTracks()
+        clearFinishedJobs()
+    }
+
+    /** songs the current imports couldn't find, newest first */
+    @Query(
+        """SELECT * FROM unmatched WHERE playlistId IN (SELECT playlistId FROM import_jobs WHERE playlistId IS NOT NULL)
+           OR (playlistId = -1 AND EXISTS (SELECT 1 FROM import_jobs WHERE intoLiked = 1))
+           ORDER BY id DESC"""
+    )
+    fun observeMissing(): Flow<List<UnmatchedTrack>>
+
+    @Query("SELECT * FROM match_cache WHERE `key` = :key")
+    suspend fun cached(key: String): MatchCache?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun cache(entry: MatchCache)
 }

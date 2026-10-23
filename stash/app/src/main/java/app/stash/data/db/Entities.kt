@@ -1,6 +1,7 @@
 package app.stash.data.db
 
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -42,6 +43,8 @@ data class Track(
     val inLibrary: Boolean = false,
     val liked: Boolean = false,
     val addedAt: Long = 0,
+    /** liked songs are listed newest-liked first; imports set this to keep spotify's order */
+    @ColumnInfo(defaultValue = "0") val likedAt: Long = 0,
     val lastPlayedAt: Long? = null,
     val playCount: Int = 0,
 ) {
@@ -65,9 +68,10 @@ data class Playlist(
     val updatedAt: Long = System.currentTimeMillis(),
 )
 
+/** keyed by position, so a song can sit in a playlist twice, same as on spotify */
 @Entity(
     tableName = "playlist_tracks",
-    primaryKeys = ["playlistId", "trackId"],
+    primaryKeys = ["playlistId", "position"],
     indices = [Index("trackId")],
 )
 data class PlaylistTrack(
@@ -85,6 +89,13 @@ data class UnmatchedTrack(
     val artist: String,
     val album: String? = null,
     val durationMs: Long = 0,
+    val position: Int,
+    /** for liked songs: the likedAt it would have had, so a hand fix lands in the right spot */
+    @ColumnInfo(defaultValue = "0") val likedAt: Long = 0,
+)
+
+data class PlaylistEntry(
+    @Embedded val track: Track,
     val position: Int,
 )
 
@@ -112,4 +123,50 @@ data class ArtistSummary(
     val artist: String,
     val artworkUrl: String?,
     val trackCount: Int,
+)
+
+/** unmatched songs from an imported liked songs list hang off this fake playlist id */
+const val LIKED_PLAYLIST_ID = -1L
+
+/** one playlist waiting to be (or being) moved into stash by [app.stash.importer.ImportWorker] */
+@Entity(tableName = "import_jobs")
+data class ImportJob(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val origin: String,
+    val originId: String? = null,
+    val coverUrl: String? = null,
+    /** spotify liked songs land in stash's liked songs instead of a new playlist */
+    val intoLiked: Boolean = false,
+    val playlistId: Long? = null,
+    /** queued, running, done, cancelled */
+    val state: String = "queued",
+    val total: Int = 0,
+    val done: Int = 0,
+    val matched: Int = 0,
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
+@Entity(tableName = "import_job_tracks", primaryKeys = ["jobId", "position"])
+data class ImportJobTrack(
+    val jobId: Long,
+    val position: Int,
+    val title: String,
+    val artist: String,
+    val album: String? = null,
+    val durationMs: Long = 0,
+    val artworkUrl: String? = null,
+    /** pending, matched, unmatched */
+    val state: String = "pending",
+)
+
+/**
+ * "artist|title" -> the track it matched (or null for nothing found), so a song that's in
+ * several of your playlists only gets searched once.
+ */
+@Entity(tableName = "match_cache")
+data class MatchCache(
+    @PrimaryKey val key: String,
+    val trackId: String?,
+    val checkedAt: Long = System.currentTimeMillis(),
 )

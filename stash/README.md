@@ -6,7 +6,7 @@ A personal music app for Android in Kotlin and Jetpack Compose. It streams from 
 
 All six milestones from the plan are in this first build:
 
-1. **Player + youtube search**: Media3/ExoPlayer in a `MediaSessionService`, so you get background playback, a media notification and lockscreen controls. Search goes through yt-dlp (`ytsearch`).
+1. **Player + youtube search**: Media3/ExoPlayer in a `MediaSessionService`, so you get background playback, a media notification and lockscreen controls. Search uses YouTube Music's own search API (well under a second), with yt-dlp's `ytsearch` as the fallback. The next song's stream is looked up while the current one plays, so there's no gap between songs.
 2. **Library**: Room db with saved songs, liked songs, playlists, and albums/artists grouped from your saved songs.
 3. **Downloads**: a download button on every song, album and playlist. They run on a WorkManager queue with resume, retries (3 tries with exponential backoff), a wi-fi only toggle and a foreground progress notification. Files go to app storage (`files/music/`). The player always uses the local file if there is one.
 4. **Fallback providers**: youtube → soundcloud → bandcamp → jamendo → internet archive → free music archive.
@@ -21,6 +21,22 @@ All six milestones from the plan are in this first build:
 - Your library has filter chips: playlists, songs, albums, artists, downloaded.
 - Playlist/album pages have a big centered cover like GPM, with tonal download and shuffle buttons and a big play button.
 - Now playing is a full-height sheet tinted with colors from the album art (androidx palette). The art shrinks with a bounce when paused, the play button morphs between pill and squircle, and there's a queue view.
+
+## Moving playlists (background)
+
+Imports are a queue saved in the database (`import_jobs`). `ImportWorker` runs it in the background with a foreground notification, so 25 playlists keep going with the app closed, and it picks up where it stopped if Android kills it. It matches 4 songs at a time, and a song that shows up in several playlists is only searched once (`match_cache`).
+
+- **Order is kept exactly**: playlist rows are keyed by position, so duplicates are allowed like on Spotify, and songs that couldn't be found show up greyed out in their spot. Fixing one by hand puts it back in that spot.
+- **Spotify liked songs** (exportify's `Liked_Songs.csv`) go into stash's liked songs in the same order, not into a new playlist.
+- **Missing songs**: the import screen lists them as soon as the first one isn't found, and the notification expands to show the latest ones.
+
+## Account / backup (Supabase)
+
+Optional. Settings → account, then email + password; Supabase sends a confirmation email the first time. Playlists (in order, missing songs included) and liked songs are saved to the `stash` Supabase project (`library_items`, row level security so every account only sees its own rows). It backs up by itself about 20 seconds after anything changes. Logging in on a new phone restores playlists it doesn't have yet.
+
+## Home greetings
+
+The title follows the time of day, with a few variants each. With "greet me by place" on (settings, asks for location), the line under it follows where you are: airport, cafe, station or train (offers your most common playlist artist), driving, gym, library, and so on. The place comes from one location fix plus OpenStreetMap's Overpass API, cached for 10 minutes.
 
 ## How playback finds audio
 

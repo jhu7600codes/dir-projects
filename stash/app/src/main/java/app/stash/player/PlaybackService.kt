@@ -71,6 +71,9 @@ class PlaybackService : MediaSessionService() {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val id = mediaItem?.mediaId ?: return
                 scope.launch { dao.markPlayed(id) }
+                // look up the next song's stream now, so the switch doesn't wait on yt-dlp
+                val next = player.nextMediaItemIndex.takeIf { it != C.INDEX_UNSET }?.let { player.getMediaItemAt(it).mediaId }
+                if (next != null) scope.launch { runCatching { resolver.streamFor(next) } }
             }
 
             override fun onPlayerError(error: PlaybackException) {

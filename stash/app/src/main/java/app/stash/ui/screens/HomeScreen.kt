@@ -30,11 +30,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -42,6 +45,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import app.stash.greet.GreetingAction
+import app.stash.greet.GreetingViewModel
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
@@ -49,14 +55,7 @@ import app.stash.ui.components.Artwork
 import app.stash.ui.components.CoverCard
 import app.stash.ui.components.EmptyState
 import app.stash.ui.components.SectionHeader
-import java.util.Calendar
-
-private fun greeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-    in 5..11 -> "good morning"
-    in 12..17 -> "good afternoon"
-    in 18..22 -> "good evening"
-    else -> "late night listening"
-}
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,12 +69,28 @@ fun HomeScreen() {
     val liked by remember { dao.observeLiked() }.collectAsState(initial = emptyList())
     val playlists by actions.playlists.collectAsState()
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val greetingVm: GreetingViewModel = hiltViewModel()
+    val greeting by greetingVm.greeting.collectAsState()
+    // re-check on every visit (the place lookup itself is cached), e.g. right after turning it on
+    LaunchedEffect(Unit) { greetingVm.refresh() }
+    val scope = rememberCoroutineScope()
+
+    fun runAction(a: GreetingAction) {
+        scope.launch {
+            when (a) {
+                is GreetingAction.PlayArtist -> actions.shuffle(dao.byArtist(a.artist))
+                GreetingAction.OpenDownloads -> nav.navigate(Routes.DOWNLOADS)
+                GreetingAction.ShuffleLiked -> actions.shuffle(dao.liked())
+                GreetingAction.ShuffleDownloads -> actions.shuffle(dao.downloaded())
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
-                title = { Text(greeting()) },
+                title = { Text(greeting.title) },
                 actions = {
                     IconButton(onClick = { nav.navigate(Routes.DOWNLOADS) }) { Icon(Icons.Rounded.DownloadForOffline, "downloads") }
                     IconButton(onClick = { nav.navigate(Routes.SETTINGS) }) { Icon(Icons.Rounded.Settings, "settings") }
@@ -86,6 +101,9 @@ fun HomeScreen() {
     ) { padding ->
         val empty = recent.isEmpty() && playlists.isEmpty() && downloaded.isEmpty() && liked.isEmpty()
         LazyColumn(contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 24.dp)) {
+            greeting.message?.let { msg ->
+                item(key = "greeting") { GreetingCard(msg, greeting.action?.takeUnless { empty }, ::runAction) }
+            }
             if (empty) {
                 item {
                     EmptyState(
@@ -195,6 +213,23 @@ private fun QuickPick(tile: QuickTile, modifier: Modifier) {
                 tile.title, style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).padding(end = 8.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun GreetingCard(message: String, action: GreetingAction?, onAction: (GreetingAction) -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+    ) {
+        Row(Modifier.padding(start = 18.dp, end = 8.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.weight(1f).padding(vertical = 10.dp),
+            )
+            if (action != null) TextButton(onClick = { onAction(action) }) { Text(action.label, maxLines = 1) }
         }
     }
 }

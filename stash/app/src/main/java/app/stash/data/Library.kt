@@ -1,5 +1,6 @@
 package app.stash.data
 
+import app.stash.data.db.LIKED_PLAYLIST_ID
 import app.stash.data.db.Playlist
 import app.stash.data.db.PlaylistDao
 import app.stash.data.db.PlaylistTrack
@@ -50,8 +51,8 @@ class Library @Inject constructor(
         addToPlaylist(id, items).join()
     }
 
-    fun removeFromPlaylist(playlistId: Long, track: Track) = scope.launch {
-        playlists.removeTrack(playlistId, track.id)
+    fun removeFromPlaylist(playlistId: Long, position: Int) = scope.launch {
+        playlists.removeAt(playlistId, position)
         playlists.touch(playlistId)
     }
 
@@ -64,9 +65,14 @@ class Library @Inject constructor(
         val u = playlists.getUnmatched(unmatchedId) ?: return@launch
         val saved = tracks.ensure(pick)
         tracks.addToLibrary(saved.id)
-        playlists.insertTrack(PlaylistTrack(u.playlistId, saved.id, u.position))
+        if (u.playlistId == LIKED_PLAYLIST_ID) {
+            if (u.likedAt > 0) tracks.importLike(saved.id, u.likedAt) else tracks.setLiked(saved.id, true)
+        } else {
+            // same slot the song had on spotify, so the order stays right
+            playlists.insertTrack(PlaylistTrack(u.playlistId, saved.id, u.position))
+            playlists.touch(u.playlistId)
+        }
         playlists.deleteUnmatched(unmatchedId)
-        playlists.touch(u.playlistId)
     }
 
     fun dismissUnmatched(unmatchedId: Long) = scope.launch { playlists.deleteUnmatched(unmatchedId) }

@@ -13,13 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
@@ -68,7 +68,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.stash.data.db.DownloadState
+import app.stash.data.db.LIKED_PLAYLIST_ID
 import app.stash.data.db.Track
+import app.stash.data.db.UnmatchedTrack
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
@@ -95,9 +97,11 @@ fun CollectionScreen(
     artShape: Shape = MaterialTheme.shapes.extraLarge,
     artIcon: ImageVector = Icons.AutoMirrored.Rounded.QueueMusic,
     menu: List<MenuEntry> = emptyList(),
-    extraTrackActions: (Track) -> List<SheetAction> = { emptyList() },
+    extraTrackActions: (index: Int, Track) -> List<SheetAction> = { _, _ -> emptyList() },
     numbered: Boolean = false,
-    footer: LazyListScope.() -> Unit = {},
+    /** where each track sits in the source playlist, so [missing] songs can be shown in their spot */
+    positions: List<Int>? = null,
+    missing: List<UnmatchedTrack> = emptyList(),
 ) {
     val actions = LocalActions.current
     val nav = LocalNav.current
@@ -136,7 +140,7 @@ fun CollectionScreen(
             )
         },
     ) { padding ->
-        CompositionLocalProvider(LocalExtraTrackActions provides extraTrackActions) {
+        val rows = remember(tracks, positions, missing) { mergeRows(tracks, positions, missing) }
             LazyColumn(state = list, contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 24.dp)) {
                 item {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -193,15 +197,28 @@ fun CollectionScreen(
                         Spacer(Modifier.height(12.dp))
                     }
                 }
-                itemsIndexed(tracks, key = { _, t -> t.id }) { i, t ->
-                    TrackRow(
-                        t, onClick = { actions.play(tracks, i) }, isCurrent = current.currentId == t.id,
-                        index = i, showArt = !numbered,
+                if (missing.isNotEmpty()) item(key = "missing-note") {
+                    Text(
+                        "${missing.size} couldn't be found, they're greyed out below. tap one to search for it.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                     )
                 }
-                footer()
+                items(rows, key = { r -> if (r is CollectionRow.Song) "s:${r.index}" else "u:${(r as CollectionRow.Missing).u.id}" }) { r ->
+                    when (r) {
+                        is CollectionRow.Song -> {
+                            val t = tracks[r.index]
+                            CompositionLocalProvider(LocalExtraTrackActions provides { extraTrackActions(r.index, it) }) {
+                                TrackRow(
+                                    t, onClick = { actions.play(tracks, r.index) }, isCurrent = current.currentId == t.id,
+                                    index = r.index, showArt = !numbered,
+                                )
+                            }
+                        }
+                        is CollectionRow.Missing -> MissingRow(r.u)
+                    }
+                }
             }
-        }
     }
 }
 
@@ -211,8 +228,9 @@ fun PlaylistScreen(id: Long) {
     val nav = LocalNav.current
     val dao = actions.library.playlists
     val playlist by remember(id) { dao.observe(id) }.collectAsState(initial = null)
-    val tracks by remember(id) { dao.observeTracks(id) }.collectAsState(initial = emptyList())
+    val entries by remember(id) { dao.observeEntries(id) }.collectAsState(initial = emptyList())
     val unmatched by remember(id) { dao.observeUnmatched(id) }.collectAsState(initial = emptyList())
+    val tracks = remember(entries) { entries.map { it.track } }
     var renaming by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     val p = playlist ?: return
@@ -221,43 +239,18 @@ fun PlaylistScreen(id: Long) {
         title = p.name,
         kind = if (p.origin == "local") "playlist" else "from ${p.origin}",
         tracks = tracks,
+        positions = entries.map { it.position },
+        missing = unmatched,
         artwork = p.coverUrl ?: tracks.firstOrNull()?.artworkUrl,
         menu = listOf(
             MenuEntry("rename", Icons.Rounded.Edit) { renaming = true },
             MenuEntry("remove downloads", Icons.Rounded.RemoveCircleOutline) { actions.downloads.delete(tracks.filter { it.isDownloaded }) },
             MenuEntry("delete playlist", Icons.Rounded.Delete) { deleting = true },
         ),
-        extraTrackActions = { t ->
-            listOf(SheetAction("remove from this playlist", Icons.Rounded.RemoveCircleOutline) { actions.library.removeFromPlaylist(id, t) })
-        },
-        footer = {
-            if (unmatched.isNotEmpty()) {
-                item {
-                    Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 4.dp)) {
-                        Text("couldn't match (${unmatched.size})", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "none of the sources found these. tap one to search for it yourself.",
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                unmatched.forEach { u ->
-                    item(key = "u:${u.id}") {
-                        ListItem(
-                            headlineContent = { Text(u.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            supportingContent = { Text(listOfNotNull(u.artist, formatDuration(u.durationMs).ifEmpty { null }).joinToString(" · ")) },
-                            leadingContent = { Icon(Icons.AutoMirrored.Rounded.HelpOutline, null, tint = MaterialTheme.colorScheme.outline) },
-                            trailingContent = {
-                                IconButton(onClick = { actions.library.dismissUnmatched(u.id) }) { Icon(Icons.Rounded.Delete, "dismiss") }
-                            },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            modifier = Modifier
-                                .clickable { nav.navigate(Routes.fix(u.id, "${u.artist} ${u.title}")) }
-                                .padding(horizontal = 4.dp),
-                        )
-                    }
-                }
-            }
+        extraTrackActions = { i, _ ->
+            listOf(SheetAction("remove from this playlist", Icons.Rounded.RemoveCircleOutline) {
+                actions.library.removeFromPlaylist(id, entries[i].position)
+            })
         },
     )
 
@@ -301,7 +294,51 @@ fun ArtistScreen(name: String) {
 
 @Composable
 fun LikedScreen() {
-    val dao = LocalActions.current.library.tracks
-    val tracks by remember { dao.observeLiked() }.collectAsState(initial = emptyList())
-    CollectionScreen(title = "liked songs", kind = "playlist", tracks = tracks, artwork = null, artIcon = Icons.Rounded.Favorite)
+    val library = LocalActions.current.library
+    val tracks by remember { library.tracks.observeLiked() }.collectAsState(initial = emptyList())
+    val unmatched by remember { library.playlists.observeUnmatched(LIKED_PLAYLIST_ID) }.collectAsState(initial = emptyList())
+    CollectionScreen(
+        title = "liked songs", kind = "playlist", tracks = tracks, artwork = null, artIcon = Icons.Rounded.Favorite,
+        missing = unmatched,
+    )
+}
+
+private sealed interface CollectionRow {
+    data class Song(val index: Int) : CollectionRow
+    data class Missing(val u: UnmatchedTrack) : CollectionRow
+}
+
+/** songs and not-found songs in source order; without positions the missing ones go last */
+private fun mergeRows(tracks: List<Track>, positions: List<Int>?, missing: List<UnmatchedTrack>): List<CollectionRow> {
+    if (positions == null) return tracks.indices.map { CollectionRow.Song(it) } + missing.map { CollectionRow.Missing(it) }
+    return (tracks.indices.map { positions[it] to CollectionRow.Song(it) } + missing.map { it.position to CollectionRow.Missing(it) })
+        .sortedBy { it.first }
+        .map { it.second }
+}
+
+@Composable
+private fun MissingRow(u: UnmatchedTrack) {
+    val actions = LocalActions.current
+    val nav = LocalNav.current
+    ListItem(
+        headlineContent = { Text(u.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        supportingContent = {
+            Text(listOfNotNull(u.artist, "not found", formatDuration(u.durationMs).ifEmpty { null }).joinToString(" · "),
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
+        leadingContent = {
+            Box(Modifier.size(52.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.AutoMirrored.Rounded.HelpOutline, null, tint = MaterialTheme.colorScheme.outline)
+            }
+        },
+        trailingContent = {
+            IconButton(onClick = { actions.library.dismissUnmatched(u.id) }) { Icon(Icons.Rounded.Close, "remove") }
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent,
+            headlineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+            supportingColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+        ),
+        modifier = Modifier.clickable { nav.navigate(Routes.fix(u.id, "${u.artist} ${u.title}")) },
+    )
 }

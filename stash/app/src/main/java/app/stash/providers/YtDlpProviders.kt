@@ -119,11 +119,17 @@ abstract class YtDlpProvider(protected val ytDlp: YtDlp) : MusicProvider {
 }
 
 @Singleton
-class YouTubeProvider @Inject constructor(ytDlp: YtDlp) : YtDlpProvider(ytDlp) {
+class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTubeMusicSearch) : YtDlpProvider(ytDlp) {
     override val id = "youtube"
     override val displayName = "youtube"
 
-    override suspend fun search(query: String, limit: Int) = flatSearch("ytsearch$limit:$query")
+    /**
+     * youtube music's own search api answers in under a second, yt-dlp's ytsearch takes a few
+     * (it boots python every time). yt-dlp stays as the fallback if the api ever changes.
+     */
+    override suspend fun search(query: String, limit: Int): List<Track> =
+        runCatching { music.search(query, limit) }.getOrNull()?.takeIf { it.isNotEmpty() }
+            ?: flatSearch("ytsearch$limit:$query")
 
     override fun entryToTrack(o: JsonObject, fallbackUrl: String?): Track? {
         val videoId = o.str("id") ?: return super.entryToTrack(o, fallbackUrl)

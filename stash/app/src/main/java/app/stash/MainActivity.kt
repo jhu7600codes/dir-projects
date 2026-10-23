@@ -60,6 +60,10 @@ class MainActivity : ComponentActivity() {
             openPlayer.trySend(Unit)
             return
         }
+        if (intent.getBooleanExtra(EXTRA_OPEN_IMPORTS, false)) {
+            navRequests.trySend(Routes.IMPORT_PROGRESS)
+            return
+        }
         if (intent.action == Intent.ACTION_SEND) {
             val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
             navRequests.trySend(Routes.import(text))
@@ -68,5 +72,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_PLAYER = "open_player"
+        const val EXTRA_OPEN_IMPORTS = "open_imports"
     }
 }
