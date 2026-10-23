@@ -11,7 +11,7 @@ class GreetingsTest {
     @Test
     fun nightTimeKeepsItQuiet() {
         val lines = (0 until 30).map { Greetings.build(2, Calendar.TUESDAY, null, null, Random(it)).message }.toSet()
-        assertTrue("don't wake up the neighborhood!" in lines)
+        assertTrue("Don't wake up the neighborhood!" in lines)
     }
 
     @Test

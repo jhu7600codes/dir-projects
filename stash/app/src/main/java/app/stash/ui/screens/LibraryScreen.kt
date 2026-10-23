@@ -54,12 +54,13 @@ import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
 import app.stash.ui.components.Artwork
+import app.stash.ui.components.originName
 import app.stash.ui.components.EmptyState
 import app.stash.ui.components.NewPlaylistDialog
 import app.stash.ui.components.TrackRow
 import kotlinx.coroutines.launch
 
-private enum class LibFilter(val label: String) { PLAYLISTS("playlists"), SONGS("songs"), ALBUMS("albums"), ARTISTS("artists"), DOWNLOADED("downloaded") }
+private enum class LibFilter(val label: String) { PLAYLISTS("Playlists"), SONGS("Songs"), ALBUMS("Albums"), ARTISTS("Artists"), DOWNLOADED("Downloaded") }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,10 +84,10 @@ fun LibraryScreen() {
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
-                title = { Text("your library") },
+                title = { Text("Your library") },
                 actions = {
-                    IconButton(onClick = { nav.navigate(Routes.import()) }) { Icon(Icons.Rounded.SwapHoriz, "import playlists") }
-                    IconButton(onClick = { creating = true }) { Icon(Icons.Rounded.Add, "new playlist") }
+                    IconButton(onClick = { nav.navigate(Routes.import()) }) { Icon(Icons.Rounded.SwapHoriz, "Import playlists") }
+                    IconButton(onClick = { creating = true }) { Icon(Icons.Rounded.Add, "New playlist") }
                 },
                 scrollBehavior = scroll,
             )
@@ -106,33 +107,33 @@ fun LibraryScreen() {
                 LibFilter.PLAYLISTS -> {
                     item {
                         LibraryRow(
-                            title = "liked songs", subtitle = "${liked.size} songs", art = null,
+                            title = "Liked songs", subtitle = "${liked.size} songs", art = null,
                             onClick = { nav.navigate(Routes.LIKED) },
                         ) { PinnedIcon(Icons.Rounded.Favorite) }
                     }
                     items(playlists, key = { it.id }) { p ->
                         val sub = buildList {
-                            add("playlist")
+                            add("Playlist")
                             add("${p.trackCount} songs")
-                            if (p.downloadedCount > 0) add(if (p.downloadedCount == p.trackCount) "downloaded" else "${p.downloadedCount} offline")
-                            if (p.origin == "mix") add("made for you") else if (p.origin != "local") add("from ${p.origin}")
+                            if (p.downloadedCount > 0) add(if (p.downloadedCount == p.trackCount) "Downloaded" else "${p.downloadedCount} offline")
+                            if (p.origin == "mix") add("Made for you") else if (p.origin != "local") add("From ${originName(p.origin)}")
                         }.joinToString(" · ")
                         LibraryRow(p.name, sub, p.coverUrl ?: p.firstArtwork, onClick = { nav.navigate(Routes.playlist(p.id)) })
                     }
                     if (playlists.isEmpty()) item {
-                        EmptyState(Icons.AutoMirrored.Rounded.QueueMusic, "no playlists yet", "make one, or bring yours over from spotify or apple music.") {
-                            TextButton(onClick = { nav.navigate(Routes.import()) }) { Text("import playlists") }
+                        EmptyState(Icons.AutoMirrored.Rounded.QueueMusic, "No playlists yet", "Make one, or bring yours over from Spotify or Apple Music.") {
+                            TextButton(onClick = { nav.navigate(Routes.import()) }) { Text("Import playlists") }
                         }
                     }
                 }
 
                 LibFilter.SONGS -> {
                     if (songs.isEmpty()) item {
-                        EmptyState(Icons.Rounded.LibraryMusic, "no saved songs", "long-press any song and pick \"save to library\".")
+                        EmptyState(Icons.Rounded.LibraryMusic, "No saved songs", "Long-press any song and pick \"Save to library\".")
                     } else item {
                         Row(Modifier.padding(horizontal = 12.dp)) {
                             TextButton(onClick = { actions.shuffle(songs) }) {
-                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("shuffle all")
+                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Shuffle all")
                             }
                         }
                     }
@@ -142,14 +143,14 @@ fun LibraryScreen() {
                 }
 
                 LibFilter.ALBUMS -> {
-                    if (albums.isEmpty()) item { EmptyState(Icons.Rounded.Album, "no albums", "songs with album info show up here, grouped.") }
+                    if (albums.isEmpty()) item { EmptyState(Icons.Rounded.Album, "No albums", "Songs with album info show up here, grouped.") }
                     items(albums, key = { "${it.album}|${it.artist}" }) { a ->
-                        LibraryRow(a.album, "album · ${a.artist}", a.artworkUrl, onClick = { nav.navigate(Routes.album(a.album, a.artist)) })
+                        LibraryRow(a.album, "Album · ${a.artist}", a.artworkUrl, onClick = { nav.navigate(Routes.album(a.album, a.artist)) })
                     }
                 }
 
                 LibFilter.ARTISTS -> {
-                    if (artists.isEmpty()) item { EmptyState(Icons.Rounded.Person, "no artists", "save some songs and their artists land here.") }
+                    if (artists.isEmpty()) item { EmptyState(Icons.Rounded.Person, "No artists", "Save some songs and their artists land here.") }
                     items(artists, key = { it.artist }) { a ->
                         LibraryRow(a.artist, "${a.trackCount} songs", a.artworkUrl, circle = true, onClick = { nav.navigate(Routes.artist(a.artist)) })
                     }
@@ -157,13 +158,13 @@ fun LibraryScreen() {
 
                 LibFilter.DOWNLOADED -> {
                     if (downloaded.isEmpty()) item {
-                        EmptyState(Icons.Rounded.DownloadDone, "nothing offline yet", "hit download on a song, album or playlist.")
+                        EmptyState(Icons.Rounded.DownloadDone, "Nothing offline yet", "Hit download on a song, album or playlist.")
                     } else item {
                         Row(Modifier.padding(horizontal = 12.dp)) {
                             TextButton(onClick = { actions.shuffle(downloaded) }) {
-                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("shuffle offline")
+                                Icon(Icons.Rounded.Shuffle, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Shuffle offline")
                             }
-                            TextButton(onClick = { nav.navigate(Routes.DOWNLOADS) }) { Text("manage downloads") }
+                            TextButton(onClick = { nav.navigate(Routes.DOWNLOADS) }) { Text("Manage downloads") }
                         }
                     }
                     itemsIndexed(downloaded, key = { _, t -> t.id }) { i, t ->

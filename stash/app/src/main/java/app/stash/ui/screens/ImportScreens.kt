@@ -110,7 +110,7 @@ class ImportViewModel @Inject constructor(
         error.value = null
         cutWarning.value = null
         if ("spotify" !in link && "music.apple.com" !in link) {
-            error.value = "paste a spotify or apple music playlist link"
+            error.value = "Paste a Spotify or Apple Music playlist link"
             return
         }
         viewModelScope.launch {
@@ -127,7 +127,7 @@ class ImportViewModel @Inject constructor(
                 queue.enqueue(listOf(playlist))
                 onStarted()
             } catch (e: Exception) {
-                error.value = e.message ?: "couldn't read that playlist"
+                error.value = e.message ?: "Couldn't read that playlist"
             } finally {
                 checking.value = false
             }
@@ -143,12 +143,12 @@ class ImportViewModel @Inject constructor(
                 uris.flatMap { uri ->
                     runCatching {
                         context.contentResolver.openInputStream(uri)!!.use { ExportifyCsv.read(displayName(uri), it) }
-                    }.onFailure { error.value = "couldn't read ${displayName(uri)}: ${it.message}" }.getOrDefault(emptyList())
+                    }.onFailure { error.value = "Couldn't read ${displayName(uri)}: ${it.message}" }.getOrDefault(emptyList())
                 }
             }
             checking.value = false
             if (playlists.isEmpty()) {
-                if (error.value == null) error.value = "no songs found, is that an exportify csv?"
+                if (error.value == null) error.value = "No songs found, is that an Exportify CSV?"
                 return@launch
             }
             queue.enqueue(playlists)
@@ -181,17 +181,17 @@ fun ImportScreen(sharedLink: String?) {
     cutWarning?.let { pending ->
         AlertDialog(
             onDismissRequest = { vm.cutWarning.value = null },
-            title = { Text("big playlist") },
-            text = { Text("detected more than 100 songs, please use exportify or the playlist will be cut.") },
+            title = { Text("Big playlist") },
+            text = { Text("Detected more than 100 songs, please use Exportify or the playlist will be cut.") },
             confirmButton = {
                 TextButton(onClick = {
                     vm.cutWarning.value = null
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://exportify.net")))
-                }) { Text("use exportify") }
+                }) { Text("Use Exportify") }
             },
             dismissButton = {
                 TextButton(onClick = { vm.importLink(pending, force = true) { nav.navigate(Routes.IMPORT_PROGRESS) } }) {
-                    Text("import first 100")
+                    Text("Import first 100")
                 }
             },
         )
@@ -200,8 +200,8 @@ fun ImportScreen(sharedLink: String?) {
     Scaffold(
         topBar = {
             LargeTopAppBar(
-                title = { Text("bring your music") },
-                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "back") } },
+                title = { Text("Bring your music") },
+                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
             )
         },
     ) { padding ->
@@ -211,22 +211,22 @@ fun ImportScreen(sharedLink: String?) {
         ) {
             item {
                 Text(
-                    "every song gets matched against youtube, soundcloud, bandcamp and the open sources, in that order. " +
+                    "Every song gets matched against YouTube, SoundCloud, Bandcamp and the open sources, in that order. " +
                         "anything that can't be found is listed so you can fix it by hand.",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (running) item {
                 FilledTonalButton(onClick = { nav.navigate(Routes.IMPORT_PROGRESS) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("moving playlists in the background, see progress")
+                    Text("Moving playlists in the background, see progress")
                 }
             }
             item {
-                ServiceCard(R.drawable.ic_spotify, "playlist link", Color(0xFF1DB954)) {
+                ServiceCard(R.drawable.ic_spotify, "Playlist link", Color(0xFF1DB954)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(painterResource(R.drawable.ic_apple_music), null, Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("spotify or apple music, the playlist has to be public. share → copy link, or share it straight to stash.",
+                        Text("Spotify or Apple Music, the playlist has to be public. Share → copy link, or share it straight to Stash.",
                             style = MaterialTheme.typography.bodySmall)
                     }
                     Spacer(Modifier.height(8.dp))
@@ -240,31 +240,31 @@ fun ImportScreen(sharedLink: String?) {
                         enabled = link.isNotBlank() && !checking,
                         onClick = { vm.importLink(vm.cleanLink(link)) { nav.navigate(Routes.IMPORT_PROGRESS) } },
                     ) {
-                        if (checking) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("import")
+                        if (checking) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("Import")
                     }
                     Text(
-                        "spotify links stop at the first 100 songs, use exportify below for bigger ones.",
+                        "Spotify links stop at the first 100 songs, use Exportify below for bigger ones.",
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }
             }
             item {
-                ServiceCard(R.drawable.ic_spotify, "exportify", Color(0xFF1DB954)) {
+                ServiceCard(R.drawable.ic_spotify, "Exportify", Color(0xFF1DB954)) {
                     Text(
-                        "for private playlists, liked songs, or everything at once: open exportify.net, log in with spotify, " +
-                            "hit export (or export all for a zip), then pick the files here.",
+                        "For private playlists, liked songs, or everything at once: open exportify.net, log in with Spotify, " +
+                            "hit export (or export all for a ZIP), then pick the files here.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://exportify.net")))
-                        }) { Text("open exportify") }
+                        }) { Text("Open Exportify") }
                         FilledTonalButton(
                             enabled = !checking,
                             onClick = { pickFiles.launch(arrayOf("text/*", "application/zip", "application/octet-stream")) },
-                        ) { Text("pick csv / zip") }
+                        ) { Text("Pick CSV / ZIP") }
                     }
                 }
             }
@@ -310,11 +310,11 @@ fun ImportProgressScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (active.isEmpty()) "all moved" else "moving playlists") },
-                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "back") } },
+                title = { Text(if (active.isEmpty()) "All moved" else "Moving playlists") },
+                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
                 actions = {
-                    if (active.isNotEmpty()) TextButton(onClick = { vm.queue.cancelAll() }) { Text("stop all") }
-                    else if (jobs.isNotEmpty()) TextButton(onClick = { vm.queue.clearFinished() }) { Text("clear") }
+                    if (active.isNotEmpty()) TextButton(onClick = { vm.queue.cancelAll() }) { Text("Stop all") }
+                    else if (jobs.isNotEmpty()) TextButton(onClick = { vm.queue.clearFinished() }) { Text("Clear") }
                 },
             )
         },
@@ -339,7 +339,7 @@ fun ImportProgressScreen() {
                         Spacer(Modifier.height(8.dp))
                         Text("$songsDone of $songsTotal songs checked", style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            "this keeps going in the background, even if you close stash. the notification shows where it's at.",
+                            "This keeps going in the background, even if you close Stash. The notification shows where it's at.",
                             style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp),
                         )
                     }
@@ -349,15 +349,15 @@ fun ImportProgressScreen() {
             if (missing.isNotEmpty()) {
                 item(key = "missing-header") {
                     Column(Modifier.padding(top = 14.dp, start = 4.dp)) {
-                        Text("couldn't find (${missing.size})", style = MaterialTheme.typography.titleMedium)
+                        Text("Couldn't find (${missing.size})", style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "tap one to search for it yourself. it goes back to the same spot in the playlist.",
+                            "Tap one to search for it yourself. It goes back to the same spot in the playlist.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
                 items(if (showAllMissing) missing else missing.take(5), key = { "m:${it.id}" }) { u ->
-                    val where = if (u.playlistId == LIKED_PLAYLIST_ID) "liked songs"
+                    val where = if (u.playlistId == LIKED_PLAYLIST_ID) "Liked songs"
                     else jobs.firstOrNull { it.playlistId == u.playlistId }?.name ?: ""
                     ListItem(
                         headlineContent = { Text(u.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -371,12 +371,12 @@ fun ImportProgressScreen() {
                 }
                 if (missing.size > 5) item(key = "missing-more") {
                     TextButton(onClick = { showAllMissing = !showAllMissing }) {
-                        Text(if (showAllMissing) "show less" else "show all ${missing.size}")
+                        Text(if (showAllMissing) "Show less" else "Show all ${missing.size}")
                     }
                 }
             }
             item(key = "jobs-header") {
-                Text("playlists", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 14.dp, start = 4.dp))
+                Text("Playlists", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 14.dp, start = 4.dp))
             }
             items(jobs.asReversed(), key = { it.id }) { job ->
                 val missing = job.done - job.matched
@@ -404,10 +404,10 @@ fun ImportProgressScreen() {
                             )
                             Text(
                                 when (job.state) {
-                                    "queued" -> "waiting · ${job.total} songs"
+                                    "queued" -> "Waiting · ${job.total} songs"
                                     "running" -> "${job.done} of ${job.total} · ${job.matched} found"
-                                    "cancelled" -> "stopped"
-                                    else -> if (missing > 0) "${job.matched} found · $missing couldn't match" else "all ${job.matched} found"
+                                    "cancelled" -> "Stopped"
+                                    else -> if (missing > 0) "${job.matched} found · $missing couldn't match" else "All ${job.matched} found"
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (job.state == "done" && missing > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -421,7 +421,7 @@ fun ImportProgressScreen() {
                             }
                         }
                         when (job.state) {
-                            "queued", "running" -> IconButton(onClick = { vm.queue.cancel(job.id) }) { Icon(Icons.Rounded.Close, "stop") }
+                            "queued", "running" -> IconButton(onClick = { vm.queue.cancel(job.id) }) { Icon(Icons.Rounded.Close, "Stop") }
                             "done" -> Icon(Icons.Rounded.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
                             else -> Unit
                         }

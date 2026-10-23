@@ -22,7 +22,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /** a song as another service describes it, before it's matched to a provider */
-data class SourceTrack(val title: String, val artist: String, val album: String?, val durationMs: Long, val artworkUrl: String?)
+data class SourceTrack(
+    val title: String,
+    val artist: String,
+    val album: String?,
+    val durationMs: Long,
+    val artworkUrl: String?,
+    /** e.g. spotify:track:… , used to fetch the real cover */
+    val sourceUri: String? = null,
+)
 
 data class SourcePlaylist(
     val name: String,
@@ -45,14 +53,14 @@ class SpotifyLink @Inject constructor(private val http: OkHttpClient) {
 
     suspend fun playlist(link: String): SourcePlaylist {
         val (kind, id) = idPattern.find(expandShortLink(link))?.destructured
-            ?: throw ProviderException("that doesn't look like a spotify playlist or album link")
+            ?: throw ProviderException("That doesn't look like a Spotify playlist or album link")
         val html = httpIo { http.getText("https://open.spotify.com/embed/$kind/$id", mapOf("User-Agent" to BROWSER_UA)) }
         val json = Regex("""<script id="__NEXT_DATA__"[^>]*>(.*?)</script>""", RegexOption.DOT_MATCHES_ALL)
-            .find(html)?.groupValues?.get(1) ?: throw ProviderException("couldn't read that spotify page")
+            .find(html)?.groupValues?.get(1) ?: throw ProviderException("Couldn't read that Spotify page")
         val entity = lenientJson.parseToJsonElement(json).jsonObject
             .obj("props")?.obj("pageProps")?.obj("state")?.obj("data")?.obj("entity")
-            ?: throw ProviderException("spotify page had no playlist in it (is it private?)")
-        val name = entity.str("name") ?: entity.str("title") ?: "spotify $kind"
+            ?: throw ProviderException("That Spotify page had no playlist in it (is it private?)")
+        val name = entity.str("name") ?: entity.str("title") ?: "Spotify $kind"
         val cover = entity.obj("coverArt")?.get("sources").asObjectList().lastOrNull()?.str("url")
         val tracks = entity["trackList"].asObjectList().mapNotNull { t ->
             SourceTrack(
@@ -62,9 +70,10 @@ class SpotifyLink @Inject constructor(private val http: OkHttpClient) {
                 album = if (kind == "album") name else null,
                 durationMs = (t.num("duration") ?: 0.0).toLong(),
                 artworkUrl = if (kind == "album") cover else null,
+                sourceUri = t.str("uri"),
             )
         }
-        if (tracks.isEmpty()) throw ProviderException("no songs found in that $kind")
+        if (tracks.isEmpty()) throw ProviderException("No songs found in that $kind")
         return SourcePlaylist(name, "spotify", id, cover, tracks)
     }
 
@@ -124,6 +133,7 @@ object ExportifyCsv {
         val album = col("album name")
         val duration = col("duration (ms)", "track duration (ms)")
         val image = col("album image url")
+        val uri = col("track uri", "spotify id")
         val tracks = rows.drop(1).mapNotNull { r ->
             val t = r.getOrNull(title)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
             SourceTrack(
@@ -133,6 +143,8 @@ object ExportifyCsv {
                 album = album?.let { r.getOrNull(it) }?.takeIf { it.isNotBlank() },
                 durationMs = duration?.let { r.getOrNull(it)?.toLongOrNull() } ?: 0,
                 artworkUrl = image?.let { r.getOrNull(it) }?.takeIf { it.startsWith("http") },
+                sourceUri = uri?.let { r.getOrNull(it) }?.takeIf { it.isNotBlank() }
+                    ?.let { if (it.startsWith("spotify:")) it else "spotify:track:$it" },
             )
         }
         if (tracks.isEmpty()) return null
@@ -184,7 +196,7 @@ class AppleMusic @Inject constructor(
         Regex("""https?://music\.apple\.com/\S+""").find(text)?.value
 
     suspend fun playlist(link: String): SourcePlaylist {
-        val m = linkPattern.find(link) ?: throw ProviderException("that doesn't look like an apple music playlist link")
+        val m = linkPattern.find(link) ?: throw ProviderException("That doesn't look like an Apple Music playlist link")
         val (storefront, id) = m.destructured
         val token = settings.current().appleDeveloperToken
         return if (token.isNotBlank()) {
@@ -197,7 +209,7 @@ class AppleMusic @Inject constructor(
         val root = lenientJson.parseToJsonElement(
             httpIo { http.getText("https://api.music.apple.com/v1/catalog/$storefront/playlists/$id", headers) }
         ).jsonObject
-        val pl = root["data"].asObjectList().firstOrNull() ?: throw ProviderException("playlist not found")
+        val pl = root["data"].asObjectList().firstOrNull() ?: throw ProviderException("Playlist not found")
         val attrs = pl.obj("attributes")
         val tracks = mutableListOf<SourceTrack>()
         var next: String? = "/v1/catalog/$storefront/playlists/$id/tracks?limit=100"
@@ -215,22 +227,22 @@ class AppleMusic @Inject constructor(
             }
             next = page.str("next")
         }
-        return SourcePlaylist(attrs?.str("name") ?: "apple music playlist", "apple", id,
+        return SourcePlaylist(attrs?.str("name") ?: "Apple Music playlist", "apple", id,
             attrs?.obj("artwork")?.str("url")?.let(::artwork), tracks)
     }
 
     private suspend fun viaPage(link: String, id: String): SourcePlaylist {
         val html = httpIo { http.getText(link, mapOf("User-Agent" to BROWSER_UA)) }
         val json = Regex("""<script[^>]*id="serialized-server-data"[^>]*>(.*?)</script>""", RegexOption.DOT_MATCHES_ALL)
-            .find(html)?.groupValues?.get(1) ?: throw ProviderException("couldn't read that playlist page")
+            .find(html)?.groupValues?.get(1) ?: throw ProviderException("Couldn't read that playlist page")
         val tracks = mutableListOf<SourceTrack>()
         collect(lenientJson.parseToJsonElement(json), tracks)
-        if (tracks.isEmpty()) throw ProviderException("no songs found on that page")
+        if (tracks.isEmpty()) throw ProviderException("No songs found on that page")
         val title = Regex("""<meta property="og:title" content="([^"]*)"""").find(html)?.groupValues?.get(1)
             ?.let { android.text.Html.fromHtml(it, android.text.Html.FROM_HTML_MODE_LEGACY).toString() }
             ?.substringBefore(" - Apple Music")?.substringBefore(" on Apple Music")
         val cover = Regex("""<meta property="og:image" content="([^"]*)"""").find(html)?.groupValues?.get(1)
-        return SourcePlaylist(title ?: "apple music playlist", "apple", id, cover, tracks.distinct())
+        return SourcePlaylist(title ?: "Apple Music playlist", "apple", id, cover, tracks.distinct())
     }
 
     /** every object with a title + artistName in the page data is a track lockup */

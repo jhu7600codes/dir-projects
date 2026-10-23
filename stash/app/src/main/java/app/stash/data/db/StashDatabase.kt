@@ -8,9 +8,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [
         Track::class, Playlist::class, PlaylistTrack::class, UnmatchedTrack::class,
-        ImportJob::class, ImportJobTrack::class, MatchCache::class,
+        ImportJob::class, ImportJobTrack::class, MatchCache::class, ArtistGenre::class, CoverCheck::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class StashDatabase : RoomDatabase() {
@@ -23,6 +23,20 @@ abstract class StashDatabase : RoomDatabase() {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 MIGRATION_1_2_SQL.forEach(db::execSQL)
+            }
+        }
+
+        /** v3: artist genre cache for genre mixes, real covers */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `artist_genres` (`artist` TEXT NOT NULL, `genre` TEXT, " +
+                        "`checkedAt` INTEGER NOT NULL, PRIMARY KEY(`artist`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `cover_checks` (`trackId` TEXT NOT NULL, `checkedAt` INTEGER NOT NULL, PRIMARY KEY(`trackId`))"
+                )
+                db.execSQL("ALTER TABLE `import_job_tracks` ADD COLUMN `sourceUri` TEXT DEFAULT NULL")
             }
         }
     }

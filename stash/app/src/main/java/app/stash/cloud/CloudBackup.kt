@@ -185,7 +185,7 @@ class CloudBackup @Inject constructor(
     }
 
     private suspend fun authed(): Request.Builder {
-        val token = account.accessToken() ?: throw ProviderException("not logged in")
+        val token = account.accessToken() ?: throw ProviderException("Not logged in")
         return Request.Builder().header("apikey", BuildConfig.SUPABASE_KEY).header("Authorization", "Bearer $token")
     }
 
@@ -194,7 +194,7 @@ class CloudBackup @Inject constructor(
             .post(json.toRequestBody("application/json".toMediaType())).build()
         httpIo {
             http.newCall(req).execute().use { r ->
-                if (!r.isSuccessful) throw ProviderException("backup failed (${r.code}): ${r.body?.string()?.take(200)}")
+                if (!r.isSuccessful) throw ProviderException("Backup failed (${r.code}): ${r.body?.string()?.take(200)}")
             }
         }
     }
@@ -204,7 +204,7 @@ class CloudBackup @Inject constructor(
         return httpIo {
             http.newCall(req).execute().use { r ->
                 val body = r.body?.string().orEmpty()
-                if (!r.isSuccessful) throw ProviderException("couldn't load your backup (${r.code})")
+                if (!r.isSuccessful) throw ProviderException("Couldn't load your backup (${r.code})")
                 body
             }
         }

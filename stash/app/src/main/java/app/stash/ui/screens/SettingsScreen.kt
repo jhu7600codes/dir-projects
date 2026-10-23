@@ -85,29 +85,29 @@ class SettingsViewModel @Inject constructor(
 
     private fun accountAction(block: suspend () -> String?) = viewModelScope.launch {
         accountBusy.value = true
-        accountMessage.value = runCatching { block() }.getOrElse { it.message ?: "something went wrong" }
+        accountMessage.value = runCatching { block() }.getOrElse { it.message ?: "Something went wrong" }
         accountBusy.value = false
     }
 
     fun signIn(email: String, password: String) = accountAction {
         account.signIn(email, password)
         val added = cloud.firstSync()
-        if (added > 0) "logged in, restored $added playlists" else "logged in, your library is backed up"
+        if (added > 0) "Logged in, restored $added playlists" else "Logged in, your library is backed up"
     }
 
     fun signUp(email: String, password: String) = accountAction {
         when (account.signUp(email, password)) {
-            Account.SignUpResult.CheckEmail -> "check your email and tap the confirm link, then log in here"
-            Account.SignUpResult.SignedIn -> { cloud.firstSync(); "account made, your library is backed up" }
+            Account.SignUpResult.CheckEmail -> "Check your email and tap the confirm link, then log in here"
+            Account.SignUpResult.SignedIn -> { cloud.firstSync(); "Account made, your library is backed up" }
         }
     }
 
-    fun backupNow() = accountAction { cloud.backup(); "backed up" }
+    fun backupNow() = accountAction { cloud.backup(); "Backed up" }
     fun restore() = accountAction { "restored ${cloud.restore()} playlists" }
     fun signOut() = accountAction { account.signOut(); null }
 
     fun updateYtDlp() = viewModelScope.launch {
-        updateResult.value = "checking…"
+        updateResult.value = "Checking…"
         updateResult.value = ytDlp.update()
     }
 
@@ -130,17 +130,17 @@ fun SettingsScreen() {
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
-                title = { Text("settings") },
-                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "back") } },
+                title = { Text("Settings") },
+                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
                 scrollBehavior = scroll,
             )
         },
     ) { padding ->
         LazyColumn(contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 32.dp)) {
-            item { SectionHeader("account") }
+            item { SectionHeader("Account") }
             item { AccountCard(vm, settings.accountEmail, settings.lastBackupAt) }
 
-            item { SectionHeader("look") }
+            item { SectionHeader("Look") }
             item {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
                     val modes = ThemeMode.entries
@@ -154,7 +154,7 @@ fun SettingsScreen() {
                 }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) item {
-                SwitchRow("colors from wallpaper", "material you dynamic color", settings.dynamicColor) { vm.set { setDynamicColor(it) } }
+                SwitchRow("Colors from wallpaper", "Material You dynamic color", settings.dynamicColor) { vm.set { setDynamicColor(it) } }
             }
 
             item {
@@ -163,8 +163,8 @@ fun SettingsScreen() {
                     if (granted.values.any { it }) vm.set { setLocationGreetings(true) }
                 }
                 SwitchRow(
-                    "greet me by place",
-                    "home says something different at the airport, a cafe, on a train… uses your location once per visit and asks openstreetmap what's nearby",
+                    "Greet me by place",
+                    "Home says something different at the airport, a cafe, on a train… uses your location once per visit and asks OpenStreetMap what's nearby",
                     settings.locationGreetings,
                 ) { on ->
                     val has = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
@@ -174,24 +174,24 @@ fun SettingsScreen() {
                 }
             }
 
-            item { SectionHeader("playback") }
+            item { SectionHeader("Playback") }
             item {
-                SwitchRow("autoplay", "when your queue ends, keep going with similar songs", settings.autoplay) {
+                SwitchRow("Autoplay", "When your queue ends, keep going with similar songs", settings.autoplay) {
                     vm.set { setAutoplay(it) }
                 }
             }
 
-            item { SectionHeader("downloads") }
+            item { SectionHeader("Downloads") }
             item {
-                SwitchRow("wi-fi only", "downloads wait for an unmetered network", settings.wifiOnlyDownloads) {
+                SwitchRow("Wi-Fi only", "Downloads wait for an unmetered network", settings.wifiOnlyDownloads) {
                     actions.downloads.setWifiOnly(it)
                 }
             }
 
-            item { SectionHeader("sources") }
+            item { SectionHeader("Sources") }
             item {
                 Text(
-                    "tried in this order when something won't play or an imported song needs matching.",
+                    "Tried in this order when something won't play or an imported song needs matching.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
@@ -201,16 +201,16 @@ fun SettingsScreen() {
                 SwitchRow(
                     p.displayName,
                     when {
-                        needsKey -> "needs a client id (below)"
-                        p.id == "youtube" || p.id == "soundcloud" || p.id == "bandcamp" -> "via yt-dlp"
-                        else -> "open / cc-licensed"
+                        needsKey -> "Needs a client ID (below)"
+                        p.id == "youtube" || p.id == "soundcloud" || p.id == "bandcamp" -> "Via yt-dlp"
+                        else -> "Open / CC-licensed"
                     },
                     p.id !in settings.disabledProviders && !needsKey,
                     enabled = !needsKey,
                 ) { on -> vm.set { setProviderEnabled(p.id, on) } }
             }
             item {
-                KeyField("jamendo client id", settings.jamendoClientId, "free from devportal.jamendo.com") { vm.set { setJamendoClientId(it) } }
+                KeyField("Jamendo client ID", settings.jamendoClientId, "Free from devportal.jamendo.com") { vm.set { setJamendoClientId(it) } }
             }
 
             item { SectionHeader("yt-dlp") }
@@ -221,29 +221,29 @@ fun SettingsScreen() {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("version ${settings.ytDlpVersion.ifBlank { "bundled" }}", style = MaterialTheme.typography.titleMedium)
-                        Text("status: $ytStatus", style = MaterialTheme.typography.bodySmall)
-                        Text("updates itself every time the app starts, because youtube keeps breaking old versions.",
+                        Text("Version ${settings.ytDlpVersion.ifBlank { "Bundled" }}", style = MaterialTheme.typography.titleMedium)
+                        Text("Status: $ytStatus", style = MaterialTheme.typography.bodySmall)
+                        Text("Updates itself every time the app starts, because YouTube keeps breaking old versions.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         updateResult?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
                         Row(Modifier.padding(top = 8.dp)) {
-                            FilledTonalButton(onClick = { vm.updateYtDlp() }) { Text("update now") }
+                            FilledTonalButton(onClick = { vm.updateYtDlp() }) { Text("Update now") }
                         }
                     }
                 }
             }
 
-            item { SectionHeader("playlist import") }
+            item { SectionHeader("Playlist import") }
             item {
-                KeyField("apple musickit developer token (optional)", settings.appleDeveloperToken,
-                    "without it, public playlist links are read from the web page", secret = true) { vm.set { setAppleDeveloperToken(it) } }
+                KeyField("Apple MusicKit developer token (optional)", settings.appleDeveloperToken,
+                    "Without it, public playlist links are read from the web page", secret = true) { vm.set { setAppleDeveloperToken(it) } }
             }
 
-            item { SectionHeader("about") }
+            item { SectionHeader("About") }
             item {
                 Text(
-                    "stash · personal use only. youtube, soundcloud and bandcamp go through yt-dlp, which is against their terms, " +
-                        "so keep this to yourself. jamendo, internet archive and free music archive are open sources.",
+                    "Stash · personal use only. YouTube, SoundCloud and Bandcamp go through yt-dlp, which is against their terms, " +
+                        "so keep this to yourself. Jamendo, Internet Archive and Free Music Archive are open sources.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
@@ -275,7 +275,7 @@ private fun KeyField(label: String, value: String, hint: String, secret: Boolean
         visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
         shape = MaterialTheme.shapes.medium,
         trailingIcon = if (text != value) ({
-            TextButton(onClick = { onSave(text) }) { Text("save") }
+            TextButton(onClick = { onSave(text) }) { Text("Save") }
         }) else null,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
     )
@@ -298,35 +298,35 @@ private fun AccountCard(vm: SettingsViewModel, email: String, lastBackupAt: Long
             if (email.isNotEmpty()) {
                 Text(email, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    if (lastBackupAt > 0) "playlists and liked songs backed up " +
+                    if (lastBackupAt > 0) "Playlists and liked songs backed up " +
                         DateUtils.getRelativeTimeSpanString(lastBackupAt).toString().lowercase()
-                    else "not backed up yet",
+                    else "Not backed up yet",
                     style = MaterialTheme.typography.bodySmall,
                 )
-                Text("it backs up by itself a few seconds after anything changes.", style = MaterialTheme.typography.bodySmall)
+                Text("It backs up by itself a few seconds after anything changes.", style = MaterialTheme.typography.bodySmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = { vm.backupNow() }, enabled = !busy) { Text("back up now") }
-                    OutlinedButton(onClick = { vm.restore() }, enabled = !busy) { Text("restore") }
+                    FilledTonalButton(onClick = { vm.backupNow() }, enabled = !busy) { Text("Back up now") }
+                    OutlinedButton(onClick = { vm.restore() }, enabled = !busy) { Text("Restore") }
                 }
-                TextButton(onClick = { vm.signOut() }, enabled = !busy) { Text("log out") }
+                TextButton(onClick = { vm.signOut() }, enabled = !busy) { Text("Log out") }
             } else {
-                Text("save your playlists to a stash account so they survive a reinstall or a new phone.",
+                Text("Save your playlists to a Stash account so they survive a reinstall or a new phone.",
                     style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(
-                    value = mail, onValueChange = { mail = it }, label = { Text("email") }, singleLine = true,
+                    value = mail, onValueChange = { mail = it }, label = { Text("Email") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
-                    value = password, onValueChange = { password = it }, label = { Text("password (6+ characters)") }, singleLine = true,
+                    value = password, onValueChange = { password = it }, label = { Text("Password (6+ characters)") }, singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth(),
                 )
                 val ready = mail.contains('@') && password.length >= 6 && !busy
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = { vm.signIn(mail, password) }, enabled = ready) { Text("log in") }
-                    OutlinedButton(onClick = { vm.signUp(mail, password) }, enabled = ready) { Text("create account") }
+                    FilledTonalButton(onClick = { vm.signIn(mail, password) }, enabled = ready) { Text("Log in") }
+                    OutlinedButton(onClick = { vm.signUp(mail, password) }, enabled = ready) { Text("Create account") }
                 }
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())

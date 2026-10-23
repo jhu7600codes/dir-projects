@@ -81,14 +81,14 @@ object Routes {
     fun fix(unmatchedId: Long, query: String) = "fix/$unmatchedId?q=${Uri.encode(query)}"
 }
 
-val LocalNav = staticCompositionLocalOf<NavHostController> { error("no nav") }
+val LocalNav = staticCompositionLocalOf<NavHostController> { error("No nav") }
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
 
 private val tabs = listOf(
-    Tab(Routes.HOME, "home", Icons.Outlined.Home, Icons.Rounded.Home),
-    Tab(Routes.SEARCH, "search", Icons.Outlined.Search, Icons.Rounded.Search),
-    Tab(Routes.LIBRARY, "your library", Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
+    Tab(Routes.HOME, "Home", Icons.Outlined.Home, Icons.Rounded.Home),
+    Tab(Routes.SEARCH, "Search", Icons.Outlined.Search, Icons.Rounded.Search),
+    Tab(Routes.LIBRARY, "Your library", Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
 )
 
 @Composable

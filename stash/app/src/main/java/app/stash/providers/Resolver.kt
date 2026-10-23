@@ -117,7 +117,7 @@ class Resolver @Inject constructor(
     }
 
     suspend fun streamFor(trackId: String): StreamSource {
-        val track = dao.get(trackId) ?: throw ProviderException("unknown track $trackId")
+        val track = dao.get(trackId) ?: throw ProviderException("Unknown song $trackId")
         track.localPath?.let { path ->
             val f = File(path)
             if (f.exists() && f.length() > 0) return StreamSource(f.toURI().toString())
@@ -166,7 +166,7 @@ class Resolver @Inject constructor(
                 errors += "${provider.displayName}: ${e.message}"
             }
         }
-        throw ProviderException(errors.lastOrNull() ?: "nothing could play this")
+        throw ProviderException(errors.lastOrNull() ?: "Nothing could play this")
     }
 
     private suspend fun bestMatch(provider: MusicProvider, title: String, artist: String, durationMs: Long): Track? {

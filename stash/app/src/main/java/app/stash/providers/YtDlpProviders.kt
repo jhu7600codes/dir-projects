@@ -46,7 +46,7 @@ abstract class YtDlpProvider(protected val ytDlp: YtDlp) : MusicProvider {
         )
         val lines = res.out.lines().filter { it.isNotBlank() }
         val url = lines.firstOrNull { it.startsWith("http") }
-            ?: throw ProviderException("$displayName: no audio url")
+            ?: throw ProviderException("$displayName: no audio URL")
         val headers = lines.firstOrNull { it.startsWith("{") }?.let { line ->
             runCatching {
                 lenientJson.parseToJsonElement(line).jsonObject.mapValues { it.value.jsonPrimitive.content }
@@ -121,7 +121,7 @@ abstract class YtDlpProvider(protected val ytDlp: YtDlp) : MusicProvider {
 @Singleton
 class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTubeMusicSearch) : YtDlpProvider(ytDlp) {
     override val id = "youtube"
-    override val displayName = "youtube"
+    override val displayName = "YouTube"
 
     /**
      * youtube music's own search api answers in under a second, yt-dlp's ytsearch takes a few
@@ -145,7 +145,7 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
 @Singleton
 class SoundCloudProvider @Inject constructor(ytDlp: YtDlp) : YtDlpProvider(ytDlp) {
     override val id = "soundcloud"
-    override val displayName = "soundcloud"
+    override val displayName = "SoundCloud"
 
     override suspend fun search(query: String, limit: Int) = flatSearch("scsearch$limit:$query")
 
@@ -170,7 +170,7 @@ class SoundCloudProvider @Inject constructor(ytDlp: YtDlp) : YtDlpProvider(ytDlp
 @Singleton
 class BandcampProvider @Inject constructor(ytDlp: YtDlp, private val http: OkHttpClient) : YtDlpProvider(ytDlp) {
     override val id = "bandcamp"
-    override val displayName = "bandcamp"
+    override val displayName = "Bandcamp"
 
     override suspend fun search(query: String, limit: Int): List<Track> = httpIo {
         val body = """{"search_text":${JsonPrimitive(query)},"search_filter":"t","full_page":false,"fan_id":null}"""
@@ -180,7 +180,7 @@ class BandcampProvider @Inject constructor(ytDlp: YtDlp, private val http: OkHtt
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
         val text = http.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw ProviderException("bandcamp search failed (${r.code})")
+            if (!r.isSuccessful) throw ProviderException("Bandcamp search failed (${r.code})")
             r.body!!.string()
         }
         val results = lenientJson.parseToJsonElement(text).jsonObject.obj("auto")?.arr("results").orEmpty()
@@ -212,7 +212,7 @@ internal fun OkHttpClient.getText(url: String, headers: Map<String, String> = em
         headers.forEach { (k, v) -> header(k, v) }
     }.build()
     return newCall(req).execute().use { r ->
-        if (!r.isSuccessful) throw ProviderException("http ${r.code} for ${req.url.host}")
+        if (!r.isSuccessful) throw ProviderException("${req.url.host} said ${r.code}")
         r.body!!.string()
     }
 }

@@ -15,6 +15,8 @@ import app.stash.StashApp
 import app.stash.data.db.DownloadState
 import app.stash.data.db.Track
 import app.stash.data.db.TrackDao
+import app.stash.data.prefs.DownloadQuality
+import app.stash.data.prefs.Settings
 import app.stash.providers.DownloadSource
 import app.stash.providers.ProviderException
 import app.stash.providers.Resolver
@@ -43,6 +45,8 @@ class DownloadWorker @AssistedInject constructor(
     private val downloads: Downloads,
     private val ytDlp: YtDlp,
     private val http: OkHttpClient,
+    private val compressor: Compressor,
+    private val settings: Settings,
 ) : CoroutineWorker(context, params) {
 
     private val trackId get() = inputData.getString(KEY_TRACK)!!
@@ -58,10 +62,13 @@ class DownloadWorker @AssistedInject constructor(
         return try {
             val source = resolver.downloadSourceFor(track)
             val base = downloads.baseName(track.id)
-            val file = when (source) {
-                is DownloadSource.YtDlp -> viaYtDlp(track, source, base)
+            val quality = settings.current().downloadQuality
+            val raw = when (source) {
+                is DownloadSource.YtDlp -> viaYtDlp(track, source, base, quality)
                 is DownloadSource.Http -> viaHttp(track, source, base)
             }
+            // a big mp3 from an open source (or a youtube stream that had no small version) gets shrunk
+            val file = runCatching { compressor.shrinkIfNeeded(raw, quality) }.getOrDefault(raw)
             dao.markDownloaded(track.id, file.absolutePath)
             Result.success()
         } catch (e: CancellationException) {
@@ -72,19 +79,19 @@ class DownloadWorker @AssistedInject constructor(
                 dao.setDownloadState(track.id, DownloadState.QUEUED, track.downloadProgress, e.message)
                 Result.retry()
             } else {
-                dao.setDownloadState(track.id, DownloadState.FAILED, 0f, e.message ?: "download failed")
+                dao.setDownloadState(track.id, DownloadState.FAILED, 0f, e.message ?: "Download failed")
                 Result.failure()
             }
         }
     }
 
-    private suspend fun viaYtDlp(track: Track, source: DownloadSource.YtDlp, base: String): File {
+    private suspend fun viaYtDlp(track: Track, source: DownloadSource.YtDlp, base: String, quality: DownloadQuality): File {
         val dir = downloads.dir
         // yt-dlp reports progress on its own thread; hop it over to a coroutine for the db writes
         val progress = MutableStateFlow(0f)
         val reporter = CoroutineScope(currentCoroutineContext()).launch { progress.collect { report(track, it) } }
         try {
-            downloadWithYtDlp(source, dir, base) { progress.value = it }
+            downloadWithYtDlp(source, dir, base, quality) { progress.value = it }
         } finally {
             reporter.cancel()
         }
@@ -93,11 +100,11 @@ class DownloadWorker @AssistedInject constructor(
             ?: throw ProviderException("yt-dlp finished but no file was written")
     }
 
-    private suspend fun downloadWithYtDlp(source: DownloadSource.YtDlp, dir: File, base: String, onProgress: (Float) -> Unit) {
+    private suspend fun downloadWithYtDlp(source: DownloadSource.YtDlp, dir: File, base: String, quality: DownloadQuality, onProgress: (Float) -> Unit) {
         ytDlp.run(
             source.pageUrl,
             listOf(
-                "-f" to "bestaudio[ext=m4a]/bestaudio/best",
+                "-f" to quality.ytFormat,
                 "-o" to "${dir.absolutePath}/$base.%(ext)s",
                 "-c" to null,
                 "--no-playlist" to null,
@@ -120,9 +127,9 @@ class DownloadWorker @AssistedInject constructor(
         }.build()
 
         http.newCall(req).execute().use { resp ->
-            if (!resp.isSuccessful) throw ProviderException("http ${resp.code}")
+            if (!resp.isSuccessful) throw ProviderException("Server said ${resp.code}")
             val append = resp.code == 206
-            val body = resp.body ?: throw ProviderException("empty response")
+            val body = resp.body ?: throw ProviderException("Empty response")
             val total = body.contentLength().let { if (it > 0) it + (if (append) have else 0) else -1 }
             var written = if (append) have else 0L
             FileOutputStream(part, append).use { out ->
@@ -139,7 +146,7 @@ class DownloadWorker @AssistedInject constructor(
                 }
             }
         }
-        if (!part.renameTo(done)) throw ProviderException("couldn't finish the file")
+        if (!part.renameTo(done)) throw ProviderException("Couldn't finish the file")
         done
     }
 
@@ -155,7 +162,7 @@ class DownloadWorker @AssistedInject constructor(
         val n: Notification = NotificationCompat.Builder(applicationContext, StashApp.CHANNEL_DOWNLOADS)
             .setSmallIcon(R.drawable.ic_stat_stash)
             .setContentTitle(track.title)
-            .setContentText("downloading · ${track.artist}")
+            .setContentText("Downloading · ${track.artist}")
             .setProgress(100, (progress * 100).toInt(), progress <= 0f)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

@@ -48,7 +48,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
         val text = http.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw ProviderException("youtube music search failed (${r.code})")
+            if (!r.isSuccessful) throw ProviderException("YouTube Music search failed (${r.code})")
             r.body!!.string()
         }
         val items = mutableListOf<JsonObject>()
@@ -80,7 +80,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
         val text = http.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw ProviderException("youtube music radio failed (${r.code})")
+            if (!r.isSuccessful) throw ProviderException("YouTube Music radio failed (${r.code})")
             r.body!!.string()
         }
         val items = mutableListOf<JsonObject>()

@@ -38,7 +38,7 @@ class YtDlp @Inject constructor(
     /** held while yt-dlp is replacing itself so nothing runs a half-written binary */
     private val updateLock = Mutex()
 
-    private val _status = MutableStateFlow("starting")
+    private val _status = MutableStateFlow("Starting")
     val status: StateFlow<String> = _status
 
     fun start() {
@@ -46,11 +46,11 @@ class YtDlp @Inject constructor(
             try {
                 YoutubeDL.getInstance().init(context)
                 ready.complete(Unit)
-                _status.value = "ready"
+                _status.value = "Ready"
             } catch (e: Exception) {
                 Log.e(TAG, "yt-dlp init failed", e)
                 ready.completeExceptionally(e)
-                _status.value = "failed to start: ${e.message}"
+                _status.value = "Failed to start: ${e.message}"
                 return@launch
             }
             update()
@@ -61,17 +61,17 @@ class YtDlp @Inject constructor(
     suspend fun update(): String = withContext(Dispatchers.IO) {
         ready.await()
         updateLock.withLock {
-            _status.value = "updating"
+            _status.value = "Updating"
             val msg = try {
                 val result = YoutubeDL.getInstance().updateYoutubeDL(context, YoutubeDL.UpdateChannel._STABLE)
                 val version = YoutubeDL.getInstance().version(context) ?: "?"
                 settings.setYtDlpUpdated(version)
-                if (result == YoutubeDL.UpdateStatus.DONE) "updated to $version" else "already on $version"
+                if (result == YoutubeDL.UpdateStatus.DONE) "Updated to $version" else "Already on $version"
             } catch (e: Exception) {
                 Log.w(TAG, "yt-dlp update failed", e)
-                "update failed: ${e.message}"
+                "Update failed: ${e.message}"
             }
-            _status.value = "ready"
+            _status.value = "Ready"
             msg
         }
     }

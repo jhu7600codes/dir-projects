@@ -75,6 +75,7 @@ import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
 import app.stash.ui.components.Artwork
+import app.stash.ui.components.originName
 import app.stash.ui.components.LocalExtraTrackActions
 import app.stash.ui.components.NewPlaylistDialog
 import app.stash.ui.components.SheetAction
@@ -120,10 +121,10 @@ fun CollectionScreen(
         topBar = {
             TopAppBar(
                 title = { Text(title, Modifier.alpha(titleAlpha), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "back") } },
+                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
                 actions = {
                     if (menu.isNotEmpty()) Box {
-                        IconButton(onClick = { showMenu = true }) { Icon(Icons.Rounded.MoreVert, "more") }
+                        IconButton(onClick = { showMenu = true }) { Icon(Icons.Rounded.MoreVert, "More") }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                             menu.forEach { m ->
                                 DropdownMenuItem(
@@ -163,19 +164,19 @@ fun CollectionScreen(
                                 onClick = {
                                     when {
                                         tracks.isEmpty() -> Unit
-                                        downloaded == tracks.size -> actions.toast("all downloaded")
+                                        downloaded == tracks.size -> actions.toast("All downloaded")
                                         else -> actions.download(tracks)
                                     }
                                 },
                                 modifier = Modifier.size(52.dp),
                             ) {
                                 when {
-                                    tracks.isNotEmpty() && downloaded == tracks.size -> Icon(Icons.Rounded.DownloadDone, "downloaded")
+                                    tracks.isNotEmpty() && downloaded == tracks.size -> Icon(Icons.Rounded.DownloadDone, "Downloaded")
                                     downloading -> CircularProgressIndicator(
                                         progress = { if (tracks.isEmpty()) 0f else downloaded.toFloat() / tracks.size },
                                         modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp,
                                     )
-                                    else -> Icon(Icons.Rounded.Download, "download all")
+                                    else -> Icon(Icons.Rounded.Download, "Download all")
                                 }
                             }
                             FilledIconButton(
@@ -186,20 +187,20 @@ fun CollectionScreen(
                             ) {
                                 Icon(
                                     if (playingHere && current.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    "play", Modifier.size(34.dp),
+                                    "Play", Modifier.size(34.dp),
                                 )
                             }
                             FilledTonalIconButton(
                                 onClick = { actions.shuffle(tracks) }, modifier = Modifier.size(52.dp), enabled = tracks.isNotEmpty(),
                                 colors = IconButtonDefaults.filledTonalIconButtonColors(),
-                            ) { Icon(Icons.Rounded.Shuffle, "shuffle") }
+                            ) { Icon(Icons.Rounded.Shuffle, "Shuffle") }
                         }
                         Spacer(Modifier.height(12.dp))
                     }
                 }
                 if (missing.isNotEmpty()) item(key = "missing-note") {
                     Text(
-                        "${missing.size} couldn't be found, they're greyed out below. tap one to search for it.",
+                        "${missing.size} couldn't be found, they're greyed out below. Tap one to search for it.",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                     )
@@ -238,39 +239,39 @@ fun PlaylistScreen(id: Long) {
     CollectionScreen(
         title = p.name,
         kind = when (p.origin) {
-            "local" -> "playlist"
-            "mix" -> "made for you"
-            else -> "from ${p.origin}"
+            "local" -> "Playlist"
+            "mix" -> "Made for you"
+            else -> "From ${originName(p.origin)}"
         },
         tracks = tracks,
         positions = entries.map { it.position },
         missing = unmatched,
         artwork = p.coverUrl ?: tracks.firstOrNull()?.artworkUrl,
         menu = listOf(
-            MenuEntry("rename", Icons.Rounded.Edit) { renaming = true },
-            MenuEntry("remove downloads", Icons.Rounded.RemoveCircleOutline) { actions.downloads.delete(tracks.filter { it.isDownloaded }) },
-            MenuEntry("delete playlist", Icons.Rounded.Delete) { deleting = true },
+            MenuEntry("Rename", Icons.Rounded.Edit) { renaming = true },
+            MenuEntry("Remove downloads", Icons.Rounded.RemoveCircleOutline) { actions.downloads.delete(tracks.filter { it.isDownloaded }) },
+            MenuEntry("Delete playlist", Icons.Rounded.Delete) { deleting = true },
         ),
         extraTrackActions = { i, _ ->
-            listOf(SheetAction("remove from this playlist", Icons.Rounded.RemoveCircleOutline) {
+            listOf(SheetAction("Remove from this playlist", Icons.Rounded.RemoveCircleOutline) {
                 actions.library.removeFromPlaylist(id, entries[i].position)
             })
         },
     )
 
     if (renaming) NewPlaylistDialog(
-        title = "rename playlist", initial = p.name,
+        title = "Rename playlist", initial = p.name,
         onDismiss = { renaming = false },
         onCreate = { actions.library.rename(id, it) },
     )
     if (deleting) AlertDialog(
         onDismissRequest = { deleting = false },
-        title = { Text("delete ${p.name}?") },
-        text = { Text("the songs stay in your library and downloads aren't touched.") },
+        title = { Text("Delete ${p.name}?") },
+        text = { Text("The songs stay in your library and downloads aren't touched.") },
         confirmButton = {
-            TextButton(onClick = { deleting = false; actions.library.deletePlaylist(id); nav.popBackStack() }) { Text("delete") }
+            TextButton(onClick = { deleting = false; actions.library.deletePlaylist(id); nav.popBackStack() }) { Text("Delete") }
         },
-        dismissButton = { TextButton(onClick = { deleting = false }) { Text("cancel") } },
+        dismissButton = { TextButton(onClick = { deleting = false }) { Text("Cancel") } },
     )
 }
 
@@ -280,9 +281,9 @@ fun AlbumScreen(name: String, artist: String) {
     val tracks by remember(name, artist) { dao.observeAlbum(name, artist) }.collectAsState(initial = emptyList())
     val nav = LocalNav.current
     CollectionScreen(
-        title = name, kind = "album · $artist", tracks = tracks,
+        title = name, kind = "Album · $artist", tracks = tracks,
         artwork = tracks.firstNotNullOfOrNull { it.artworkUrl }, numbered = true,
-        menu = listOf(MenuEntry("go to artist", Icons.Rounded.Person) { nav.navigate(Routes.artist(artist)) }),
+        menu = listOf(MenuEntry("Go to artist", Icons.Rounded.Person) { nav.navigate(Routes.artist(artist)) }),
     )
 }
 
@@ -302,7 +303,7 @@ fun LikedScreen() {
     val tracks by remember { library.tracks.observeLiked() }.collectAsState(initial = emptyList())
     val unmatched by remember { library.playlists.observeUnmatched(LIKED_PLAYLIST_ID) }.collectAsState(initial = emptyList())
     CollectionScreen(
-        title = "liked songs", kind = "playlist", tracks = tracks, artwork = null, artIcon = Icons.Rounded.Favorite,
+        title = "Liked songs", kind = "Playlist", tracks = tracks, artwork = null, artIcon = Icons.Rounded.Favorite,
         missing = unmatched,
     )
 }
@@ -327,7 +328,7 @@ private fun MissingRow(u: UnmatchedTrack) {
     ListItem(
         headlineContent = { Text(u.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
-            Text(listOfNotNull(u.artist, "not found", formatDuration(u.durationMs).ifEmpty { null }).joinToString(" · "),
+            Text(listOfNotNull(u.artist, "Not found", formatDuration(u.durationMs).ifEmpty { null }).joinToString(" · "),
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         },
         leadingContent = {
@@ -336,7 +337,7 @@ private fun MissingRow(u: UnmatchedTrack) {
             }
         },
         trailingContent = {
-            IconButton(onClick = { actions.library.dismissUnmatched(u.id) }) { Icon(Icons.Rounded.Close, "remove") }
+            IconButton(onClick = { actions.library.dismissUnmatched(u.id) }) { Icon(Icons.Rounded.Close, "Remove") }
         },
         colors = ListItemDefaults.colors(
             containerColor = Color.Transparent,

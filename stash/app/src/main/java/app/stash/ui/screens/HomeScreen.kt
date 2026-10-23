@@ -77,7 +77,10 @@ fun HomeScreen() {
     val liked by remember { dao.observeLiked() }.collectAsState(initial = emptyList())
     val allPlaylists by actions.playlists.collectAsState()
     val playlists = remember(allPlaylists) { allPlaylists.filter { it.origin != "mix" } }
-    val mixes = remember(allPlaylists) { allPlaylists.filter { it.origin == "mix" }.sortedBy { mixOrder(it.name) } }
+    val allMixes = remember(allPlaylists) { allPlaylists.filter { it.origin == "mix" }.sortedBy { mixOrder(it.originId) } }
+    val mixes = allMixes.filter { it.originId?.startsWith("genre-") != true && it.originId?.startsWith("artist-") != true }
+    val genreMixes = allMixes.filter { it.originId?.startsWith("genre-") == true }
+    val artistMixes = allMixes.filter { it.originId?.startsWith("artist-") == true }
     val recs: RecsViewModel = hiltViewModel()
     val because by recs.becauseYouLiked.collectAsState()
     val rebuilding by recs.refreshing.collectAsState()
@@ -121,12 +124,12 @@ fun HomeScreen() {
                 item {
                     EmptyState(
                         Icons.Rounded.Search,
-                        "your stash is empty",
-                        "search for something to play, or bring your playlists over from spotify or apple music.",
+                        "Your Stash is empty",
+                        "Search for something to play, or bring your playlists over from Spotify or Apple Music.",
                     ) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilledTonalButton(onClick = { nav.navigate(Routes.SEARCH) }) { Text("search") }
-                            OutlinedButton(onClick = { nav.navigate(Routes.import()) }) { Text("import playlists") }
+                            FilledTonalButton(onClick = { nav.navigate(Routes.SEARCH) }) { Text("Search") }
+                            OutlinedButton(onClick = { nav.navigate(Routes.import()) }) { Text("Import playlists") }
                         }
                     }
                 }
@@ -136,7 +139,7 @@ fun HomeScreen() {
             // spotify-style quick picks: a two column grid of compact tiles
             item {
                 val tiles = buildList {
-                    if (liked.isNotEmpty()) add(QuickTile("liked songs", null, Icons.Rounded.Favorite) { nav.navigate(Routes.LIKED) })
+                    if (liked.isNotEmpty()) add(QuickTile("Liked songs", null, Icons.Rounded.Favorite) { nav.navigate(Routes.LIKED) })
                     if (downloaded.isNotEmpty()) add(QuickTile("downloads", null, Icons.Rounded.Download) { nav.navigate(Routes.DOWNLOADS) })
                     playlists.take(8 - size).forEach { p ->
                         add(QuickTile(p.name, p.coverUrl ?: p.firstArtwork, null) { nav.navigate(Routes.playlist(p.id)) })
@@ -154,9 +157,9 @@ fun HomeScreen() {
 
             if (mixes.isNotEmpty() || rebuilding) {
                 item {
-                    SectionHeader("made for you") {
+                    SectionHeader("Made for you") {
                         if (rebuilding) CircularProgressIndicator(Modifier.size(20.dp).padding(end = 4.dp), strokeWidth = 2.dp)
-                        else IconButton(onClick = { recs.rebuildMixes() }) { Icon(Icons.Rounded.Refresh, "make new mixes") }
+                        else IconButton(onClick = { recs.rebuildMixes() }) { Icon(Icons.Rounded.Refresh, "Make new mixes") }
                     }
                 }
                 item {
@@ -168,8 +171,30 @@ fun HomeScreen() {
                 }
             }
 
+            if (genreMixes.isNotEmpty()) {
+                item { SectionHeader("Your genres") }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(genreMixes, key = { it.id }) { m ->
+                            MixCard(m.name, m.description?.substringAfter("· "), m.coverUrl ?: m.firstArtwork) { nav.navigate(Routes.playlist(m.id)) }
+                        }
+                    }
+                }
+            }
+
+            if (artistMixes.isNotEmpty()) {
+                item { SectionHeader("Artist mixes") }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(artistMixes, key = { it.id }) { m ->
+                            MixCard(m.name, m.description, m.coverUrl ?: m.firstArtwork) { nav.navigate(Routes.playlist(m.id)) }
+                        }
+                    }
+                }
+            }
+
             if (recent.isNotEmpty()) {
-                item { SectionHeader("recently played") }
+                item { SectionHeader("Recently played") }
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         itemsIndexed(recent, key = { _, t -> t.id }) { i, t ->
@@ -180,7 +205,7 @@ fun HomeScreen() {
             }
 
             because?.let { (seed, list) ->
-                item { SectionHeader("because you liked ${seed.title}") }
+                item { SectionHeader("Because you liked ${seed.title}") }
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         itemsIndexed(list, key = { _, t -> "b:${t.id}" }) { i, t ->
@@ -191,7 +216,7 @@ fun HomeScreen() {
             }
 
             if (playlists.isNotEmpty()) {
-                item { SectionHeader("your playlists") }
+                item { SectionHeader("Your playlists") }
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         items(playlists, key = { it.id }) { p ->
@@ -202,7 +227,7 @@ fun HomeScreen() {
             }
 
             if (mostPlayed.size >= 3) {
-                item { SectionHeader("on repeat") }
+                item { SectionHeader("On repeat") }
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         itemsIndexed(mostPlayed, key = { _, t -> t.id }) { i, t ->
@@ -214,8 +239,8 @@ fun HomeScreen() {
 
             if (downloaded.isNotEmpty()) {
                 item {
-                    SectionHeader("ready offline") {
-                        IconButton(onClick = { actions.shuffle(downloaded) }) { Icon(Icons.Rounded.Shuffle, "shuffle downloads") }
+                    SectionHeader("Ready offline") {
+                        IconButton(onClick = { actions.shuffle(downloaded) }) { Icon(Icons.Rounded.Shuffle, "Shuffle downloads") }
                     }
                 }
                 item {
@@ -274,11 +299,13 @@ private fun GreetingCard(message: String, action: GreetingAction?, onAction: (Gr
     }
 }
 
-/** daily mix 1..4, then discover, then rewind */
-private fun mixOrder(name: String) = when {
-    name.startsWith("daily mix") -> name.filter(Char::isDigit).toIntOrNull() ?: 0
-    name.startsWith("discover") -> 10
-    else -> 20
+/** daily mix 1..4, then discover, then rewind; genre and artist mixes keep their order */
+private fun mixOrder(originId: String?) = when {
+    originId == null -> 99
+    originId.startsWith("daily-") -> originId.removePrefix("daily-").toIntOrNull() ?: 0
+    originId == "discover" -> 10
+    originId == "rewind" -> 20
+    else -> 30
 }
 
 /** spotify-style mix tile: the art with the name sitting on a dark fade at the bottom */
@@ -293,6 +320,15 @@ private fun MixCard(name: String, about: String?, art: Any?, onClick: () -> Unit
                         Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.75f))
                     )
                 )
+                // the stash stamp, like spotify's little logo on its own mixes
+                Surface(
+                    color = Color.Black.copy(alpha = 0.45f),
+                    contentColor = Color.White,
+                    shape = MaterialTheme.shapes.extraSmall,
+                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                ) {
+                    Text("For you by Stash", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                }
                 Text(
                     name, style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 2,
                     modifier = Modifier.align(Alignment.BottomStart).padding(12.dp),

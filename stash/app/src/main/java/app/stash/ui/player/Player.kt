@@ -137,7 +137,7 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit) {
                         Icon(if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, "play/pause")
                     }
                 }
-                IconButton(onClick = { actions.player.next() }) { Icon(Icons.Rounded.SkipNext, "next") }
+                IconButton(onClick = { actions.player.next() }) { Icon(Icons.Rounded.SkipNext, "Next") }
             }
             LinearProgressIndicator(
                 progress = { if (state.durationMs > 0) pos.toFloat() / state.durationMs else 0f },
@@ -226,14 +226,14 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onCollapse) { Icon(Icons.Rounded.KeyboardArrowDown, "close") }
+            IconButton(onClick = onCollapse) { Icon(Icons.Rounded.KeyboardArrowDown, "Close") }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("now playing", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Now playing", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 track?.album?.let {
                     Text(it, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, "more") }
+            IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, "More") }
         }
 
         Spacer(Modifier.weight(0.6f))
@@ -258,22 +258,22 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
             track?.let { t ->
                 IconButton(onClick = {
                     when (t.downloadState) {
-                        DownloadState.DONE -> actions.toast("already downloaded")
+                        DownloadState.DONE -> actions.toast("Already downloaded")
                         DownloadState.NONE, DownloadState.FAILED -> actions.download(listOf(t))
-                        else -> actions.toast("already in the download queue")
+                        else -> actions.toast("Already in the download queue")
                     }
                 }) {
                     when (t.downloadState) {
-                        DownloadState.DONE -> Icon(Icons.Rounded.DownloadDone, "downloaded", tint = accent)
+                        DownloadState.DONE -> Icon(Icons.Rounded.DownloadDone, "Downloaded", tint = accent)
                         DownloadState.DOWNLOADING -> CircularProgressIndicator(
                             progress = { t.downloadProgress }, Modifier.size(22.dp), color = accent, strokeWidth = 2.5.dp,
                         )
-                        else -> Icon(Icons.Rounded.Download, "download")
+                        else -> Icon(Icons.Rounded.Download, "Download")
                     }
                 }
                 IconButton(onClick = { actions.setLiked(t, !t.liked) }) {
                     Icon(
-                        if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, "like",
+                        if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, "Like",
                         tint = if (t.liked) accent else MaterialTheme.colorScheme.onSurface,
                     )
                 }
@@ -281,7 +281,7 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
         }
 
         state.error?.let {
-            Text("can't play this one: $it", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
+            Text("Can't play this one: $it", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp), maxLines = 2)
         }
 
@@ -299,7 +299,7 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
             Spacer(Modifier.weight(1f))
             if (state.isBuffering) {
                 Text(
-                    if (buffered <= pos) "loading…" else "buffering…",
+                    if (buffered <= pos) "Loading…" else "Buffering…",
                     style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.weight(1f))
@@ -310,12 +310,12 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { player.toggleShuffle() }) {
-                Icon(Icons.Rounded.Shuffle, "shuffle", tint = if (state.shuffle) accent else MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Rounded.Shuffle, "Shuffle", tint = if (state.shuffle) accent else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             FilledIconButton(
                 onClick = { player.previous() }, modifier = Modifier.size(56.dp),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-            ) { Icon(Icons.Rounded.SkipPrevious, "previous", Modifier.size(30.dp)) }
+            ) { Icon(Icons.Rounded.SkipPrevious, "Previous", Modifier.size(30.dp)) }
             FilledIconButton(
                 onClick = { player.togglePlay() },
                 modifier = Modifier.size(width = 96.dp, height = 80.dp),
@@ -328,10 +328,10 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
             FilledIconButton(
                 onClick = { player.next() }, modifier = Modifier.size(56.dp),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-            ) { Icon(Icons.Rounded.SkipNext, "next", Modifier.size(30.dp)) }
+            ) { Icon(Icons.Rounded.SkipNext, "Next", Modifier.size(30.dp)) }
             IconButton(onClick = { player.cycleRepeat() }) {
                 Icon(
-                    if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat, "repeat",
+                    if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat, "Repeat",
                     tint = if (state.repeatMode != Player.REPEAT_MODE_OFF) accent else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -349,7 +349,7 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
                 Spacer(Modifier.width(12.dp))
                 val upNext = state.queue.getOrNull(state.queueIndex + 1)
                 Text(
-                    upNext?.let { "up next: ${it.mediaMetadata.title}" } ?: "queue",
+                    upNext?.let { "up next: ${it.mediaMetadata.title}" } ?: "Queue",
                     style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -365,8 +365,8 @@ private fun QueueView(state: PlayerUiState, accent: Color, onClose: () -> Unit) 
     val list = rememberLazyListState(initialFirstVisibleItemIndex = state.queueIndex.coerceAtLeast(0))
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "back") }
-            Text("queue", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Back") }
+            Text("Queue", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             Text("${state.queue.size} songs", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(end = 16.dp))
         }
@@ -395,7 +395,7 @@ private fun QueueView(state: PlayerUiState, accent: Color, onClose: () -> Unit) 
                         Text(item.mediaMetadata.artist?.toString() ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    if (!current) IconButton(onClick = { player.removeAt(i) }) { Icon(Icons.Rounded.Close, "remove") }
+                    if (!current) IconButton(onClick = { player.removeAt(i) }) { Icon(Icons.Rounded.Close, "Remove") }
                 }
             }
         }

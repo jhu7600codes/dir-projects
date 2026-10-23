@@ -48,6 +48,9 @@ interface TrackDao {
     @Query("UPDATE tracks SET liked = 1, inLibrary = 1, likedAt = :likedAt, addedAt = CASE WHEN addedAt = 0 THEN :likedAt ELSE addedAt END WHERE id = :id")
     suspend fun importLike(id: String, likedAt: Long)
 
+    @Query("UPDATE tracks SET artworkUrl = :art, album = COALESCE(album, :album) WHERE id = :id")
+    suspend fun setCover(id: String, art: String, album: String?)
+
     @Query("UPDATE tracks SET lastPlayedAt = :now, playCount = playCount + 1 WHERE id = :id")
     suspend fun markPlayed(id: String, now: Long = System.currentTimeMillis())
 
@@ -173,7 +176,7 @@ interface PlaylistDao {
     suspend fun touch(id: Long, now: Long = System.currentTimeMillis())
 
     @Query(
-        """SELECT p.id, p.name, p.description, p.coverUrl, p.origin, p.updatedAt,
+        """SELECT p.id, p.name, p.description, p.coverUrl, p.origin, p.originId, p.updatedAt,
            (SELECT COUNT(*) FROM playlist_tracks pt WHERE pt.playlistId = p.id) AS trackCount,
            (SELECT COUNT(*) FROM playlist_tracks pt JOIN tracks t ON t.id = pt.trackId
               WHERE pt.playlistId = p.id AND t.downloadState = 'DONE') AS downloadedCount,
@@ -293,6 +296,26 @@ interface ImportDao {
            ORDER BY id DESC"""
     )
     fun observeMissing(): Flow<List<UnmatchedTrack>>
+
+    /**
+     * saved songs still wearing a youtube video thumbnail (or nothing) that the cover fixer
+     * hasn't tried yet. youtube music song art (googleusercontent) is already the real cover.
+     */
+    @Query(
+        """SELECT * FROM tracks WHERE (artworkUrl IS NULL OR artworkUrl LIKE '%ytimg.com%')
+           AND (inLibrary = 1 OR liked = 1 OR id IN (SELECT trackId FROM playlist_tracks))
+           AND id NOT IN (SELECT trackId FROM cover_checks) LIMIT :limit"""
+    )
+    suspend fun needingCovers(limit: Int = 50): List<Track>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun coverChecked(check: CoverCheck)
+
+    @Query("SELECT * FROM artist_genres WHERE artist = :artist")
+    suspend fun genre(artist: String): ArtistGenre?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveGenre(g: ArtistGenre)
 
     @Query("SELECT * FROM match_cache WHERE `key` = :key")
     suspend fun cached(key: String): MatchCache?

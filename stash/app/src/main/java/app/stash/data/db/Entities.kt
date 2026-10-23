@@ -105,6 +105,7 @@ data class PlaylistWithCount(
     val description: String?,
     val coverUrl: String?,
     val origin: String,
+    val originId: String?,
     val updatedAt: Long,
     val trackCount: Int,
     val downloadedCount: Int,
@@ -123,6 +124,21 @@ data class ArtistSummary(
     val artist: String,
     val artworkUrl: String?,
     val trackCount: Int,
+)
+
+/** an artist's main genre (from deezer), so genre mixes don't look it up every day */
+@Entity(tableName = "artist_genres")
+data class ArtistGenre(
+    @PrimaryKey val artist: String,
+    val genre: String?,
+    val checkedAt: Long = System.currentTimeMillis(),
+)
+
+/** tracks the cover fixer already looked at, so it doesn't ask again every start */
+@Entity(tableName = "cover_checks")
+data class CoverCheck(
+    @PrimaryKey val trackId: String,
+    val checkedAt: Long = System.currentTimeMillis(),
 )
 
 /** unmatched songs from an imported liked songs list hang off this fake playlist id */
@@ -156,6 +172,7 @@ data class ImportJobTrack(
     val album: String? = null,
     val durationMs: Long = 0,
     val artworkUrl: String? = null,
+    @ColumnInfo(defaultValue = "NULL") val sourceUri: String? = null,
     /** pending, matched, unmatched */
     val state: String = "pending",
 )

@@ -21,13 +21,13 @@ class JamendoProvider @Inject constructor(
     private val settings: Settings,
 ) : MusicProvider {
     override val id = "jamendo"
-    override val displayName = "jamendo"
+    override val displayName = "Jamendo"
 
     override suspend fun isConfigured() = settings.current().jamendoClientId.isNotBlank()
 
     private suspend fun api(path: String, params: Map<String, String>): List<JsonObject> {
         val clientId = settings.current().jamendoClientId
-        if (clientId.isBlank()) throw ProviderException("jamendo needs a client id (settings)")
+        if (clientId.isBlank()) throw ProviderException("Jamendo needs a client ID (Settings)")
         val url = "https://api.jamendo.com/v3.0/$path/".toHttpUrl().newBuilder()
             .addQueryParameter("client_id", clientId)
             .addQueryParameter("format", "json")
@@ -38,7 +38,7 @@ class JamendoProvider @Inject constructor(
         val root = lenientJson.parseToJsonElement(text).jsonObject
         val status = root.obj("headers")?.str("status")
         if (status != null && status != "success") {
-            throw ProviderException("jamendo: ${root.obj("headers")?.str("error_message") ?: status}")
+            throw ProviderException("Jamendo: ${root.obj("headers")?.str("error_message") ?: status}")
         }
         return root["results"].asObjectList()
     }
@@ -66,7 +66,7 @@ class JamendoProvider @Inject constructor(
 
     override suspend fun resolveStream(locator: Locator): StreamSource {
         val url = locator.streamHint ?: metadata(locator.sourceId)?.streamHint
-            ?: throw ProviderException("jamendo: track not found")
+            ?: throw ProviderException("Jamendo: song not found")
         return StreamSource(url)
     }
 
@@ -74,7 +74,7 @@ class JamendoProvider @Inject constructor(
         val o = api("tracks", mapOf("id" to locator.sourceId)).firstOrNull()
         val allowed = o?.str("audiodownload_allowed") != "false"
         val url = o?.str("audiodownload")?.takeIf { allowed } ?: locator.streamHint ?: o?.str("audio")
-            ?: throw ProviderException("jamendo: no download")
+            ?: throw ProviderException("Jamendo: no download for this one")
         return DownloadSource.Http(url, "mp3")
     }
 }
@@ -86,7 +86,7 @@ class JamendoProvider @Inject constructor(
 @Singleton
 class InternetArchiveProvider @Inject constructor(private val http: OkHttpClient) : MusicProvider {
     override val id = "archive"
-    override val displayName = "internet archive"
+    override val displayName = "Internet Archive"
 
     private fun fileUrl(identifier: String, name: String) =
         "https://archive.org/download/".toHttpUrl().newBuilder()
@@ -172,7 +172,7 @@ class InternetArchiveProvider @Inject constructor(private val http: OkHttpClient
 @Singleton
 class FreeMusicArchiveProvider @Inject constructor(private val http: OkHttpClient) : MusicProvider {
     override val id = "fma"
-    override val displayName = "free music archive"
+    override val displayName = "Free Music Archive"
 
     private val playItem = Regex("""<div class="play-item[^"]*"[^>]*data-track-info='([^']*)'""")
     private val duration = Regex("""^\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$""", RegexOption.MULTILINE)
@@ -226,7 +226,7 @@ class FreeMusicArchiveProvider @Inject constructor(private val http: OkHttpClien
 
     override suspend fun resolveStream(locator: Locator): StreamSource {
         val url = locator.streamHint ?: metadata(locator.sourceId)?.streamHint
-            ?: throw ProviderException("fma: track not found")
+            ?: throw ProviderException("Free Music Archive: song not found")
         return StreamSource(url, mapOf("User-Agent" to BROWSER_UA))
     }
 

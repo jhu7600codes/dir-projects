@@ -28,6 +28,7 @@ import app.stash.data.db.TrackDao
 import app.stash.data.db.UnmatchedTrack
 import app.stash.providers.Matcher
 import app.stash.providers.Resolver
+import app.stash.recs.Covers
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.async
@@ -47,6 +48,7 @@ class ImportWorker @AssistedInject constructor(
     private val tracks: TrackDao,
     private val playlists: PlaylistDao,
     private val resolver: Resolver,
+    private val covers: Covers,
 ) : CoroutineWorker(context, params) {
 
     private var lastNotified = 0L
@@ -54,11 +56,12 @@ class ImportWorker @AssistedInject constructor(
     private val missing = java.util.Collections.synchronizedList(mutableListOf<String>())
 
     override suspend fun doWork(): Result {
-        runCatching { setForeground(notification("getting ready", null, 0, 0)) }
+        runCatching { setForeground(notification("Getting ready", null, 0, 0)) }
         while (!isStopped) {
             val job = dao.nextJob() ?: break
             runJob(job)
         }
+        covers.fixInBackground()
         return Result.success()
     }
 
@@ -124,6 +127,8 @@ class ImportWorker @AssistedInject constructor(
             else if (fresh) return null
         }
         val hit = runCatching { resolver.match(t.title, t.artist, t.durationMs) }.getOrNull()
+        // the spotify cover beats whatever thumbnail the matched source has
+        val art = t.artworkUrl ?: hit?.let { covers.spotify(t.sourceUri) }
         val saved = hit?.let {
             // keep the nicer metadata from spotify / the csv
             tracks.ensure(
@@ -131,7 +136,7 @@ class ImportWorker @AssistedInject constructor(
                     title = t.title,
                     artist = t.artist,
                     album = t.album ?: it.album,
-                    artworkUrl = t.artworkUrl ?: it.artworkUrl,
+                    artworkUrl = art ?: it.artworkUrl,
                     durationMs = if (t.durationMs > 0) t.durationMs else it.durationMs,
                 )
             )
@@ -161,13 +166,13 @@ class ImportWorker @AssistedInject constructor(
                 // pull the notification down to see what couldn't be found so far
                 if (recentMissing.isNotEmpty()) setStyle(
                     NotificationCompat.InboxStyle()
-                        .setBigContentTitle("couldn't find ${missing.size} so far")
+                        .setBigContentTitle("Couldn't find ${missing.size} so far")
                         .also { style -> recentMissing.forEach { style.addLine(it) } }
                         .setSummaryText(text ?: "$done of $total")
                 )
             }
             .setSmallIcon(R.drawable.ic_stat_stash)
-            .setContentTitle("moving playlists: $title")
+            .setContentTitle("Moving playlists: $title")
             .setContentText(
                 (text ?: "$done of $total") + if (missing.isNotEmpty()) " · ${missing.size} not found" else ""
             )

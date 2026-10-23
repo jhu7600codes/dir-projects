@@ -6,7 +6,7 @@ A personal music app for Android in Kotlin and Jetpack Compose. It streams from 
 
 All six milestones from the plan are in this first build:
 
-1. **Player + youtube search**: Media3/ExoPlayer in a `MediaSessionService`, so you get background playback, a media notification and lockscreen controls. Search uses YouTube Music's own search API (well under a second), with yt-dlp's `ytsearch` as the fallback. The next song's stream is looked up while the current one plays, so there's no gap between songs.
+1. **Player + youtube search**: Media3/ExoPlayer in a `MediaSessionService`, so you get background playback, a media notification and lockscreen controls. Search shows one list of songs from every source (duplicates removed, best matches first). YouTube search uses YouTube Music's own search API (well under a second), with yt-dlp's `ytsearch` as the fallback. The next song's stream is looked up while the current one plays, so there's no gap between songs.
 2. **Library**: Room db with saved songs, liked songs, playlists, and albums/artists grouped from your saved songs.
 3. **Downloads**: a download button on every song, album and playlist. They run on a WorkManager queue with resume, retries (3 tries with exponential backoff), a wi-fi only toggle and a foreground progress notification. Files go to app storage (`files/music/`). The player always uses the local file if there is one.
 4. **Fallback providers**: youtube → soundcloud → bandcamp → jamendo → internet archive → free music archive.
@@ -44,11 +44,22 @@ Everything runs on the phone. Your plays and likes pick the seeds, and YouTube M
 - **because you liked …**: a home row of songs similar to your latest like.
 - **start radio** on any song (long-press), and **autoplay** (settings → playback) keeps the music going with similar songs when the queue ends.
 
+- **genre mixes** ("For you by Stash"): every artist's main genre comes from Deezer's public API (cached), and the genres you listen to most each get a mix of your favourite artists from that genre plus similar songs.
+- **artist mixes** ("Overtonight Mix"): the artist's songs, yours and their popular ones, mixed with similar artists.
+
 Mixes are normal playlists (origin `mix`), so they can be downloaded. They aren't part of the cloud backup, since every phone rebuilds them.
 
 ## Home greetings
 
 The title follows the time of day, with a few variants each. With "greet me by place" on (settings, asks for location), the line under it follows where you are: airport, cafe, station or train (offers your most common playlist artist), driving, gym, library, and so on. The place comes from one location fix plus OpenStreetMap's Overpass API, cached for 10 minutes.
+
+## Covers
+
+Saved songs get their real album cover instead of a YouTube video thumbnail. For Spotify imports the cover comes from Spotify itself (public oEmbed, using the track URI from the link or the CSV). Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.
+
+## Download size
+
+Settings live on the downloads screen. **High** keeps the best stream (about 130–160 kbps). **Balanced** (the default) picks YouTube's ~70 kbps Opus stream and re-encodes other sources to 96 kbps AAC. **Data saver** goes down to about 50–64 kbps. Re-encoding uses media3 Transformer, so the phone's own encoder, no ffmpeg, and a file is only replaced if the result is actually smaller. "Shrink my downloads" re-encodes what's already on the phone in the background.
 
 ## How playback finds audio
 

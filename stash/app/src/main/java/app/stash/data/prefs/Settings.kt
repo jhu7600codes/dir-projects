@@ -19,6 +19,19 @@ private val Context.dataStore by preferencesDataStore("settings")
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+/**
+ * how big downloads are. youtube streams already come in several sizes, so yt-dlp just picks
+ * the right one ([ytFormat]); other sources get re-encoded to aac at [aacBitrate] on the phone.
+ */
+enum class DownloadQuality(val label: String, val about: String, val ytFormat: String, val aacBitrate: Int?) {
+    HIGH("High", "Best available, about 130–160 kbps", "bestaudio[ext=m4a]/bestaudio/best", null),
+    BALANCED(
+        "Balanced", "About 70–96 kbps. Still sounds great, about half the size",
+        "bestaudio[abr<=100]/bestaudio[abr<=140]/bestaudio/best", 96_000,
+    ),
+    SAVER("Data saver", "About 50–64 kbps, the smallest files", "worstaudio[abr>=40]/bestaudio[abr<=70]/bestaudio/best", 64_000),
+}
+
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = true,
@@ -36,6 +49,7 @@ data class AppSettings(
     val locationGreetings: Boolean = false,
     /** keep playing similar songs when the queue runs out */
     val autoplay: Boolean = true,
+    val downloadQuality: DownloadQuality = DownloadQuality.BALANCED,
 )
 
 @Singleton
@@ -57,6 +71,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val cloudReady = booleanPreferencesKey("cloud_ready")
         val locationGreetings = booleanPreferencesKey("location_greetings")
         val autoplay = booleanPreferencesKey("autoplay")
+        val quality = stringPreferencesKey("download_quality")
     }
 
     private val store get() = context.dataStore
@@ -79,6 +94,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         cloudReady = this[Keys.cloudReady] ?: false,
         locationGreetings = this[Keys.locationGreetings] ?: false,
         autoplay = this[Keys.autoplay] ?: true,
+        downloadQuality = this[Keys.quality]?.let { runCatching { DownloadQuality.valueOf(it) }.getOrNull() } ?: DownloadQuality.BALANCED,
     )
 
     suspend fun setTheme(mode: ThemeMode) = store.edit { it[Keys.theme] = mode.name }
@@ -95,6 +111,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         it[Keys.ytUpdated] = System.currentTimeMillis()
         it[Keys.ytVersion] = version
     }
+    suspend fun setDownloadQuality(q: DownloadQuality) = store.edit { it[Keys.quality] = q.name }
     suspend fun setAutoplay(on: Boolean) = store.edit { it[Keys.autoplay] = on }
     suspend fun setLocationGreetings(on: Boolean) = store.edit { it[Keys.locationGreetings] = on }
 

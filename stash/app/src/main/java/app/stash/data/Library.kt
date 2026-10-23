@@ -34,7 +34,7 @@ class Library @Inject constructor(
     fun removeFromLibrary(track: Track) = scope.launch { tracks.removeFromLibrary(track.id) }
 
     suspend fun createPlaylist(name: String): Long =
-        playlists.insert(Playlist(name = name.trim().ifEmpty { "new playlist" }))
+        playlists.insert(Playlist(name = name.trim().ifEmpty { "New playlist" }))
 
     fun addToPlaylist(playlistId: Long, items: List<Track>) = scope.launch {
         var pos = playlists.nextPosition(playlistId)

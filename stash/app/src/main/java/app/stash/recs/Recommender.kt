@@ -14,7 +14,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
@@ -34,6 +36,7 @@ class Recommender @Inject constructor(
     private val db: StashDatabase,
     private val tracks: TrackDao,
     private val playlists: PlaylistDao,
+    private val genres: Genres,
 ) {
     private data class CachedRadio(val at: Long, val tracks: List<Track>)
     private val radios = ConcurrentHashMap<String, CachedRadio>()
@@ -67,6 +70,8 @@ class Recommender @Inject constructor(
         val today = startOfDay()
         if (force || (existing["daily-1"]?.updatedAt ?: 0) < today) {
             runCatching { dailyMixes(taste, existing) }.onFailure { Log.w(TAG, "daily mixes failed", it) }
+            runCatching { genreMixes(taste, existing) }.onFailure { Log.w(TAG, "genre mixes failed", it) }
+            runCatching { artistMixes(taste, existing) }.onFailure { Log.w(TAG, "artist mixes failed", it) }
         }
         if (force || (existing["discover"]?.updatedAt ?: 0) < startOfWeek()) {
             runCatching { discover(taste) }.onFailure { Log.w(TAG, "discover failed", it) }
@@ -97,10 +102,75 @@ class Recommender @Inject constructor(
             }
         }.awaitAll()
         made.forEachIndexed { i, (id, mix, about) ->
-            if (mix.size >= 5) save(id, "daily mix ${i + 1}", about, mix)
+            if (mix.size >= 5) save(id, "Daily Mix ${i + 1}", about, mix)
         }
         // fewer top artists than before: drop the leftover mixes
         existing.keys.filterNotNull().filter { it.startsWith("daily-") && made.none { m -> m.first == it } }
+            .forEach { id -> existing[id]?.let { playlists.deleteFully(it.id) } }
+    }
+
+    /** your artists ranked by plays and likes, with their songs */
+    private fun topArtists(taste: List<Track>, n: Int): List<Pair<String, List<Track>>> =
+        taste.groupBy { firstArtist(it.artist) }.filterKeys { it.isNotBlank() }.entries
+            .map { (artist, list) -> artist to list }
+            .sortedByDescending { (_, list) -> list.sumOf { it.playCount * 2 + (if (it.liked) 5 else 0) + 1 } }
+            .take(n)
+
+    /**
+     * one mix per genre you listen to most: your favourite artists from that genre plus
+     * similar songs from their radios, labelled "For you by Stash".
+     */
+    private suspend fun genreMixes(taste: List<Track>, existing: Map<String?, Playlist>) = coroutineScope {
+        val known = knownKeys()
+        val random = Random(startOfDay() + 7)
+        val artists = topArtists(taste, 40)
+        val gate = Semaphore(4)
+        val withGenre = artists.map { (artist, own) ->
+            async { gate.withPermit { Triple(artist, own, runCatching { genres.of(artist) }.getOrNull()) } }
+        }.awaitAll().filter { it.third != null }
+
+        val topGenres = withGenre.groupBy { it.third!! }.entries
+            .filter { (_, list) -> list.size >= 2 || list.sumOf { it.second.size } >= 6 }
+            .sortedByDescending { (_, list) -> list.sumOf { it.second.size } }
+            .take(MAX_GENRES)
+
+        val made = topGenres.map { (genre, list) ->
+            async {
+                val own = list.take(6).flatMap { it.second.take(6) }.shuffled(random).take(15)
+                val fresh = list.take(2).map { (_, songs, _) ->
+                    async { runCatching { radioFor(songs.first()) }.getOrDefault(emptyList()) }
+                }.awaitAll().flatten().filter { key(it) !in known }.distinctBy { it.id }.capPerArtist(2).shuffled(random).take(15)
+                val names = list.take(3).joinToString(", ") { it.first }
+                Triple("genre-${genre.lowercase()}", genre, interleave(own, fresh).take(30) to "For you by Stash · $names and more")
+            }
+        }.awaitAll()
+        made.forEach { (id, name, mix) -> if (mix.first.size >= 5) save(id, name, mix.second, mix.first) }
+        dropStale(existing, "genre-", made.map { it.first })
+    }
+
+    /** "<artist> Mix": the artist's songs (yours and their popular ones) mixed with similar artists */
+    private suspend fun artistMixes(taste: List<Track>, existing: Map<String?, Playlist>) = coroutineScope {
+        val known = knownKeys()
+        val random = Random(startOfDay() + 13)
+        val made = topArtists(taste, MAX_ARTIST_MIXES).map { (artist, own) ->
+            async {
+                val popular = runCatching { music.search(artist, 15) }.getOrDefault(emptyList())
+                    .filter { firstArtist(it.artist).equals(artist, ignoreCase = true) }
+                val theirs = (own + popular).distinctBy { key(it) }.shuffled(random).take(18)
+                val similar = runCatching { radioFor(own.first()) }.getOrDefault(emptyList())
+                    .filter { key(it) !in known && !firstArtist(it.artist).equals(artist, ignoreCase = true) }
+                    .capPerArtist(1).take(12)
+                Triple("artist-${artist.lowercase()}", "$artist Mix", interleave(theirs, similar).take(30))
+            }
+        }.awaitAll()
+        made.forEach { (id, name, mix) ->
+            if (mix.size >= 5) save(id, name, "${name.removeSuffix(" Mix")} and similar artists", mix)
+        }
+        dropStale(existing, "artist-", made.map { it.first })
+    }
+
+    private suspend fun dropStale(existing: Map<String?, Playlist>, prefix: String, keep: List<String>) {
+        existing.keys.filterNotNull().filter { it.startsWith(prefix) && it !in keep }
             .forEach { id -> existing[id]?.let { playlists.deleteFully(it.id) } }
     }
 
@@ -116,13 +186,13 @@ class Recommender @Inject constructor(
             .capPerArtist(2)
             .take(30)
             .shuffled(random)
-        if (picks.size >= 5) save("discover", "discover weekly", "new to you, from what you play. new every monday", picks)
+        if (picks.size >= 5) save("discover", "Discover Weekly", "New to you, picked from what you play. New every Monday", picks)
     }
 
     private suspend fun rewind() {
         val old = tracks.forgottenFavorites(System.currentTimeMillis() - 30L * DAY_MS)
         val existing = playlists.findMix("rewind")
-        if (old.size >= 8) save("rewind", "repeat rewind", "songs you had on repeat a while ago", old)
+        if (old.size >= 8) save("rewind", "Repeat Rewind", "Songs you had on repeat a while ago", old)
         else if (existing != null) playlists.deleteFully(existing.id)
     }
 
@@ -160,6 +230,8 @@ class Recommender @Inject constructor(
         private const val RADIO_CACHE_MS = 60 * 60 * 1000L
         private const val DAY_MS = 24 * 60 * 60 * 1000L
         private const val MAX_DAILY = 4
+        private const val MAX_GENRES = 4
+        private const val MAX_ARTIST_MIXES = 4
         private const val MIN_TASTE = 5
 
         fun firstArtist(a: String) = a.split(',', '&', ';').first().trim()

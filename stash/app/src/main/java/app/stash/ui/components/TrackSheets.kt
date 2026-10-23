@@ -60,7 +60,7 @@ import app.stash.ui.LocalNav
 import app.stash.ui.Routes
 import kotlinx.coroutines.launch
 
-/** an extra row a screen can add to the track sheet, e.g. "remove from this playlist" */
+/** an extra row a screen can add to the track sheet, e.g. "Remove from this playlist" */
 data class SheetAction(val label: String, val icon: ImageVector, val onClick: () -> Unit)
 
 val LocalExtraTrackActions = compositionLocalOf<(Track) -> List<SheetAction>> { { emptyList() } }
@@ -96,34 +96,34 @@ fun TrackOptionsSheet(track: Track, onDismiss: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        "from ${t.resolvedProvider?.let { "${t.provider} → $it" } ?: t.provider}",
+                        "From ${t.resolvedProvider?.let { "${t.provider} → $it" } ?: t.provider}",
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline,
                     )
                 }
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            SheetRow(if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (t.liked) "remove from liked songs" else "like") {
+            SheetRow(if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (t.liked) "Remove from liked songs" else "Like") {
                 actions.setLiked(t, !t.liked); close {}
             }
-            SheetRow(Icons.Rounded.Radio, "start radio") { actions.startRadio(t); close {} }
-            SheetRow(Icons.Rounded.PlaylistPlay, "play next") { actions.playNext(t); close {} }
-            SheetRow(Icons.AutoMirrored.Rounded.QueueMusic, "add to queue") { actions.addToQueue(listOf(t)); close {} }
-            SheetRow(Icons.AutoMirrored.Rounded.PlaylistAdd, "add to playlist") { pickPlaylist = true }
+            SheetRow(Icons.Rounded.Radio, "Start radio") { actions.startRadio(t); close {} }
+            SheetRow(Icons.Rounded.PlaylistPlay, "Play next") { actions.playNext(t); close {} }
+            SheetRow(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") { actions.addToQueue(listOf(t)); close {} }
+            SheetRow(Icons.AutoMirrored.Rounded.PlaylistAdd, "Add to playlist") { pickPlaylist = true }
             if (t.inLibrary) {
-                SheetRow(Icons.Rounded.LibraryAddCheck, "remove from library") { actions.library.removeFromLibrary(t); close {} }
+                SheetRow(Icons.Rounded.LibraryAddCheck, "Remove from library") { actions.library.removeFromLibrary(t); close {} }
             } else {
-                SheetRow(Icons.Rounded.LibraryAdd, "save to library") { actions.library.save(t); actions.toast("saved"); close {} }
+                SheetRow(Icons.Rounded.LibraryAdd, "Save to library") { actions.library.save(t); actions.toast("Saved"); close {} }
             }
             when (t.downloadState) {
-                DownloadState.DONE -> SheetRow(Icons.Rounded.Delete, "remove download") { actions.removeDownload(t); close {} }
+                DownloadState.DONE -> SheetRow(Icons.Rounded.Delete, "Remove download") { actions.removeDownload(t); close {} }
                 DownloadState.QUEUED, DownloadState.DOWNLOADING ->
-                    SheetRow(Icons.Rounded.RemoveCircleOutline, "cancel download") { actions.downloads.cancel(t); close {} }
-                else -> SheetRow(Icons.Rounded.Download, "download") { actions.download(listOf(t)); close {} }
+                    SheetRow(Icons.Rounded.RemoveCircleOutline, "Cancel download") { actions.downloads.cancel(t); close {} }
+                else -> SheetRow(Icons.Rounded.Download, "Download") { actions.download(listOf(t)); close {} }
             }
-            if (t.artist.isNotBlank()) SheetRow(Icons.Rounded.Person, "go to artist") {
+            if (t.artist.isNotBlank()) SheetRow(Icons.Rounded.Person, "Go to artist") {
                 close { nav.navigate(Routes.artist(t.artist)) }
             }
-            if (!t.album.isNullOrBlank()) SheetRow(Icons.Rounded.Album, "go to album") {
+            if (!t.album.isNullOrBlank()) SheetRow(Icons.Rounded.Album, "Go to album") {
                 close { nav.navigate(Routes.album(t.album, t.artist)) }
             }
             extra.forEach { a -> SheetRow(a.icon, a.label) { a.onClick(); close {} } }
@@ -159,12 +159,12 @@ fun AddToPlaylistDialog(tracks: List<Track>, onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("add to playlist") },
+        title = { Text("Add to playlist") },
         text = {
             LazyColumn(Modifier.height(360.dp)) {
                 item {
                     ListItem(
-                        headlineContent = { Text("new playlist") },
+                        headlineContent = { Text("New playlist") },
                         leadingContent = { Icon(Icons.Rounded.Add, null) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         modifier = Modifier.clickable { creating = true },
@@ -183,12 +183,12 @@ fun AddToPlaylistDialog(tracks: List<Track>, onDismiss: () -> Unit) {
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("cancel") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }
 
 @Composable
-fun NewPlaylistDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit, initial: String = "", title: String = "new playlist") {
+fun NewPlaylistDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit, initial: String = "", title: String = "New playlist") {
     var name by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -196,12 +196,12 @@ fun NewPlaylistDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit, initial
         text = {
             OutlinedTextField(
                 value = name, onValueChange = { name = it }, singleLine = true,
-                label = { Text("name") }, shape = MaterialTheme.shapes.medium,
+                label = { Text("Name") }, shape = MaterialTheme.shapes.medium,
             )
         },
         confirmButton = {
-            TextButton(onClick = { onCreate(name.ifBlank { "new playlist" }); onDismiss() }) { Text("save") }
+            TextButton(onClick = { onCreate(name.ifBlank { "New playlist" }); onDismiss() }) { Text("Save") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

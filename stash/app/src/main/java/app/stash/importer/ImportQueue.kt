@@ -45,7 +45,7 @@ class ImportQueue @Inject constructor(
                     )
                 )
                 dao.insertTracks(p.tracks.mapIndexed { i, t ->
-                    ImportJobTrack(jobId, i, t.title, t.artist, t.album, t.durationMs, t.artworkUrl)
+                    ImportJobTrack(jobId, i, t.title, t.artist, t.album, t.durationMs, t.artworkUrl, t.sourceUri)
                 })
             }
         }

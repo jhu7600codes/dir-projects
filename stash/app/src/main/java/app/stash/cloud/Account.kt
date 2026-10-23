@@ -66,8 +66,8 @@ class Account @Inject constructor(
     }
 
     private suspend fun save(o: JsonObject, email: String) {
-        val access = o.str("access_token") ?: throw ProviderException("login failed")
-        val refresh = o.str("refresh_token") ?: throw ProviderException("login failed")
+        val access = o.str("access_token") ?: throw ProviderException("Login failed")
+        val refresh = o.str("refresh_token") ?: throw ProviderException("Login failed")
         val expiresIn = (o.num("expires_in") ?: 3600.0).toLong()
         val userEmail = o.obj("user")?.str("email") ?: email.trim()
         settings.saveSession(Settings.Session(userEmail, access, refresh, System.currentTimeMillis() + (expiresIn - 60) * 1000))
@@ -88,12 +88,12 @@ class Account @Inject constructor(
 
     private fun authError(body: String, code: Int): String {
         val o = runCatching { lenientJson.parseToJsonElement(body).jsonObject }.getOrNull()
-        val msg = o?.str("msg") ?: o?.str("error_description") ?: o?.str("message") ?: "error $code"
+        val msg = o?.str("msg") ?: o?.str("error_description") ?: o?.str("message") ?: "Error $code"
         return when {
-            msg.contains("Invalid login credentials", true) -> "wrong email or password"
-            msg.contains("Email not confirmed", true) -> "confirm your email first (check your inbox)"
-            msg.contains("already registered", true) -> "that email already has an account, log in instead"
-            else -> msg.lowercase()
+            msg.contains("Invalid login credentials", true) -> "Wrong email or password"
+            msg.contains("Email not confirmed", true) -> "Confirm your email first (check your inbox)"
+            msg.contains("already registered", true) -> "That email already has an account, log in instead"
+            else -> msg
         }
     }
 }

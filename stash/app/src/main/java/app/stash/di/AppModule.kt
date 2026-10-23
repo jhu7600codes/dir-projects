@@ -22,7 +22,7 @@ object AppModule {
     @Singleton
     fun database(@ApplicationContext context: Context): StashDatabase =
         Room.databaseBuilder(context, StashDatabase::class.java, "stash.db")
-            .addMigrations(StashDatabase.MIGRATION_1_2)
+            .addMigrations(StashDatabase.MIGRATION_1_2, StashDatabase.MIGRATION_2_3)
             .build()
 
     @Provides

@@ -30,10 +30,10 @@ class AppViewModel @Inject constructor(
     val downloads: Downloads,
     val library: Library,
     private val recommender: Recommender,
-    settings: Settings,
+    val prefs: Settings,
 ) : ViewModel() {
 
-    val settings: StateFlow<AppSettings?> = settings.flow.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val settings: StateFlow<AppSettings?> = prefs.flow.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val playlists: StateFlow<List<PlaylistWithCount>> =
         library.playlists.observeAll().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -54,44 +54,44 @@ class AppViewModel @Inject constructor(
 
     /** plays the song, then youtube music's radio for it */
     fun startRadio(track: Track) {
-        toast("starting radio")
+        toast("Starting radio")
         val started = player.play(listOf(track))
         viewModelScope.launch {
             val similar = runCatching { recommender.radioFor(track) }.getOrDefault(emptyList())
             started?.join() // the song itself has to be queued before the radio goes after it
-            if (similar.isEmpty()) toast("couldn't find similar songs") else player.addToQueue(similar)
+            if (similar.isEmpty()) toast("Couldn't find similar songs") else player.addToQueue(similar)
         }
     }
 
     fun playNext(track: Track) {
-        player.playNext(track); toast("playing next")
+        player.playNext(track); toast("Playing next")
     }
 
     fun addToQueue(tracks: List<Track>) {
-        player.addToQueue(tracks); toast(if (tracks.size == 1) "added to queue" else "${tracks.size} added to queue")
+        player.addToQueue(tracks); toast(if (tracks.size == 1) "Added to queue" else "${tracks.size} added to queue")
     }
 
     fun download(tracks: List<Track>) {
         downloads.enqueue(tracks)
-        toast(if (tracks.size == 1) "downloading" else "downloading ${tracks.size} songs")
+        toast(if (tracks.size == 1) "Downloading" else "Downloading ${tracks.size} songs")
     }
 
     fun removeDownload(track: Track) {
-        downloads.delete(track); toast("removed download")
+        downloads.delete(track); toast("Removed download")
     }
 
     fun setLiked(track: Track, liked: Boolean) = library.setLiked(track, liked)
 
     fun addToPlaylist(playlistId: Long, name: String, tracks: List<Track>) {
-        library.addToPlaylist(playlistId, tracks); toast("added to $name")
+        library.addToPlaylist(playlistId, tracks); toast("Added to $name")
     }
 
     fun newPlaylistWith(name: String, tracks: List<Track>) {
         viewModelScope.launch {
             library.createPlaylistWith(name, tracks).join()
-            toast("created $name")
+            toast("Created $name")
         }
     }
 }
 
-val LocalActions = staticCompositionLocalOf<AppViewModel> { error("no AppViewModel") }
+val LocalActions = staticCompositionLocalOf<AppViewModel> { error("No AppViewModel") }

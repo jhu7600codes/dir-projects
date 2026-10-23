@@ -111,6 +111,16 @@ class Downloads @Inject constructor(
         dao.pendingDownloads().forEach { schedule(it.id, wifiOnly, ExistingWorkPolicy.KEEP) }
     }
 
+    /** re-encode what's already downloaded to the current quality (see [ShrinkWorker]) */
+    fun shrinkAll() {
+        work.enqueueUniqueWork(
+            "stash_shrink", ExistingWorkPolicy.KEEP,
+            OneTimeWorkRequestBuilder<ShrinkWorker>().setConstraints(
+                Constraints.Builder().setRequiresStorageNotLow(false).setRequiresBatteryNotLow(true).build()
+            ).build(),
+        )
+    }
+
     fun usedBytes(): Long = dir.listFiles()?.sumOf { it.length() } ?: 0
 
     fun baseName(trackId: String): String {

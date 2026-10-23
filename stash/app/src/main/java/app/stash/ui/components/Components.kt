@@ -88,7 +88,7 @@ fun Artwork(
 fun DownloadBadge(track: Track, modifier: Modifier = Modifier) {
     when (track.downloadState) {
         DownloadState.DONE -> Icon(
-            Icons.Rounded.DownloadDone, "downloaded",
+            Icons.Rounded.DownloadDone, "Downloaded",
             modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary,
         )
         DownloadState.DOWNLOADING -> CircularProgressIndicator(
@@ -97,7 +97,7 @@ fun DownloadBadge(track: Track, modifier: Modifier = Modifier) {
             strokeWidth = 2.dp,
         )
         DownloadState.QUEUED -> Icon(Icons.Rounded.Schedule, "queued", modifier.size(16.dp), tint = MaterialTheme.colorScheme.outline)
-        DownloadState.FAILED -> Icon(Icons.Rounded.ErrorOutline, "download failed", modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+        DownloadState.FAILED -> Icon(Icons.Rounded.ErrorOutline, "Download failed", modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
         DownloadState.NONE -> Unit
     }
 }
@@ -168,7 +168,7 @@ fun TrackRow(
         }
         trailing?.invoke()
         IconButton(onClick = { menu = true }) {
-            Icon(Icons.Rounded.MoreVert, "more", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Rounded.MoreVert, "More", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     if (menu) TrackOptionsSheet(track = track, onDismiss = { menu = false })
@@ -213,7 +213,7 @@ fun EmptyState(
     }
 }
 
-/** big square-ish card for carousels (the google play music "listen now" look) */
+/** big square-ish card for carousels (the google play music "Listen now" look) */
 @Composable
 fun CoverCard(
     title: String,
@@ -248,3 +248,10 @@ fun CoverCard(
 }
 
 val ListBottomPadding = PaddingValues(bottom = 24.dp)
+
+/** "spotify" -> "Spotify" for labels like "From Spotify" */
+fun originName(origin: String) = when (origin) {
+    "spotify" -> "Spotify"
+    "apple" -> "Apple Music"
+    else -> origin.replaceFirstChar { it.uppercase() }
+}
