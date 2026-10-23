@@ -1,0 +1,193 @@
+package app.stash.player
+
+import android.app.PendingIntent
+import android.content.Intent
+import android.net.Uri
+import androidx.annotation.OptIn
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.ResolvingDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
+import app.stash.MainActivity
+import app.stash.R
+import app.stash.data.db.TrackDao
+import app.stash.data.prefs.Settings
+import app.stash.player.PlayerConnection.Companion.toMediaItem
+import app.stash.providers.Resolver
+import app.stash.recs.Recommender
+import kotlinx.coroutines.withContext
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
+import java.io.IOException
+import javax.inject.Inject
+
+/**
+ * Background playback. The queue holds "stash://track/<id>" uris; the real audio url is only
+ * looked up (downloaded file, else a fresh stream url) when exoplayer opens the item, so
+ * expiring yt-dlp urls never sit in the queue.
+ */
+@AndroidEntryPoint
+@OptIn(UnstableApi::class)
+class PlaybackService : MediaSessionService() {
+    @Inject lateinit var resolver: Resolver
+    @Inject lateinit var dao: TrackDao
+    @Inject lateinit var http: OkHttpClient
+    @Inject lateinit var recommender: Recommender
+    @Inject lateinit var settings: Settings
+
+    private var session: MediaSession? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    override fun onCreate() {
+        super.onCreate()
+
+        val upstream = DefaultDataSource.Factory(this, OkHttpDataSource.Factory(http))
+        val resolving = ResolvingDataSource.Factory(upstream) { spec -> resolve(spec) }
+
+        val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(resolving))
+            .setAudioAttributes(
+                AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
+                true,
+            )
+            .setHandleAudioBecomingNoisy(true)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            .build()
+
+        player.addListener(object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                val id = mediaItem?.mediaId ?: return
+                scope.launch { dao.markPlayed(id) }
+                // look up the next song's stream now, so the switch doesn't wait on yt-dlp
+                val next = player.nextMediaItemIndex.takeIf { it != C.INDEX_UNSET }?.let { player.getMediaItemAt(it).mediaId }
+                if (next != null) scope.launch { runCatching { resolver.streamFor(next) } }
+            }
+
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) autoplay(player)
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                // a dead stream url: forget it and move on instead of stopping the whole queue
+                player.currentMediaItem?.mediaId?.let(resolver::invalidate)
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                    player.prepare()
+                    player.play()
+                }
+            }
+        })
+
+        val openApp = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_OPEN_PLAYER, true),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this).build().apply { setSmallIcon(R.drawable.ic_stat_stash) }
+        )
+
+        session = MediaSession.Builder(this, player)
+            .setSessionActivity(openApp)
+            .setCallback(object : MediaSession.Callback {
+                // controllers strip uris off media items, so rebuild them from the id
+                override fun onAddMediaItems(
+                    mediaSession: MediaSession,
+                    controller: MediaSession.ControllerInfo,
+                    mediaItems: MutableList<MediaItem>,
+                ): ListenableFuture<MutableList<MediaItem>> =
+                    Futures.immediateFuture(mediaItems.map { it.withStashUri() }.toMutableList())
+            })
+            .build()
+    }
+
+    /** queue ran out: carry on with songs similar to the last one, like spotify's autoplay */
+    private fun autoplay(player: ExoPlayer) {
+        val last = player.currentMediaItem?.mediaId ?: return
+        val inQueue = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+        scope.launch {
+            if (!settings.current().autoplay) return@launch
+            val seed = dao.get(last) ?: return@launch
+            val next = runCatching { recommender.radioFor(seed) }.getOrDefault(emptyList())
+                .filter { it.id !in inQueue }
+                .take(20)
+            if (next.isEmpty()) return@launch
+            next.forEach { dao.ensure(it) }
+            withContext(Dispatchers.Main) {
+                val start = player.mediaItemCount
+                player.addMediaItems(next.map { it.toMediaItem() })
+                player.seekTo(start, 0)
+                player.prepare()
+                player.play()
+            }
+        }
+    }
+
+    private fun resolve(spec: DataSpec): DataSpec {
+        val uri = spec.uri
+        if (uri.scheme != SCHEME) return spec
+        val trackId = Uri.decode(uri.lastPathSegment?.removeSuffix(HLS_SUFFIX) ?: return spec)
+        val source = try {
+            runBlocking { resolver.streamFor(trackId) }
+        } catch (e: Exception) {
+            throw IOException("couldn't play: ${e.message}", e)
+        }
+        return spec.buildUpon()
+            .setUri(Uri.parse(source.url))
+            .setHttpRequestHeaders(spec.httpRequestHeaders + source.headers)
+            .build()
+    }
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val player = session?.player
+        if (player == null || !player.playWhenReady || player.mediaItemCount == 0) stopSelf()
+    }
+
+    override fun onDestroy() {
+        session?.run {
+            player.release()
+            release()
+        }
+        session = null
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    companion object {
+        const val SCHEME = "stash"
+        const val HLS_SUFFIX = ".m3u8"
+        const val EXTRA_HLS = "hls"
+
+        /**
+         * [hls] streams get a .m3u8 ending so exoplayer picks its hls loader up front, before
+         * the real (soundcloud) playlist url has been looked up
+         */
+        fun uriFor(trackId: String, hls: Boolean = false): Uri =
+            Uri.parse("$SCHEME://track/${Uri.encode(trackId)}${if (hls) HLS_SUFFIX else ""}")
+
+        fun MediaItem.withStashUri(): MediaItem =
+            buildUpon().setUri(uriFor(mediaId, mediaMetadata.extras?.getBoolean(EXTRA_HLS) == true)).build()
+    }
+}
