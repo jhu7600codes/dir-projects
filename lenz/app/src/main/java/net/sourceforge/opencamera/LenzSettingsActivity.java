@@ -67,6 +67,17 @@ public class LenzSettingsActivity extends AppCompatActivity {
                     version.setSummary(null);
                 }
             }
+            Preference performance = findPreference(LenzPerformance.PerformancePreferenceKey);
+            if( performance != null ) {
+                performance.setSummaryProvider(p -> {
+                    String value = ((androidx.preference.ListPreference)p).getValue();
+                    if( LenzPerformance.PERFORMANCE_ULTRA.equals(value) )
+                        return getString(R.string.lenz_performance_ultra);
+                    if( LenzPerformance.PERFORMANCE_OFF.equals(value) )
+                        return getString(R.string.lenz_performance_off);
+                    return getString(LenzPerformance.isLowEndDevice(requireContext()) ? R.string.lenz_performance_auto_on : R.string.lenz_performance_auto_off);
+                });
+            }
             Preference source = findPreference("lenz_source");
             if( source != null ) {
                 source.setOnPreferenceClickListener(p -> {

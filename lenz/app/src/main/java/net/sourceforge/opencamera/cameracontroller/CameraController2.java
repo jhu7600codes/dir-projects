@@ -1,6 +1,7 @@
 package net.sourceforge.opencamera.cameracontroller;
 
 import net.sourceforge.opencamera.HDRProcessor;
+import net.sourceforge.opencamera.LenzPerformance;
 import net.sourceforge.opencamera.MyDebug;
 
 import java.nio.ByteBuffer;
@@ -7039,7 +7040,8 @@ public class CameraController2 extends CameraController {
                     test_fake_flash_photo++;
                 }
 
-                if( !is_samsung && burst_type == BurstType.BURSTTYPE_NORMAL && burst_for_noise_reduction ) {
+                // Lenz: ultra performance mode stacks fewer frames, so it keeps the phone's own (hardware) noise reduction on
+                if( !is_samsung && burst_type == BurstType.BURSTTYPE_NORMAL && burst_for_noise_reduction && !LenzPerformance.isUltra() ) {
                     // Must be done after calling setupBuilder(), so we override the default EDGE_MODE and NOISE_REDUCTION_MODE.
                     // We disable noise-reduction etc for photo mode NR because on many devices this smears out detail that we actually
                     // aim to recover by averaging a stack of multiple images.
@@ -7121,6 +7123,7 @@ public class CameraController2 extends CameraController {
                             }
                         }
                     }
+                    n_burst = LenzPerformance.nrFrames(n_burst);
                 }
                 else {
                     if( MyDebug.LOG )

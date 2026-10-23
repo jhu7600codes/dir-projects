@@ -1062,9 +1062,9 @@ public class HDRProcessor {
             //final int scale_align_size = 2;
             //final int scale_align_size = 4;
             //final int scale_align_size = Math.max(4 / this.cached_avg_sample_size, 1);
-            final int scale_align_size = (zoom_factor > 3.9f) ?
+            final int scale_align_size = LenzPerformance.alignScale((zoom_factor > 3.9f) ?
                     1 :
-                    Math.max(4 / this.getAvgSampleSize(iso, exposure_time), 1);
+                    Math.max(4 / this.getAvgSampleSize(iso, exposure_time), 1));
             if( MyDebug.LOG )
                 Log.d(TAG, "scale_align_size: " + scale_align_size);
             boolean crop_to_centre = true;

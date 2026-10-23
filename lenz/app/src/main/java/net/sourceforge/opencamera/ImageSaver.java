@@ -1355,7 +1355,7 @@ public class ImageSaver extends Thread {
                     // e.g., storing 4 16MP bitmaps takes 256MB of heap (NR requires at least 512MB large heap); also need to make
                     // sure there isn't a knock on effect on performance
                     //final int n_smp_images = 2;
-                    final int n_smp_images = 4;
+                    final int n_smp_images = LenzPerformance.nrDecodeBatch(main_activity);
                     long this_time_s = System.currentTimeMillis();
                     List<Bitmap> bitmaps = null;
                     Bitmap bitmap0, bitmap1;

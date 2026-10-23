@@ -310,6 +310,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         bluetoothRemoteControl = new BluetoothRemoteControl(this);
         permissionHandler = new PermissionHandler(this);
         settingsManager = new SettingsManager(this);
+        LenzPerformance.update(this); // before the camera opens, as it changes how NR bursts are taken
         mainUI = new MainUI(this);
         modeController = new ModeController(this);
         lenzUI = new LenzUI(this);
@@ -4471,6 +4472,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
         super.onActivityResult(requestCode, resultCode, resultData);
 
         if( requestCode == LENZ_SETTINGS_CODE ) {
+            LenzPerformance.update(this);
             // apply the new settings once the camera has reopened
             new Handler().postDelayed(() -> {
                 if( !app_is_paused ) {

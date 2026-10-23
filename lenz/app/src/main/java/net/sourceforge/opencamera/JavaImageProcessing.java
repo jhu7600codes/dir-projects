@@ -228,7 +228,7 @@ public class JavaImageProcessing {
         if( MyDebug.LOG )
             Log.d(TAG, "height: " + height);
         //final int n_threads = 1;
-        final int n_threads = height >= 16 ? 4 : 1;
+        final int n_threads = height >= 16 ? LenzPerformance.processingThreads() : 1; // Lenz: use every core, not a fixed 4
         //final int n_threads = height >= 16 ? 8 : 1;
         function.init(n_threads);
         ApplyFunctionThread [] threads = new ApplyFunctionThread[n_threads];

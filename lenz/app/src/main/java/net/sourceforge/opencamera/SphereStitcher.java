@@ -33,7 +33,7 @@ class SphereStitcher {
     static boolean stitchAndSave(Context context, List<PhotoSphereActivity.Shot> shots, float tanHalfH, float tanHalfV) throws IOException {
         long maxMemory = Runtime.getRuntime().maxMemory();
         // the accumulation buffers take 16 bytes per output pixel
-        final int width = maxMemory >= 400L * 1024 * 1024 ? 4096 : 2048;
+        final int width = maxMemory < 400L * 1024 * 1024 ? 2048 : LenzPerformance.isUltra() ? 3072 : 4096;
         final int height = width / 2;
         final float[] accR = new float[width * height];
         final float[] accG = new float[width * height];

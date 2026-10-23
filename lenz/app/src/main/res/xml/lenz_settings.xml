@@ -19,6 +19,13 @@
             app:defaultValue="preference_raw_no"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
+        <ListPreference
+            app:key="lenz_performance"
+            app:title="@string/lenz_settings_performance"
+            app:entries="@array/lenz_performance_entries"
+            app:entryValues="@array/lenz_performance_values"
+            app:defaultValue="auto"
+            app:iconSpaceReserved="false" />
         <SwitchPreferenceCompat
             app:key="preference_face_detection"
             app:title="@string/lenz_settings_faces"

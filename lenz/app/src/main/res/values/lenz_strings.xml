@@ -40,6 +40,21 @@
     <string name="lenz_settings_about">About</string>
     <string name="lenz_settings_source">Source code</string>
     <string name="lenz_settings_source_summary">Lenz is free software (GPL v3), built on the Open Camera engine by Mark Harman</string>
+    <string name="lenz_settings_performance">Performance</string>
+    <string name="lenz_performance_auto_on">Auto: ultra performance is on for this phone</string>
+    <string name="lenz_performance_auto_off">Auto: best quality on this phone</string>
+    <string name="lenz_performance_ultra">Ultra performance: faster Photo and Night shots, a bit more noise</string>
+    <string name="lenz_performance_off">Best quality: more frames per shot, slower</string>
+    <string-array name="lenz_performance_entries">
+        <item>Auto</item>
+        <item>Ultra performance</item>
+        <item>Best quality</item>
+    </string-array>
+    <string-array name="lenz_performance_values" translatable="false">
+        <item>auto</item>
+        <item>ultra</item>
+        <item>off</item>
+    </string-array>
     <string-array name="lenz_quality_entries">
         <item>Maximum (100)</item>
         <item>High (95)</item>
