@@ -99,7 +99,9 @@ private val tabs = listOf(
 fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: Flow<Unit>) {
     val nav = rememberNavController()
     val snackbar = remember { SnackbarHostState() }
-    val player by app.player.state.collectAsState()
+    // only "is anything playing" here; the full player state is read inside the player views,
+    // so position / buffering updates don't redraw the whole app
+    val currentId by app.player.currentId.collectAsState()
     var showPlayer by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { app.messages.collect { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(it) } }
@@ -114,10 +116,11 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
             bottomBar = {
                 Column {
                     AnimatedVisibility(
-                        visible = player.currentId != null,
+                        visible = currentId != null,
                         enter = slideInVertically { it } + fadeIn(),
                         exit = slideOutVertically { it } + fadeOut(),
                     ) {
+                        val player by app.player.state.collectAsState()
                         MiniPlayer(state = player, onOpen = { showPlayer = true })
                     }
                     NavigationBar {
@@ -178,7 +181,8 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
             }
         }
 
-        if (showPlayer && player.currentId != null) {
+        if (showPlayer && currentId != null) {
+            val player by app.player.state.collectAsState()
             NowPlayingSheet(state = player, onDismiss = { showPlayer = false })
         }
     }

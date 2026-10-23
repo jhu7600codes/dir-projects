@@ -15,6 +15,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,6 +26,8 @@ import javax.inject.Singleton
  * [ImportWorker] in the background, so 25 playlists keep going with the app closed and
  * pick up where they stopped if the phone kills it.
  */
+data class RescanProgress(val running: Boolean, val done: Int, val total: Int, val found: Int)
+
 @Singleton
 class ImportQueue @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -75,17 +79,30 @@ class ImportQueue @Inject constructor(
 
     fun clearFinished() = scope.launch { dao.clearFinished() }
 
+    /** where the rescan is at: null when none has run (or it was a while ago) */
+    val rescan: Flow<RescanProgress?> = WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(RESCAN).map { infos ->
+        val info = infos.lastOrNull() ?: return@map null
+        val data = if (info.state.isFinished) info.outputData else info.progress
+        RescanProgress(
+            running = !info.state.isFinished,
+            done = data.getInt(RescanWorker.KEY_DONE, 0),
+            total = data.getInt(RescanWorker.KEY_TOTAL, 0),
+            found = data.getInt(RescanWorker.KEY_FOUND, 0),
+        )
+    }
+
     /** search every not-found song again (see [RescanWorker]) */
     fun rescanMissing() {
         val request = OneTimeWorkRequestBuilder<RescanWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("stash_rescan", ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(context).enqueueUniqueWork(RESCAN, ExistingWorkPolicy.KEEP, request)
     }
 
     companion object {
         const val WORK = "stash_import"
         const val TAG = "stash_import"
+        private const val RESCAN = "stash_rescan"
 
         fun isLikedSongs(p: SourcePlaylist) =
             p.originId == "liked" || p.name.trim().lowercase() in setOf("liked songs", "liked", "your liked songs")

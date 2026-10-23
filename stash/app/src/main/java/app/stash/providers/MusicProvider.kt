@@ -56,7 +56,13 @@ interface MusicProvider {
 }
 
 /** a search result plus what we know about how big it is and how it's tagged */
-data class SearchHit(val track: Track, val plays: Long? = null, val tags: List<String> = emptyList())
+data class SearchHit(
+    val track: Track,
+    val plays: Long? = null,
+    val tags: List<String> = emptyList(),
+    /** who uploaded it, when the source says (soundcloud / audius), for the artists row */
+    val uploader: RemoteArtist? = null,
+)
 
 /** an artist on some source (soundcloud user, audius user, youtube channel) */
 data class RemoteArtist(

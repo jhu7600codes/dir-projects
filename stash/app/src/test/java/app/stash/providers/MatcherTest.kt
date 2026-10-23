@@ -33,4 +33,27 @@ class MatcherTest {
         assertEquals("Kino" to "Gruppa krovi", YtDlpProvider.splitArtistTitle("Gruppa krovi", "Kino - Topic", false))
         assertEquals("Uploader" to "Song", YtDlpProvider.splitArtistTitle("Song", "Uploader", true))
     }
+
+    @Test
+    fun cyrillicMatchesLatinSpelling() {
+        // youtube music in english answers "Zemfira", spotify says "Земфира"
+        val t = yt("ХОЧЕШЬ?", "Zemfira", 222)
+        assertTrue(Matcher.score(t, "Хочешь?", "Земфира", 222_000) >= Matcher.ACCEPT)
+        assertEquals("zemfira", Matcher.normalize("Земфира"))
+    }
+
+    @Test
+    fun cyrillicBothSides() {
+        val t = yt("ариведерчи", "Земфира", 165)
+        assertTrue(Matcher.score(t, "Ариведерчи", "Земфира", 166_000) >= Matcher.ACCEPT)
+    }
+
+    @Test
+    fun symbolOnlyTitleGoesByArtistAndLength() {
+        val right = yt("Бесконечность", "Zemfira", 318)
+        val wrong = yt("ПММЛ", "Zemfira", 212)
+        assertTrue(Matcher.score(right, "∞", "Земфира", 316_000) >= Matcher.ACCEPT)
+        assertTrue(Matcher.score(wrong, "∞", "Земфира", 316_000) < Matcher.ACCEPT)
+        assertEquals("∞", Matcher.normalize("∞"))
+    }
 }

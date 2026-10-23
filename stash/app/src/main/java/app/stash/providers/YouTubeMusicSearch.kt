@@ -55,7 +55,9 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
                 putJsonObject("client") {
                     put("clientName", "WEB_REMIX")
                     put("clientVersion", CLIENT_VERSION)
-                    put("hl", "en")
+                    // in english youtube music spells russian artists in latin ("Zemfira"); ask in
+                    // russian for cyrillic searches so names come back the way they were typed
+                    put("hl", languageFor(query))
                 }
             }
             put("query", query)
@@ -79,10 +81,13 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
     private fun toHit(item: JsonObject): SearchHit? {
         val track = toTrack(item) ?: return null
         val plays = columnText(item, 1).joinToString("").split(" • ")
-            .firstOrNull { it.endsWith(" views") || it.endsWith(" plays") }
-            ?.substringBefore(' ')?.let(::parseCount)
+            .firstOrNull { p -> VIEW_WORDS.any { p.contains(it) } }
+            ?.let { p -> VIEW_WORDS.fold(p) { acc, w -> acc.replace(w, "") } }
+            ?.let(::parseCount)
         return SearchHit(track, plays)
     }
+
+    private fun languageFor(query: String) = if (query.any { it in '\u0400'..'\u04FF' }) "ru" else "en"
 
     /**
      * youtube music's radio for a song: the "up next" queue its own app builds, ~50 similar
@@ -197,7 +202,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         // "Artist • Album • 2019" for songs, "Channel • 1.5B views • 8M likes" for videos
         val parts = runsText(r.obj("longBylineText")).split(" • ").map { it.trim() }
         val byline = parts.firstOrNull().orEmpty()
-        val album = parts.getOrNull(1)?.takeUnless { it.endsWith("views") || it.endsWith("likes") || it.all(Char::isDigit) }
+        val album = parts.getOrNull(1)?.takeUnless { p -> VIEW_WORDS.any { p.contains(it) } || p.endsWith("likes") || p.contains("отметок") || p.all(Char::isDigit) }
         val (artist, cleanTitle) = YtDlpProvider.splitArtistTitle(title, byline, hasTrackField = false)
         val thumb = r.obj("thumbnail")?.get("thumbnails").asObjectList().lastOrNull()?.str("url")
         val url = watchUrl(videoId)
@@ -250,7 +255,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         val parts = columnText(item, 1).joinToString("").split(" • ").map { it.trim() }.filter { it.isNotEmpty() }
             .dropWhile { it in TYPE_LABELS }
         val duration = parts.lastOrNull { DURATION.matches(it) }
-        val rest = parts.filter { it != duration && !it.endsWith(" views") && !it.endsWith(" plays") }
+        val rest = parts.filter { p -> p != duration && VIEW_WORDS.none { p.contains(it) } }
         val artistRaw = rest.firstOrNull() ?: ""
         val album = rest.getOrNull(1)
         val url = "https://www.youtube.com/watch?v=$videoId"
@@ -274,11 +279,19 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         )
     }
 
-    /** "1.5B" -> 1_500_000_000 */
+    /** "1.5B" -> 1_500_000_000; also russian "51 млн" / "93 тыс." / "1,2 млрд" */
     private fun parseCount(s: String): Long? {
-        val n = s.replace(",", "").trim()
-        val mult = when (n.lastOrNull()) { 'K' -> 1e3; 'M' -> 1e6; 'B' -> 1e9; else -> 1.0 }
-        return n.trimEnd('K', 'M', 'B').toDoubleOrNull()?.let { (it * mult).toLong() }
+        val t = s.replace('\u00a0', ' ').trim().lowercase()
+        val mult = when {
+            t.endsWith("b") || t.contains("млрд") -> 1e9
+            t.endsWith("m") || t.contains("млн") -> 1e6
+            t.endsWith("k") || t.contains("тыс") -> 1e3
+            else -> 1.0
+        }
+        val number = Regex("""[\d.,]+""").find(t)?.value ?: return null
+        // russian uses a comma for decimals ("9,5"), english a comma for thousands ("1,234")
+        val n = if (mult > 1.0) number.replace(',', '.') else number.replace(",", "")
+        return n.toDoubleOrNull()?.let { (it * mult).toLong() }
     }
 
     private fun parseDuration(s: String): Long =
@@ -290,7 +303,8 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         private const val SONGS = "EgWKAQIIAWoMEAQQBRAQEBUQChAR"
         private const val VIDEOS = "EgWKAQIQAWoMEAQQBRAQEBUQChAR"
         private const val ARTISTS = "EgWKAQIgAWoMEAQQBRAQEBUQChAR"
-        private val TYPE_LABELS = setOf("Song", "Video")
+        private val TYPE_LABELS = setOf("Song", "Video", "Песня", "Видео", "Трек")
+        private val VIEW_WORDS = listOf(" views", " plays", " просмотров", " просмотра", " просмотр", " прослушиваний")
         private val DURATION = Regex("""\d{1,2}(:\d{2}){1,2}""")
     }
 }

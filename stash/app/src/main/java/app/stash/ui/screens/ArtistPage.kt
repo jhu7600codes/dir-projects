@@ -133,7 +133,7 @@ fun ArtistPageScreen() {
     val d by vm.details.collectAsState()
     val loading by vm.loading.collectAsState()
     val yours by vm.yours.collectAsState()
-    val current by actions.player.state.collectAsState()
+    val currentId by actions.player.currentId.collectAsState()
     var showAll by remember { mutableStateOf(false) }
     var bioOpen by remember { mutableStateOf(false) }
 
@@ -229,7 +229,7 @@ fun ArtistPageScreen() {
         if (yours.isNotEmpty()) {
             item { SectionTitle("In your library") }
             itemsIndexed(yours, key = { _, t -> "y:${t.id}" }) { i, t ->
-                TrackRow(t, onClick = { actions.play(yours, i) }, isCurrent = current.currentId == t.id)
+                TrackRow(t, onClick = { actions.play(yours, i) }, isCurrent = currentId == t.id)
             }
         }
 
@@ -237,7 +237,7 @@ fun ArtistPageScreen() {
             item { SectionTitle("Popular") }
             val shown = if (showAll) popular else popular.take(10)
             itemsIndexed(shown, key = { _, t -> "p:${t.id}" }) { i, t ->
-                TrackRow(t, onClick = { actions.play(popular, i) }, isCurrent = current.currentId == t.id, index = i)
+                TrackRow(t, onClick = { actions.play(popular, i) }, isCurrent = currentId == t.id, index = i)
             }
             if (popular.size > 10) item {
                 TextButton(onClick = { showAll = !showAll }, modifier = Modifier.padding(horizontal = 12.dp)) {

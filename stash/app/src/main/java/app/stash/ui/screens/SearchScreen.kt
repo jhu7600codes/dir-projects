@@ -169,7 +169,7 @@ class SearchViewModel @Inject constructor(
                     }
                 }
                 if (query.tag == null) launch {
-                    val found = runCatching { p.searchArtists(query.text) }.getOrDefault(emptyList())
+                    val found = runCatching { p.searchArtists(query.text, 15) }.getOrDefault(emptyList())
                     if (found.isNotEmpty()) _ui.update { it.copy(artists = it.artists + found) }
                 }
             }
@@ -196,7 +196,7 @@ fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
     val actions = LocalActions.current
     val nav = LocalNav.current
     val keyboard = LocalSoftwareKeyboardController.current
-    val current by actions.player.state.collectAsState()
+    val currentId by actions.player.currentId.collectAsState()
     val picking = fixUnmatchedId != null
 
     LaunchedEffect(initialQuery) {
@@ -270,7 +270,11 @@ fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
             SearchRanking.merge(query, ui.local, ui.providers.map { it.id }, ui.results.mapValues { it.value.hits }, ui.underground)
         }
         val songs = remember(hits) { hits.map { it.track } }
-        val artists = remember(ui.artists, ui.underground) { SearchRanking.mergeArtists(query.text, ui.artists, ui.underground) }
+        val artists = remember(ui.artists, ui.results, ui.underground) {
+            // searched artists plus whoever uploaded the songs found (lots of small artists only show up that way)
+            val uploaders = ui.results.values.flatMap { r -> r.hits.mapNotNull { it.uploader } }
+            SearchRanking.mergeArtists(query.text, ui.artists + uploaders, ui.underground)
+        }
 
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp))
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -302,7 +306,7 @@ fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
             }
             itemsIndexed(hits, key = { _, h -> h.track.id }) { i, h ->
                 TrackRow(
-                    h.track, onClick = { onPick(songs, i) }, isCurrent = current.currentId == h.track.id,
+                    h.track, onClick = { onPick(songs, i) }, isCurrent = currentId == h.track.id,
                     note = hitNote(h, query),
                     trailing = if (picking) null else ({
                         IconButton(onClick = { actions.download(listOf(h.track)) }) {

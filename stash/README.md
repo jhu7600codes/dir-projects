@@ -113,7 +113,7 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 ./gradlew :app:assembleDebug
 ```
 
-compileSdk/targetSdk 35, minSdk 26, AGP 8.7.3, Kotlin 2.0.21 (compose compiler plugin), Hilt + KSP, Room, WorkManager, Media3 1.5.1, youtubedl-android 0.18.1. A prebuilt debug apk is in `dist/`.
+compileSdk/targetSdk 35, minSdk 26, AGP 8.7.3, Kotlin 2.0.21 (compose compiler plugin), Hilt + KSP, Room, WorkManager, Media3 1.5.1, youtubedl-android 0.18.1. A prebuilt release apk is at `dist/stash.apk` (release build, much smoother than debug). Every build is signed with `app/stash.keystore` (the standard Android debug key, committed on purpose) so updates always install over the old app.
 
 `icon.svg` is the icon mockup and matches the vector drawables in `res/drawable/ic_launcher_*.xml`.
 

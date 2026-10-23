@@ -15,8 +15,8 @@ android {
         applicationId = "app.stash.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         // yt-dlp ships a whole python per abi, so only keep arm64 (every recent phone) and
         // x86_64 (the emulator) to stop the apk from ballooning.
@@ -34,15 +34,28 @@ android {
         buildConfigField("String", "SUPABASE_KEY", "\"sb_publishable_uexeqwWBLSc9xTTCDrOUog_TcUe2Or7\"")
     }
 
+    // one fixed key in the repo, so every build (any machine, any session) installs over the last
+    // one without wiping your library. it's the same key all earlier stash apks were signed with.
+    signingConfigs {
+        create("stash") {
+            storeFile = file("stash.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("stash")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // personal use only: sign release builds with the debug key so they install directly.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("stash")
         }
     }
 

@@ -45,12 +45,39 @@ object Matcher {
     private val feat = Regex("""\s+(feat\.?|ft\.?|featuring|with)\s+.*$""", RegexOption.IGNORE_CASE)
     private val nonWord = Regex("""[^\p{L}\p{N}]+""")
 
+    /**
+     * lowercase, no accents, cyrillic spelled in latin letters (so "Земфира" == "Zemfira", since
+     * youtube music answers in either depending on language), no brackets / feat. / punctuation.
+     * a title that's only symbols (like "∞") is kept as those symbols instead of turning empty.
+     */
     fun normalize(s: String): String {
-        val noAccents = Normalizer.normalize(s.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
-        return noAccents.replace(brackets, " ").replace(feat, "").replace(nonWord, " ").trim()
+        val latin = transliterate(s.lowercase())
+        val noAccents = Normalizer.normalize(latin, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+        val clean = noAccents.replace(brackets, " ").replace(feat, "").replace(nonWord, " ").trim()
+        return clean.ifEmpty { s.filterNot { it.isWhitespace() } }
     }
 
-    private fun tokens(s: String) = normalize(s).split(' ').filter { it.isNotEmpty() }.toSet()
+    private val cyrillic = mapOf(
+        'а' to "a", 'б' to "b", 'в' to "v", 'г' to "g", 'д' to "d", 'е' to "e", 'ё' to "e", 'ж' to "zh",
+        'з' to "z", 'и' to "i", 'й' to "y", 'к' to "k", 'л' to "l", 'м' to "m", 'н' to "n", 'о' to "o",
+        'п' to "p", 'р' to "r", 'с' to "s", 'т' to "t", 'у' to "u", 'ф' to "f", 'х' to "h", 'ц' to "ts",
+        'ч' to "ch", 'ш' to "sh", 'щ' to "sch", 'ъ' to "", 'ы' to "y", 'ь' to "", 'э' to "e", 'ю' to "yu",
+        'я' to "ya", 'і' to "i", 'ї' to "yi", 'є' to "ye", 'ґ' to "g", 'ў' to "u",
+    )
+
+    fun transliterate(s: String): String {
+        if (s.none { it in cyrillic }) return s
+        val out = StringBuilder(s.length + 8)
+        for (c in s) out.append(cyrillic[c] ?: c)
+        return out.toString()
+    }
+
+    /** looser form for comparing: spellings like kh/h, iy/y, yo/e treated the same */
+    private fun fold(t: String) = t.replace("kh", "h").replace("iy", "y").replace("yo", "e").replace("ii", "i")
+
+    private fun tokens(s: String) = normalize(s).split(' ').filter { it.isNotEmpty() }.map(::fold).toSet()
+
+    private fun hasLetters(s: String) = s.any { it.isLetterOrDigit() }
 
     private fun overlap(a: Set<String>, b: Set<String>): Double {
         if (a.isEmpty() || b.isEmpty()) return 0.0
@@ -73,6 +100,15 @@ object Matcher {
         val artistScore = overlap(wantArtist, tokens(candidate.artist)).coerceAtLeast(
             if (wantArtist.isNotEmpty()) wantArtist.count { it in haveAll }.toDouble() / wantArtist.size else 0.0
         )
+        // a title with no letters at all ("∞") can't be matched by words: go by artist + length
+        if (!hasLetters(title)) {
+            val sameSymbols = candidate.title.contains(title.trim())
+            val lengthScore = if (durationMs > 0 && candidate.durationMs > 0) {
+                val diff = abs(durationMs - candidate.durationMs) / 1000
+                when { diff <= 3 -> 0.45; diff <= 10 -> 0.35; diff <= 25 -> 0.15; else -> 0.0 }
+            } else 0.0
+            return (artistScore * 0.45 + lengthScore + if (sameSymbols) 0.3 else 0.0).coerceIn(0.0, 1.0)
+        }
         var s = titleScore * 0.55 + artistScore * 0.3 - minOf(extra, 4) * 0.03
         if (durationMs > 0 && candidate.durationMs > 0) {
             val diff = abs(durationMs - candidate.durationMs) / 1000

@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import app.stash.data.db.DownloadState
 import app.stash.data.db.Track
 import app.stash.providers.RemoteArtist
-import coil.compose.SubcomposeAsyncImage
+import coil.compose.AsyncImage
 
 fun formatDuration(ms: Long): String {
     if (ms <= 0) return ""
@@ -68,22 +69,18 @@ fun Artwork(
     shape: Shape = MaterialTheme.shapes.small,
     icon: ImageVector = Icons.Rounded.MusicNote,
 ) {
-    val placeholder = @Composable {
-        Box(
-            Modifier.fillMaxSize().background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-        }
-    }
-    Box(modifier.clip(shape)) {
-        if (url == null) placeholder() else SubcomposeAsyncImage(
+    // icon underneath, picture drawn over it once loaded. plain AsyncImage, not the subcompose
+    // version, which builds a whole extra layout per picture and made long lists stutter
+    Box(
+        modifier.clip(shape).background(MaterialTheme.colorScheme.secondaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+        if (url != null) AsyncImage(
             model = url,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
-            loading = { placeholder() },
-            error = { placeholder() },
         )
     }
 }
@@ -295,3 +292,33 @@ fun ArtistBubble(a: RemoteArtist, onClick: () -> Unit) {
     }
 }
 
+
+/** "Rescan" button, or the live rescan progress / last result in its place */
+@Composable
+fun RescanStatus(modifier: Modifier = Modifier) {
+    val actions = app.stash.ui.LocalActions.current
+    val rescan by actions.rescan.collectAsState()
+    val r = rescan
+    Column(modifier) {
+        when {
+            r != null && r.running -> {
+                Text(
+                    if (r.total == 0) "Rescanning…" else "Rescanning: ${r.done} of ${r.total} checked · ${r.found} found",
+                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
+                )
+                androidx.compose.material3.LinearProgressIndicator(
+                    progress = { if (r.total > 0) r.done.toFloat() / r.total else 0f },
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                )
+            }
+            else -> Row(verticalAlignment = Alignment.CenterVertically) {
+                if (r != null && r.total > 0) Text(
+                    "Last rescan found ${r.found} of ${r.total}",
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                ) else Spacer(Modifier.weight(1f))
+                androidx.compose.material3.FilledTonalButton(onClick = { actions.rescanMissing() }) { Text("Rescan failed songs") }
+            }
+        }
+    }
+}

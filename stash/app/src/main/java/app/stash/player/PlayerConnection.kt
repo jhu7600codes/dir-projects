@@ -52,6 +52,14 @@ class PlayerConnection @Inject constructor(
     private val _state = MutableStateFlow(PlayerUiState())
     val state: StateFlow<PlayerUiState> = _state
 
+    // lists only care which song is on and whether it's playing; watching these instead of the
+    // whole state keeps them from redrawing on every buffering / position event
+    private val _currentId = MutableStateFlow<String?>(null)
+    val currentId: StateFlow<String?> = _currentId
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying: StateFlow<Boolean> = _isPlaying
+    private var queueCache: List<MediaItem> = emptyList()
+
     fun connect() {
         if (controller != null) return
         val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
@@ -60,9 +68,10 @@ class PlayerConnection @Inject constructor(
             val c = runCatching { future.get() }.getOrNull() ?: return@addListener
             controller = c
             c.addListener(object : Player.Listener {
-                override fun onEvents(player: Player, events: Player.Events) = refresh()
+                override fun onEvents(player: Player, events: Player.Events) =
+                    refresh(queueChanged = events.contains(Player.EVENT_TIMELINE_CHANGED))
             })
-            refresh()
+            refresh(queueChanged = true)
             pending.forEach { it(c) }
             pending.clear()
         }, ContextCompat.getMainExecutor(context))
@@ -76,10 +85,14 @@ class PlayerConnection @Inject constructor(
         }
     }
 
-    private fun refresh() {
+    private fun refresh(queueChanged: Boolean) {
         val c = controller ?: return
         val item = c.currentMediaItem
-        val queue = (0 until c.mediaItemCount).map { c.getMediaItemAt(it) }
+        // copying a long queue on every event is wasteful; only when it actually changed
+        if (queueChanged) queueCache = (0 until c.mediaItemCount).map { c.getMediaItemAt(it) }
+        val queue = queueCache
+        _currentId.value = item?.mediaId
+        _isPlaying.value = c.isPlaying
         _state.value = PlayerUiState(
             currentId = item?.mediaId,
             title = item?.mediaMetadata?.title?.toString() ?: "",
