@@ -174,6 +174,13 @@ fun SettingsScreen() {
                 }
             }
 
+            item { SectionHeader("playback") }
+            item {
+                SwitchRow("autoplay", "when your queue ends, keep going with similar songs", settings.autoplay) {
+                    vm.set { setAutoplay(it) }
+                }
+            }
+
             item { SectionHeader("downloads") }
             item {
                 SwitchRow("wi-fi only", "downloads wait for an unmetered network", settings.wifiOnlyDownloads) {

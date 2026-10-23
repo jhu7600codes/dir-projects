@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LibraryAddCheck
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlaylistPlay
+import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -104,6 +105,7 @@ fun TrackOptionsSheet(track: Track, onDismiss: () -> Unit) {
             SheetRow(if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (t.liked) "remove from liked songs" else "like") {
                 actions.setLiked(t, !t.liked); close {}
             }
+            SheetRow(Icons.Rounded.Radio, "start radio") { actions.startRadio(t); close {} }
             SheetRow(Icons.Rounded.PlaylistPlay, "play next") { actions.playNext(t); close {} }
             SheetRow(Icons.AutoMirrored.Rounded.QueueMusic, "add to queue") { actions.addToQueue(listOf(t)); close {} }
             SheetRow(Icons.AutoMirrored.Rounded.PlaylistAdd, "add to playlist") { pickPlaylist = true }

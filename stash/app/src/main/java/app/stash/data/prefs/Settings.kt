@@ -34,6 +34,8 @@ data class AppSettings(
     /** turned on after the first sync on this phone, so an empty new install never wipes the backup */
     val cloudReady: Boolean = false,
     val locationGreetings: Boolean = false,
+    /** keep playing similar songs when the queue runs out */
+    val autoplay: Boolean = true,
 )
 
 @Singleton
@@ -54,6 +56,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val lastBackup = longPreferencesKey("last_backup")
         val cloudReady = booleanPreferencesKey("cloud_ready")
         val locationGreetings = booleanPreferencesKey("location_greetings")
+        val autoplay = booleanPreferencesKey("autoplay")
     }
 
     private val store get() = context.dataStore
@@ -75,6 +78,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         lastBackupAt = this[Keys.lastBackup] ?: 0,
         cloudReady = this[Keys.cloudReady] ?: false,
         locationGreetings = this[Keys.locationGreetings] ?: false,
+        autoplay = this[Keys.autoplay] ?: true,
     )
 
     suspend fun setTheme(mode: ThemeMode) = store.edit { it[Keys.theme] = mode.name }
@@ -91,6 +95,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         it[Keys.ytUpdated] = System.currentTimeMillis()
         it[Keys.ytVersion] = version
     }
+    suspend fun setAutoplay(on: Boolean) = store.edit { it[Keys.autoplay] = on }
     suspend fun setLocationGreetings(on: Boolean) = store.edit { it[Keys.locationGreetings] = on }
 
     // account session (supabase auth)

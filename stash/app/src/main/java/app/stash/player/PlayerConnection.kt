@@ -15,6 +15,7 @@ import app.stash.data.db.TrackDao
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -103,9 +104,10 @@ class PlayerConnection @Inject constructor(
         tracks.forEach { dao.ensure(it) }
     }
 
-    fun play(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false) {
-        if (tracks.isEmpty()) return
-        scope.launch {
+    /** the returned job finishes once the queue has been handed to the player */
+    fun play(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false): Job? {
+        if (tracks.isEmpty()) return null
+        return scope.launch {
             save(tracks)
             withController { c ->
                 c.shuffleModeEnabled = shuffle

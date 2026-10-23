@@ -10,6 +10,7 @@ import app.stash.data.prefs.AppSettings
 import app.stash.data.prefs.Settings
 import app.stash.download.Downloads
 import app.stash.player.PlayerConnection
+import app.stash.recs.Recommender
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,6 +29,7 @@ class AppViewModel @Inject constructor(
     val player: PlayerConnection,
     val downloads: Downloads,
     val library: Library,
+    private val recommender: Recommender,
     settings: Settings,
 ) : ViewModel() {
 
@@ -49,6 +51,17 @@ class AppViewModel @Inject constructor(
 
     fun play(tracks: List<Track>, index: Int = 0) = player.play(tracks, index)
     fun shuffle(tracks: List<Track>) = player.play(tracks, shuffle = true)
+
+    /** plays the song, then youtube music's radio for it */
+    fun startRadio(track: Track) {
+        toast("starting radio")
+        val started = player.play(listOf(track))
+        viewModelScope.launch {
+            val similar = runCatching { recommender.radioFor(track) }.getOrDefault(emptyList())
+            started?.join() // the song itself has to be queued before the radio goes after it
+            if (similar.isEmpty()) toast("couldn't find similar songs") else player.addToQueue(similar)
+        }
+    }
 
     fun playNext(track: Track) {
         player.playNext(track); toast("playing next")

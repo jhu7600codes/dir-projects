@@ -1,10 +1,13 @@
 package app.stash.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,9 +20,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -40,6 +45,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -48,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.stash.greet.GreetingAction
 import app.stash.greet.GreetingViewModel
+import app.stash.recs.RecsViewModel
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
@@ -67,7 +75,12 @@ fun HomeScreen() {
     val mostPlayed by remember { dao.observeMostPlayed(15) }.collectAsState(initial = emptyList())
     val downloaded by remember { dao.observeDownloaded() }.collectAsState(initial = emptyList())
     val liked by remember { dao.observeLiked() }.collectAsState(initial = emptyList())
-    val playlists by actions.playlists.collectAsState()
+    val allPlaylists by actions.playlists.collectAsState()
+    val playlists = remember(allPlaylists) { allPlaylists.filter { it.origin != "mix" } }
+    val mixes = remember(allPlaylists) { allPlaylists.filter { it.origin == "mix" }.sortedBy { mixOrder(it.name) } }
+    val recs: RecsViewModel = hiltViewModel()
+    val because by recs.becauseYouLiked.collectAsState()
+    val rebuilding by recs.refreshing.collectAsState()
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val greetingVm: GreetingViewModel = hiltViewModel()
     val greeting by greetingVm.greeting.collectAsState()
@@ -139,12 +152,39 @@ fun HomeScreen() {
                 }
             }
 
+            if (mixes.isNotEmpty() || rebuilding) {
+                item {
+                    SectionHeader("made for you") {
+                        if (rebuilding) CircularProgressIndicator(Modifier.size(20.dp).padding(end = 4.dp), strokeWidth = 2.dp)
+                        else IconButton(onClick = { recs.rebuildMixes() }) { Icon(Icons.Rounded.Refresh, "make new mixes") }
+                    }
+                }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(mixes, key = { it.id }) { m ->
+                            MixCard(m.name, m.description, m.coverUrl ?: m.firstArtwork) { nav.navigate(Routes.playlist(m.id)) }
+                        }
+                    }
+                }
+            }
+
             if (recent.isNotEmpty()) {
                 item { SectionHeader("recently played") }
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         itemsIndexed(recent, key = { _, t -> t.id }) { i, t ->
                             CoverCard(t.title, t.artist, t.artworkUrl, onClick = { actions.play(recent, i) })
+                        }
+                    }
+                }
+            }
+
+            because?.let { (seed, list) ->
+                item { SectionHeader("because you liked ${seed.title}") }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        itemsIndexed(list, key = { _, t -> "b:${t.id}" }) { i, t ->
+                            CoverCard(t.title, t.artist, t.artworkUrl, onClick = { actions.play(list, i) }, size = 120.dp)
                         }
                     }
                 }
@@ -231,5 +271,37 @@ private fun GreetingCard(message: String, action: GreetingAction?, onAction: (Gr
             )
             if (action != null) TextButton(onClick = { onAction(action) }) { Text(action.label, maxLines = 1) }
         }
+    }
+}
+
+/** daily mix 1..4, then discover, then rewind */
+private fun mixOrder(name: String) = when {
+    name.startsWith("daily mix") -> name.filter(Char::isDigit).toIntOrNull() ?: 0
+    name.startsWith("discover") -> 10
+    else -> 20
+}
+
+/** spotify-style mix tile: the art with the name sitting on a dark fade at the bottom */
+@Composable
+private fun MixCard(name: String, about: String?, art: Any?, onClick: () -> Unit) {
+    Column(Modifier.width(156.dp)) {
+        Surface(onClick = onClick, shape = MaterialTheme.shapes.large, modifier = Modifier.size(156.dp)) {
+            Box {
+                Artwork(art, Modifier.fillMaxSize(), RectangleShape)
+                Box(
+                    Modifier.fillMaxSize().background(
+                        Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.75f))
+                    )
+                )
+                Text(
+                    name, style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 2,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(12.dp),
+                )
+            }
+        }
+        if (about != null) Text(
+            about, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp, start = 2.dp, end = 2.dp),
+        )
     }
 }

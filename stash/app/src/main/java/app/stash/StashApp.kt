@@ -5,7 +5,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import app.stash.cloud.CloudBackup
+import app.stash.recs.Recommender
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import app.stash.download.Downloads
 import app.stash.importer.ImportQueue
 import app.stash.providers.YtDlp
@@ -19,6 +24,7 @@ class StashApp : Application(), Configuration.Provider {
     @Inject lateinit var downloads: Downloads
     @Inject lateinit var imports: ImportQueue
     @Inject lateinit var cloud: CloudBackup
+    @Inject lateinit var recommender: Recommender
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
@@ -36,6 +42,8 @@ class StashApp : Application(), Configuration.Provider {
         downloads.recoverAfterRestart()
         imports.resume()
         cloud.startAutoBackup()
+        // daily mixes / discover weekly, only rebuilt when they're out of date
+        ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) { recommender.refreshMixes() }
     }
 
     companion object {

@@ -56,6 +56,76 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         items.mapNotNull(::toTrack)
     }
 
+    /**
+     * youtube music's radio for a song: the "up next" queue its own app builds, ~50 similar
+     * songs. this is what all the recommendations and mixes are made from.
+     */
+    suspend fun radio(videoId: String): List<Track> = httpIo {
+        val body = buildJsonObject {
+            putJsonObject("context") {
+                putJsonObject("client") {
+                    put("clientName", "WEB_REMIX")
+                    put("clientVersion", CLIENT_VERSION)
+                    put("hl", "en")
+                }
+            }
+            put("videoId", videoId)
+            put("playlistId", "RDAMVM$videoId")
+            put("isAudioOnly", true)
+        }.toString()
+        val req = Request.Builder()
+            .url("https://music.youtube.com/youtubei/v1/next?prettyPrint=false")
+            .header("User-Agent", BROWSER_UA)
+            .header("Origin", "https://music.youtube.com")
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        val text = http.newCall(req).execute().use { r ->
+            if (!r.isSuccessful) throw ProviderException("youtube music radio failed (${r.code})")
+            r.body!!.string()
+        }
+        val items = mutableListOf<JsonObject>()
+        collectKey(lenientJson.parseToJsonElement(text), "playlistPanelVideoRenderer", items)
+        items.mapNotNull(::radioTrack).filter { it.sourceId != watchUrl(videoId) }.distinctBy { it.id }
+    }
+
+    private fun runsText(o: JsonObject?): String =
+        o?.get("runs").asObjectList().joinToString("") { (it["text"] as? JsonPrimitive)?.content.orEmpty() }
+
+    private fun radioTrack(r: JsonObject): Track? {
+        val videoId = r.str("videoId") ?: return null
+        val title = runsText(r.obj("title")).ifBlank { return null }
+        // "Artist • Album • 2019" for songs, "Channel • 1.5B views • 8M likes" for videos
+        val parts = runsText(r.obj("longBylineText")).split(" • ").map { it.trim() }
+        val byline = parts.firstOrNull().orEmpty()
+        val album = parts.getOrNull(1)?.takeUnless { it.endsWith("views") || it.endsWith("likes") || it.all(Char::isDigit) }
+        val (artist, cleanTitle) = YtDlpProvider.splitArtistTitle(title, byline, hasTrackField = false)
+        val thumb = r.obj("thumbnail")?.get("thumbnails").asObjectList().lastOrNull()?.str("url")
+        val url = watchUrl(videoId)
+        return Track(
+            id = Track.makeId("youtube", url),
+            title = cleanTitle,
+            artist = artist,
+            album = album,
+            durationMs = runsText(r.obj("lengthText")).takeIf { DURATION.matches(it) }?.let(::parseDuration) ?: 0,
+            artworkUrl = thumb?.replace(Regex("=w\\d+-h\\d+.*$"), "=w544-h544-l90-rj") ?: "https://i.ytimg.com/vi/$videoId/hqdefault.jpg",
+            provider = "youtube",
+            sourceId = url,
+        )
+    }
+
+    private fun watchUrl(videoId: String) = "https://www.youtube.com/watch?v=$videoId"
+
+    private fun collectKey(el: JsonElement, key: String, out: MutableList<JsonObject>) {
+        when (el) {
+            is JsonObject -> {
+                val item = el[key] as? JsonObject
+                if (item != null) out += item else el.values.forEach { collectKey(it, key, out) }
+            }
+            is JsonArray -> el.forEach { collectKey(it, key, out) }
+            else -> Unit
+        }
+    }
+
     private fun collect(el: JsonElement, out: MutableList<JsonObject>) {
         when (el) {
             is JsonObject -> {

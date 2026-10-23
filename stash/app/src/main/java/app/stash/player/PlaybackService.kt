@@ -22,7 +22,11 @@ import androidx.media3.session.MediaSessionService
 import app.stash.MainActivity
 import app.stash.R
 import app.stash.data.db.TrackDao
+import app.stash.data.prefs.Settings
+import app.stash.player.PlayerConnection.Companion.toMediaItem
 import app.stash.providers.Resolver
+import app.stash.recs.Recommender
+import kotlinx.coroutines.withContext
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,6 +51,8 @@ class PlaybackService : MediaSessionService() {
     @Inject lateinit var resolver: Resolver
     @Inject lateinit var dao: TrackDao
     @Inject lateinit var http: OkHttpClient
+    @Inject lateinit var recommender: Recommender
+    @Inject lateinit var settings: Settings
 
     private var session: MediaSession? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -74,6 +80,10 @@ class PlaybackService : MediaSessionService() {
                 // look up the next song's stream now, so the switch doesn't wait on yt-dlp
                 val next = player.nextMediaItemIndex.takeIf { it != C.INDEX_UNSET }?.let { player.getMediaItemAt(it).mediaId }
                 if (next != null) scope.launch { runCatching { resolver.streamFor(next) } }
+            }
+
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) autoplay(player)
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -109,6 +119,28 @@ class PlaybackService : MediaSessionService() {
                     Futures.immediateFuture(mediaItems.map { it.withStashUri() }.toMutableList())
             })
             .build()
+    }
+
+    /** queue ran out: carry on with songs similar to the last one, like spotify's autoplay */
+    private fun autoplay(player: ExoPlayer) {
+        val last = player.currentMediaItem?.mediaId ?: return
+        val inQueue = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+        scope.launch {
+            if (!settings.current().autoplay) return@launch
+            val seed = dao.get(last) ?: return@launch
+            val next = runCatching { recommender.radioFor(seed) }.getOrDefault(emptyList())
+                .filter { it.id !in inQueue }
+                .take(20)
+            if (next.isEmpty()) return@launch
+            next.forEach { dao.ensure(it) }
+            withContext(Dispatchers.Main) {
+                val start = player.mediaItemCount
+                player.addMediaItems(next.map { it.toMediaItem() })
+                player.seekTo(start, 0)
+                player.prepare()
+                player.play()
+            }
+        }
     }
 
     private fun resolve(spec: DataSpec): DataSpec {

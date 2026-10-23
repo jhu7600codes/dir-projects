@@ -34,6 +34,18 @@ Imports are a queue saved in the database (`import_jobs`). `ImportWorker` runs i
 
 Optional. Settings → account, then email + password; Supabase sends a confirmation email the first time. Playlists (in order, missing songs included) and liked songs are saved to the `stash` Supabase project (`library_items`, row level security so every account only sees its own rows). It backs up by itself about 20 seconds after anything changes. Logging in on a new phone restores playlists it doesn't have yet.
 
+## Made for you
+
+Everything runs on the phone. Your plays and likes pick the seeds, and YouTube Music's radio for a song (the "up next" list its own app builds) supplies similar songs.
+
+- **daily mix 1–4**: one per top artist. Your songs by them and by artists the radio calls similar, alternating with new ones (max 2 per artist). Rebuilt once a day.
+- **discover weekly**: 30 songs you don't have, from 5 of your favourite songs' radios. Songs several radios agree on come first. New every Monday.
+- **repeat rewind**: songs you played 3+ times but not in the last 30 days.
+- **because you liked …**: a home row of songs similar to your latest like.
+- **start radio** on any song (long-press), and **autoplay** (settings → playback) keeps the music going with similar songs when the queue ends.
+
+Mixes are normal playlists (origin `mix`), so they can be downloaded. They aren't part of the cloud backup, since every phone rebuilds them.
+
 ## Home greetings
 
 The title follows the time of day, with a few variants each. With "greet me by place" on (settings, asks for location), the line under it follows where you are: airport, cafe, station or train (offers your most common playlist artist), driving, gym, library, and so on. The place comes from one location fix plus OpenStreetMap's Overpass API, cached for 10 minutes.

@@ -115,7 +115,7 @@ fun LibraryScreen() {
                             add("playlist")
                             add("${p.trackCount} songs")
                             if (p.downloadedCount > 0) add(if (p.downloadedCount == p.trackCount) "downloaded" else "${p.downloadedCount} offline")
-                            if (p.origin != "local") add("from ${p.origin}")
+                            if (p.origin == "mix") add("made for you") else if (p.origin != "local") add("from ${p.origin}")
                         }.joinToString(" · ")
                         LibraryRow(p.name, sub, p.coverUrl ?: p.firstArtwork, onClick = { nav.navigate(Routes.playlist(p.id)) })
                     }

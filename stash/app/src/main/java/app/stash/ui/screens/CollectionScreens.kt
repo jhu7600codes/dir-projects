@@ -237,7 +237,11 @@ fun PlaylistScreen(id: Long) {
 
     CollectionScreen(
         title = p.name,
-        kind = if (p.origin == "local") "playlist" else "from ${p.origin}",
+        kind = when (p.origin) {
+            "local" -> "playlist"
+            "mix" -> "made for you"
+            else -> "from ${p.origin}"
+        },
         tracks = tracks,
         positions = entries.map { it.position },
         missing = unmatched,

@@ -87,7 +87,8 @@ class CloudBackup @Inject constructor(
                 put("name", "liked songs")
                 put("tracks", JsonArray(liked.map { trackJson(it) } + playlists.unmatched(LIKED_PLAYLIST_ID).map(::missingJson)))
             })
-            playlists.all().forEachIndexed { i, p ->
+            // mixes get rebuilt on every phone anyway, no point backing them up
+            playlists.all().filter { it.origin != "mix" }.forEachIndexed { i, p ->
                 val entries = playlists.entries(p.id).map { it.position to trackJson(it.track) }
                 val missing = playlists.unmatched(p.id).map { it.position to missingJson(it) }
                 add(buildJsonObject {

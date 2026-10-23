@@ -75,6 +75,20 @@ interface TrackDao {
     @Query("SELECT * FROM tracks WHERE liked = 1 ORDER BY likedAt DESC")
     suspend fun liked(): List<Track>
 
+    /** what you listen to, best first: plays count, likes count more */
+    @Query(
+        """SELECT * FROM tracks WHERE liked = 1 OR playCount > 0 OR inLibrary = 1
+           ORDER BY (playCount * 2 + liked * 5 + inLibrary) DESC, lastPlayedAt DESC LIMIT :limit"""
+    )
+    suspend fun taste(limit: Int = 400): List<Track>
+
+    /** songs you played a lot, but not lately */
+    @Query("SELECT * FROM tracks WHERE playCount >= 3 AND lastPlayedAt < :before ORDER BY playCount DESC LIMIT :limit")
+    suspend fun forgottenFavorites(before: Long, limit: Int = 30): List<Track>
+
+    @Query("SELECT * FROM tracks WHERE liked = 1 ORDER BY likedAt DESC LIMIT 1")
+    suspend fun lastLiked(): Track?
+
     @Query("SELECT * FROM tracks WHERE artist = :artist ORDER BY playCount DESC")
     suspend fun byArtist(artist: String): List<Track>
 
@@ -202,6 +216,12 @@ interface PlaylistDao {
     /** the artist that shows up most across all playlists */
     @Query("SELECT t.artist FROM playlist_tracks pt JOIN tracks t ON t.id = pt.trackId WHERE t.artist != '' GROUP BY t.artist ORDER BY COUNT(*) DESC LIMIT 1")
     suspend fun topArtist(): String?
+
+    @Query("SELECT * FROM playlists WHERE origin = 'mix' AND originId = :mixId LIMIT 1")
+    suspend fun findMix(mixId: String): Playlist?
+
+    @Query("SELECT * FROM playlists WHERE origin = 'mix'")
+    suspend fun mixes(): List<Playlist>
 
     @Query("SELECT * FROM playlists WHERE name = :name LIMIT 1")
     suspend fun findByName(name: String): Playlist?
