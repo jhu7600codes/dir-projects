@@ -97,7 +97,7 @@ class SettingsViewModel @Inject constructor(
 
     fun signUp(email: String, password: String) = accountAction {
         when (account.signUp(email, password)) {
-            Account.SignUpResult.CheckEmail -> "Check your email and tap the confirm link, then log in here"
+            Account.SignUpResult.CheckEmail -> "Check your email and tap the confirm link, then come back here. You'll be logged in by yourself"
             Account.SignUpResult.SignedIn -> { cloud.firstSync(); "Account made, your library is backed up" }
         }
     }

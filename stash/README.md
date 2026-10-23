@@ -32,7 +32,7 @@ Imports are a queue saved in the database (`import_jobs`). `ImportWorker` runs i
 
 ## Account / backup (Supabase)
 
-Optional. Settings → account, then email + password; Supabase sends a confirmation email the first time. Playlists (in order, missing songs included) and liked songs are saved to the `stash` Supabase project (`library_items`, row level security so every account only sees its own rows). It backs up by itself about 20 seconds after anything changes. Logging in on a new phone restores playlists it doesn't have yet.
+Optional. Settings → account, then email + password; Supabase sends a confirmation email the first time. After tapping the link, coming back to Stash logs you in by itself. To make the link open Stash directly, add `stash://auth-callback` under Supabase → Authentication → URL Configuration → Redirect URLs (and set it as the Site URL); the app handles that link. Playlists (in order, missing songs included) and liked songs are saved to the `stash` Supabase project (`library_items`, row level security so every account only sees its own rows). It backs up by itself about 20 seconds after anything changes. Logging in on a new phone restores playlists it doesn't have yet.
 
 ## Made for you
 

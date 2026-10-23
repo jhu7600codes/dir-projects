@@ -1,5 +1,6 @@
 package app.stash.cloud
 
+import android.net.Uri
 import app.stash.BuildConfig
 import app.stash.data.prefs.Settings
 import app.stash.providers.ProviderException
@@ -35,12 +36,58 @@ class Account @Inject constructor(
         data object CheckEmail : SignUpResult
     }
 
+    /**
+     * a signup waiting for its email to be confirmed. only kept in memory (never on disk) so
+     * coming back to the app after tapping the email link can log straight in.
+     */
+    private var pending: Pair<String, String>? = null
+    val hasPendingSignup get() = pending != null
+
     suspend fun signUp(email: String, password: String): SignUpResult {
-        val o = post("/auth/v1/signup", buildJsonObject { put("email", email.trim()); put("password", password) }.toString())
+        // the confirm link sends you back into the app (stash://auth-callback) when that's an
+        // allowed redirect in the supabase project, see handleRedirect
+        val o = post(
+            "/auth/v1/signup?redirect_to=${Uri.encode(REDIRECT)}",
+            buildJsonObject { put("email", email.trim()); put("password", password) }.toString(),
+        )
         // with email confirmation on, signup returns the user but no session
-        if (o.str("access_token") == null) return SignUpResult.CheckEmail
+        if (o.str("access_token") == null) {
+            pending = email to password
+            return SignUpResult.CheckEmail
+        }
         save(o, email)
         return SignUpResult.SignedIn
+    }
+
+    /** true once the pending signup's email got confirmed and we're logged in */
+    suspend fun completePendingSignup(): Boolean {
+        val (email, password) = pending ?: return false
+        return try {
+            signIn(email, password)
+            pending = null
+            true
+        } catch (e: ProviderException) {
+            false // still not confirmed
+        }
+    }
+
+    /** stash://auth-callback#access_token=…&refresh_token=… from the confirm email */
+    suspend fun handleRedirect(uri: Uri) {
+        val params = (uri.fragment ?: uri.query ?: "").split('&').mapNotNull {
+            val i = it.indexOf('='); if (i > 0) it.substring(0, i) to Uri.decode(it.substring(i + 1)) else null
+        }.toMap()
+        params["error_description"]?.let { throw ProviderException(it.replace('+', ' ')) }
+        val access = params["access_token"] ?: throw ProviderException("That link didn't have a login in it")
+        val refresh = params["refresh_token"] ?: throw ProviderException("That link didn't have a login in it")
+        val expiresIn = params["expires_in"]?.toLongOrNull() ?: 3600
+        val email = httpIo {
+            http.newCall(
+                Request.Builder().url(BuildConfig.SUPABASE_URL + "/auth/v1/user")
+                    .header("apikey", BuildConfig.SUPABASE_KEY).header("Authorization", "Bearer $access").build()
+            ).execute().use { r -> lenientJson.parseToJsonElement(r.body!!.string()).jsonObject.str("email") }
+        } ?: pending?.first ?: ""
+        settings.saveSession(Settings.Session(email, access, refresh, System.currentTimeMillis() + (expiresIn - 60) * 1000))
+        pending = null
     }
 
     suspend fun signIn(email: String, password: String) {
@@ -49,6 +96,10 @@ class Account @Inject constructor(
     }
 
     suspend fun signOut() = settings.clearSession()
+
+    companion object {
+        const val REDIRECT = "stash://auth-callback"
+    }
 
     /** a valid access token, refreshed when it's close to expiring; null when logged out */
     suspend fun accessToken(): String? = refreshLock.withLock {
