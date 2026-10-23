@@ -146,7 +146,7 @@ class PlaybackService : MediaSessionService() {
     private fun resolve(spec: DataSpec): DataSpec {
         val uri = spec.uri
         if (uri.scheme != SCHEME) return spec
-        val trackId = Uri.decode(uri.lastPathSegment ?: return spec)
+        val trackId = Uri.decode(uri.lastPathSegment?.removeSuffix(HLS_SUFFIX) ?: return spec)
         val source = try {
             runBlocking { resolver.streamFor(trackId) }
         } catch (e: Exception) {
@@ -177,8 +177,17 @@ class PlaybackService : MediaSessionService() {
 
     companion object {
         const val SCHEME = "stash"
-        fun uriFor(trackId: String): Uri = Uri.parse("$SCHEME://track/${Uri.encode(trackId)}")
+        const val HLS_SUFFIX = ".m3u8"
+        const val EXTRA_HLS = "hls"
 
-        fun MediaItem.withStashUri(): MediaItem = buildUpon().setUri(uriFor(mediaId)).build()
+        /**
+         * [hls] streams get a .m3u8 ending so exoplayer picks its hls loader up front, before
+         * the real (soundcloud) playlist url has been looked up
+         */
+        fun uriFor(trackId: String, hls: Boolean = false): Uri =
+            Uri.parse("$SCHEME://track/${Uri.encode(trackId)}${if (hls) HLS_SUFFIX else ""}")
+
+        fun MediaItem.withStashUri(): MediaItem =
+            buildUpon().setUri(uriFor(mediaId, mediaMetadata.extras?.getBoolean(EXTRA_HLS) == true)).build()
     }
 }

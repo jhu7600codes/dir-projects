@@ -24,12 +24,30 @@ import javax.inject.Singleton
 @Singleton
 class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
 
-    suspend fun search(query: String, limit: Int): List<Track> {
-        val songs = request(query, SONGS)
-        return (songs.ifEmpty { request(query, VIDEOS) }).take(limit)
+    suspend fun search(query: String, limit: Int): List<Track> = searchHits(query, limit).map { it.track }
+
+    /** songs, or videos where the songs catalog isn't available, with view counts when shown */
+    suspend fun searchHits(query: String, limit: Int): List<SearchHit> {
+        val songs = request(query, SONGS).mapNotNull(::toHit)
+        return songs.ifEmpty { request(query, VIDEOS).mapNotNull(::toHit) }.take(limit)
     }
 
-    private suspend fun request(query: String, params: String): List<Track> = httpIo {
+    /** artist results; the "id" is the artist's name, which the artist page searches by */
+    suspend fun searchArtists(query: String, limit: Int): List<RemoteArtist> =
+        request(query, ARTISTS).mapNotNull { item ->
+            val name = columnText(item, 0).joinToString("").ifBlank { return@mapNotNull null }
+            val sub = columnText(item, 1).joinToString("")
+            RemoteArtist(
+                provider = "youtube",
+                id = name,
+                name = name,
+                avatarUrl = item.obj("thumbnail")?.obj("musicThumbnailRenderer")?.obj("thumbnail")?.get("thumbnails")
+                    .asObjectList().lastOrNull()?.str("url")?.replace(Regex("=w\\d+-h\\d+.*$"), "=w400-h400-l90-rj"),
+                followers = Regex("""([\d.,]+[KMB]?) (monthly audience|subscribers)""").find(sub)?.groupValues?.get(1)?.let(::parseCount),
+            )
+        }.take(limit)
+
+    private suspend fun request(query: String, params: String): List<JsonObject> = httpIo {
         val body = buildJsonObject {
             putJsonObject("context") {
                 putJsonObject("client") {
@@ -53,7 +71,15 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         }
         val items = mutableListOf<JsonObject>()
         collect(lenientJson.parseToJsonElement(text), items)
-        items.mapNotNull(::toTrack)
+        items
+    }
+
+    private fun toHit(item: JsonObject): SearchHit? {
+        val track = toTrack(item) ?: return null
+        val plays = columnText(item, 1).joinToString("").split(" • ")
+            .firstOrNull { it.endsWith(" views") || it.endsWith(" plays") }
+            ?.substringBefore(' ')?.let(::parseCount)
+        return SearchHit(track, plays)
     }
 
     /**
@@ -174,6 +200,13 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         )
     }
 
+    /** "1.5B" -> 1_500_000_000 */
+    private fun parseCount(s: String): Long? {
+        val n = s.replace(",", "").trim()
+        val mult = when (n.lastOrNull()) { 'K' -> 1e3; 'M' -> 1e6; 'B' -> 1e9; else -> 1.0 }
+        return n.trimEnd('K', 'M', 'B').toDoubleOrNull()?.let { (it * mult).toLong() }
+    }
+
     private fun parseDuration(s: String): Long =
         s.split(':').fold(0L) { acc, p -> acc * 60 + (p.toLongOrNull() ?: 0) } * 1000
 
@@ -182,6 +215,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         // search filter tabs, as music.youtube.com's chips send them
         private const val SONGS = "EgWKAQIIAWoMEAQQBRAQEBUQChAR"
         private const val VIDEOS = "EgWKAQIQAWoMEAQQBRAQEBUQChAR"
+        private const val ARTISTS = "EgWKAQIgAWoMEAQQBRAQEBUQChAR"
         private val TYPE_LABELS = setOf("Song", "Video")
         private val DURATION = Regex("""\d{1,2}(:\d{2}){1,2}""")
     }

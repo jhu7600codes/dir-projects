@@ -29,6 +29,20 @@ interface MusicProvider {
 
     suspend fun search(query: String, limit: Int = 20): List<Track>
 
+    /**
+     * search with the extra bits the search screen ranks by: play counts (for the underground
+     * filter) and tags. [tag] set means "songs tagged this" (from #tag searches), where the
+     * source supports it. sources without those details just wrap [search].
+     */
+    suspend fun searchHits(query: String, limit: Int = 20, tag: String? = null): List<SearchHit> =
+        search(query, limit).map { SearchHit(it) }
+
+    /** artists matching [query]; empty for sources without artist pages */
+    suspend fun searchArtists(query: String, limit: Int = 8): List<RemoteArtist> = emptyList()
+
+    /** an artist's own tracks, for the artist page opened from search */
+    suspend fun artistTracks(artistId: String, limit: Int = 50): List<Track> = emptyList()
+
     /** called right before playback. never cache the result for long, yt-dlp urls expire */
     suspend fun resolveStream(locator: Locator): StreamSource
 
@@ -37,6 +51,18 @@ interface MusicProvider {
 
     suspend fun downloadSource(locator: Locator): DownloadSource
 }
+
+/** a search result plus what we know about how big it is and how it's tagged */
+data class SearchHit(val track: Track, val plays: Long? = null, val tags: List<String> = emptyList())
+
+/** an artist on some source (soundcloud user, audius user, youtube channel) */
+data class RemoteArtist(
+    val provider: String,
+    val id: String,
+    val name: String,
+    val avatarUrl: String?,
+    val followers: Long?,
+)
 
 data class Locator(val provider: String, val sourceId: String, val streamHint: String?)
 

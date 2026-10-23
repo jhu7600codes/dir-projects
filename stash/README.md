@@ -53,6 +53,15 @@ Mixes are normal playlists (origin `mix`), so they can be downloaded. They aren'
 
 The title follows the time of day, with a few variants each. With "greet me by place" on (settings, asks for location), the line under it follows where you are: airport, cafe, station or train (offers your most common playlist artist), driving, gym, library, and so on. The place comes from one location fix plus OpenStreetMap's Overpass API, cached for 10 minutes.
 
+## Search
+
+- One list of songs from every source. Library hits come first, then the best matches by title, artist and tags. The same song from two sources shows once. Each result shows its play count and a tag when the source has them.
+- **#tags**: `#phonk` (or `tag:phonk`) searches by tag. SoundCloud uses its own tag filter, Audius filters on its track tags, and YouTube Music gets a plain search. The browse tiles are tag searches.
+- **Underground** switch: drops anything known to have more than 200K plays/views and lists the least played first. There's an Underground browse section too (hyperpop, breakcore, memphis rap…).
+- **Artists** row: artist results from YouTube Music, SoundCloud and Audius, with fan counts and an "Underground" badge under 20K. Tapping one opens their uploads.
+- **Audius** (independent artists, open API, plain MP3 streams) is a source now. SoundCloud search and playback go through SoundCloud's own web API (client id read from their site), which is much faster than yt-dlp. SoundCloud only serves HLS now, so its songs are queued as HLS (`stash://track/<id>.m3u8`).
+- Recent searches show when the box is empty.
+
 ## Covers
 
 Saved songs get their real album cover instead of a YouTube video thumbnail. For Spotify imports the cover comes from Spotify itself (public oEmbed, using the track URI from the link or the CSV). Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.

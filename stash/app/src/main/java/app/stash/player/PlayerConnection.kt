@@ -160,9 +160,12 @@ class PlayerConnection @Inject constructor(
     fun clearQueue() = withController { it.stop(); it.clearMediaItems() }
 
     companion object {
+        /** soundcloud is hls-only; downloaded files and songs that fell back to another source aren't */
+        private val Track.isHls get() = provider == "soundcloud" && !isDownloaded && resolvedProvider == null
+
         fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
             .setMediaId(id)
-            .setUri(PlaybackService.uriFor(id))
+            .setUri(PlaybackService.uriFor(id, isHls))
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(title)
@@ -171,7 +174,10 @@ class PlayerConnection @Inject constructor(
                     .setArtworkUri(artworkUrl?.let(Uri::parse))
                     .setIsPlayable(true)
                     .setIsBrowsable(false)
-                    .setExtras(Bundle().apply { putLong("durationMs", durationMs) })
+                    .setExtras(Bundle().apply {
+                        putLong("durationMs", durationMs)
+                        putBoolean(PlaybackService.EXTRA_HLS, isHls)
+                    })
                     .build()
             )
             .build()

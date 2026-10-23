@@ -202,7 +202,9 @@ fun SettingsScreen() {
                     p.displayName,
                     when {
                         needsKey -> "Needs a client ID (below)"
-                        p.id == "youtube" || p.id == "soundcloud" || p.id == "bandcamp" -> "Via yt-dlp"
+                        p.id == "audius" -> "Independent artists, open API"
+                        p.id == "soundcloud" -> "SoundCloud's own API, yt-dlp as backup"
+                        p.id == "youtube" || p.id == "bandcamp" -> "Via yt-dlp"
                         else -> "Open / CC-licensed"
                     },
                     p.id !in settings.disabledProviders && !needsKey,

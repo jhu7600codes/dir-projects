@@ -102,6 +102,8 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-session:1.5.1")
     implementation("androidx.media3:media3-datasource-okhttp:1.5.1")
+    // soundcloud only streams hls now
+    implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
     // re-encodes downloads to smaller aac files on the phone (no ffmpeg needed)
     implementation("androidx.media3:media3-transformer:1.5.1")
 

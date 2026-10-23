@@ -23,12 +23,13 @@ class ProviderRegistry @Inject constructor(
     youtube: YouTubeProvider,
     soundcloud: SoundCloudProvider,
     bandcamp: BandcampProvider,
+    audius: AudiusProvider,
     jamendo: JamendoProvider,
     archive: InternetArchiveProvider,
     fma: FreeMusicArchiveProvider,
     private val settings: Settings,
 ) {
-    val all: List<MusicProvider> = listOf(youtube, soundcloud, bandcamp, jamendo, archive, fma)
+    val all: List<MusicProvider> = listOf(youtube, soundcloud, audius, bandcamp, jamendo, archive, fma)
 
     fun get(id: String): MusicProvider? = all.firstOrNull { it.id == id }
 

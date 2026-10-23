@@ -50,6 +50,7 @@ data class AppSettings(
     /** keep playing similar songs when the queue runs out */
     val autoplay: Boolean = true,
     val downloadQuality: DownloadQuality = DownloadQuality.BALANCED,
+    val recentSearches: List<String> = emptyList(),
 )
 
 @Singleton
@@ -72,6 +73,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val locationGreetings = booleanPreferencesKey("location_greetings")
         val autoplay = booleanPreferencesKey("autoplay")
         val quality = stringPreferencesKey("download_quality")
+        val recent = stringPreferencesKey("recent_searches")
     }
 
     private val store get() = context.dataStore
@@ -94,6 +96,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         cloudReady = this[Keys.cloudReady] ?: false,
         locationGreetings = this[Keys.locationGreetings] ?: false,
         autoplay = this[Keys.autoplay] ?: true,
+        recentSearches = this[Keys.recent]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),
         downloadQuality = this[Keys.quality]?.let { runCatching { DownloadQuality.valueOf(it) }.getOrNull() } ?: DownloadQuality.BALANCED,
     )
 
@@ -110,6 +113,13 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
     suspend fun setYtDlpUpdated(version: String) = store.edit {
         it[Keys.ytUpdated] = System.currentTimeMillis()
         it[Keys.ytVersion] = version
+    }
+    suspend fun addRecentSearch(q: String) = store.edit {
+        val list = listOf(q.trim()) + (it[Keys.recent]?.split('\n').orEmpty().filter { old -> !old.equals(q.trim(), true) })
+        it[Keys.recent] = list.filter { s -> s.isNotBlank() }.take(12).joinToString("\n")
+    }
+    suspend fun removeRecentSearch(q: String) = store.edit {
+        it[Keys.recent] = it[Keys.recent]?.split('\n').orEmpty().filter { old -> old != q }.joinToString("\n")
     }
     suspend fun setDownloadQuality(q: DownloadQuality) = store.edit { it[Keys.quality] = q.name }
     suspend fun setAutoplay(on: Boolean) = store.edit { it[Keys.autoplay] = on }

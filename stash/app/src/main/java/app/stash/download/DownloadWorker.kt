@@ -104,7 +104,8 @@ class DownloadWorker @AssistedInject constructor(
         ytDlp.run(
             source.pageUrl,
             listOf(
-                "-f" to quality.ytFormat,
+                // soundcloud's hls comes as aac (needs ffmpeg to stitch) or mp3 (doesn't): take mp3
+                "-f" to if ("soundcloud.com" in source.pageUrl) "bestaudio[ext=mp3]/bestaudio" else quality.ytFormat,
                 "-o" to "${dir.absolutePath}/$base.%(ext)s",
                 "-c" to null,
                 "--no-playlist" to null,

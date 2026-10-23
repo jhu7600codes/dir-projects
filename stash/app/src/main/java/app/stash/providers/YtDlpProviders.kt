@@ -127,9 +127,17 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
      * youtube music's own search api answers in under a second, yt-dlp's ytsearch takes a few
      * (it boots python every time). yt-dlp stays as the fallback if the api ever changes.
      */
-    override suspend fun search(query: String, limit: Int): List<Track> =
-        runCatching { music.search(query, limit) }.getOrNull()?.takeIf { it.isNotEmpty() }
-            ?: flatSearch("ytsearch$limit:$query")
+    override suspend fun search(query: String, limit: Int): List<Track> = searchHits(query, limit).map { it.track }
+
+    override suspend fun searchHits(query: String, limit: Int, tag: String?): List<SearchHit> =
+        runCatching { music.searchHits(tag ?: query, limit) }.getOrNull()?.takeIf { it.isNotEmpty() }
+            ?: flatSearch("ytsearch$limit:${tag ?: query}").map { SearchHit(it) }
+
+    override suspend fun searchArtists(query: String, limit: Int) = music.searchArtists(query, limit)
+
+    /** youtube "artist ids" are names: their songs = a songs search filtered to that artist */
+    override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
+        music.search(artistId, limit).filter { it.artist.contains(artistId, ignoreCase = true) }
 
     override fun entryToTrack(o: JsonObject, fallbackUrl: String?): Track? {
         val videoId = o.str("id") ?: return super.entryToTrack(o, fallbackUrl)
@@ -143,11 +151,45 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
 }
 
 @Singleton
-class SoundCloudProvider @Inject constructor(ytDlp: YtDlp) : YtDlpProvider(ytDlp) {
+class SoundCloudProvider @Inject constructor(ytDlp: YtDlp, private val api: SoundCloudApi) : YtDlpProvider(ytDlp) {
     override val id = "soundcloud"
     override val displayName = "SoundCloud"
 
-    override suspend fun search(query: String, limit: Int) = flatSearch("scsearch$limit:$query")
+    override suspend fun search(query: String, limit: Int) = searchHits(query, limit).map { it.track }
+
+    /** soundcloud's api first (fast, tags + plays), yt-dlp's scsearch if the api is down */
+    override suspend fun searchHits(query: String, limit: Int, tag: String?): List<SearchHit> = runCatching {
+        val params = buildMap {
+            put("q", if (tag != null) "" else query)
+            put("limit", "$limit")
+            if (tag != null) put("filter.genre_or_tag", tag)
+        }
+        api.get("/search/tracks", params)["collection"].asObjectList().mapNotNull(api::hitFrom)
+    }.getOrElse { flatSearch("scsearch$limit:${tag ?: query}").map { SearchHit(it) } }
+
+    /**
+     * soundcloud stopped offering plain mp3 streams, it's hls only; the queue marks soundcloud
+     * songs as hls (see PlaybackService.uriFor) so the player loads this playlist right
+     */
+    override suspend fun resolveStream(locator: Locator): StreamSource {
+        val track = api.get("/resolve", mapOf("url" to locator.sourceId))
+        val auth = track.str("track_authorization")
+        val transcodings = track.obj("media")?.get("transcodings").asObjectList()
+        val hls = transcodings.filter { it.obj("format")?.str("protocol") == "hls" }
+        val pick = hls.firstOrNull { it.obj("format")?.str("mime_type")?.contains("mp4a") == true } ?: hls.firstOrNull()
+            ?: throw ProviderException("SoundCloud has no stream for this one")
+        val path = pick.str("url")!!.removePrefix("https://api-v2.soundcloud.com")
+        val url = api.get(path, buildMap { if (auth != null) put("track_authorization", auth) }).str("url")
+            ?: throw ProviderException("SoundCloud didn't give a stream")
+        return StreamSource(url)
+    }
+
+    override suspend fun searchArtists(query: String, limit: Int): List<RemoteArtist> =
+        api.get("/search/users", mapOf("q" to query, "limit" to "$limit"))["collection"].asObjectList().mapNotNull(api::artistFrom)
+
+    override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
+        api.get("/users/$artistId/tracks", mapOf("limit" to "$limit"))["collection"].asObjectList()
+            .mapNotNull { api.hitFrom(it)?.track }
 
     override fun entryToTrack(o: JsonObject, fallbackUrl: String?): Track? {
         return super.entryToTrack(o, fallbackUrl) ?: run {

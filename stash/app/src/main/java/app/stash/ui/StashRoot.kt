@@ -45,6 +45,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import app.stash.providers.RemoteArtist
 import app.stash.ui.player.MiniPlayer
 import app.stash.ui.player.NowPlayingSheet
 import app.stash.ui.screens.AlbumScreen
@@ -56,6 +57,7 @@ import app.stash.ui.screens.ImportScreen
 import app.stash.ui.screens.LibraryScreen
 import app.stash.ui.screens.LikedScreen
 import app.stash.ui.screens.PlaylistScreen
+import app.stash.ui.screens.RemoteArtistScreen
 import app.stash.ui.screens.SearchScreen
 import app.stash.ui.screens.SettingsScreen
 import kotlinx.coroutines.flow.Flow
@@ -73,12 +75,15 @@ object Routes {
     const val IMPORT = "import?link={link}"
     const val IMPORT_PROGRESS = "import/progress"
     const val FIX = "fix/{id}?q={q}"
+    const val REMOTE_ARTIST = "rartist/{provider}/{id}?name={name}&art={art}"
 
     fun playlist(id: Long) = "playlist/$id"
     fun album(name: String, artist: String) = "album?name=${Uri.encode(name)}&artist=${Uri.encode(artist)}"
     fun artist(name: String) = "artist?name=${Uri.encode(name)}"
     fun import(link: String? = null) = if (link == null) "import" else "import?link=${Uri.encode(link)}"
     fun fix(unmatchedId: Long, query: String) = "fix/$unmatchedId?q=${Uri.encode(query)}"
+    fun remoteArtist(a: RemoteArtist) =
+        "rartist/${a.provider}/${Uri.encode(a.id)}?name=${Uri.encode(a.name)}&art=${Uri.encode(a.avatarUrl ?: "")}"
 }
 
 val LocalNav = staticCompositionLocalOf<NavHostController> { error("No nav") }
@@ -153,6 +158,13 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 composable(Routes.ARTIST, listOf(navArgument("name") { defaultValue = "" })) {
                     ArtistScreen(it.arguments!!.getString("name")!!)
                 }
+                composable(
+                    Routes.REMOTE_ARTIST,
+                    listOf(
+                        navArgument("provider") {}, navArgument("id") {},
+                        navArgument("name") { defaultValue = "" }, navArgument("art") { defaultValue = "" },
+                    ),
+                ) { RemoteArtistScreen() }
                 composable(Routes.LIKED) { LikedScreen() }
                 composable(Routes.DOWNLOADS) { DownloadsScreen() }
                 composable(Routes.SETTINGS) { SettingsScreen() }

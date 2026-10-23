@@ -112,6 +112,8 @@ fun TrackRow(
     index: Int? = null,
     showArt: Boolean = true,
     showProvider: Boolean = false,
+    /** extra bit for the subtitle, e.g. "12K plays · #phonk" in search */
+    note: String? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -156,6 +158,7 @@ fun TrackRow(
                     add(track.artist)
                     if (showProvider) add(track.provider)
                     formatDuration(track.durationMs).takeIf { it.isNotEmpty() }?.let(::add)
+                    note?.let(::add)
                 }.filter { it.isNotBlank() }.joinToString(" · ")
                 Text(
                     sub,
@@ -253,5 +256,7 @@ val ListBottomPadding = PaddingValues(bottom = 24.dp)
 fun originName(origin: String) = when (origin) {
     "spotify" -> "Spotify"
     "apple" -> "Apple Music"
+    "youtube" -> "YouTube"
+    "soundcloud" -> "SoundCloud"
     else -> origin.replaceFirstChar { it.uppercase() }
 }
