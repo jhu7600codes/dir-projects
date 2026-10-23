@@ -1,5 +1,6 @@
 package app.stash.ui.screens
 
+import app.stash.data.calm
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -97,8 +98,8 @@ class ImportViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     val error = MutableStateFlow<String?>(null)
-    val jobs = queue.jobs.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    val missing = queue.missing.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val jobs = queue.jobs.calm().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val missing = queue.missing.calm().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     /** a spotify or apple music link (or any shared text containing one) */
     fun cleanLink(text: String) = spotify.findLink(text) ?: apple.findLink(text) ?: text.trim()

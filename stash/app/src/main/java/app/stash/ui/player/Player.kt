@@ -80,6 +80,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.palette.graphics.Palette
+import app.stash.data.calm
 import app.stash.data.db.DownloadState
 import app.stash.player.PlayerUiState
 import app.stash.ui.LocalActions
@@ -206,7 +207,7 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
 private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: () -> Unit, onQueue: () -> Unit) {
     val actions = LocalActions.current
     val player = actions.player
-    val trackFlow = remember(state.currentId) { actions.library.tracks.observe(state.currentId ?: "") }
+    val trackFlow = remember(state.currentId) { actions.library.tracks.observe(state.currentId ?: "").calm() }
     val track by trackFlow.collectAsState(initial = null)
     val (pos, buffered) = rememberPosition()
     var scrubbing by remember { mutableStateOf(false) }

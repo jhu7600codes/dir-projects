@@ -1,6 +1,7 @@
 package app.stash.providers
 
 import app.stash.data.db.Track
+import kotlinx.coroutines.async
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -30,6 +31,16 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
     suspend fun searchHits(query: String, limit: Int): List<SearchHit> {
         val songs = request(query, SONGS).mapNotNull(::toHit)
         return songs.ifEmpty { request(query, VIDEOS).mapNotNull(::toHit) }.take(limit)
+    }
+
+    /**
+     * songs and videos together, for matching imports: the songs tab only has label releases
+     * (and isn't there at all in some countries), lots of underground music is only a video.
+     */
+    suspend fun matchCandidates(query: String): List<SearchHit> = kotlinx.coroutines.coroutineScope {
+        val songs = async { runCatching { request(query, SONGS).mapNotNull(::toHit) }.getOrDefault(emptyList()) }
+        val videos = async { runCatching { request(query, VIDEOS).mapNotNull(::toHit) }.getOrDefault(emptyList()) }
+        (songs.await().take(8) + videos.await().take(12)).distinctBy { it.track.id }
     }
 
     /** artist results; the id is the artist's youtube music browse id (UC…) */
@@ -84,7 +95,8 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
             .firstOrNull { p -> VIEW_WORDS.any { p.contains(it) } }
             ?.let { p -> VIEW_WORDS.fold(p) { acc, w -> acc.replace(w, "") } }
             ?.let(::parseCount)
-        return SearchHit(track, plays)
+        val byline = columnText(item, 1).joinToString("").split(" • ").firstOrNull { it !in TYPE_LABELS }.orEmpty()
+        return SearchHit(track, plays, byline = "$byline ${columnText(item, 0).joinToString("")}")
     }
 
     private fun languageFor(query: String) = if (query.any { it in '\u0400'..'\u04FF' }) "ru" else "en"

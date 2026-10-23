@@ -91,6 +91,9 @@ class MainActivity : ComponentActivity() {
             openPlayer.trySend(Unit)
             return
         }
+        if (intent.getBooleanExtra(EXTRA_OPEN_RESCAN, false)) {
+            navRequests.trySend(Routes.RESCAN)
+        }
         if (intent.getBooleanExtra(EXTRA_OPEN_IMPORTS, false)) {
             navRequests.trySend(Routes.IMPORT_PROGRESS)
             return
@@ -104,5 +107,6 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_OPEN_PLAYER = "open_player"
         const val EXTRA_OPEN_IMPORTS = "open_imports"
+        const val EXTRA_OPEN_RESCAN = "open_rescan"
     }
 }

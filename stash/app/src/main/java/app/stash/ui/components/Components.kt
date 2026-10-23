@@ -297,9 +297,10 @@ fun ArtistBubble(a: RemoteArtist, onClick: () -> Unit) {
 @Composable
 fun RescanStatus(modifier: Modifier = Modifier) {
     val actions = app.stash.ui.LocalActions.current
+    val nav = app.stash.ui.LocalNav.current
     val rescan by actions.rescan.collectAsState()
     val r = rescan
-    Column(modifier) {
+    Column(modifier.clickable { nav.navigate(app.stash.ui.Routes.RESCAN) }) {
         when {
             r != null && r.running -> {
                 Text(
@@ -317,7 +318,10 @@ fun RescanStatus(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 ) else Spacer(Modifier.weight(1f))
-                androidx.compose.material3.FilledTonalButton(onClick = { actions.rescanMissing() }) { Text("Rescan failed songs") }
+                androidx.compose.material3.FilledTonalButton(onClick = {
+                    actions.rescanMissing()
+                    nav.navigate(app.stash.ui.Routes.RESCAN)
+                }) { Text("Rescan failed songs") }
             }
         }
     }

@@ -37,6 +37,12 @@ interface MusicProvider {
     suspend fun searchHits(query: String, limit: Int = 20, tag: String? = null): List<SearchHit> =
         search(query, limit).map { SearchHit(it) }
 
+    /**
+     * results to pick an imported song from. youtube overrides it to look at both songs and
+     * videos, since underground songs are often only uploaded as videos.
+     */
+    suspend fun matchCandidates(query: String): List<SearchHit> = searchHits(query, 10)
+
     /** artists matching [query]; empty for sources without artist pages */
     suspend fun searchArtists(query: String, limit: Int = 8): List<RemoteArtist> = emptyList()
 
@@ -62,6 +68,8 @@ data class SearchHit(
     val tags: List<String> = emptyList(),
     /** who uploaded it, when the source says (soundcloud / audius), for the artists row */
     val uploader: RemoteArtist? = null,
+    /** the channel and raw upload title, for the matcher ("LSPLASH" behind "DOORS OST - Here I Come") */
+    val byline: String? = null,
 )
 
 /** an artist on some source (soundcloud user, audius user, youtube channel) */

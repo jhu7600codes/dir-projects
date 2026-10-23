@@ -41,19 +41,26 @@ class ProviderRegistry @Inject constructor(
 }
 
 object Matcher {
-    private val brackets = Regex("""\s*[(\[][^)\]]*[)\]]""")
-    private val feat = Regex("""\s+(feat\.?|ft\.?|featuring|with)\s+.*$""", RegexOption.IGNORE_CASE)
+    // ascii and fullwidth round brackets / square brackets / 【】 (「」 often hold the title itself)
+    private val brackets = Regex("""\s*[(\[（【][^)\]）】]*[)\]）】]""")
+    private val feat = Regex("""\s*\b(feat\.?|ft\.?|featuring|with)(\s+|(?<=\.)).*$""", RegexOption.IGNORE_CASE)
     private val nonWord = Regex("""[^\p{L}\p{N}]+""")
+    private val marks = Regex("\\p{Mn}+")
 
     /**
-     * lowercase, no accents, cyrillic spelled in latin letters (so "Земфира" == "Zemfira", since
-     * youtube music answers in either depending on language), no brackets / feat. / punctuation.
+     * lowercase, no accents, cyrillic and japanese kana spelled in latin letters (so "Земфира" ==
+     * "Zemfira" and "タカオカミズキ" == "takaokamizuki"), no brackets / feat. / punctuation.
+     * kanji, kana and latin runs are split into separate words, since japanese has no spaces.
      * a title that's only symbols (like "∞") is kept as those symbols instead of turning empty.
      */
-    fun normalize(s: String): String {
-        val latin = transliterate(s.lowercase())
-        val noAccents = Normalizer.normalize(latin, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
-        val clean = noAccents.replace(brackets, " ").replace(feat, "").replace(nonWord, " ").trim()
+    fun normalize(s: String): String = words(s, stripExtras = true)
+
+    private fun words(s: String, stripExtras: Boolean): String {
+        var t = romanizeKana(splitScripts(s.lowercase()))
+        t = transliterate(t)
+        t = Normalizer.normalize(t, Normalizer.Form.NFD).replace(marks, "")
+        if (stripExtras) t = t.replace(brackets, " ").replace(feat, "")
+        val clean = t.replace(nonWord, " ").trim()
         return clean.ifEmpty { s.filterNot { it.isWhitespace() } }
     }
 
@@ -72,34 +79,142 @@ object Matcher {
         return out.toString()
     }
 
-    /** looser form for comparing: spellings like kh/h, iy/y, yo/e treated the same */
-    private fun fold(t: String) = t.replace("kh", "h").replace("iy", "y").replace("yo", "e").replace("ii", "i")
+    private enum class Script { HAN, KANA, OTHER }
 
-    private fun tokens(s: String) = normalize(s).split(' ').filter { it.isNotEmpty() }.map(::fold).toSet()
+    private fun scriptOf(c: Char): Script = when (Character.UnicodeScript.of(c.code)) {
+        Character.UnicodeScript.HAN -> Script.HAN
+        Character.UnicodeScript.HIRAGANA, Character.UnicodeScript.KATAKANA -> Script.KANA
+        else -> Script.OTHER
+    }
+
+    /** "おちゃめ機能" -> "おちゃめ 機能", "テトsv" -> "テト sv" */
+    private fun splitScripts(s: String): String {
+        if (s.none { scriptOf(it) != Script.OTHER }) return s
+        val out = StringBuilder(s.length + 8)
+        var prev: Script? = null
+        for (c in s) {
+            val cur = if (c.isLetterOrDigit() || c == 'ー') scriptOf(c) else null
+            if (cur != null && prev != null && cur != prev) out.append(' ')
+            out.append(c)
+            prev = cur
+        }
+        return out.toString()
+    }
+
+    // hepburn, hiragana order; katakana is the same block shifted by 0x60
+    private val kana: Map<Char, String> = run {
+        val chars = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
+            "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゔ"
+        val roma = ("a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no ha hi fu he ho " +
+            "ma mi mu me mo ya yu yo ra ri ru re ro wa o n ga gi gu ge go za ji zu ze zo da ji zu de do " +
+            "ba bi bu be bo pa pi pu pe po vu").split(' ')
+        buildMap {
+            chars.forEachIndexed { i, c -> put(c, roma[i]); put(c + 0x60, roma[i]) }
+        }
+    }
+    private val smallY = mapOf('ゃ' to "a", 'ゅ' to "u", 'ょ' to "o", 'ャ' to "a", 'ュ' to "u", 'ョ' to "o")
+    private val smallV = mapOf('ぁ' to "a", 'ぃ' to "i", 'ぅ' to "u", 'ぇ' to "e", 'ぉ' to "o", 'ァ' to "a", 'ィ' to "i", 'ゥ' to "u", 'ェ' to "e", 'ォ' to "o")
+
+    fun romanizeKana(s: String): String {
+        if (s.none { scriptOf(it) == Script.KANA }) return s
+        val out = StringBuilder(s.length * 2)
+        var double = false
+        for (c in s) {
+            val y = smallY[c]
+            val v = smallV[c]
+            val base = kana[c]
+            when {
+                // きゃ -> kya, しゃ -> sha, じゃ -> ja
+                y != null && out.endsWith("i") -> {
+                    out.setLength(out.length - 1)
+                    if (!(out.endsWith("sh") || out.endsWith("ch") || out.endsWith("j"))) out.append('y')
+                    out.append(y)
+                }
+                // ファ -> fa, ティ -> ti
+                v != null && out.length >= 2 && out.last() in "aiueo" -> {
+                    out.setLength(out.length - 1)
+                    out.append(v)
+                }
+                c == 'っ' || c == 'ッ' -> double = true
+                c == 'ー' -> Unit
+                base != null -> {
+                    if (double && base[0] !in "aiueon") out.append(if (base.startsWith("ch")) 't' else base[0])
+                    double = false
+                    out.append(base)
+                }
+                y != null -> out.append("y").append(y)
+                v != null -> out.append(v)
+                else -> out.append(c)
+            }
+        }
+        return out.toString()
+    }
+
+    /** looser form for comparing: spellings like kh/h, iy/y, yo/e, ou/o treated the same */
+    private fun fold(t: String) = t.replace("kh", "h").replace("iy", "y").replace("yo", "e").replace("ii", "i")
+        .replace("ou", "o").replace("uu", "u")
+
+    private fun tokens(s: String, stripExtras: Boolean = true) =
+        words(s, stripExtras).split(' ').filter { it.isNotEmpty() }.map(::fold).toSet()
 
     private fun hasLetters(s: String) = s.any { it.isLetterOrDigit() }
 
-    private fun overlap(a: Set<String>, b: Set<String>): Double {
-        if (a.isEmpty() || b.isEmpty()) return 0.0
-        return a.intersect(b).size.toDouble() / max(a.size, b.size)
-    }
+    /** "covered" counts for "cover", "r4ns0m" for "r4ns0m": equal, or one starts the other (4+ letters) */
+    private fun Set<String>.has(word: String) =
+        word in this || (word.length >= 4 && any { it.length >= 4 && (it.startsWith(word) || word.startsWith(it)) })
+
+    private fun share(want: Set<String>, have: Set<String>): Double =
+        if (want.isEmpty()) 0.0 else want.count { have.has(it) }.toDouble() / want.size
+
+    /** words that mean "not the original recording" */
+    private val versionWords = setOf(
+        "cover", "remix", "live", "sped", "slowed", "nightcore", "karaoke", "piano", "instrumental",
+        "reverb", "8d", "mashup", "acoustic", "tutorial", "reaction", "extended", "loop",
+    )
+
+    /** words in album names that say nothing about who made it */
+    private val genericAlbumWords = setOf(
+        "original", "game", "soundtrack", "ost", "vol", "volume", "deluxe", "edition", "the", "a", "of",
+        "remastered", "version", "ep", "single", "music", "from", "motion", "picture", "series", "part",
+        "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+    )
 
     /**
      * 0..1 for how likely [candidate] is the song "[artist] - [title]" of [durationMs].
-     * Titles carry the most weight, artist can also show up inside a youtube title,
-     * and a close duration is a strong signal that it's not a live/extended cut.
+     * Titles carry the most weight; any credited artist counts, and it can also show up in the
+     * channel or raw upload title ([extra], e.g. "DOORS OST VOL. 1 - Elevator Jam" uploaded by
+     * LSPLASH). A close duration is a strong signal that it's not a live/extended cut. A
+     * distinctive album word (the game "Doors") counts as half an artist, for soundtracks
+     * re-uploaded by fan channels.
      */
-    fun score(candidate: Track, title: String, artist: String, durationMs: Long): Double {
+    fun score(
+        candidate: Track,
+        title: String,
+        artist: String,
+        durationMs: Long,
+        album: String? = null,
+        extra: String? = null,
+    ): Double {
         val wantTitle = tokens(title)
-        val wantArtist = tokens(artist.split(',', '&').first())
+        val credited = artist.split(',', '&', ';', '、').map { tokens(it) }.filter { it.isNotEmpty() }
         val haveTitle = tokens(candidate.title)
-        val haveAll = haveTitle + tokens(candidate.artist)
+        val haveArtist = tokens(candidate.artist)
+        // raw text keeps what's in brackets, like "(@LSPLASH)" or "【初音ミク】"
+        val raw = tokens(candidate.title, stripExtras = false) + extra.orEmpty().let { tokens(it, stripExtras = false) }
+        val haveAll = haveTitle + haveArtist + raw
 
-        val titleScore = if (wantTitle.isNotEmpty()) wantTitle.count { it in haveAll }.toDouble() / wantTitle.size else 0.0
-        val extra = (haveTitle - wantTitle - wantArtist).size // words like "live", "remix", "cover"
-        val artistScore = overlap(wantArtist, tokens(candidate.artist)).coerceAtLeast(
-            if (wantArtist.isNotEmpty()) wantArtist.count { it in haveAll }.toDouble() / wantArtist.size else 0.0
-        )
+        val titleScore = share(wantTitle, haveAll)
+        val wantArtistWords = credited.flatten().toSet()
+        val extraWords = (haveTitle - wantTitle - wantArtistWords).size // words like "live", "remix", "cover"
+        var artistScore = credited.maxOfOrNull { a -> maxOf(share(a, haveArtist), share(a, haveAll)) } ?: 0.0
+        var onlyAlbum = false
+        if (artistScore == 0.0 && album != null) {
+            val albumWords = tokens(album) - genericAlbumWords - wantTitle
+            if (albumWords.isNotEmpty() && share(albumWords, haveAll) >= 0.5) {
+                artistScore = 0.5
+                onlyAlbum = true
+            }
+        }
         // a title with no letters at all ("∞") can't be matched by words: go by artist + length
         if (!hasLetters(title)) {
             val sameSymbols = candidate.title.contains(title.trim())
@@ -109,9 +224,13 @@ object Matcher {
             } else 0.0
             return (artistScore * 0.45 + lengthScore + if (sameSymbols) 0.3 else 0.0).coerceIn(0.0, 1.0)
         }
-        var s = titleScore * 0.55 + artistScore * 0.3 - minOf(extra, 4) * 0.03
-        if (durationMs > 0 && candidate.durationMs > 0) {
-            val diff = abs(durationMs - candidate.durationMs) / 1000
+        var s = titleScore * 0.55 + artistScore * 0.3 - minOf(extraWords, 4) * 0.03
+        // "metal cover", "sped up", "piano" etc. that the wanted title doesn't have: a different version
+        if (raw.any { it in versionWords && !wantTitle.has(it) }) s -= 0.2
+        val diff = if (durationMs > 0 && candidate.durationMs > 0) abs(durationMs - candidate.durationMs) / 1000 else null
+        // an album word alone is weak evidence: it also needs the length to line up
+        if (onlyAlbum && (diff == null || diff > 8)) s = minOf(s, 0.5)
+        if (diff != null) {
             s += when {
                 diff <= 3 -> 0.15
                 diff <= 8 -> 0.1
@@ -122,9 +241,12 @@ object Matcher {
             s += 0.05
         }
         // right title by a different artist is a cover, not the song
-        if (wantArtist.isNotEmpty() && artistScore == 0.0) s = minOf(s, 0.4)
+        if (credited.isNotEmpty() && artistScore == 0.0) s = minOf(s, 0.4)
         return s.coerceIn(0.0, 1.0)
     }
+
+    /** "LSPLASH, jasper.creations" -> "LSPLASH": searching with every credit buries the song */
+    fun primaryArtist(artist: String) = artist.split(',', '&', ';', '、').first().trim()
 
     const val ACCEPT = 0.6
 }
@@ -206,20 +328,35 @@ class Resolver @Inject constructor(
         throw ProviderException(errors.lastOrNull() ?: "Nothing could play this")
     }
 
-    private suspend fun bestMatch(provider: MusicProvider, title: String, artist: String, durationMs: Long): Track? {
-        val results = provider.search("$artist $title".trim(), 8)
-        return results.map { it to Matcher.score(it, title, artist, durationMs) }
+    private suspend fun bestMatch(provider: MusicProvider, title: String, artist: String, durationMs: Long): Track? =
+        pick(provider.search("${Matcher.primaryArtist(artist)} $title".trim(), 8).map { SearchHit(it) }, title, artist, durationMs, null)
+
+    private fun pick(hits: List<SearchHit>, title: String, artist: String, durationMs: Long, album: String?): Track? =
+        hits.map { h -> h.track to Matcher.score(h.track, title, artist, durationMs, album, h.byline ?: h.uploader?.name) }
             .filter { it.second >= Matcher.ACCEPT }
             .maxByOrNull { it.second }?.first
-    }
 
-    /** finds a song from another service (an imported playlist) on the first provider that has it */
-    suspend fun match(title: String, artist: String, durationMs: Long): Track? {
-        for (provider in registry.active()) {
-            val hit = runCatching { bestMatch(provider, title, artist, durationMs) }
+    /**
+     * finds a song from another service (an imported playlist) on the first provider that has it.
+     * first "artist title" everywhere; then, for soundtracks and fan uploads, "title album" on
+     * youtube and soundcloud ("R4NS0M Doors" finds what "LSPLASH R4NS0M" doesn't).
+     */
+    suspend fun match(title: String, artist: String, durationMs: Long, album: String? = null): Track? {
+        val providers = registry.active()
+        val main = "${Matcher.primaryArtist(artist)} $title".trim()
+        for (provider in providers) {
+            val hit = runCatching { pick(provider.matchCandidates(main), title, artist, durationMs, album) }
                 .onFailure { Log.w(TAG, "match via ${provider.id} failed", it) }
                 .getOrNull()
             if (hit != null) return hit
+        }
+        val albumWords = album?.replace(Regex("""\s*[(\[].*?[)\]]"""), "")?.substringBefore(" - ")?.trim()
+        if (!albumWords.isNullOrBlank() && !albumWords.equals(title, ignoreCase = true)) {
+            for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
+                val hit = runCatching { pick(provider.matchCandidates("$title $albumWords"), title, artist, durationMs, album) }
+                    .getOrNull()
+                if (hit != null) return hit
+            }
         }
         return null
     }
