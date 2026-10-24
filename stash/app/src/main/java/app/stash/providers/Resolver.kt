@@ -190,6 +190,14 @@ object Matcher {
         "reverb", "8d", "mashup", "acoustic", "tutorial", "reaction", "extended", "loop",
     )
 
+    /** covers / playthroughs, written the japanese way or as phrases the word list can't catch */
+    private val versionMarkers = listOf(
+        "歌ってみた", "踊ってみた", "弾いてみた", "叩いてみた", "演奏してみた", "描いてみた", "作ってみた", "カバー", "カラオケ",
+        "off vocal", "オフボーカル", "instrumental", "mmd", "guitar cover", "bass cover", "drum cover", "violin", "ピアノ",
+        "ギター", "ベース", "dance practice", "midi", "8-bit", "music box", "オルゴール", "sped up", "mashup", "マッシュアップ",
+        "tutorial", "piano cover", "歌枠",
+    )
+
     /** words in album names that say nothing about who made it */
     private val genericAlbumWords = setOf(
         "original", "game", "soundtrack", "ost", "vol", "volume", "deluxe", "edition", "the", "a", "of",
@@ -247,7 +255,10 @@ object Matcher {
         }
         var s = titleScore * 0.55 + artistScore * 0.3 - minOf(extraWords, 4) * 0.03
         // "metal cover", "sped up", "piano" etc. that the wanted title doesn't have: a different version
-        if (raw.any { it in versionWords && !wantTitle.has(it) }) s -= 0.2
+        val rawText = (candidate.title + " " + extra.orEmpty()).lowercase()
+        val otherVersion = raw.any { it in versionWords && !wantTitle.has(it) } ||
+            versionMarkers.any { it in rawText && it !in title.lowercase() }
+        if (otherVersion) s -= 0.2
         val diff = if (durationMs > 0 && candidate.durationMs > 0) abs(durationMs - candidate.durationMs) / 1000 else null
         // an album word alone is weak evidence: it also needs the length to line up
         if (onlyAlbum && (diff == null || diff > 8)) s = minOf(s, 0.5)
@@ -261,14 +272,24 @@ object Matcher {
         } else {
             s += 0.05
         }
-        // right title by a different artist is a cover, not the song
-        if (credited.isNotEmpty() && artistScore == 0.0) s = minOf(s, 0.4)
+        // right title by a different artist is usually a cover, not the song...
+        if (credited.isNotEmpty() && artistScore == 0.0) {
+            // ...unless the whole title is there, the length is within 3 seconds and nothing says
+            // it's another version: originals reuploaded by other channels (vocaloid songs on
+            // fan channels, "巡音ルカ「ルカルカ★ナイトフィーバー」" with no "samfree" in it).
+            // just enough to pass, so any upload naming the artist still wins
+            val reupload = titleScore >= 1.0 && wantTitle.sumOf { it.length } >= 6 && diff != null && diff <= 3 && !otherVersion
+            s = if (reupload) ACCEPT else minOf(s, 0.4)
+        }
         return s.coerceIn(0.0, 1.0)
     }
 
     /** the title as typed, minus "(feat. …)", "[Remastered]" and " - Cover" style tails */
     fun stripForSearch(title: String): String =
-        title.replace(brackets, " ").replace(feat, "").replace(Regex("""\s+[-–]\s+.*$"""), "").trim().ifEmpty { title }
+        title.replace(brackets, " ").replace(feat, "")
+            .replace(Regex("""\s+[-–]\s+.*$"""), "") // "Song - Remastered 2011"
+            .replace(Regex("""\s*[-~～][^-~～]+[-~～]\s*$"""), "") // "ルカルカ★ナイトフィーバー -Miku ver.-"
+            .trim().ifEmpty { title }
 
     /** "LSPLASH, jasper.creations" -> "LSPLASH": searching with every credit buries the song */
     fun primaryArtist(artist: String) = artist.split(',', '&', ';', '、').first().trim()
@@ -373,6 +394,13 @@ class Resolver @Inject constructor(
             val hit = runCatching { pick(provider.matchCandidates(main, title), title, artist, durationMs, album) }
                 .onFailure { Log.w(TAG, "match via ${provider.id} failed", it) }
                 .getOrNull()
+            if (hit != null) return hit
+        }
+        // the title alone, without decorations: songs whose uploads don't name the artist
+        val bare = Matcher.stripForSearch(title)
+        // (vocadb already searched by the bare title above)
+        for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
+            val hit = runCatching { pick(provider.matchCandidates(bare, bare), title, artist, durationMs, album) }.getOrNull()
             if (hit != null) return hit
         }
         val albumWords = album?.replace(Regex("""\s*[(\[].*?[)\]]"""), "")?.substringBefore(" - ")?.trim()

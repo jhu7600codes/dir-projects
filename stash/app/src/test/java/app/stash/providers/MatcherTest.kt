@@ -80,8 +80,9 @@ class MatcherTest {
         val v = video("DOORS ORIGINAL SOUNDTRACK VOL. 6 - R4NS0M", "DOORS - Official Game Soundtrack", 84)
         val album = "Doors (Original Game Soundtrack), Vol. 6"
         assertTrue(score(v, "R4NS0M", "LSPLASH, jasper.creations", 83_732, album) >= Matcher.ACCEPT)
-        // without the album it's just some channel with the same title
-        assertTrue(score(v, "R4NS0M", "LSPLASH, jasper.creations", 83_732) < Matcher.ACCEPT)
+        // without the album it's only a same-title, same-length upload: just barely accepted, below the album match
+        val bare = score(v, "R4NS0M", "LSPLASH, jasper.creations", 83_732)
+        assertTrue(bare < score(v, "R4NS0M", "LSPLASH, jasper.creations", 83_732, album))
     }
 
     @Test
@@ -138,5 +139,22 @@ class MatcherTest {
     fun stripsTitlesForNameSearch() {
         assertEquals("Ochame Kinou", Matcher.stripForSearch("Ochame Kinou (feat. KASANE TETO) - Cover"))
         assertEquals("∞", Matcher.stripForSearch("∞"))
+    }
+
+    @Test
+    fun reuploadsWithoutTheArtistNeedTheExactLength() {
+        // real result: the original on a fan channel, no "samfree" anywhere
+        val v = video("巡音ルカ「ルカルカ★ナイトフィーバー」【オリジナル曲】", "Mellow Mel", 240)
+        assertTrue(score(v, "ルカルカ★ナイトフィーバー", "Samfree", 241_000) >= Matcher.ACCEPT)
+        assertTrue(score(v, "ルカルカ★ナイトフィーバー", "Samfree", 260_000) < Matcher.ACCEPT)
+        // covers stay out even at the same length
+        val cover = video("【歌ってみた】ルカルカ★ナイトフィーバー", "みない", 241)
+        assertTrue(score(cover, "ルカルカ★ナイトフィーバー", "Samfree", 241_000) < Matcher.ACCEPT)
+    }
+
+    @Test
+    fun stripsVersionTails() {
+        assertEquals("ルカルカ★ナイトフィーバー", Matcher.stripForSearch("ルカルカ★ナイトフィーバー -Miku ver.-"))
+        assertEquals("1/6", Matcher.stripForSearch("1/6 -out of the gravity-"))
     }
 }
