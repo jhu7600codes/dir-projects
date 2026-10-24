@@ -2,6 +2,7 @@ package app.stash.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -282,6 +283,8 @@ fun PlaylistScreen(id: Long) {
     var renaming by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     var changingCover by remember { mutableStateOf(false) }
+    val pinnedList by actions.pinned.collectAsState()
+    val pinnedHere = pinnedList.any { it.id == id }
     val p = playlist ?: return
 
     CollectionScreen(
@@ -298,6 +301,8 @@ fun PlaylistScreen(id: Long) {
         menu = listOf(
             MenuEntry("Rename", Icons.Rounded.Edit) { renaming = true },
             MenuEntry("Change cover", Icons.Rounded.Image) { changingCover = true },
+            if (pinnedHere) MenuEntry("Unpin", Icons.Rounded.PushPin) { actions.setPinned(id, false) }
+            else MenuEntry("Pin to home", Icons.Rounded.PushPin) { actions.setPinned(id, true) },
             MenuEntry("Remove downloads", Icons.Rounded.RemoveCircleOutline) { actions.downloads.delete(tracks.filter { it.isDownloaded }) },
             MenuEntry("Delete playlist", Icons.Rounded.Delete) { deleting = true },
         ),

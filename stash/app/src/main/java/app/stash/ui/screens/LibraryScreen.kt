@@ -2,6 +2,8 @@ package app.stash.ui.screens
 
 import app.stash.data.calm
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
@@ -95,6 +97,7 @@ fun LibraryScreen() {
     val downloaded by remember { dao.observeDownloaded() .calm() }.collectAsState(initial = emptyList())
     val currentId by actions.player.currentId.collectAsState()
     val missingCount by actions.missingCount.collectAsState()
+    val pinned by actions.pinned.collectAsState()
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -136,7 +139,10 @@ fun LibraryScreen() {
 
             when (filter) {
                 LibFilter.PLAYLISTS -> {
-                    val sorted = if (alphabetical) playlists.sortedBy { it.name.lowercase() } else playlists
+                    val pinnedIds = pinned.map { it.id }.toSet()
+                    // pinned ones stay on top, like spotify's library
+                    val sorted = pinned + (if (alphabetical) playlists.sortedBy { it.name.lowercase() } else playlists)
+                        .filter { it.id !in pinnedIds }
                     if (!grid) item {
                         LibraryRow(
                             title = "Liked songs", subtitle = "Pinned · Playlist · ${liked.size} songs", art = null,
@@ -174,12 +180,16 @@ fun LibraryScreen() {
                         }
                     } else items(sorted, key = { it.id }) { p ->
                         val sub = buildList {
+                            if (p.id in pinnedIds) add("Pinned")
                             add("Playlist")
                             add("${p.trackCount} songs")
                             if (p.downloadedCount > 0) add(if (p.downloadedCount == p.trackCount) "Downloaded" else "${p.downloadedCount} offline")
                             if (p.origin == "mix") add("Made for you") else if (p.origin != "local") add("From ${originName(p.origin)}")
                         }.joinToString(" · ")
-                        LibraryRow(p.name, sub, p.art, onClick = { nav.navigate(Routes.playlist(p.id)) })
+                        LibraryRow(
+                            p.name, sub, p.art, onClick = { nav.navigate(Routes.playlist(p.id)) },
+                            onLongClick = { actions.setPinned(p.id, p.id !in pinnedIds) },
+                        )
                     }
                     if (playlists.isEmpty()) item {
                         EmptyState(Icons.AutoMirrored.Rounded.QueueMusic, "No playlists yet", "Make one, or bring yours over from Spotify or Apple Music.") {
@@ -249,6 +259,7 @@ private fun PinnedIcon(icon: ImageVector) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LibraryRow(
     title: String,
@@ -256,6 +267,7 @@ fun LibraryRow(
     art: Any?,
     onClick: () -> Unit,
     circle: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null,
 ) {
     ListItem(
@@ -266,6 +278,6 @@ fun LibraryRow(
                 if (circle) Icons.Rounded.Person else Icons.AutoMirrored.Rounded.QueueMusic)
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 4.dp),
+        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick).padding(horizontal = 4.dp),
     )
 }

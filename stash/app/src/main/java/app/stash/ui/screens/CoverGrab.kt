@@ -75,6 +75,12 @@ class CoverGrabViewModel @Inject constructor(private val covers: PlaylistCovers)
 
     fun fromProfile(link: String) = run { covers.fromProfile(link) }
 
+    /** any text with spotify playlist links in it (one per line, or a whole pasted list) */
+    fun fromLinks(text: String) = run {
+        val ids = Regex("""playlist[/:]([A-Za-z0-9]{22})""").findAll(text).map { it.groupValues[1] }.distinct()
+        covers.apply(ids.associateWith { null })
+    }
+
     /** {"spotify:playlist:id": "name", …} from the exportify page */
     fun fromExportify(json: String) = run {
         val found = lenientJson.parseToJsonElement(json).jsonObject.mapNotNull { (uri, name) ->
@@ -93,6 +99,7 @@ fun PlaylistCoversCard() {
     val busy by vm.busy.collectAsState()
     val message by vm.message.collectAsState()
     var profile by remember { mutableStateOf("") }
+    var links by remember { mutableStateOf("") }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Playlist covers", style = MaterialTheme.typography.titleMedium)
@@ -119,6 +126,13 @@ fun PlaylistCoversCard() {
                 "A profile only shows about 10 public playlists; Exportify gets all of them.",
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            OutlinedTextField(
+                value = links, onValueChange = { links = it }, minLines = 2, maxLines = 6,
+                label = { Text("Or paste playlist links, as many as you want") },
+                placeholder = { Text("Spotify → playlist → share → copy link, then paste them all here") },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedButton(onClick = { vm.fromLinks(links) }, enabled = links.contains("playlist") && !busy) { Text("Get covers from links") }
             message?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary) }
         }
     }
@@ -208,6 +222,17 @@ fun CoverGrabScreen() {
                         WebView(ctx).apply {
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
+                            // spotify's login turns away in-app browsers: look like plain chrome
+                            // (no "; wv", no "Version/4.0") and keep its login cookies
+                            settings.userAgentString = settings.userAgentString
+                                .replace("; wv", "").replace(Regex("""Version/[\d.]+ """), "")
+                            settings.javaScriptCanOpenWindowsAutomatically = true
+                            settings.setSupportMultipleWindows(false)
+                            val view = this
+                            android.webkit.CookieManager.getInstance().apply {
+                                setAcceptCookie(true)
+                                setAcceptThirdPartyCookies(view, true)
+                            }
                             webViewClient = object : WebViewClient() {
                                 // spotify: links in the table would try to leave the page
                                 override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest) =
