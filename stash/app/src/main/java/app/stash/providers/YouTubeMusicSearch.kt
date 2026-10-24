@@ -133,6 +133,57 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         items.mapNotNull(::radioTrack).filter { it.sourceId != watchUrl(videoId) }.distinctBy { it.id }
     }
 
+    /**
+     * the audio stream straight from youtube's player api, as the android VR app asks for it:
+     * those urls need no signature solving, so this takes one http request instead of starting
+     * yt-dlp's whole python (seconds on a phone). null when youtube wants more (bot check, age
+     * gate…); yt-dlp handles those.
+     */
+    suspend fun audioStream(videoId: String): StreamSource? = httpIo {
+        val body = buildJsonObject {
+            putJsonObject("context") {
+                putJsonObject("client") {
+                    put("clientName", "ANDROID_VR")
+                    put("clientVersion", VR_VERSION)
+                    put("deviceMake", "Oculus")
+                    put("deviceModel", "Quest 3")
+                    put("androidSdkVersion", 32)
+                    put("osName", "Android")
+                    put("osVersion", "12L")
+                    put("hl", "en")
+                }
+            }
+            put("videoId", videoId)
+            put("contentCheckOk", true)
+            put("racyCheckOk", true)
+        }.toString()
+        val req = Request.Builder()
+            .url("https://www.youtube.com/youtubei/v1/player?prettyPrint=false")
+            .header("User-Agent", VR_UA)
+            .header("X-YouTube-Client-Name", "28")
+            .header("X-YouTube-Client-Version", VR_VERSION)
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        val text = http.newCall(req).execute().use { r -> if (r.isSuccessful) r.body?.string() else null } ?: return@httpIo null
+        val root = lenientJson.parseToJsonElement(text).jsonObject
+        if (root.obj("playabilityStatus")?.str("status") != "OK") return@httpIo null
+        val audio = root.obj("streamingData")?.get("adaptiveFormats").asObjectList()
+            .filter { it.str("mimeType").orEmpty().startsWith("audio/") && it.str("url") != null }
+        // opus (251) is the best sounding, m4a (140) plays everywhere
+        val best = audio.firstOrNull { it.num("itag")?.toInt() == 251 }
+            ?: audio.firstOrNull { it.num("itag")?.toInt() == 140 }
+            ?: audio.maxByOrNull { it.num("bitrate") ?: 0.0 }
+            ?: return@httpIo null
+        val url = best.str("url")!!
+        // youtube sometimes hands out links that answer 403 once played (it wants a token yt-dlp
+        // knows how to get); ask for the first two bytes so those fall through to yt-dlp
+        val ok = runCatching {
+            http.newCall(Request.Builder().url(url).header("User-Agent", VR_UA).header("Range", "bytes=0-1").build())
+                .execute().use { it.code == 206 || it.code == 200 }
+        }.getOrDefault(false)
+        if (ok) StreamSource(url, mapOf("User-Agent" to VR_UA)) else null
+    }
+
     /** an artist's youtube music page: banner, bio, audience, top songs/videos, "fans also like" */
     suspend fun artist(browseId: String): ArtistDetails? = httpIo {
         val body = buildJsonObject {
@@ -311,6 +362,9 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
 
     companion object {
         private const val CLIENT_VERSION = "1.20250929.03.00"
+        private const val VR_VERSION = "1.60.19"
+        private const val VR_UA =
+            "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip"
         // search filter tabs, as music.youtube.com's chips send them
         private const val SONGS = "EgWKAQIIAWoMEAQQBRAQEBUQChAR"
         private const val VIDEOS = "EgWKAQIQAWoMEAQQBRAQEBUQChAR"

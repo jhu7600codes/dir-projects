@@ -61,7 +61,7 @@ class RescanWorker @AssistedInject constructor(
                 async {
                     gate.withPermit {
                         if (isStopped) return@withPermit
-                        setProgress(progress(done.get(), missing.size, found.get(), "${u.artist} - ${u.title}", foundNames))
+                        if (due()) setProgress(progress(done.get(), missing.size, found.get(), "${u.artist} - ${u.title}", foundNames))
                         val hit = runCatching { resolver.match(u.title, u.artist, u.durationMs, u.album) }.getOrNull()
                         if (hit != null) {
                             place(u, hit)
@@ -69,9 +69,12 @@ class RescanWorker @AssistedInject constructor(
                             foundNames.add(0, "${u.artist} - ${u.title}")
                         }
                         val n = done.incrementAndGet()
-                        runCatching { setForeground(info(n, missing.size, found.get())) }
-                        // the app shows this live (library row, import screen, playlists)
-                        setProgress(progress(n, missing.size, found.get(), null, foundNames))
+                        // at most about once a second: posting a notification per song (4 at a time)
+                        // floods android's notification service until the whole system stops responding
+                        if (due() || n == missing.size) {
+                            runCatching { setForeground(info(n, missing.size, found.get())) }
+                            setProgress(progress(n, missing.size, found.get(), null, foundNames))
+                        }
                     }
                 }
             }.awaitAll()
@@ -89,6 +92,15 @@ class RescanWorker @AssistedInject constructor(
             )
         }
         return Result.success(progress(missing.size, missing.size, found.get(), null, foundNames))
+    }
+
+    private val lastUpdate = java.util.concurrent.atomic.AtomicLong(0)
+
+    /** true at most once per [UPDATE_MS], for whichever coroutine asks first */
+    private fun due(): Boolean {
+        val now = System.currentTimeMillis()
+        val last = lastUpdate.get()
+        return now - last >= UPDATE_MS && lastUpdate.compareAndSet(last, now)
     }
 
     /** work data is capped at 10KB, so only the latest found songs ride along */
@@ -136,6 +148,7 @@ class RescanWorker @AssistedInject constructor(
     }
 
     companion object {
+        private const val UPDATE_MS = 1_000L
         const val KEY_DONE = "done"
         const val KEY_TOTAL = "total"
         const val KEY_FOUND = "found"

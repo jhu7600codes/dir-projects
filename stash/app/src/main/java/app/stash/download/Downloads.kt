@@ -33,6 +33,13 @@ class Downloads @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val work get() = WorkManager.getInstance(context)
 
+    /**
+     * downloads actually running at once. a whole playlist is queued as one worker per song and
+     * workmanager would start them all together, each with its own python (yt-dlp) process and
+     * notification, which is enough to run a phone out of memory. the rest wait here, quietly.
+     */
+    val slots = kotlinx.coroutines.sync.Semaphore(2)
+
     val dir: File get() = File(context.filesDir, "music").apply { mkdirs() }
 
     fun enqueue(tracks: List<Track>) = scope.launch {
