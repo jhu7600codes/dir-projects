@@ -152,7 +152,7 @@ class YouTubeProvider @Inject constructor(
     private val fastFailures = java.util.concurrent.atomic.AtomicInteger(0)
     @Volatile private var fastRetryAt = 0L
 
-    /** videos whose fast link broke while playing: yt-dlp only, until the app restarts */
+    /** videos whose quick link broke while playing: NewPipe / yt-dlp only, until the app restarts */
     private val slowOnly = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     fun preferYtDlp(sourceId: String) {
@@ -163,13 +163,15 @@ class YouTubeProvider @Inject constructor(
     override suspend fun resolveStream(locator: Locator): StreamSource {
         val videoId = Regex("""[?&]v=([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
             ?: Regex("""youtu\.be/([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
-        if (videoId == null || locator.sourceId in slowOnly) return super.resolveStream(locator)
+        if (videoId == null) return super.resolveStream(locator)
         val url = "https://www.youtube.com/watch?v=$videoId"
         // youtube's quick way (skipped for a while after it keeps refusing) and NewPipe (java,
         // a second or two) start together; yt-dlp (a whole python, 30s+ on some phones) only
         // joins if neither has answered in a few seconds. first one with a link wins.
         return kotlinx.coroutines.coroutineScope {
-            val quickBlocked = fastFailures.get() >= 3 && System.currentTimeMillis() < fastRetryAt
+            // a song whose quick link was cut off mid-play goes NewPipe → yt-dlp instead
+            val quickBlocked = locator.sourceId in slowOnly ||
+                (fastFailures.get() >= 3 && System.currentTimeMillis() < fastRetryAt)
             val fast = async {
                 if (quickBlocked) null
                 else runCatching { music.audioStream(videoId) }.getOrNull().also { r ->
@@ -177,14 +179,22 @@ class YouTubeProvider @Inject constructor(
                     else if (fastFailures.incrementAndGet() >= 3) fastRetryAt = System.currentTimeMillis() + 10 * 60 * 1000L
                 }
             }
-            val pipe = async { runCatching { newPipe.audioStream(url) }.getOrNull() }
+            var pipeWhy = "no link"
+            val pipe = async {
+                runCatching { newPipe.audioStream(url) }
+                    .onFailure { pipeWhy = "${it.javaClass.simpleName}: ${it.message.orEmpty()}".take(90) }
+                    .getOrNull()
+                    .also { if (it == null && pipeWhy == "no link") pipeWhy = "link refused (403)" }
+            }
             val quick = listOf(fast, pipe)
             firstNonNull(quick, YTDLP_AFTER_MS)?.let { quick.forEach { it.cancel() }; return@coroutineScope it }
             val slow = async { runCatching { super.resolveStream(locator) } }
             val result = firstNonNull(quick + async { slow.await().getOrNull() }, Long.MAX_VALUE)
             quick.forEach { it.cancel() }
             slow.cancel()
-            result ?: slow.await().getOrThrow()
+            // when yt-dlp had to do it, say why the quick ways didn't (settings → playback log)
+            val why = " (quick: ${if (quickBlocked) "skipped" else "refused"}; NewPipe: $pipeWhy)"
+            (result ?: slow.await().getOrThrow()).let { if (it.via == "yt-dlp") it.copy(via = it.via + why) else it }
         }
     }
 

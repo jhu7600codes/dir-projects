@@ -80,6 +80,8 @@ class PlaybackService : MediaSessionService() {
             .build()
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        var switchedAt = 0L
+        var waitingForSound = false
         // songs already given their one slow retry / their one hls switch
         val retried = mutableSetOf<String>()
         val hlsSwitched = mutableSetOf<String>()
@@ -93,7 +95,20 @@ class PlaybackService : MediaSessionService() {
                 val index = player.currentMediaItemIndex
                 val upcoming = (1..2).map { (index + it) }.filter { it < player.mediaItemCount }
                     .map { player.getMediaItemAt(it).mediaId }
-                scope.launch { upcoming.forEach { id -> runCatching { resolver.streamFor(id) } } }
+                scope.launch { upcoming.forEach { id -> runCatching { resolver.streamFor(id, ahead = true) } } }
+                switchedAt = System.currentTimeMillis()
+                waitingForSound = true
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                // the real number: from switching to a song until it's audible
+                if (isPlaying && waitingForSound) {
+                    waitingForSound = false
+                    resolver.recordPlaying(
+                        player.currentMediaItem?.mediaMetadata?.title?.toString() ?: "?",
+                        System.currentTimeMillis() - switchedAt,
+                    )
+                }
             }
 
             override fun onPlaybackStateChanged(state: Int) {
