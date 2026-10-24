@@ -145,6 +145,9 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
         const val FAST_HEAD_START_MS = 2_500L
     }
 
+    private val fastFailures = java.util.concurrent.atomic.AtomicInteger(0)
+    @Volatile private var fastRetryAt = 0L
+
     /** videos whose fast link broke while playing: yt-dlp only, until the app restarts */
     private val slowOnly = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
@@ -157,10 +160,17 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
         val videoId = Regex("""[?&]v=([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
             ?: Regex("""youtu\.be/([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
         if (videoId == null || locator.sourceId in slowOnly) return super.resolveStream(locator)
+        // youtube refusing the quick way every time (some connections): stop waiting for it for a while
+        if (fastFailures.get() >= 3 && System.currentTimeMillis() < fastRetryAt) return super.resolveStream(locator)
         // the fast way first; if it hasn't answered in a couple of seconds, start yt-dlp too and
         // take whichever finishes first, so a slow or refused fast try never costs its full time
         return kotlinx.coroutines.coroutineScope {
-            val fast = async { runCatching { music.audioStream(videoId) }.getOrNull() }
+            val fast = async {
+                runCatching { music.audioStream(videoId) }.getOrNull().also { r ->
+                    if (r != null) fastFailures.set(0)
+                    else if (fastFailures.incrementAndGet() >= 3) fastRetryAt = System.currentTimeMillis() + 10 * 60 * 1000L
+                }
+            }
             kotlinx.coroutines.withTimeoutOrNull(FAST_HEAD_START_MS) { fast.await() }?.let { return@coroutineScope it }
             val slow = async { runCatching { super.resolveStream(locator) } }
             val winner = kotlinx.coroutines.selects.select<StreamSource?> {

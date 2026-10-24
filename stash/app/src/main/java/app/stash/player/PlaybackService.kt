@@ -88,8 +88,12 @@ class PlaybackService : MediaSessionService() {
                 val id = mediaItem?.mediaId ?: return
                 scope.launch { dao.markPlayed(id) }
                 // look up the next song's stream now, so the switch doesn't wait on yt-dlp
-                val next = player.nextMediaItemIndex.takeIf { it != C.INDEX_UNSET }?.let { player.getMediaItemAt(it).mediaId }
-                if (next != null) scope.launch { runCatching { resolver.streamFor(next) } }
+                // get the next two songs ready while this one plays: on connections where youtube
+                // only works through yt-dlp, that's the difference between a gap and none
+                val index = player.currentMediaItemIndex
+                val upcoming = (1..2).map { (index + it) }.filter { it < player.mediaItemCount }
+                    .map { player.getMediaItemAt(it).mediaId }
+                scope.launch { upcoming.forEach { id -> runCatching { resolver.streamFor(id) } } }
             }
 
             override fun onPlaybackStateChanged(state: Int) {

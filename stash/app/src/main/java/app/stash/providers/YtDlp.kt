@@ -111,6 +111,8 @@ class YtDlp @Inject constructor(
         val request = YoutubeDLRequest(target).apply {
             addOption("--no-warnings")
             addOption("--no-check-certificates")
+            // keeps youtube's solved signature code between runs; without it every song re-solves it
+            addOption("--cache-dir", java.io.File(context.cacheDir, "yt-dlp").absolutePath)
             if ("youtube.com" in target || "youtu.be" in target || target.startsWith("ytsearch")) {
                 val cookies = YouTubeLogin.cookieFile(context)
                 if (cookies.exists()) {

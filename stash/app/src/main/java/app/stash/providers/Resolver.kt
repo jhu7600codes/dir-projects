@@ -317,7 +317,15 @@ class Resolver @Inject constructor(
     private val registry: ProviderRegistry,
     private val dao: TrackDao,
 ) {
+    /** [at]: until when the link can be used */
     private data class Cached(val source: StreamSource, val at: Long)
+
+    private fun validUntil(url: String): Long {
+        val now = System.currentTimeMillis()
+        val expire = Regex("""[?&/]expire[=/](\d{9,11})""").find(url)?.groupValues?.get(1)?.toLongOrNull()
+            ?: return now + CACHE_MS
+        return (expire * 1000 - 10 * 60 * 1000L).coerceIn(now, now + 5 * 60 * 60 * 1000L)
+    }
 
     /**
      * Stream urls are only memoised for a few minutes so seeking doesn't re-run yt-dlp
@@ -363,7 +371,7 @@ class Resolver @Inject constructor(
             val f = File(path)
             if (f.exists() && f.length() > 0) return StreamSource(f.toURI().toString(), via = "downloaded")
         }
-        shortCache[trackId]?.let { if (System.currentTimeMillis() - it.at < CACHE_MS) return it.source }
+        shortCache[trackId]?.let { if (System.currentTimeMillis() < it.at) return it.source }
         val started = System.currentTimeMillis()
         return try {
             lookUp(trackId, track).also { record(LogEntry(track.title, it.via.ifEmpty { track.provider }, System.currentTimeMillis() - started, null)) }
@@ -386,7 +394,9 @@ class Resolver @Inject constructor(
         } finally {
             inFlight.remove(trackId, job)
         }
-        shortCache[trackId] = Cached(source, System.currentTimeMillis())
+        // kept until shortly before youtube's link expires (its "expire=" stamp, usually ~6 hours),
+        // so a song played again, or got ready ahead, never waits on yt-dlp twice
+        shortCache[trackId] = Cached(source, validUntil(source.url))
         return source
     }
 
