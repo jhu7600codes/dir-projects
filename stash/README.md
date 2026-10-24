@@ -90,7 +90,16 @@ Songs that couldn't be found can be searched for again against all current sourc
 
 ## Covers
 
-Saved songs get their real album cover instead of a YouTube video thumbnail. For Spotify imports the cover comes from Spotify itself: the CSV's album image url, or public oEmbed with the track URI from the link. It's applied even when the matched song was already saved (older versions skipped those), and songs imported before that are fixed once in the background. Spotify covers are on `i.scdn.co`, which some networks block, so the app falls back to the same picture on Spotify's other CDN hosts. Playlists have "Change cover": a photo from the phone, or a Spotify playlist link (exportify's CSVs don't include the playlist's own cover). Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.
+Saved songs get their real album cover instead of a YouTube video thumbnail. For Spotify imports the cover comes from Spotify itself: the CSV's album image url, or public oEmbed with the track URI from the link. It's applied even when the matched song was already saved (older versions skipped those), and songs imported before that are fixed once in the background. Spotify covers are on `i.scdn.co`, which some networks block, so the app falls back to the same picture on Spotify's other CDN hosts. Playlists have "Change cover": a photo from the phone, or a Spotify playlist link (exportify's CSVs don't include the playlist's own cover).
+
+### Playlist covers for Exportify imports
+
+Exportify's files only have the playlist's name, and Spotify only gives a cover by playlist id. The import screen's "Playlist covers" card gets the ids two ways, then asks Spotify's public oEmbed for each one's name and cover and matches them to Stash playlists by name (letters and digits only, the way Exportify names its files). The real name, with its capitals and punctuation, comes back too.
+
+- **Through Exportify**: opens exportify.net inside the app. You log in like you did for the CSVs, then "Grab covers" reads every page of Exportify's playlist list (each name links to the playlist) through a small script.
+- **Profile link**: your Spotify profile page lists your public playlists, but only about 10.
+
+The ids are remembered by name (`PlaylistCovers`), so later Exportify imports get their cover by themselves. Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.
 
 ## Download size
 

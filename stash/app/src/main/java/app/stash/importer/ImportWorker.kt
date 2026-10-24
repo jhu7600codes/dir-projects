@@ -49,6 +49,7 @@ class ImportWorker @AssistedInject constructor(
     private val playlists: PlaylistDao,
     private val resolver: Resolver,
     private val covers: Covers,
+    private val playlistCovers: PlaylistCovers,
 ) : CoroutineWorker(context, params) {
 
     private var lastNotified = 0L
@@ -73,6 +74,15 @@ class ImportWorker @AssistedInject constructor(
             else -> playlists.insert(
                 Playlist(name = job.name, coverUrl = job.coverUrl, origin = job.origin, originId = job.originId)
             ).also { dao.setPlaylist(job.id, it) }
+        }
+        // an exportify file only has the name; if that playlist's spotify id was seen before
+        // (profile / exportify cover grab), its real cover comes along
+        if (!job.intoLiked && job.origin == "spotify" && job.coverUrl == null) {
+            playlistCovers.knownId(job.name)?.let { spotifyId ->
+                runCatching { playlistCovers.oembed(spotifyId) }.getOrNull()?.let { (name, cover) ->
+                    if (cover != null) playlists.setSpotify(playlistId, name ?: job.name, cover, spotifyId)
+                }
+            }
         }
         val queuePos = dao.pendingCount()
         val done = AtomicInteger(job.done)
