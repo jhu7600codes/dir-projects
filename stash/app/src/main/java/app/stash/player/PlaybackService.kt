@@ -97,6 +97,12 @@ class PlaybackService : MediaSessionService() {
 
             override fun onPlayerError(error: PlaybackException) {
                 val id = player.currentMediaItem?.mediaId
+                // what actually went wrong, down to the root cause, for settings → playback log
+                val root = generateSequence(error as Throwable) { it.cause }.last()
+                resolver.recordPlayerError(
+                    player.currentMediaItem?.mediaMetadata?.title?.toString() ?: "?",
+                    "${error.errorCodeName}: ${root.javaClass.simpleName} ${root.message.orEmpty()}".take(300),
+                )
                 // first failure of a song: youtube's fast link broke (it does that to some
                 // videos). get it again the slow sure way and carry on from the same spot
                 if (id != null && retried.add(id)) {

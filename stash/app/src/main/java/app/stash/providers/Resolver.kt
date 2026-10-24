@@ -337,6 +337,9 @@ class Resolver @Inject constructor(
     private val _log = kotlinx.coroutines.flow.MutableStateFlow<List<LogEntry>>(emptyList())
     val log: kotlinx.coroutines.flow.StateFlow<List<LogEntry>> = _log
 
+    /** the player itself choked on a stream it was given (403, unsupported format…) */
+    fun recordPlayerError(title: String, what: String) = record(LogEntry(title, "player error", 0, what))
+
     private fun record(e: LogEntry) {
         _log.value = (listOf(e) + _log.value).take(30)
     }
