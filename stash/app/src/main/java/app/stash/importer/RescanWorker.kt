@@ -49,6 +49,8 @@ class RescanWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         imports.forgetMisses()
         val missing = playlists.allUnmatched()
+        // the playlist each song is in, which helps find soundtracks (see Resolver.match)
+        val names = playlists.all().associate { it.id to it.name }
         if (missing.isEmpty()) return Result.success(workDataOf(KEY_TOTAL to 0, KEY_FOUND to 0))
         val done = AtomicInteger()
         val found = AtomicInteger()
@@ -62,7 +64,7 @@ class RescanWorker @AssistedInject constructor(
                     gate.withPermit {
                         if (isStopped) return@withPermit
                         if (due()) setProgress(progress(done.get(), missing.size, found.get(), "${u.artist} - ${u.title}", foundNames))
-                        val hit = runCatching { resolver.match(u.title, u.artist, u.durationMs, u.album) }.getOrNull()
+                        val hit = runCatching { resolver.match(u.title, u.artist, u.durationMs, u.album, names[u.playlistId]) }.getOrNull()
                         if (hit != null) {
                             place(u, hit)
                             found.incrementAndGet()

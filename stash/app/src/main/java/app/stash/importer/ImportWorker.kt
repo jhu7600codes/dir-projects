@@ -93,7 +93,7 @@ class ImportWorker @AssistedInject constructor(
                 async {
                     gate.withPermit {
                         if (dao.state(job.id) == "cancelled") return@withPermit
-                        val hit = match(t)
+                        val hit = match(t, if (job.intoLiked) null else job.name)
                         save(job, playlistId, t, hit)
                         notify(job, done.incrementAndGet(), queuePos, t)
                     }
@@ -128,7 +128,7 @@ class ImportWorker @AssistedInject constructor(
     }
 
     /** the same song in several playlists is only searched once */
-    private suspend fun match(t: ImportJobTrack): Track? {
+    private suspend fun match(t: ImportJobTrack, context: String?): Track? {
         val key = Matcher.normalize(t.artist.split(',').first()) + "|" + Matcher.normalize(t.title)
         val cached = dao.cached(key)
         if (cached != null) {
@@ -137,7 +137,7 @@ class ImportWorker @AssistedInject constructor(
             if (cached.trackId != null) tracks.get(cached.trackId)?.let { return withSpotifyCover(it, t) }
             else if (fresh) return null
         }
-        val hit = runCatching { resolver.match(t.title, t.artist, t.durationMs, t.album) }.getOrNull()
+        val hit = runCatching { resolver.match(t.title, t.artist, t.durationMs, t.album, context) }.getOrNull()
         val saved = hit?.let {
             // keep the nicer metadata from spotify / the csv
             tracks.ensure(
@@ -211,8 +211,8 @@ class ImportWorker @AssistedInject constructor(
         private const val PARALLEL = 4
         private const val NOTIFICATION_ID = 0x4100
         private const val RETRY_MISSES_AFTER = 3L * 24 * 60 * 60 * 1000
-        /** 1.6.2: reuploads without the artist, title-only search. bump when matching gets better again */
-        const val MATCHER_CHANGED_AT = 1_792_886_400_000L
-        const val MATCHER_VERSION = 4
+        /** 1.10.0: playlist name as context (soundtracks under the game's name). bump when matching gets better again */
+        const val MATCHER_CHANGED_AT = 1_792_972_800_000L
+        const val MATCHER_VERSION = 5
     }
 }

@@ -30,6 +30,31 @@ object YouTubeLogin {
         cookieFile(context).writeText("# Netscape HTTP Cookie File\n" + lines.joinToString("\n") + "\n")
     }
 
+    /**
+     * pasted cookies in any of the shapes cookie exporters give: a header string
+     * ("SID=…; SAPISID=…"), a netscape cookies.txt, or Cookie-Editor's json. returns them as a
+     * header string, or null when there's no youtube session in it.
+     */
+    fun parsePasted(raw: String): String? {
+        val text = raw.trim().removePrefix("Cookie:").trim()
+        val pairs: List<Pair<String, String>> = when {
+            text.startsWith("[") -> Regex(""""name"\s*:\s*"([^"]+)"[^}]*?"value"\s*:\s*"([^"]*)"""")
+                .findAll(text).map { it.groupValues[1] to it.groupValues[2] }.toList()
+                .ifEmpty {
+                    // value before name in some exports
+                    Regex(""""value"\s*:\s*"([^"]*)"[^}]*?"name"\s*:\s*"([^"]+)"""")
+                        .findAll(text).map { it.groupValues[2] to it.groupValues[1] }.toList()
+                }
+            "\t" in text -> text.lines().filter { it.isNotBlank() && !it.startsWith("#") || it.startsWith("#HttpOnly_") }
+                .map { it.removePrefix("#HttpOnly_").split('\t') }
+                .filter { it.size >= 7 && "youtube" in it[0] }
+                .map { it[5] to it[6] }
+            else -> text.split(";").map { it.trim() }.filter { "=" in it }.map { it.substringBefore("=") to it.substringAfter("=") }
+        }
+        val header = pairs.distinctBy { it.first }.joinToString("; ") { "${it.first}=${it.second}" }
+        return header.takeIf { hasSession(it) }
+    }
+
     fun logOut(context: Context) {
         cookieFile(context).delete()
         CookieManager.getInstance().removeAllCookies(null)

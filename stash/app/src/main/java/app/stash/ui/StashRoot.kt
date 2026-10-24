@@ -56,6 +56,7 @@ import app.stash.ui.screens.ImportProgressScreen
 import app.stash.ui.screens.RescanScreen
 import app.stash.ui.screens.CoverGrabScreen
 import app.stash.ui.screens.YouTubeLoginScreen
+import app.stash.ui.screens.YtPlaylistScreen
 import app.stash.ui.screens.ImportScreen
 import app.stash.ui.screens.LibraryScreen
 import app.stash.ui.screens.LikedScreen
@@ -79,6 +80,7 @@ object Routes {
     const val RESCAN = "rescan"
     const val COVER_GRAB = "covers/exportify"
     const val YOUTUBE_LOGIN = "youtube/login"
+    const val YT_PLAYLIST = "ytplaylist/{id}"
     const val FIX = "fix/{id}?q={q}"
     const val REMOTE_ARTIST = "rartist/{provider}/{id}?name={name}&art={art}"
 
@@ -87,6 +89,7 @@ object Routes {
     fun artist(name: String) = "artist?name=${Uri.encode(name)}"
     fun import(link: String? = null) = if (link == null) "import" else "import?link=${Uri.encode(link)}"
     fun fix(unmatchedId: Long, query: String) = "fix/$unmatchedId?q=${Uri.encode(query)}"
+    fun ytPlaylist(id: String) = "ytplaylist/${Uri.encode(id)}"
     fun remoteArtist(a: RemoteArtist) =
         "rartist/${a.provider}/${Uri.encode(a.id)}?name=${Uri.encode(a.name)}&art=${Uri.encode(a.avatarUrl ?: "")}"
 }
@@ -181,6 +184,7 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 composable(Routes.RESCAN) { RescanScreen() }
                 composable(Routes.COVER_GRAB) { CoverGrabScreen() }
                 composable(Routes.YOUTUBE_LOGIN) { YouTubeLoginScreen() }
+                composable(Routes.YT_PLAYLIST, listOf(navArgument("id") {})) { YtPlaylistScreen() }
                 composable(
                     Routes.FIX,
                     listOf(navArgument("id") { type = NavType.LongType }, navArgument("q") { defaultValue = "" }),

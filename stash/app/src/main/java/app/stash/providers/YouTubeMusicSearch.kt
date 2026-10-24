@@ -43,6 +43,70 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         (songs.await().take(8) + videos.await().take(12)).distinctBy { it.track.id }
     }
 
+    /** youtube music's community playlists for [query] */
+    suspend fun searchPlaylists(query: String, limit: Int = 12): List<RemotePlaylist> =
+        request(query, PLAYLISTS).mapNotNull { item ->
+            val browseId = item.obj("navigationEndpoint")?.obj("browseEndpoint")?.str("browseId")
+                ?.takeIf { it.startsWith("VL") } ?: return@mapNotNull null
+            RemotePlaylist(
+                id = browseId,
+                title = columnText(item, 0).joinToString("").ifBlank { return@mapNotNull null },
+                subtitle = columnText(item, 1).joinToString("").ifBlank { null },
+                coverUrl = item.obj("thumbnail")?.obj("musicThumbnailRenderer")?.obj("thumbnail")?.get("thumbnails")
+                    .asObjectList().lastOrNull()?.str("url")?.replace(Regex("=w\\d+-h\\d+.*$"), "=w544-h544-l90-rj"),
+            )
+        }.take(limit)
+
+    /** a playlist with its songs (up to [max], following youtube's pages of 100) */
+    suspend fun playlist(browseId: String, max: Int = 1000): RemotePlaylist? {
+        val id = if (browseId.startsWith("VL")) browseId else "VL$browseId"
+        var root = browse(buildJsonObject { put("browseId", id) }) ?: return null
+        val header = mutableListOf<JsonObject>().also { collectKey(root, "musicResponsiveHeaderRenderer", it) }.firstOrNull()
+            ?: mutableListOf<JsonObject>().also { collectKey(root, "musicDetailHeaderRenderer", it) }.firstOrNull()
+        val title = runsText(header?.obj("title")).ifBlank { "YouTube Music playlist" }
+        val cover = header?.obj("thumbnail")?.obj("musicThumbnailRenderer")?.obj("thumbnail")?.get("thumbnails")
+            .asObjectList().lastOrNull()?.str("url")?.replace(Regex("=[sw]\\d+.*$"), "=w544-h544-l90-rj")
+        val subtitle = runsText(header?.obj("secondSubtitle")).ifBlank { runsText(header?.obj("subtitle")) }.ifBlank { null }
+        val tracks = mutableListOf<Track>()
+        while (true) {
+            val rows = mutableListOf<JsonObject>().also { collectKey(root, "musicResponsiveListItemRenderer", it) }
+            tracks += rows.mapNotNull { toTrack(it, splitTitle = false) }
+            if (tracks.size >= max) break
+            val token = continuationToken(root) ?: break
+            root = browse(buildJsonObject { put("continuation", token) }) ?: break
+        }
+        return RemotePlaylist(id, title, subtitle, cover, tracks.distinctBy { it.id }.take(max))
+    }
+
+    private fun continuationToken(el: JsonElement): String? = when (el) {
+        is JsonObject -> el.obj("continuationCommand")?.str("token")
+            ?: el.obj("nextContinuationData")?.str("continuation")
+            ?: el.values.firstNotNullOfOrNull(::continuationToken)
+        is JsonArray -> el.firstNotNullOfOrNull(::continuationToken)
+        else -> null
+    }
+
+    private suspend fun browse(extra: JsonObject): JsonObject? = httpIo {
+        val body = buildJsonObject {
+            putJsonObject("context") {
+                putJsonObject("client") {
+                    put("clientName", "WEB_REMIX")
+                    put("clientVersion", CLIENT_VERSION)
+                    put("hl", "en")
+                }
+            }
+            extra.forEach { (k, v) -> put(k, v) }
+        }.toString()
+        val req = Request.Builder()
+            .url("https://music.youtube.com/youtubei/v1/browse?prettyPrint=false")
+            .header("User-Agent", BROWSER_UA)
+            .header("Origin", "https://music.youtube.com")
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        http.newCall(req).execute().use { r -> if (r.isSuccessful) r.body?.string() else null }
+            ?.let { lenientJson.parseToJsonElement(it).jsonObject }
+    }
+
     /** artist results; the id is the artist's youtube music browse id (UC…) */
     suspend fun searchArtists(query: String, limit: Int): List<RemoteArtist> =
         request(query, ARTISTS).mapNotNull { item ->
@@ -315,20 +379,28 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
             ?.obj("musicResponsiveListItemFlexColumnRenderer")?.obj("text")?.get("runs").asObjectList()
             .mapNotNull { (it["text"] as? JsonPrimitive)?.content }
 
-    private fun toTrack(item: JsonObject): Track? {
+    /** [splitTitle]: "Artist - Song" video titles get split; off for playlist rows, which already name the artist */
+    private fun toTrack(item: JsonObject, splitTitle: Boolean = true): Track? {
         val videoId = item.obj("playlistItemData")?.str("videoId") ?: return null
         val title = columnText(item, 0).joinToString("").ifBlank { return null }
         // "Artist • Album • 3:58" for songs, "Channel • 1.5B views • 3:57" for videos,
         // sometimes with a leading "Song" / "Video" label
         val parts = columnText(item, 1).joinToString("").split(" • ").map { it.trim() }.filter { it.isNotEmpty() }
             .dropWhile { it in TYPE_LABELS }
-        val duration = parts.lastOrNull { DURATION.matches(it) }
+        // playlist rows keep the length in a separate fixed column...
+        val fixed = (item["fixedColumns"] as? JsonArray)?.mapNotNull { c ->
+            (c as? JsonObject)?.obj("musicResponsiveListItemFixedColumnRenderer")?.obj("text")?.let(::runsText)
+        }.orEmpty()
+        // ...or in a third flex column, depending on the layout youtube sends
+        val later = (2..3).flatMap { columnText(item, it) }.map { it.trim() }
+        val duration = parts.lastOrNull { DURATION.matches(it) } ?: fixed.firstOrNull { DURATION.matches(it) }
+            ?: later.firstOrNull { DURATION.matches(it) }
         val rest = parts.filter { p -> p != duration && VIEW_WORDS.none { p.contains(it) } }
         val artistRaw = rest.firstOrNull() ?: ""
         val album = rest.getOrNull(1)
         val url = "https://www.youtube.com/watch?v=$videoId"
         // videos: titles are often "Artist - Song (Official Video)", reuse the yt-dlp heuristics
-        val (artist, cleanTitle) = if (album == null) {
+        val (artist, cleanTitle) = if (album == null && splitTitle) {
             YtDlpProvider.splitArtistTitle(title, artistRaw, hasTrackField = false)
         } else artistRaw to title
         val thumb = item.obj("thumbnail")?.obj("musicThumbnailRenderer")?.obj("thumbnail")?.get("thumbnails")
@@ -385,6 +457,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         private const val SONGS = "EgWKAQIIAWoMEAQQBRAQEBUQChAR"
         private const val VIDEOS = "EgWKAQIQAWoMEAQQBRAQEBUQChAR"
         private const val ARTISTS = "EgWKAQIgAWoMEAQQBRAQEBUQChAR"
+        private const val PLAYLISTS = "EgeKAQQoAEABagoQBBAFEBUQChAQ"
         private val TYPE_LABELS = setOf("Song", "Video", "Песня", "Видео", "Трек")
         private val VIEW_WORDS = listOf(" views", " plays", " просмотров", " просмотра", " просмотр", " прослушиваний")
         private val DURATION = Regex("""\d{1,2}(:\d{2}){1,2}""")

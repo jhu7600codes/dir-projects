@@ -202,8 +202,18 @@ object Matcher {
     private val genericAlbumWords = setOf(
         "original", "game", "soundtrack", "ost", "vol", "volume", "deluxe", "edition", "the", "a", "of",
         "remastered", "version", "ep", "single", "music", "from", "motion", "picture", "series", "part",
-        "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+        // playlist names count too (see Resolver.match's context), so their filler words as well
+        "roblox", "themes", "theme", "your", "my", "all", "time", "top", "songs", "song", "playlist", "mix",
+        "best", "liked", "favorites", "favourites", "tracks", "gaming", "and", "for", "in", "on",
     )
+
+    /** the words of [name] as written (not romanized), keeping only [keep]'s ones, for searching */
+    fun originalWords(name: String, keep: Set<String>): String =
+        name.split(Regex("""\s+""")).filter { w -> tokens(w).any { it in keep } }.joinToString(" ")
+
+    /** distinctive words of an album / playlist name: no filler, no bare numbers */
+    fun distinctiveWords(name: String): Set<String> =
+        tokens(name).filter { it !in genericAlbumWords && !it.all(Char::isDigit) }.toSet()
 
     /**
      * 0..1 for how likely [candidate] is the song "[artist] - [title]" of [durationMs].
@@ -238,7 +248,7 @@ object Matcher {
         var artistScore = if (perArtist.isEmpty()) 0.0 else perArtist.max() * 0.75 + perArtist.average() * 0.25
         var onlyAlbum = false
         if (artistScore == 0.0 && album != null) {
-            val albumWords = tokens(album) - genericAlbumWords - wantTitle
+            val albumWords = distinctiveWords(album) - wantTitle
             if (albumWords.isNotEmpty() && share(albumWords, haveAll) >= 0.5) {
                 artistScore = 0.5
                 onlyAlbum = true
@@ -427,11 +437,17 @@ class Resolver @Inject constructor(
      * first "artist title" everywhere; then, for soundtracks and fan uploads, "title album" on
      * youtube and soundcloud ("R4NS0M Doors" finds what "LSPLASH R4NS0M" doesn't).
      */
-    suspend fun match(title: String, artist: String, durationMs: Long, album: String? = null): Track? {
+    /**
+     * [context] is the playlist the song came from: game soundtracks and roblox music are often
+     * uploaded under the game's name ("untitled tag game OST: B0MB!!") rather than the artist's,
+     * so the playlist name is searched with and counts like an album word.
+     */
+    suspend fun match(title: String, artist: String, durationMs: Long, album: String? = null, context: String? = null): Track? {
         val providers = registry.active()
+        val hint = listOfNotNull(album, context).joinToString(" ").ifBlank { null }
         val main = "${Matcher.primaryArtist(artist)} $title".trim()
         for (provider in providers) {
-            val hit = runCatching { pick(provider.matchCandidates(main, title), title, artist, durationMs, album) }
+            val hit = runCatching { pick(provider.matchCandidates(main, title), title, artist, durationMs, hint) }
                 .onFailure { Log.w(TAG, "match via ${provider.id} failed", it) }
                 .getOrNull()
             if (hit != null) return hit
@@ -440,14 +456,23 @@ class Resolver @Inject constructor(
         val bare = Matcher.stripForSearch(title)
         // (vocadb already searched by the bare title above)
         for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
-            val hit = runCatching { pick(provider.matchCandidates(bare, bare), title, artist, durationMs, album) }.getOrNull()
+            val hit = runCatching { pick(provider.matchCandidates(bare, bare), title, artist, durationMs, hint) }.getOrNull()
             if (hit != null) return hit
         }
         val albumWords = album?.replace(Regex("""\s*[(\[].*?[)\]]"""), "")?.substringBefore(" - ")?.trim()
         if (!albumWords.isNullOrBlank() && !albumWords.equals(title, ignoreCase = true)) {
             for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
-                val hit = runCatching { pick(provider.matchCandidates("$title $albumWords"), title, artist, durationMs, album) }
+                val hit = runCatching { pick(provider.matchCandidates("$title $albumWords"), title, artist, durationMs, hint) }
                     .getOrNull()
+                if (hit != null) return hit
+            }
+        }
+        // the playlist's own name, for soundtracks uploaded under the game's name
+        val contextWords = context?.let { Matcher.distinctiveWords(it) }.orEmpty()
+        if (contextWords.isNotEmpty()) {
+            val q = "$bare ${Matcher.originalWords(context!!, contextWords)}"
+            for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
+                val hit = runCatching { pick(provider.matchCandidates(q), title, artist, durationMs, hint) }.getOrNull()
                 if (hit != null) return hit
             }
         }

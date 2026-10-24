@@ -106,6 +106,16 @@ data class ArtistDetails(
     val similar: List<RemoteArtist> = emptyList(),
 )
 
+/** a youtube music playlist (community / featured), for search and its own page */
+data class RemotePlaylist(
+    /** youtube music browse id, "VL" + the playlist id */
+    val id: String,
+    val title: String,
+    val subtitle: String?,
+    val coverUrl: String?,
+    val tracks: List<Track> = emptyList(),
+)
+
 data class Locator(val provider: String, val sourceId: String, val streamHint: String?)
 
 val Track.primaryLocator get() = Locator(provider, sourceId, streamHint)
