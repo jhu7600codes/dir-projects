@@ -1,6 +1,7 @@
 package app.stash.providers
 
 import app.stash.data.db.Track
+import kotlinx.coroutines.async
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -72,34 +73,52 @@ class VocaDbProvider @Inject constructor(
     }
 
     /**
-     * "teto" -> kasane teto's main voicebank, or null if it isn't one. songs are then asked for
-     * with childVoicebanks, which pulls in its appends / synthv / other versions too (several
-     * artist ids at once would mean "sung by all of them").
+     * "teto" -> kasane teto's main voicebank on every engine she has (utau, synthv…), since on
+     * vocadb those are separate artists, not versions of one. "teto utau" / "teto synthv" ->
+     * only that one. songs are then asked for with childVoicebanks, which adds that voicebank's
+     * own appends / updates (SV2, Kyuu…). empty if it isn't a voicebank at all.
      */
-    private suspend fun voicebank(name: String): String? {
+    private suspend fun voicebanks(spec: String): List<String> {
+        val words = Matcher.normalize(spec).split(' ').filter { it.isNotEmpty() }
+        val engine = words.firstNotNullOfOrNull { ENGINES[it] }
+        val nameWords = words.filter { it !in ENGINES && it != "v" }.toSet()
+        if (nameWords.isEmpty()) return emptyList()
         val found = get(
             "artists",
             listOf(
-                "query" to name, "nameMatchMode" to "Words", "artistTypes" to VOICE_TYPES, "lang" to "Romaji",
-                "sort" to "FollowerCount", "maxResults" to "6",
+                "query" to nameWords.joinToString(" "), "nameMatchMode" to "Words", "artistTypes" to (engine ?: VOICE_TYPES),
+                "lang" to "Romaji", "sort" to "FollowerCount", "maxResults" to "12",
             ),
         )["items"].asObjectList()
-        val wanted = Matcher.normalize(name).split(' ').toSet()
-        // "rin" also hits "megurine luka" by word search; prefer names that really have the word
-        val exact = found.filter { a -> Matcher.normalize(a.str("name").orEmpty()).split(' ').containsAll(wanted) }
-        val picked = exact.ifEmpty { if (Matcher.normalize(name) in KNOWN_VOICES) found.take(1) else emptyList() }
-        return picked.firstOrNull()?.let { it.str("id") ?: it.num("id")?.toLong()?.toString() }
+        // "rin" also hits "megurine luka" by word search; keep names that really have the words
+        val exact = found.filter { a -> Matcher.normalize(a.str("name").orEmpty()).split(' ').containsAll(nameWords) }
+        val picked = exact.ifEmpty { if (nameWords.joinToString(" ") in KNOWN_VOICES) found.take(1) else emptyList() }
+        // one per engine, most followed first
+        return picked.distinctBy { it.str("artistType") }.take(if (engine != null) 1 else 3)
+            .mapNotNull { it.str("id") ?: it.num("id")?.toLong()?.toString() }
     }
 
     override suspend fun search(query: String, limit: Int) = searchHits(query, limit).map { it.track }
 
     override suspend fun searchHits(query: String, limit: Int, tag: String?): List<SearchHit> {
         val sort = "sort" to "RatingScore"
-        // a voicebank name, as a #tag or typed on its own ("teto", "hatsune miku")
-        val voice = tag ?: query.takeIf { Matcher.normalize(it) in KNOWN_VOICES }
+        // a voicebank name, as a #tag or typed on its own ("teto", "teto synthv", "hatsune miku")
+        val voice = tag ?: query.takeIf { q ->
+            val n = Matcher.normalize(q).split(' ').filter { it !in ENGINES }.joinToString(" ")
+            n in KNOWN_VOICES
+        }
         if (voice != null) {
-            val voiceId = voicebank(voice)
-            if (voiceId != null) return songs(listOf("artistId[]" to voiceId, "childVoicebanks" to "true", sort), limit)
+            val ids = voicebanks(voice)
+            if (ids.isNotEmpty()) {
+                val perVoice = kotlinx.coroutines.coroutineScope {
+                    ids.map { id ->
+                        async { runCatching { songs(listOf("artistId[]" to id, "childVoicebanks" to "true", sort), limit) }.getOrDefault(emptyList()) }
+                    }.map { it.await() }
+                }
+                // take turns, so "teto" is utau and synthv songs, not one buried under the other
+                val mixed = (0 until (perVoice.maxOfOrNull { it.size } ?: 0)).flatMap { i -> perVoice.mapNotNull { it.getOrNull(i) } }
+                return mixed.distinctBy { it.track.id }.take(limit)
+            }
             if (tag != null) return songs(listOf("tagName[]" to tag, sort), limit)
         }
         return songs(listOf("query" to query, "nameMatchMode" to "Auto", sort), limit)
@@ -121,6 +140,13 @@ class VocaDbProvider @Inject constructor(
         private const val VOICE_TYPES =
             "Vocaloid,UTAU,CeVIO,SynthesizerV,NEUTRINO,VoiSona,NewType,Voiceroid,VOICEVOX,ACEVirtualSinger,AIVOICE,OtherVoiceSynthesizer"
         private val NOT_VOICES = setOf("Producer", "Circle", "Label", "OtherGroup", "Illustrator", "Animator", "Lyricist", "OtherIndividual", "CoverArtist", "Band")
+
+        /** words that pick one engine's voicebank ("teto synthv", "miku v4x" stays all-engine) */
+        private val ENGINES = mapOf(
+            "utau" to "UTAU", "sv" to "SynthesizerV", "synthv" to "SynthesizerV", "synthesizer" to "SynthesizerV",
+            "synthesizerv" to "SynthesizerV", "vocaloid" to "Vocaloid", "cevio" to "CeVIO", "voicepeak" to "OtherVoiceSynthesizer",
+            "voisona" to "VoiSona", "neutrino" to "NEUTRINO", "voicevox" to "VOICEVOX",
+        )
 
         /** plain searches that mean "songs by this voicebank" (normalized), as typed */
         val KNOWN_VOICES = setOf(

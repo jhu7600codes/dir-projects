@@ -85,6 +85,7 @@ import app.stash.data.db.DownloadState
 import app.stash.player.PlayerUiState
 import app.stash.ui.LocalActions
 import app.stash.ui.components.Artwork
+import app.stash.ui.components.rememberArtColors
 import app.stash.ui.components.TrackOptionsSheet
 import app.stash.ui.components.formatDuration
 import coil.imageLoader
@@ -107,66 +108,73 @@ private fun rememberPosition(): Pair<Long, Long> {
     return pos to buf
 }
 
+/**
+ * spotify style: a card tinted with the cover's color, title / artist, a heart and play, and a
+ * thin progress line along the bottom edge
+ */
 @Composable
 fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit) {
     val actions = LocalActions.current
-    val (pos, _) = rememberPosition()
+    val scheme = MaterialTheme.colorScheme
+    val (dominant, _) = rememberArtColors(state.artworkUri)
+    // darkened like spotify's, so white text always reads; theme color until the cover loads
+    val bg by animateColorAsState(
+        dominant?.let { Color.Black.copy(alpha = 0.45f).compositeOver(it) } ?: scheme.secondaryContainer, label = "mini",
+    )
+    val fg = if (bg.luminance() < 0.45f) Color.White else Color.Black
+    val track by remember(state.currentId) { actions.library.tracks.observe(state.currentId ?: "") }.collectAsState(initial = null)
     Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp).clickable(onClick = onOpen),
+        color = bg,
+        contentColor = fg,
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).clickable(onClick = onOpen),
     ) {
         Column {
-            Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Artwork(state.artworkUri, Modifier.size(44.dp), MaterialTheme.shapes.small)
-                Spacer(Modifier.width(12.dp))
+            Row(Modifier.padding(start = 8.dp, top = 8.dp, bottom = 6.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Artwork(state.artworkUri, Modifier.size(40.dp), MaterialTheme.shapes.extraSmall)
+                Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
+                    Text(state.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        state.title, style = MaterialTheme.typography.titleSmall, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
-                    Text(
-                        state.error?.let { "can't play: $it" } ?: state.artist,
+                        state.error?.let { "Can't play: $it" } ?: state.artist,
                         style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        color = if (state.error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f),
+                        color = if (state.error != null) scheme.error else fg.copy(alpha = 0.7f),
                     )
+                }
+                track?.let { t ->
+                    IconButton(onClick = { actions.setLiked(t, !t.liked) }) {
+                        Icon(
+                            if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            if (t.liked) "Remove from liked songs" else "Add to liked songs",
+                            tint = if (t.liked) scheme.primary.takeIf { bg.luminance() > 0.2f } ?: scheme.inversePrimary else fg,
+                        )
+                    }
                 }
                 IconButton(onClick = { actions.player.togglePlay() }) {
                     if (state.isBuffering && !state.isPlaying) {
-                        CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp)
+                        CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp, color = fg)
                     } else {
-                        Icon(if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, "play/pause")
+                        Icon(if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, "Play/pause", Modifier.size(30.dp))
                     }
                 }
-                IconButton(onClick = { actions.player.next() }) { Icon(Icons.Rounded.SkipNext, "Next") }
             }
-            LinearProgressIndicator(
-                progress = { if (state.durationMs > 0) pos.toFloat() / state.durationMs else 0f },
-                modifier = Modifier.fillMaxWidth().height(2.dp).padding(horizontal = 12.dp),
-                drawStopIndicator = {},
-                gapSize = 0.dp,
-            )
+            MiniProgress(state.durationMs, fg)
         }
     }
 }
 
-/** dominant + vibrant colors pulled from the album art, for the now-playing background */
+/** its own composable so the twice-a-second position updates only redraw this line */
 @Composable
-private fun rememberArtColors(url: Any?): Pair<Color?, Color?> {
-    val context = LocalContext.current
-    var colors by remember(url) { mutableStateOf<Pair<Color?, Color?>>(null to null) }
-    LaunchedEffect(url) {
-        if (url == null) return@LaunchedEffect
-        val result = context.imageLoader.execute(
-            ImageRequest.Builder(context).data(url).allowHardware(false).size(128).build()
-        )
-        val bitmap = (result.drawable as? BitmapDrawable)?.bitmap ?: return@LaunchedEffect
-        val p = Palette.from(bitmap).generate()
-        val dominant = p.dominantSwatch?.rgb?.let { Color(it) }
-        val vibrant = (p.vibrantSwatch ?: p.lightVibrantSwatch ?: p.mutedSwatch)?.rgb?.let { Color(it) }
-        colors = dominant to vibrant
-    }
-    return colors
+private fun MiniProgress(durationMs: Long, color: Color) {
+    val (pos, _) = rememberPosition()
+    LinearProgressIndicator(
+        progress = { if (durationMs > 0) (pos.toFloat() / durationMs).coerceIn(0f, 1f) else 0f },
+        modifier = Modifier.fillMaxWidth().height(2.dp).padding(horizontal = 8.dp),
+        color = color,
+        trackColor = color.copy(alpha = 0.25f),
+        drawStopIndicator = {},
+        gapSize = 0.dp,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

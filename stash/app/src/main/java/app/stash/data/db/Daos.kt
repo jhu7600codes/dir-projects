@@ -150,6 +150,9 @@ interface PlaylistDao {
     @Query("SELECT * FROM playlists WHERE id = :id")
     suspend fun get(id: Long): Playlist?
 
+    @Query("UPDATE playlists SET coverUrl = :cover, updatedAt = :now WHERE id = :id")
+    suspend fun setCover(id: Long, cover: String?, now: Long = System.currentTimeMillis())
+
     @Query("SELECT * FROM playlists WHERE id = :id")
     fun observe(id: Long): Flow<Playlist?>
 
@@ -300,6 +303,22 @@ interface ImportDao {
         clearFinishedTracks()
         clearFinishedJobs()
     }
+
+    /**
+     * imported songs and the spotify cover they should have, found through the exact playlist
+     * spot they were put in. for fixing imports from before covers were applied properly.
+     */
+    @Query(
+        """SELECT pt.trackId AS trackId, jt.artworkUrl AS artworkUrl, jt.sourceUri AS sourceUri, jt.album AS album
+           FROM import_job_tracks jt
+           JOIN import_jobs j ON j.id = jt.jobId
+           JOIN playlist_tracks pt ON pt.playlistId = j.playlistId AND pt.position = jt.position
+           JOIN tracks t ON t.id = pt.trackId
+           WHERE jt.state = 'matched' AND j.intoLiked = 0
+             AND (jt.artworkUrl IS NOT NULL OR jt.sourceUri LIKE 'spotify:track:%')
+             AND (t.artworkUrl IS NULL OR t.artworkUrl != COALESCE(jt.artworkUrl, ''))"""
+    )
+    suspend fun coverRepairs(): List<CoverRepair>
 
     /** songs the current imports couldn't find, newest first */
     @Query(

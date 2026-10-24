@@ -124,12 +124,10 @@ class ImportWorker @AssistedInject constructor(
         if (cached != null) {
             // misses from an older, worse matcher are always retried
             val fresh = System.currentTimeMillis() - cached.checkedAt < RETRY_MISSES_AFTER && cached.checkedAt > MATCHER_CHANGED_AT
-            if (cached.trackId != null) tracks.get(cached.trackId)?.let { return it }
+            if (cached.trackId != null) tracks.get(cached.trackId)?.let { return withSpotifyCover(it, t) }
             else if (fresh) return null
         }
         val hit = runCatching { resolver.match(t.title, t.artist, t.durationMs, t.album) }.getOrNull()
-        // the spotify cover beats whatever thumbnail the matched source has
-        val art = t.artworkUrl ?: hit?.let { covers.spotify(t.sourceUri) }
         val saved = hit?.let {
             // keep the nicer metadata from spotify / the csv
             tracks.ensure(
@@ -137,13 +135,24 @@ class ImportWorker @AssistedInject constructor(
                     title = t.title,
                     artist = t.artist,
                     album = t.album ?: it.album,
-                    artworkUrl = art ?: it.artworkUrl,
                     durationMs = if (t.durationMs > 0) t.durationMs else it.durationMs,
                 )
             )
-        }
+        }?.let { withSpotifyCover(it, t) }
         dao.cache(MatchCache(key, saved?.id))
         return saved
+    }
+
+    /**
+     * the spotify cover beats whatever thumbnail the matched source has. set it even when the
+     * song was already saved (from a search, a mix, another playlist): ensure() alone keeps the
+     * old row, which is how imported songs used to end up with youtube thumbnails.
+     */
+    private suspend fun withSpotifyCover(track: Track, t: ImportJobTrack): Track {
+        val art = t.artworkUrl ?: covers.spotify(t.sourceUri) ?: return track
+        if (art == track.artworkUrl) return track
+        tracks.setCover(track.id, art, t.album)
+        return track.copy(artworkUrl = art, album = track.album ?: t.album)
     }
 
     private suspend fun notify(job: ImportJob, done: Int, waiting: Int, t: ImportJobTrack) {

@@ -2,6 +2,15 @@ package app.stash.ui.screens
 
 import app.stash.data.calm
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.ui.Alignment
+import app.stash.data.db.PlaylistWithCount
+import app.stash.ui.components.LikedArt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -76,6 +85,8 @@ fun LibraryScreen() {
     val scope = rememberCoroutineScope()
     var filter by rememberSaveable { mutableStateOf(LibFilter.PLAYLISTS) }
     var creating by remember { mutableStateOf(false) }
+    var alphabetical by rememberSaveable { mutableStateOf(false) }
+    var grid by rememberSaveable { mutableStateOf(false) }
     val playlists by actions.playlists.collectAsState()
     val songs by remember { dao.observeLibrary() .calm() }.collectAsState(initial = emptyList())
     val liked by remember { dao.observeLiked() .calm() }.collectAsState(initial = emptyList())
@@ -106,16 +117,31 @@ fun LibraryScreen() {
                         FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) })
                     }
                 }
-                Spacer(Modifier.size(8.dp))
+                // spotify's "Recents" sort and list / grid switch
+                if (filter == LibFilter.PLAYLISTS) Row(
+                    Modifier.fillMaxWidth().padding(start = 8.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = { alphabetical = !alphabetical }) {
+                        Icon(Icons.AutoMirrored.Rounded.Sort, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (alphabetical) "Alphabetical" else "Recents")
+                    }
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = { grid = !grid }) {
+                        Icon(if (grid) Icons.AutoMirrored.Rounded.ViewList else Icons.Rounded.GridView, if (grid) "List" else "Grid")
+                    }
+                } else Spacer(Modifier.size(8.dp))
             }
 
             when (filter) {
                 LibFilter.PLAYLISTS -> {
-                    item {
+                    val sorted = if (alphabetical) playlists.sortedBy { it.name.lowercase() } else playlists
+                    if (!grid) item {
                         LibraryRow(
-                            title = "Liked songs", subtitle = "${liked.size} songs", art = null,
+                            title = "Liked songs", subtitle = "Pinned · Playlist · ${liked.size} songs", art = null,
                             onClick = { nav.navigate(Routes.LIKED) },
-                        ) { PinnedIcon(Icons.Rounded.Favorite) }
+                        ) { LikedArt(Modifier.size(56.dp)) }
                     }
                     // only shows up while something couldn't be found
                     if (missingCount > 0) item {
@@ -127,7 +153,26 @@ fun LibraryScreen() {
                             modifier = Modifier.clickable { nav.navigate(Routes.RESCAN) }.padding(horizontal = 4.dp),
                         )
                     }
-                    items(playlists, key = { it.id }) { p ->
+                    if (grid) {
+                        val cells = listOf<PlaylistWithCount?>(null) + sorted
+                        items(cells.chunked(3), key = { row -> row.joinToString { it?.id?.toString() ?: "liked" } }) { row ->
+                            Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                row.forEach { p ->
+                                    Column(Modifier.weight(1f).clickable { nav.navigate(if (p == null) Routes.LIKED else Routes.playlist(p.id)) }) {
+                                        val art = Modifier.fillMaxWidth().aspectRatio(1f)
+                                        if (p == null) LikedArt(art) else Artwork(p.coverUrl ?: p.firstArtwork, art, MaterialTheme.shapes.small)
+                                        Spacer(Modifier.height(6.dp))
+                                        Text(p?.name ?: "Liked songs", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(
+                                            if (p == null) "${liked.size} songs" else "${p.trackCount} songs",
+                                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                                        )
+                                    }
+                                }
+                                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                            }
+                        }
+                    } else items(sorted, key = { it.id }) { p ->
                         val sub = buildList {
                             add("Playlist")
                             add("${p.trackCount} songs")

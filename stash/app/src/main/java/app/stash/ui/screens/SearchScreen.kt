@@ -184,7 +184,8 @@ private val browseTiles = listOf(
 
 /** voicebanks: searched on vocadb by every version of the voice (utau, synthv…) */
 private val vocalTiles = listOf(
-    "Miku", "Teto", "GUMI", "KAITO", "Luka", "Rin", "Len", "MEIKO", "IA", "Kafu", "Flower", "Zundamon",
+    "Miku", "Teto UTAU", "Teto SynthV", "GUMI", "Rin", "Len", "Luka", "KAITO", "MEIKO", "IA", "Kafu", "Flower",
+    "Una", "Zundamon",
 )
 
 /** scenes where most of the good stuff isn't on the big charts */
@@ -369,7 +370,7 @@ private fun BrowseGrid(
             Column(Modifier.padding(top = 10.dp)) {
                 Text("Vocaloid & synth voices", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "Songs by voicebank from VocaDB, every version of the voice. Or type #teto, #miku…",
+                    "Songs by voicebank from VocaDB. Type #teto for every Teto, or #teto-synthv / #teto-utau for one",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
