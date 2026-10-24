@@ -143,7 +143,7 @@ fun HomeScreen() {
                     if (liked.isNotEmpty()) add(QuickTile("Liked songs", null, Icons.Rounded.Favorite) { nav.navigate(Routes.LIKED) })
                     if (downloaded.isNotEmpty()) add(QuickTile("downloads", null, Icons.Rounded.Download) { nav.navigate(Routes.DOWNLOADS) })
                     playlists.take(8 - size).forEach { p ->
-                        add(QuickTile(p.name, p.coverUrl ?: p.firstArtwork, null) { nav.navigate(Routes.playlist(p.id)) })
+                        add(QuickTile(p.name, p.art, null) { nav.navigate(Routes.playlist(p.id)) })
                     }
                 }
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -166,7 +166,7 @@ fun HomeScreen() {
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(mixes, key = { it.id }) { m ->
-                            MixCard(m.name, m.description, m.coverUrl ?: m.firstArtwork) { nav.navigate(Routes.playlist(m.id)) }
+                            MixCard(m.name, m.description, m.art) { nav.navigate(Routes.playlist(m.id)) }
                         }
                     }
                 }
@@ -177,7 +177,7 @@ fun HomeScreen() {
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(genreMixes, key = { it.id }) { m ->
-                            MixCard(m.name, m.description?.substringAfter("· "), m.coverUrl ?: m.firstArtwork) { nav.navigate(Routes.playlist(m.id)) }
+                            MixCard(m.name, m.description?.substringAfter("· "), m.art) { nav.navigate(Routes.playlist(m.id)) }
                         }
                     }
                 }
@@ -188,7 +188,7 @@ fun HomeScreen() {
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(artistMixes, key = { it.id }) { m ->
-                            MixCard(m.name, m.description, m.coverUrl ?: m.firstArtwork) { nav.navigate(Routes.playlist(m.id)) }
+                            MixCard(m.name, m.description, m.art) { nav.navigate(Routes.playlist(m.id)) }
                         }
                     }
                 }
@@ -221,7 +221,7 @@ fun HomeScreen() {
                 item {
                     LazyRow(contentPadding = PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         items(playlists, key = { it.id }) { p ->
-                            CoverCard(p.name, "${p.trackCount} songs", p.coverUrl ?: p.firstArtwork, onClick = { nav.navigate(Routes.playlist(p.id)) })
+                            CoverCard(p.name, "${p.trackCount} songs", p.art, onClick = { nav.navigate(Routes.playlist(p.id)) })
                         }
                     }
                 }
@@ -314,27 +314,8 @@ private fun mixOrder(originId: String?) = when {
 private fun MixCard(name: String, about: String?, art: Any?, onClick: () -> Unit) {
     Column(Modifier.width(156.dp)) {
         Surface(onClick = onClick, shape = MaterialTheme.shapes.large, modifier = Modifier.size(156.dp)) {
-            Box {
-                Artwork(art, Modifier.fillMaxSize(), RectangleShape)
-                Box(
-                    Modifier.fillMaxSize().background(
-                        Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.75f))
-                    )
-                )
-                // the stash stamp, like spotify's little logo on its own mixes
-                Surface(
-                    color = Color.Black.copy(alpha = 0.45f),
-                    contentColor = Color.White,
-                    shape = MaterialTheme.shapes.extraSmall,
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-                ) {
-                    Text("For you by Stash", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
-                }
-                Text(
-                    name, style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 2,
-                    modifier = Modifier.align(Alignment.BottomStart).padding(12.dp),
-                )
-            }
+            // the cover itself carries the name and the stash mark (MixArt), like spotify's mixes
+            Artwork(art, Modifier.fillMaxSize(), RectangleShape)
         }
         if (about != null) Text(
             about, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

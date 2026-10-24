@@ -160,7 +160,7 @@ fun LibraryScreen() {
                                 row.forEach { p ->
                                     Column(Modifier.weight(1f).clickable { nav.navigate(if (p == null) Routes.LIKED else Routes.playlist(p.id)) }) {
                                         val art = Modifier.fillMaxWidth().aspectRatio(1f)
-                                        if (p == null) LikedArt(art) else Artwork(p.coverUrl ?: p.firstArtwork, art, MaterialTheme.shapes.small)
+                                        if (p == null) LikedArt(art) else Artwork(p.art, art, MaterialTheme.shapes.small)
                                         Spacer(Modifier.height(6.dp))
                                         Text(p?.name ?: "Liked songs", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(
@@ -179,7 +179,7 @@ fun LibraryScreen() {
                             if (p.downloadedCount > 0) add(if (p.downloadedCount == p.trackCount) "Downloaded" else "${p.downloadedCount} offline")
                             if (p.origin == "mix") add("Made for you") else if (p.origin != "local") add("From ${originName(p.origin)}")
                         }.joinToString(" · ")
-                        LibraryRow(p.name, sub, p.coverUrl ?: p.firstArtwork, onClick = { nav.navigate(Routes.playlist(p.id)) })
+                        LibraryRow(p.name, sub, p.art, onClick = { nav.navigate(Routes.playlist(p.id)) })
                     }
                     if (playlists.isEmpty()) item {
                         EmptyState(Icons.AutoMirrored.Rounded.QueueMusic, "No playlists yet", "Make one, or bring yours over from Spotify or Apple Music.") {

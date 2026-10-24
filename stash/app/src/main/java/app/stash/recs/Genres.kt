@@ -34,6 +34,16 @@ class Genres @Inject constructor(
         return genre
     }
 
+    /** the artist's photo from deezer (1000px), only when deezer has that exact name */
+    suspend fun picture(artist: String): String? = runCatching {
+        val search = "https://api.deezer.com/search/artist".toHttpUrl().newBuilder()
+            .addQueryParameter("q", artist).addQueryParameter("limit", "3").build()
+        lenientJson.parseToJsonElement(httpIo { http.getText(search.toString()) }).jsonObject["data"].asObjectList()
+            .firstOrNull { it.str("name").orEmpty().equals(artist.trim(), ignoreCase = true) }
+            ?.let { it.str("picture_xl") ?: it.str("picture_big") }
+            ?.takeUnless { it.contains("/artist//") } // deezer's blank placeholder
+    }.getOrNull()
+
     private suspend fun lookup(artist: String): String? {
         val search = "https://api.deezer.com/search/artist".toHttpUrl().newBuilder()
             .addQueryParameter("q", artist).addQueryParameter("limit", "1").build()

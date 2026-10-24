@@ -25,7 +25,7 @@ class RecsViewModel @Inject constructor(private val recommender: Recommender) : 
 
     fun rebuildMixes() = viewModelScope.launch {
         refreshing.value = true
-        runCatching { recommender.refreshMixes(force = true) }
+        runCatching { recommender.refreshMixes(forceIt = true) }
         _becauseYouLiked.value = runCatching { recommender.becauseYouLiked() }.getOrNull()
         refreshing.value = false
     }

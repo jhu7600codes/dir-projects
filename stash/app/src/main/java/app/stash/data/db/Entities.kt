@@ -111,7 +111,21 @@ data class PlaylistWithCount(
     val downloadedCount: Int,
     /** first track's art, used as the cover when the playlist has none */
     val firstArtwork: String?,
-)
+) {
+    /** what to draw as its cover: a made-for-you design for mixes, else its cover, else the first song's */
+    val art: Any? get() = MixCover.of(origin, originId, name, coverUrl) ?: coverUrl ?: firstArtwork
+}
+
+/**
+ * a made-for-you cover drawn by the app, spotify style (see ui MixArt): "Daily Mix 2" band,
+ * "This is <artist>", a genre over an artist photo. [photo] is the artist picture, if any.
+ */
+data class MixCover(val mixId: String, val title: String, val photo: String?) {
+    companion object {
+        fun of(origin: String, originId: String?, name: String, photo: String?): MixCover? =
+            if (origin == "mix" && originId != null) MixCover(originId, name, photo) else null
+    }
+}
 
 data class AlbumSummary(
     val album: String,
