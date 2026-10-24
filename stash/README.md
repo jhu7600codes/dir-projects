@@ -141,6 +141,10 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 - FMA has no public API anymore, so its search results are scraped from the search page and may break if they redesign the site.
 - Only arm64 (all recent phones) and x86_64 (emulator) builds are included. Each one bundles a whole Python for yt-dlp.
 
+## YouTube login (optional, for playback only)
+
+Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Classic) do it: Google's own sign-in page in a WebView with a desktop Chrome identity and WebView's `X-Requested-With` header turned off (Google's main "this browser may not be secure" signal). Once youtube.com's cookies hold a session (`SAPISID`), they're written as a Netscape `cookies.txt` that yt-dlp gets with `--cookies`, so songs YouTube won't hand out anonymously still play. Search, artist pages and the catalog stay anonymous. Without a login, yt-dlp skips the watch page and client config requests (`player_skip=webpage,configs`) to get to the audio faster.
+
 ## Keeping the phone happy
 
 - At most 2 downloads run at once, and downloads have their own 2 yt-dlp slots (each yt-dlp is a whole Python), so they never make a song you tapped wait. Queued downloads wait without a notification.

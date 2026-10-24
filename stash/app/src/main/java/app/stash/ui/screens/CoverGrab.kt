@@ -170,7 +170,7 @@ private const val COLLECT_JS = """
  * "Grab covers" reads the playlist list exportify shows (every page) and gets their covers.
  * nothing is sent anywhere but to spotify's public oembed for the covers.
  */
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "RestrictedApi")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoverGrabScreen() {
@@ -236,6 +236,10 @@ fun CoverGrabScreen() {
                             // (no "; wv", no "Version/4.0") and keep its login cookies
                             settings.userAgentString = settings.userAgentString
                                 .replace("; wv", "").replace(Regex("""Version/[\d.]+ """), "")
+                            // the header that tells login pages "this is an app's webview"
+                            if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
+                                androidx.webkit.WebSettingsCompat.setRequestedWithHeaderOriginAllowList(settings, emptySet())
+                            }
                             settings.javaScriptCanOpenWindowsAutomatically = true
                             settings.setSupportMultipleWindows(false)
                             val view = this

@@ -15,8 +15,8 @@ android {
         applicationId = "app.stash.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.8.4"
+        versionCode = 16
+        versionName = "1.9.0"
 
         // yt-dlp ships a whole python per abi, so only keep arm64 (every recent phone) and
         // x86_64 (the emulator) to stop the apk from ballooning.
@@ -102,6 +102,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.5")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.palette:palette-ktx:1.0.0")
+    // turning off webview's X-Requested-With header for the youtube login
+    implementation("androidx.webkit:webkit:1.12.1")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
