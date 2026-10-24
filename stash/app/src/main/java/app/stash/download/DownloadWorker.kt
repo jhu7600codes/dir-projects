@@ -1,5 +1,6 @@
 package app.stash.download
 
+import kotlinx.coroutines.sync.withPermit
 import android.app.Notification
 import android.content.Context
 import android.content.pm.ServiceInfo
@@ -51,8 +52,11 @@ class DownloadWorker @AssistedInject constructor(
 
     private val trackId get() = inputData.getString(KEY_TRACK)!!
     private var lastReported = -1f
+    private var lastReportedAt = 0L
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = downloads.slots.withPermit { download() }
+
+    private suspend fun download(): Result {
         val track = dao.get(trackId) ?: return Result.failure()
         if (track.isDownloaded && track.localPath?.let { File(it).exists() } == true) return Result.success()
 
@@ -153,8 +157,12 @@ class DownloadWorker @AssistedInject constructor(
 
     private suspend fun report(track: Track, fraction: Float) {
         val f = fraction.coerceIn(0f, 1f)
-        if (f - lastReported < 0.02f && f < 1f) return
+        // every 5% and at most twice a second: several downloads at once each posting a
+        // notification and a database write per percent hammered the system and every list
+        val now = System.currentTimeMillis()
+        if (f < 1f && (f - lastReported < 0.05f || now - lastReportedAt < 500)) return
         lastReported = f
+        lastReportedAt = now
         dao.setDownloadProgress(track.id, f)
         runCatching { setForeground(foregroundInfo(track, f)) }
     }

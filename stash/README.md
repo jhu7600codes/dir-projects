@@ -113,7 +113,7 @@ Settings live on the downloads screen. **High** keeps the best stream (about 130
 The queue only holds `stash://track/<id>` uris. When ExoPlayer opens one, `PlaybackService` resolves it right then (`ResolvingDataSource`):
 
 1. downloaded file, if there is one
-2. the track's own provider. For yt-dlp sources that means `-f bestaudio` right before playback. The url is kept in memory for 15 minutes so seeking doesn't re-run yt-dlp, and is never stored.
+2. the track's own provider. YouTube first asks YouTube's own player API the way the Android VR app does (one request, no signature solving) and checks the link answers; only if that fails does yt-dlp run `-f bestaudio`. The url is kept in memory for 15 minutes so seeking doesn't re-run yt-dlp, and is never stored.
 3. the fallback that worked last time (cached on the track)
 4. search every other enabled provider in order and match by title + artist + duration (`Matcher`), then remember the winner
 
@@ -136,6 +136,11 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 - Bandcamp search uses the site's own autocomplete API, which sometimes sends a bot check. Playback still goes through yt-dlp.
 - FMA has no public API anymore, so its search results are scraped from the search page and may break if they redesign the site.
 - Only arm64 (all recent phones) and x86_64 (emulator) builds are included. Each one bundles a whole Python for yt-dlp.
+
+## Keeping the phone happy
+
+- At most 2 downloads and 3 yt-dlp processes run at once (each yt-dlp is a whole Python). Queued downloads wait without a notification.
+- Background progress (rescan, downloads) updates its notification at most about once a second. Posting one per song made Android's notification service stop responding.
 
 ## Building
 

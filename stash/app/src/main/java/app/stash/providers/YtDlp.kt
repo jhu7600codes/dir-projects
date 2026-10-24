@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -90,6 +91,17 @@ class YtDlp @Inject constructor(
     ): YoutubeDLResponse {
         ready.await()
         updateLock.withLock { } // wait out an update in progress
+        // each run is a whole python process (~100MB); never more than a few at once
+        return processes.withPermit { start(target, options, onProgress) }
+    }
+
+    private val processes = kotlinx.coroutines.sync.Semaphore(3)
+
+    private suspend fun start(
+        target: String,
+        options: List<Pair<String, String?>>,
+        onProgress: ((Float) -> Unit)?,
+    ): YoutubeDLResponse {
         val processId = UUID.randomUUID().toString()
         val request = YoutubeDLRequest(target).apply {
             addOption("--no-warnings")

@@ -141,6 +141,14 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
 
     override suspend fun searchArtists(query: String, limit: Int) = music.searchArtists(query, limit)
 
+    /** youtube's own player api first (one request), yt-dlp when youtube asks for more */
+    override suspend fun resolveStream(locator: Locator): StreamSource {
+        val videoId = Regex("""[?&]v=([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
+            ?: Regex("""youtu\.be/([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
+        if (videoId != null) runCatching { music.audioStream(videoId) }.getOrNull()?.let { return it }
+        return super.resolveStream(locator)
+    }
+
     override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
         music.artist(artistId)?.popular.orEmpty().take(limit)
 
