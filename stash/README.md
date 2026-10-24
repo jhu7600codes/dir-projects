@@ -84,6 +84,7 @@ Songs that couldn't be found can be searched for again against all current sourc
 - cyrillic and japanese kana spelled in latin letters ("タカオカミズキ" = "takaokamizuki"), with kanji, kana and latin split into separate words
 - length, and a penalty for versions the original title doesn't mention (cover, remix, sped up, nightcore, piano…)
 - small typos in upload titles (two letters swapped, one missing), for words of 6+ letters
+- uploads that don't name the artist at all (the original on a fan channel, "巡音ルカ「ルカルカ★ナイトフィーバー」") count when the whole title is there, the length is within 3 seconds and nothing marks it as a cover (歌ってみた, off vocal, MMD…); they only just pass, so an upload naming the artist always wins. If "artist + title" finds nothing anywhere, YouTube and SoundCloud are searched by the bare title too
 - VocaDB, right after YouTube: it knows every vocaloid / utau / synthv song by its japanese, romaji and english names, so "Rolling Girl" finds "ローリンガール" (wowaka's own upload, not a remake)
 
 ## VocaDB
