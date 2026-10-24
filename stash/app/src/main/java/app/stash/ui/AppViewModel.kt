@@ -103,6 +103,10 @@ class AppViewModel @Inject constructor(
 
     fun setLiked(track: Track, liked: Boolean) = library.setLiked(track, liked)
 
+    fun setLyricsTranslate(on: Boolean) {
+        viewModelScope.launch { prefs.setLyricsTranslate(on) }
+    }
+
     /** pinned playlists, in pin order (only ones that still exist) */
     val pinned: StateFlow<List<PlaylistWithCount>> = kotlinx.coroutines.flow.combine(playlists, settings) { all, s ->
         s?.pinnedPlaylists.orEmpty().mapNotNull { id -> all.firstOrNull { it.id == id } }

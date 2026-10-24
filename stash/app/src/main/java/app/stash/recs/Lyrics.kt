@@ -18,7 +18,13 @@ import javax.inject.Singleton
 import kotlin.math.abs
 
 /** a song's lyrics: [lines] are time-synced (ms, text), [plain] when only unsynced text exists */
-data class SongLyrics(val lines: List<Pair<Long, String>>, val plain: String?) {
+data class SongLyrics(
+    val lines: List<Pair<Long, String>>,
+    val plain: String?,
+    val source: String = "LRCLIB",
+    /** musixmatch's id for the song, for its translations */
+    val commontrackId: Long? = null,
+) {
     val synced get() = lines.isNotEmpty()
 }
 
@@ -27,12 +33,24 @@ data class SongLyrics(val lines: List<Pair<Long, String>>, val plain: String?) {
  * key. looked up by artist + title + length, then by search; cached for the session.
  */
 @Singleton
-class Lyrics @Inject constructor(private val http: OkHttpClient) {
+class Lyrics @Inject constructor(
+    private val http: OkHttpClient,
+    private val musixmatch: Musixmatch,
+) {
     private val cache = ConcurrentHashMap<String, SongLyrics>()
+    private val translations = ConcurrentHashMap<String, List<String?>>()
 
-    suspend fun forSong(title: String, artist: String, durationMs: Long): SongLyrics? {
-        val key = "$artist|$title"
+    /** [preferMusixmatch]: musixmatch first, lrclib if it has nothing */
+    suspend fun forSong(title: String, artist: String, durationMs: Long, preferMusixmatch: Boolean = false): SongLyrics? {
+        val key = "$artist|$title|$preferMusixmatch"
         cache[key]?.let { return it }
+        if (preferMusixmatch) {
+            runCatching { musixmatch.lyrics(title, artist, durationMs) }.getOrNull()?.let { f ->
+                val l = f.lyrics.copy(commontrackId = f.commontrackId)
+                cache[key] = l
+                return l
+            }
+        }
         val cleanTitle = Matcher.stripForSearch(title)
         val firstArtist = Matcher.primaryArtist(artist)
         val exact = runCatching {
@@ -69,6 +87,37 @@ class Lyrics @Inject constructor(private val http: OkHttpClient) {
         if (!lyrics.synced && lyrics.plain == null) return null
         cache[key] = lyrics
         return lyrics
+    }
+
+    /**
+     * a translation for every line (null where there's none) into [lang]: musixmatch's community
+     * translation when the song came from there and has one, else google's machine translation
+     */
+    suspend fun translate(lyrics: SongLyrics, lang: String): List<String?>? {
+        val texts = if (lyrics.synced) lyrics.lines.map { it.second } else lyrics.plain.orEmpty().lines()
+        val key = "${texts.hashCode()}|$lang"
+        translations[key]?.let { return it }
+        val community = lyrics.commontrackId?.let { id -> runCatching { musixmatch.translation(id, lang) }.getOrNull() }
+        val result = if (community != null) texts.map { community[it.trim()] }
+        else runCatching { machine(texts, lang) }.getOrNull() ?: return null
+        translations[key] = result
+        return result
+    }
+
+    /** google translate's free web endpoint, the whole song in one request (lines kept apart) */
+    private suspend fun machine(texts: List<String>, lang: String): List<String?>? {
+        val joined = texts.joinToString("\n")
+        val url = "https://translate.googleapis.com/translate_a/single".toHttpUrl().newBuilder()
+            .addQueryParameter("client", "gtx").addQueryParameter("sl", "auto").addQueryParameter("tl", lang)
+            .addQueryParameter("dt", "t").addQueryParameter("q", joined).build()
+        val root = lenientJson.parseToJsonElement(httpIo { http.getText(url.toString()) }) as? JsonArray ?: return null
+        val out = (root.firstOrNull() as? JsonArray)?.joinToString("") { seg ->
+            ((seg as? JsonArray)?.firstOrNull() as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty()
+        } ?: return null
+        val lines = out.split("\n")
+        // blank lines stay blank; if google merged lines, give up rather than misalign
+        if (lines.size != texts.size) return null
+        return lines.mapIndexed { i, t -> if (texts[i].isBlank() || t.trim().equals(texts[i].trim(), true)) null else t.trim() }
     }
 
     /** closest in length (within 5s when the length is known), synced ones first */

@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -440,15 +441,30 @@ private fun QueueView(state: PlayerUiState, accent: Color, onClose: () -> Unit) 
 @Composable
 private fun LyricsView(state: PlayerUiState, accent: Color, onClose: () -> Unit) {
     val actions = LocalActions.current
+    val settings by actions.settings.collectAsState()
+    val mxm = settings?.lyricsMusixmatch == true
+    val translateOn = settings?.lyricsTranslate == true
+    val lang = settings?.translateTo?.ifBlank { null } ?: java.util.Locale.getDefault().language
     var lyrics by remember(state.currentId) { mutableStateOf<app.stash.recs.SongLyrics?>(null) }
     var loading by remember(state.currentId) { mutableStateOf(true) }
-    LaunchedEffect(state.currentId) {
+    var translated by remember(state.currentId) { mutableStateOf<List<String?>?>(null) }
+    var translating by remember(state.currentId) { mutableStateOf(false) }
+    LaunchedEffect(state.currentId, mxm) {
         val id = state.currentId ?: return@LaunchedEffect
+        loading = true
         val track = actions.library.tracks.get(id)
         lyrics = runCatching {
-            actions.lyrics.forSong(state.title, state.artist, track?.durationMs?.takeIf { it > 0 } ?: state.durationMs)
+            actions.lyrics.forSong(state.title, state.artist, track?.durationMs?.takeIf { it > 0 } ?: state.durationMs, preferMusixmatch = mxm)
         }.getOrNull()
         loading = false
+    }
+    LaunchedEffect(lyrics, translateOn, lang) {
+        val l = lyrics
+        translated = null
+        if (!translateOn || l == null) return@LaunchedEffect
+        translating = true
+        translated = runCatching { actions.lyrics.translate(l, lang) }.getOrNull()
+        translating = false
     }
     val (pos, _) = rememberPosition(everyMs = 200)
     val lines = lyrics?.lines.orEmpty()
@@ -463,17 +479,36 @@ private fun LyricsView(state: PlayerUiState, accent: Color, onClose: () -> Unit)
             IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Back") }
             Column(Modifier.weight(1f)) {
                 Text(state.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(state.artist, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    listOfNotNull(state.artist, lyrics?.source?.let { "lyrics: $it" }).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
             }
+            // translation on / off right here (also in settings)
+            androidx.compose.material3.FilterChip(
+                selected = translateOn,
+                onClick = { actions.setLyricsTranslate(!translateOn) },
+                label = { Text(if (translating) "Translating…" else "Translate") },
+                leadingIcon = { Icon(Icons.Rounded.Translate, null, Modifier.size(16.dp)) },
+            )
         }
+        if (translateOn && !translating && translated == null && lyrics != null) Text(
+            "No translation available for this one",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         when {
             loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = accent) }
             lyrics == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No lyrics found for this one", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             lines.isEmpty() -> androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize().padding(top = 16.dp)) {
-                item {
-                    Text(lyrics!!.plain.orEmpty(), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 48.dp))
+                val plainLines = lyrics!!.plain.orEmpty().lines()
+                items(plainLines.size) { i ->
+                    Text(plainLines[i], style = MaterialTheme.typography.headlineSmall)
+                    translated?.getOrNull(i)?.let {
+                        Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(Modifier.height(6.dp))
                 }
             }
             else -> androidx.compose.foundation.lazy.LazyColumn(
@@ -491,13 +526,17 @@ private fun LyricsView(state: PlayerUiState, accent: Color, onClose: () -> Unit)
                         },
                         label = "line",
                     )
-                    Text(
-                        text.ifBlank { "♪" },
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = if (now) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.SemiBold,
-                        color = color,
-                        modifier = Modifier.fillMaxWidth().clickable { actions.player.seekTo(at) }.padding(vertical = 10.dp),
-                    )
+                    Column(Modifier.fillMaxWidth().clickable { actions.player.seekTo(at) }.padding(vertical = 10.dp)) {
+                        Text(
+                            text.ifBlank { "♪" },
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = if (now) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.SemiBold,
+                            color = color,
+                        )
+                        translated?.getOrNull(i)?.let { tr ->
+                            Text(tr, style = MaterialTheme.typography.titleMedium, color = color.copy(alpha = color.alpha * 0.8f))
+                        }
+                    }
                 }
             }
         }
