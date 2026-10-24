@@ -114,7 +114,7 @@ class PlayerConnection @Inject constructor(
 
     private suspend fun save(tracks: List<Track>) = withContext(Dispatchers.IO) {
         // the service resolves by id, so every queued track has to exist in the db
-        tracks.forEach { dao.ensure(it) }
+        dao.insertAllIgnore(tracks)
     }
 
     /** the returned job finishes once the queue has been handed to the player */

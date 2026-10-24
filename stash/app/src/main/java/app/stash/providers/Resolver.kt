@@ -321,13 +321,43 @@ class Resolver @Inject constructor(
         shortCache.remove(trackId)
     }
 
+    /** the stream broke mid-song: next time get this song through yt-dlp, the slow sure way */
+    suspend fun retrySlow(trackId: String) {
+        shortCache.remove(trackId)
+        val track = dao.get(trackId) ?: return
+        val yt = registry.get("youtube") as? YouTubeProvider ?: return
+        listOfNotNull(track.primaryLocator, track.fallbackLocator)
+            .filter { it.provider == "youtube" }
+            .forEach { yt.preferYtDlp(it.sourceId) }
+    }
+
+    /** the last songs looked up and how long it took, newest first (settings → playback log) */
+    data class LogEntry(val title: String, val via: String, val ms: Long, val error: String?)
+
+    private val _log = kotlinx.coroutines.flow.MutableStateFlow<List<LogEntry>>(emptyList())
+    val log: kotlinx.coroutines.flow.StateFlow<List<LogEntry>> = _log
+
+    private fun record(e: LogEntry) {
+        _log.value = (listOf(e) + _log.value).take(30)
+    }
+
     suspend fun streamFor(trackId: String): StreamSource {
         val track = dao.get(trackId) ?: throw ProviderException("Unknown song $trackId")
         track.localPath?.let { path ->
             val f = File(path)
-            if (f.exists() && f.length() > 0) return StreamSource(f.toURI().toString())
+            if (f.exists() && f.length() > 0) return StreamSource(f.toURI().toString(), via = "downloaded")
         }
         shortCache[trackId]?.let { if (System.currentTimeMillis() - it.at < CACHE_MS) return it.source }
+        val started = System.currentTimeMillis()
+        return try {
+            lookUp(trackId, track).also { record(LogEntry(track.title, it.via.ifEmpty { track.provider }, System.currentTimeMillis() - started, null)) }
+        } catch (e: Exception) {
+            record(LogEntry(track.title, "failed", System.currentTimeMillis() - started, e.message))
+            throw e
+        }
+    }
+
+    private suspend fun lookUp(trackId: String, track: Track): StreamSource {
 
         // the prefetch and exoplayer can ask for the same song at once; share one lookup
         val job = inFlight.computeIfAbsent(trackId) {
@@ -336,7 +366,7 @@ class Resolver @Inject constructor(
         val source = try {
             // never spin forever: after a minute the player shows why instead of loading
             kotlinx.coroutines.withTimeoutOrNull(OVERALL_MS) { job.await() }
-                ?: throw ProviderException("Took too long to find this song. YouTube may be blocking this connection (a VPN often does)")
+                ?: throw ProviderException("Took too long to find this song")
         } finally {
             inFlight.remove(trackId, job)
         }

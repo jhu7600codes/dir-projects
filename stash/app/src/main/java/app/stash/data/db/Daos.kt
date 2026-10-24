@@ -25,6 +25,10 @@ interface TrackDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnore(track: Track): Long
 
+    /** a whole queue at once, in one transaction (one insert per song made big playlists slow to start) */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(tracks: List<Track>)
+
     @Update
     suspend fun update(track: Track)
 

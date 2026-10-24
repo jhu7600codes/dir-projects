@@ -54,7 +54,9 @@ class YtDlp @Inject constructor(
                 _status.value = "Failed to start: ${e.message}"
                 return@launch
             }
-            update()
+            // songs that need yt-dlp wait while it updates, so not on every start: once a day
+            val last = settings.current().lastYtDlpUpdate
+            if (System.currentTimeMillis() - last > 24L * 60 * 60 * 1000) update()
         }
     }
 

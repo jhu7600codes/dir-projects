@@ -77,7 +77,9 @@ class SettingsViewModel @Inject constructor(
     private val ytDlp: YtDlp,
     private val account: Account,
     private val cloud: CloudBackup,
+    resolver: app.stash.providers.Resolver,
 ) : ViewModel() {
+    val playbackLog = resolver.log
     val ytStatus = ytDlp.status
     val updateResult = MutableStateFlow<String?>(null)
     val accountBusy = MutableStateFlow(false)
@@ -178,6 +180,27 @@ fun SettingsScreen() {
             item {
                 SwitchRow("Autoplay", "When your queue ends, keep going with similar songs", settings.autoplay) {
                     vm.set { setAutoplay(it) }
+                }
+            }
+
+            item {
+                val log by vm.playbackLog.collectAsState()
+                var open by remember { mutableStateOf(false) }
+                Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) {
+                    TextButton(onClick = { open = !open }, contentPadding = PaddingValues(0.dp)) {
+                        Text(if (open) "Hide playback log" else "Playback log (how long songs took to start)")
+                    }
+                    if (open) {
+                        if (log.isEmpty()) Text("Play something first.", style = MaterialTheme.typography.bodySmall)
+                        log.forEach { e ->
+                            Text(
+                                "${"%.1f".format(e.ms / 1000.0)}s · ${e.via} · ${e.title}" + (e.error?.let { " · $it" } ?: ""),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (e.error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                            )
+                        }
+                    }
                 }
             }
 

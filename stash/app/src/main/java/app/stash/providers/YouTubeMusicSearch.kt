@@ -186,7 +186,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
             http.newCall(Request.Builder().url(url).header("User-Agent", client.ua).header("Range", "bytes=0-1").build())
                 .execute().use { it.code == 206 || it.code == 200 }
         }.getOrDefault(false)
-        if (ok) StreamSource(url, mapOf("User-Agent" to client.ua)) else null
+        if (ok) StreamSource(url, mapOf("User-Agent" to client.ua), via = "YouTube fast (${client.name.lowercase()})") else null
     }
 
     /** an artist's youtube music page: banner, bio, audience, top songs/videos, "fans also like" */
@@ -373,11 +373,6 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
                 "ANDROID_VR", 28, "1.60.19",
                 "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
                 mapOf("deviceMake" to "Oculus", "deviceModel" to "Quest 3", "androidSdkVersion" to 32, "osName" to "Android", "osVersion" to "12L"),
-            ),
-            PlayerClient(
-                "IOS", 5, "20.10.4",
-                "com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)",
-                mapOf("deviceMake" to "Apple", "deviceModel" to "iPhone16,2", "osName" to "iPhone", "osVersion" to "18.3.2.22D82"),
             ),
         )
         // search filter tabs, as music.youtube.com's chips send them
