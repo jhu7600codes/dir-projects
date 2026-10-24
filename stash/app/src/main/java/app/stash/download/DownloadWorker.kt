@@ -116,6 +116,7 @@ class DownloadWorker @AssistedInject constructor(
                 "--no-mtime" to null,
                 "--newline" to null,
             ),
+            background = true,
         ) { pct -> onProgress(pct / 100f) }
     }
 

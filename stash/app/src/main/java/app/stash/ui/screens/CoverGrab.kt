@@ -81,10 +81,10 @@ class CoverGrabViewModel @Inject constructor(private val covers: PlaylistCovers)
         covers.apply(ids.associateWith { null })
     }
 
-    /** {"spotify:playlist:id": "name", …} from the exportify page */
+    /** {"<playlist id>": "name", …} from the exportify page */
     fun fromExportify(json: String) = run {
-        val found = lenientJson.parseToJsonElement(json).jsonObject.mapNotNull { (uri, name) ->
-            val id = uri.substringAfterLast(':').takeIf { it.length == 22 } ?: return@mapNotNull null
+        val found = lenientJson.parseToJsonElement(json).jsonObject.mapNotNull { (id, name) ->
+            if (id.length != 22) return@mapNotNull null
             id to name.jsonPrimitive.content
         }.toMap()
         covers.apply(found)
@@ -142,7 +142,10 @@ fun PlaylistCoversCard() {
 private const val COLLECT_JS = """
 (async function () {
   const out = {};
-  const grab = () => document.querySelectorAll('a[href^="spotify:playlist:"]').forEach(a => { out[a.getAttribute('href')] = a.textContent.trim(); });
+  const grab = () => document.querySelectorAll('a[href*="playlist/"], a[href^="spotify:playlist:"]').forEach(a => {
+    const m = (a.getAttribute('href') || '').match(/playlist[\/:]([A-Za-z0-9]{22})/);
+    if (m) out[m[1]] = a.textContent.trim();
+  });
   for (let i = 0; i < 200; i++) {
     grab();
     StashBridge.progress(Object.keys(out).length);
@@ -152,8 +155,9 @@ private const val COLLECT_JS = """
     next.click();
     for (let w = 0; w < 30; w++) {
       await new Promise(r => setTimeout(r, 300));
-      const first = document.querySelector('a[href^="spotify:playlist:"]');
-      if (first && !(first.getAttribute('href') in out)) break;
+      const first = document.querySelector('a[href*="playlist/"], a[href^="spotify:playlist:"]');
+      const fm = first && (first.getAttribute('href') || '').match(/playlist[\/:]([A-Za-z0-9]{22})/);
+      if (fm && !(fm[1] in out)) break;
     }
   }
   grab();
@@ -178,6 +182,8 @@ fun CoverGrabScreen() {
     var collecting by remember { mutableStateOf(false) }
     var seen by remember { mutableStateOf(0) }
     var noTable by remember { mutableStateOf(false) }
+    var loadProgress by remember { mutableStateOf(0) }
+    var loadError by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -209,7 +215,11 @@ fun CoverGrabScreen() {
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
+            if (loadProgress in 1..99) androidx.compose.material3.LinearProgressIndicator(
+                progress = { loadProgress / 100f }, modifier = Modifier.fillMaxWidth(),
+            )
             val note = when {
+                loadError != null -> "Exportify didn't load: $loadError. Check your connection (or VPN), then go back and open this again."
                 message != null -> message
                 noTable -> "No playlists on this page yet. Log in first, then tap Grab covers on the page with your playlist list."
                 else -> "Log in with Spotify, wait for your playlist list, then tap Grab covers."
@@ -233,7 +243,19 @@ fun CoverGrabScreen() {
                                 setAcceptCookie(true)
                                 setAcceptThirdPartyCookies(view, true)
                             }
+                            setBackgroundColor(android.graphics.Color.WHITE)
+                            webChromeClient = object : android.webkit.WebChromeClient() {
+                                override fun onProgressChanged(view: WebView, newProgress: Int) { loadProgress = newProgress }
+                            }
                             webViewClient = object : WebViewClient() {
+                                override fun onReceivedError(
+                                    view: WebView, request: android.webkit.WebResourceRequest, error: android.webkit.WebResourceError,
+                                ) {
+                                    if (request.isForMainFrame) loadError = error.description?.toString() ?: "error ${error.errorCode}"
+                                }
+
+                                override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) { loadError = null }
+
                                 // spotify: links in the table would try to leave the page
                                 override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest) =
                                     !request.url.scheme.orEmpty().startsWith("http")

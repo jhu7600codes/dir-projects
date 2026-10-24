@@ -334,7 +334,9 @@ class Resolver @Inject constructor(
             scope.async { resolveWithFallback(track) { provider, loc -> provider.resolveStream(loc) } }
         }
         val source = try {
-            job.await()
+            // never spin forever: after a minute the player shows why instead of loading
+            kotlinx.coroutines.withTimeoutOrNull(OVERALL_MS) { job.await() }
+                ?: throw ProviderException("Took too long to find this song. YouTube may be blocking this connection (a VPN often does)")
         } finally {
             inFlight.remove(trackId, job)
         }
@@ -353,7 +355,7 @@ class Resolver @Inject constructor(
             val provider = registry.get(loc.provider) ?: continue
             tried += loc.provider
             try {
-                return op(provider, loc)
+                return kotlinx.coroutines.withTimeout(STEP_MS) { op(provider, loc) }
             } catch (e: Exception) {
                 Log.w(TAG, "${provider.id} failed for ${track.title}", e)
                 errors += "${provider.displayName}: ${e.message}"
@@ -362,9 +364,11 @@ class Resolver @Inject constructor(
 
         for (provider in registry.active()) {
             if (provider.id in tried) continue
-            val match = runCatching { bestMatch(provider, track.title, track.artist, track.durationMs) }.getOrNull() ?: continue
+            val match = runCatching {
+                kotlinx.coroutines.withTimeout(SEARCH_MS) { bestMatch(provider, track.title, track.artist, track.durationMs) }
+            }.getOrNull() ?: continue
             try {
-                val result = op(provider, match.primaryLocator)
+                val result = kotlinx.coroutines.withTimeout(STEP_MS) { op(provider, match.primaryLocator) }
                 dao.setResolved(track.id, match.provider, match.sourceId, match.streamHint)
                 return result
             } catch (e: Exception) {
@@ -417,5 +421,8 @@ class Resolver @Inject constructor(
     companion object {
         private const val TAG = "Resolver"
         private const val CACHE_MS = 15 * 60 * 1000L
+        private const val OVERALL_MS = 60_000L
+        private const val STEP_MS = 30_000L
+        private const val SEARCH_MS = 10_000L
     }
 }

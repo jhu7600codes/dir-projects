@@ -87,15 +87,18 @@ class YtDlp @Inject constructor(
     suspend fun run(
         target: String,
         options: List<Pair<String, String?>>,
+        /** downloads: their own lane, so a playlist download never makes a song you tapped wait */
+        background: Boolean = false,
         onProgress: ((Float) -> Unit)? = null,
     ): YoutubeDLResponse {
         ready.await()
         updateLock.withLock { } // wait out an update in progress
         // each run is a whole python process (~100MB); never more than a few at once
-        return processes.withPermit { start(target, options, onProgress) }
+        return (if (background) backgroundProcesses else processes).withPermit { start(target, options, onProgress) }
     }
 
-    private val processes = kotlinx.coroutines.sync.Semaphore(3)
+    private val processes = kotlinx.coroutines.sync.Semaphore(2)
+    private val backgroundProcesses = kotlinx.coroutines.sync.Semaphore(2)
 
     private suspend fun start(
         target: String,

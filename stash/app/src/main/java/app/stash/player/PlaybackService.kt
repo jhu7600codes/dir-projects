@@ -63,7 +63,13 @@ class PlaybackService : MediaSessionService() {
         val upstream = DefaultDataSource.Factory(this, OkHttpDataSource.Factory(http))
         val resolving = ResolvingDataSource.Factory(upstream) { spec -> resolve(spec) }
 
+        // start playing after half a second of audio instead of the default 2.5s; it keeps
+        // streaming (and buffering ahead) while it plays, nothing waits for the whole file
+        val loadControl = androidx.media3.exoplayer.DefaultLoadControl.Builder()
+            .setBufferDurationsMs(15_000, 60_000, 500, 1_500)
+            .build()
         val player = ExoPlayer.Builder(this)
+            .setLoadControl(loadControl)
             .setMediaSourceFactory(DefaultMediaSourceFactory(resolving))
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
