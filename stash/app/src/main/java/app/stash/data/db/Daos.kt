@@ -226,6 +226,10 @@ interface PlaylistDao {
     @Query("SELECT * FROM unmatched ORDER BY playlistId, position")
     suspend fun allUnmatched(): List<UnmatchedTrack>
 
+    /** every not-found song, in every playlist and liked songs (the rescan screen's list) */
+    @Query("SELECT * FROM unmatched ORDER BY playlistId, position")
+    fun observeAllUnmatched(): Flow<List<UnmatchedTrack>>
+
     @Query("SELECT COUNT(*) FROM unmatched")
     fun observeUnmatchedCount(): Flow<Int>
 

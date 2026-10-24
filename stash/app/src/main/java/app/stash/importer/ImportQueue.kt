@@ -108,12 +108,18 @@ class ImportQueue @Inject constructor(
         )
     }
 
-    /** search every not-found song again (see [RescanWorker]) */
-    fun rescanMissing() {
+    /** search every not-found song again (see [RescanWorker]); [restart] drops a running one first */
+    fun rescanMissing(restart: Boolean = false) {
         val request = OneTimeWorkRequestBuilder<RescanWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(RESCAN, ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            RESCAN, if (restart) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP, request,
+        )
+    }
+
+    fun stopRescan() {
+        WorkManager.getInstance(context).cancelUniqueWork(RESCAN)
     }
 
     companion object {
