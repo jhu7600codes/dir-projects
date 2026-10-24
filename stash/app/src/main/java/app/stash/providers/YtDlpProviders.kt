@@ -121,7 +121,11 @@ abstract class YtDlpProvider(protected val ytDlp: YtDlp) : MusicProvider {
 }
 
 @Singleton
-class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTubeMusicSearch) : YtDlpProvider(ytDlp) {
+class YouTubeProvider @Inject constructor(
+    ytDlp: YtDlp,
+    private val music: YouTubeMusicSearch,
+    private val newPipe: NewPipeStreams,
+) : YtDlpProvider(ytDlp) {
     override val id = "youtube"
     override val displayName = "YouTube"
 
@@ -142,7 +146,7 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
     override suspend fun searchArtists(query: String, limit: Int) = music.searchArtists(query, limit)
 
     private companion object {
-        const val FAST_HEAD_START_MS = 2_500L
+        const val YTDLP_AFTER_MS = 8_000L
     }
 
     private val fastFailures = java.util.concurrent.atomic.AtomicInteger(0)
@@ -160,27 +164,43 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
         val videoId = Regex("""[?&]v=([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
             ?: Regex("""youtu\.be/([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
         if (videoId == null || locator.sourceId in slowOnly) return super.resolveStream(locator)
-        // youtube refusing the quick way every time (some connections): stop waiting for it for a while
-        if (fastFailures.get() >= 3 && System.currentTimeMillis() < fastRetryAt) return super.resolveStream(locator)
-        // the fast way first; if it hasn't answered in a couple of seconds, start yt-dlp too and
-        // take whichever finishes first, so a slow or refused fast try never costs its full time
+        val url = "https://www.youtube.com/watch?v=$videoId"
+        // youtube's quick way (skipped for a while after it keeps refusing) and NewPipe (java,
+        // a second or two) start together; yt-dlp (a whole python, 30s+ on some phones) only
+        // joins if neither has answered in a few seconds. first one with a link wins.
         return kotlinx.coroutines.coroutineScope {
+            val quickBlocked = fastFailures.get() >= 3 && System.currentTimeMillis() < fastRetryAt
             val fast = async {
-                runCatching { music.audioStream(videoId) }.getOrNull().also { r ->
+                if (quickBlocked) null
+                else runCatching { music.audioStream(videoId) }.getOrNull().also { r ->
                     if (r != null) fastFailures.set(0)
                     else if (fastFailures.incrementAndGet() >= 3) fastRetryAt = System.currentTimeMillis() + 10 * 60 * 1000L
                 }
             }
-            kotlinx.coroutines.withTimeoutOrNull(FAST_HEAD_START_MS) { fast.await() }?.let { return@coroutineScope it }
+            val pipe = async { runCatching { newPipe.audioStream(url) }.getOrNull() }
+            val quick = listOf(fast, pipe)
+            firstNonNull(quick, YTDLP_AFTER_MS)?.let { quick.forEach { it.cancel() }; return@coroutineScope it }
             val slow = async { runCatching { super.resolveStream(locator) } }
-            val winner = kotlinx.coroutines.selects.select<StreamSource?> {
-                fast.onAwait { it }
-                slow.onAwait { it.getOrNull() }
-            } ?: if (fast.isCompleted) slow.await().getOrThrow() else fast.await() ?: slow.await().getOrThrow()
-            fast.cancel(); slow.cancel()
-            winner
+            val result = firstNonNull(quick + async { slow.await().getOrNull() }, Long.MAX_VALUE)
+            quick.forEach { it.cancel() }
+            slow.cancel()
+            result ?: slow.await().getOrThrow()
         }
     }
+
+    /** the first non-null result of [jobs] within [timeoutMs], or null if all end empty or time runs out */
+    private suspend fun firstNonNull(jobs: List<kotlinx.coroutines.Deferred<StreamSource?>>, timeoutMs: Long): StreamSource? =
+        kotlinx.coroutines.withTimeoutOrNull(timeoutMs) {
+            val pending = jobs.toMutableList()
+            while (pending.isNotEmpty()) {
+                val (done, value) = kotlinx.coroutines.selects.select<Pair<kotlinx.coroutines.Deferred<StreamSource?>, StreamSource?>> {
+                    pending.forEach { d -> d.onAwait { d to it } }
+                }
+                if (value != null) return@withTimeoutOrNull value
+                pending -= done
+            }
+            null
+        }
 
     override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
         music.artist(artistId)?.popular.orEmpty().take(limit)

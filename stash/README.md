@@ -122,7 +122,7 @@ Settings live on the downloads screen. **High** keeps the best stream (about 130
 The queue only holds `stash://track/<id>` uris. When ExoPlayer opens one, `PlaybackService` resolves it right then (`ResolvingDataSource`):
 
 1. downloaded file, if there is one
-2. the track's own provider. YouTube first asks YouTube's own player API the way its Android VR app does, then its iOS app (one request each, no signature solving), and checks the link answers; only if that fails does yt-dlp run `-f bestaudio`. The url is kept in memory for 15 minutes so seeking doesn't re-run yt-dlp, and is never stored.
+2. the track's own provider. For YouTube, two quick ways start together: YouTube's own player API the way its Android VR app asks (skipped for 10 minutes after it keeps refusing), and NewPipeExtractor (the library NewPipe, PipePipe and YouTube Classic use: plain Java with Rhino for YouTube's player code, 1-3 seconds). Each link is checked with a 2-byte request and sent with the app identity it was made for. yt-dlp (a whole Python, 30+ seconds on some phones) only starts if neither has a link after 8 seconds.
 3. the fallback that worked last time (cached on the track)
 4. search every other enabled provider in order and match by title + artist + duration (`Matcher`), then remember the winner
 
