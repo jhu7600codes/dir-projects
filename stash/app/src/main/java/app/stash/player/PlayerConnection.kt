@@ -173,8 +173,13 @@ class PlayerConnection @Inject constructor(
     fun clearQueue() = withController { it.stop(); it.clearMediaItems() }
 
     companion object {
-        /** soundcloud is hls-only; downloaded files and songs that fell back to another source aren't */
-        private val Track.isHls get() = provider == "soundcloud" && !isDownloaded && resolvedProvider == null
+        /**
+         * soundcloud streams are hls, so the player has to open them as hls: soundcloud songs,
+         * and songs from elsewhere that fell back to soundcloud. downloads are plain files. if
+         * this guess is wrong for a song the player switches when it fails (PlaybackService).
+         */
+        private val Track.isHls get() = !isDownloaded &&
+            (resolvedProvider == "soundcloud" || (provider == "soundcloud" && resolvedProvider == null))
 
         fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
             .setMediaId(id)

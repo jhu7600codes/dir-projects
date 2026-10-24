@@ -144,6 +144,8 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 ## Keeping the phone happy
 
 - At most 2 downloads run at once, and downloads have their own 2 yt-dlp slots (each yt-dlp is a whole Python), so they never make a song you tapped wait. Queued downloads wait without a notification.
+- SoundCloud streams are HLS playlists, and a song from elsewhere can fall back to SoundCloud. The queue marks those as HLS up front, a plain MP3 is used when SoundCloud still has one, and if the player still gets the wrong kind (`PARSING_CONTAINER_UNSUPPORTED`) it reopens the song as the other kind instead of skipping.
+- yt-dlp gets 60 seconds per try (90 overall); on some phones it needs 35-45.
 - If YouTube's fast link hasn't answered in 2.5 seconds, yt-dlp starts alongside it and whichever is first wins. If a song's stream breaks while playing, it's fetched again through yt-dlp and continues from the same spot; only a second failure skips it.
 - Settings → Playback log shows how long the last songs took to start and how they were found.
 - Songs stream: playback starts after half a second of audio and keeps buffering ahead. Finding a song's audio gives up after a minute with a reason, instead of loading forever.

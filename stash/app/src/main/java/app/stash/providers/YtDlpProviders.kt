@@ -213,13 +213,16 @@ class SoundCloudProvider @Inject constructor(ytDlp: YtDlp, private val api: Soun
         val track = api.get("/resolve", mapOf("url" to locator.sourceId))
         val auth = track.str("track_authorization")
         val transcodings = track.obj("media")?.get("transcodings").asObjectList()
+        // a plain mp3 file when soundcloud still has one (plays like any file), else hls
+        val progressive = transcodings.firstOrNull { it.obj("format")?.str("protocol") == "progressive" }
         val hls = transcodings.filter { it.obj("format")?.str("protocol") == "hls" }
-        val pick = hls.firstOrNull { it.obj("format")?.str("mime_type")?.contains("mp4a") == true } ?: hls.firstOrNull()
+        val pick = progressive
+            ?: hls.firstOrNull { it.obj("format")?.str("mime_type")?.contains("mp4a") == true } ?: hls.firstOrNull()
             ?: throw ProviderException("SoundCloud has no stream for this one")
         val path = pick.str("url")!!.removePrefix("https://api-v2.soundcloud.com")
         val url = api.get(path, buildMap { if (auth != null) put("track_authorization", auth) }).str("url")
             ?: throw ProviderException("SoundCloud didn't give a stream")
-        return StreamSource(url)
+        return StreamSource(url, via = "SoundCloud", hls = pick !== progressive)
     }
 
     override suspend fun searchArtists(query: String, limit: Int): List<RemoteArtist> =

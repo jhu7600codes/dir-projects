@@ -80,8 +80,9 @@ class PlaybackService : MediaSessionService() {
             .build()
 
         val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        // songs already given their one slow retry
+        // songs already given their one slow retry / their one hls switch
         val retried = mutableSetOf<String>()
+        val hlsSwitched = mutableSetOf<String>()
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val id = mediaItem?.mediaId ?: return
@@ -103,6 +104,27 @@ class PlaybackService : MediaSessionService() {
                     player.currentMediaItem?.mediaMetadata?.title?.toString() ?: "?",
                     "${error.errorCodeName}: ${root.javaClass.simpleName} ${root.message.orEmpty()}".take(300),
                 )
+                val item = player.currentMediaItem
+                // the stream came back hls when the queue expected a plain file (a song that fell
+                // back to soundcloud), or the other way round: reopen it the right way
+                if (id != null && item != null && error.errorCode in FORMAT_ERRORS && hlsSwitched.add(id)) {
+                    val wasHls = item.mediaMetadata.extras?.getBoolean(EXTRA_HLS) == true
+                    val hls = resolver.cachedHls(id) ?: !wasHls
+                    if (hls != wasHls) {
+                        val index = player.currentMediaItemIndex
+                        val position = player.currentPosition
+                        val extras = android.os.Bundle(item.mediaMetadata.extras ?: android.os.Bundle()).apply { putBoolean(EXTRA_HLS, hls) }
+                        player.replaceMediaItem(
+                            index,
+                            item.buildUpon().setUri(uriFor(id, hls))
+                                .setMediaMetadata(item.mediaMetadata.buildUpon().setExtras(extras).build()).build(),
+                        )
+                        player.seekTo(index, position)
+                        player.prepare()
+                        player.play()
+                        return
+                    }
+                }
                 // first failure of a song: youtube's fast link broke (it does that to some
                 // videos). get it again the slow sure way and carry on from the same spot
                 if (id != null && retried.add(id)) {
@@ -211,6 +233,12 @@ class PlaybackService : MediaSessionService() {
     companion object {
         const val SCHEME = "stash"
         const val HLS_SUFFIX = ".m3u8"
+        private val FORMAT_ERRORS = setOf(
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,
+        )
         const val EXTRA_HLS = "hls"
 
         /**
