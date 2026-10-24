@@ -182,6 +182,11 @@ private val browseTiles = listOf(
     "Phonk", "R&B", "Metal", "Ambient", "Russian rap", "K-Pop", "Soundtracks", "Chill",
 )
 
+/** voicebanks: searched on vocadb by every version of the voice (utau, synthv…) */
+private val vocalTiles = listOf(
+    "Miku", "Teto", "GUMI", "KAITO", "Luka", "Rin", "Len", "MEIKO", "IA", "Kafu", "Flower", "Zundamon",
+)
+
 /** scenes where most of the good stuff isn't on the big charts */
 private val undergroundTiles = listOf(
     "Hyperpop", "Breakcore", "Memphis rap", "Drift phonk", "Bedroom pop", "Shoegaze", "Jersey club",
@@ -326,7 +331,7 @@ private fun hitNote(h: SearchHit, query: SearchQuery): String? {
     return listOfNotNull(plays, tag).joinToString(" · ").ifEmpty { null }
 }
 
-/** recent searches, then spotify's "browse all" with tonal tiles, then an underground section */
+/** recent searches, then spotify's "browse all" with tonal tiles, voicebanks, then an underground section */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun BrowseGrid(
@@ -360,6 +365,16 @@ private fun BrowseGrid(
         }
         item { Text("Browse all", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 6.dp)) }
         tileRows(browseTiles, palette) { onTag(it.lowercase(), false) }
+        item {
+            Column(Modifier.padding(top = 10.dp)) {
+                Text("Vocaloid & synth voices", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    "Songs by voicebank from VocaDB, every version of the voice. Or type #teto, #miku…",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        tileRows(vocalTiles, palette.drop(1) + palette.take(1)) { onTag(it.lowercase(), false) }
         item {
             Column(Modifier.padding(top = 10.dp)) {
                 Text("Underground", style = MaterialTheme.typography.titleLarge)

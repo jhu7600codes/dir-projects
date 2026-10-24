@@ -192,8 +192,8 @@ class ImportWorker @AssistedInject constructor(
         private const val PARALLEL = 4
         private const val NOTIFICATION_ID = 0x4100
         private const val RETRY_MISSES_AFTER = 3L * 24 * 60 * 60 * 1000
-        /** 1.2.0: uploader-aware, kana-aware matcher. bump when matching gets better again */
-        const val MATCHER_CHANGED_AT = 1_792_713_600_000L
-        const val MATCHER_VERSION = 2
+        /** 1.3.0: vocadb + typo-tolerant matcher. bump when matching gets better again */
+        const val MATCHER_CHANGED_AT = 1_792_800_000_000L
+        const val MATCHER_VERSION = 3
     }
 }

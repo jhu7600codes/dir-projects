@@ -9,7 +9,7 @@ All six milestones from the plan are in this first build:
 1. **Player + youtube search**: Media3/ExoPlayer in a `MediaSessionService`, so you get background playback, a media notification and lockscreen controls. Search shows one list of songs from every source (duplicates removed, best matches first). YouTube search uses YouTube Music's own search API (well under a second), with yt-dlp's `ytsearch` as the fallback. The next song's stream is looked up while the current one plays, so there's no gap between songs.
 2. **Library**: Room db with saved songs, liked songs, playlists, and albums/artists grouped from your saved songs.
 3. **Downloads**: a download button on every song, album and playlist. They run on a WorkManager queue with resume, retries (3 tries with exponential backoff), a wi-fi only toggle and a foreground progress notification. Files go to app storage (`files/music/`). The player always uses the local file if there is one.
-4. **Fallback providers**: youtube → soundcloud → bandcamp → jamendo → internet archive → free music archive.
+4. **Fallback providers**: youtube → vocadb → soundcloud → bandcamp → jamendo → internet archive → free music archive.
 5. **Playlist import**: Spotify (public playlist/album link, or CSV/zip files from exportify.net) and Apple Music (public playlist link, or the catalog API if you add a MusicKit token). There's a progress screen and a "couldn't match" list you can fix by hand.
 6. **Polish**: Material You dynamic color (wallpaper colors on Android 12+, lavender fallback below that), light/dark/system theme, and an adaptive icon with a monochrome layer for themed icons.
 
@@ -79,6 +79,12 @@ Songs that couldn't be found can be searched for again against all current sourc
 - a distinctive album word ("Doors") as half an artist, only when the length also matches
 - cyrillic and japanese kana spelled in latin letters ("タカオカミズキ" = "takaokamizuki"), with kanji, kana and latin split into separate words
 - length, and a penalty for versions the original title doesn't mention (cover, remix, sped up, nightcore, piano…)
+- small typos in upload titles (two letters swapped, one missing), for words of 6+ letters
+- VocaDB, right after YouTube: it knows every vocaloid / utau / synthv song by its japanese, romaji and english names, so "Rolling Girl" finds "ローリンガール" (wowaka's own upload, not a remake)
+
+## VocaDB
+
+`VocaDbProvider` uses vocadb.net's public API. Songs come out as their original YouTube upload, so they play and download like any YouTube song. `#teto`, `#miku`, `#gumi`, `#kaito`, `#rin`… (or just typing a voicebank name) lists songs by that voice, every version of it included (appends, SynthV…); other tags like `#vocarock` use VocaDB's own tags. Search has a "Vocaloid & synth voices" row of tiles.
 
 ## Covers
 
