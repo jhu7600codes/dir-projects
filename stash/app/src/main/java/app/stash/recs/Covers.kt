@@ -47,6 +47,14 @@ class Covers @Inject constructor(
         }.getOrNull()
     }
 
+    /** a spotify playlist / album link -> its cover (custom playlist covers included), via oembed */
+    suspend fun spotifyLink(link: String): String? {
+        val url = "https://open.spotify.com/oembed".toHttpUrl().newBuilder().addQueryParameter("url", link.trim()).build()
+        return runCatching {
+            lenientJson.parseToJsonElement(httpIo { http.getText(url.toString()) }).jsonObject.str("thumbnail_url")
+        }.getOrNull()
+    }
+
     /** the apple music catalog's cover for a song, through the itunes search api (no key) */
     suspend fun apple(title: String, artist: String, durationMs: Long): Cover? {
         val url = "https://itunes.apple.com/search".toHttpUrl().newBuilder()
@@ -86,6 +94,7 @@ class CoverWorker @AssistedInject constructor(
     private val checks: ImportDao,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        repairImports()
         while (!isStopped) {
             val batch = checks.needingCovers()
             if (batch.isEmpty()) break
@@ -97,6 +106,18 @@ class CoverWorker @AssistedInject constructor(
             }
         }
         return Result.success()
+    }
+
+    /** once: give songs imported by older versions the spotify cover they should have had */
+    private suspend fun repairImports() {
+        val prefs = applicationContext.getSharedPreferences("stash_covers", Context.MODE_PRIVATE)
+        if (prefs.getInt("import_repair", 0) >= 1) return
+        for (r in runCatching { checks.coverRepairs() }.getOrDefault(emptyList())) {
+            if (isStopped) return
+            val art = r.artworkUrl ?: covers.spotify(r.sourceUri)?.also { delay(200) } ?: continue
+            tracks.setCover(r.trackId, art, r.album)
+        }
+        prefs.edit().putInt("import_repair", 1).apply()
     }
 
     companion object {

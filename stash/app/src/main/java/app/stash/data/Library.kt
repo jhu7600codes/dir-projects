@@ -58,6 +58,9 @@ class Library @Inject constructor(
 
     fun rename(playlistId: Long, name: String) = scope.launch { playlists.rename(playlistId, name) }
 
+    /** a picked photo (file uri) or a spotify cover url; null goes back to the first song's cover */
+    fun setPlaylistCover(playlistId: Long, cover: String?) = scope.launch { playlists.setCover(playlistId, cover) }
+
     fun deletePlaylist(playlistId: Long) = scope.launch { playlists.deleteFully(playlistId) }
 
     /** a hand-picked replacement for a song the importer couldn't match */

@@ -187,3 +187,6 @@ data class MatchCache(
     val trackId: String?,
     val checkedAt: Long = System.currentTimeMillis(),
 )
+
+/** an imported song and the cover spotify / the csv had for it */
+data class CoverRepair(val trackId: String, val artworkUrl: String?, val sourceUri: String?, val album: String?)

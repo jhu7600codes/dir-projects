@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.MusicNote
@@ -34,12 +35,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import coil.imageLoader
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -76,13 +80,32 @@ fun Artwork(
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+        // spotify covers come from i.scdn.co, which some networks block; the same picture is on
+        // spotify's other cdn hosts, so try those before giving up
+        val candidates = remember(url) { artCandidates(url) }
+        var attempt by remember(url) { mutableIntStateOf(0) }
         if (url != null) AsyncImage(
-            model = url,
+            model = candidates.getOrNull(attempt) ?: url,
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            onError = { if (attempt < candidates.lastIndex) attempt++ },
             modifier = Modifier.fillMaxSize(),
         )
     }
+}
+
+private val spotifyImage = Regex("""https?://(?:i\.scdn\.co|image-cdn-(?:ak|fa)\.spotifycdn\.com)/image/([A-Za-z0-9]+)""")
+
+/** the url itself, plus mirrors for spotify covers */
+internal fun artCandidates(url: Any?): List<Any> {
+    if (url == null) return emptyList()
+    val id = (url as? String)?.let { spotifyImage.find(it)?.groupValues?.get(1) } ?: return listOf(url)
+    return listOf(
+        url,
+        "https://image-cdn-ak.spotifycdn.com/image/$id",
+        "https://image-cdn-fa.spotifycdn.com/image/$id",
+        "https://i.scdn.co/image/$id",
+    ).distinct()
 }
 
 @Composable
@@ -324,5 +347,40 @@ fun RescanStatus(modifier: Modifier = Modifier) {
                 }) { Text("Rescan failed songs") }
             }
         }
+    }
+}
+
+
+/** dominant + vibrant colors pulled from a cover, for tinted headers / players (spotify style) */
+@Composable
+fun rememberArtColors(url: Any?): Pair<Color?, Color?> {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var colors by remember(url) { mutableStateOf<Pair<Color?, Color?>>(null to null) }
+    androidx.compose.runtime.LaunchedEffect(url) {
+        if (url == null) return@LaunchedEffect
+        val result = context.imageLoader.execute(
+            coil.request.ImageRequest.Builder(context).data(url).allowHardware(false).size(128).build()
+        )
+        val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap ?: return@LaunchedEffect
+        val p = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            androidx.palette.graphics.Palette.from(bitmap).generate()
+        }
+        val dominant = p.dominantSwatch?.rgb?.let { Color(it) }
+        val vibrant = (p.vibrantSwatch ?: p.lightVibrantSwatch ?: p.mutedSwatch)?.rgb?.let { Color(it) }
+        colors = dominant to vibrant
+    }
+    return colors
+}
+
+/** spotify's liked songs tile: a gradient square with a heart, in this theme's colors */
+@Composable
+fun LikedArt(modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Box(
+        modifier.clip(MaterialTheme.shapes.small)
+            .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(scheme.primary, scheme.tertiary))),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.Rounded.Favorite, null, Modifier.fillMaxSize(0.4f), tint = scheme.onPrimary)
     }
 }

@@ -1,5 +1,17 @@
 package app.stash.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.text.font.FontWeight
+import app.stash.ui.components.LikedArt
+import app.stash.ui.components.rememberArtColors
 import app.stash.data.calm
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
@@ -87,8 +99,9 @@ import app.stash.ui.components.originName
 data class MenuEntry(val label: String, val icon: ImageVector, val onClick: () -> Unit)
 
 /**
- * shared layout for playlists, albums, artists, liked songs: a big centered cover
- * (google play music style) with tonal download / shuffle buttons and a morphing play button.
+ * shared layout for playlists, albums, liked songs, spotify style: the cover's color fading down
+ * the page, a big cover, left-aligned title, download / more on the left and shuffle + a big
+ * round play button on the right.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +118,8 @@ fun CollectionScreen(
     /** where each track sits in the source playlist, so [missing] songs can be shown in their spot */
     positions: List<Int>? = null,
     missing: List<UnmatchedTrack> = emptyList(),
+    /** drawn instead of [artwork], e.g. liked songs' gradient heart */
+    artContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val actions = LocalActions.current
     val nav = LocalNav.current
@@ -119,6 +134,11 @@ fun CollectionScreen(
     val downloaded = tracks.count { it.downloadState == DownloadState.DONE }
     val downloading = tracks.any { it.downloadState == DownloadState.QUEUED || it.downloadState == DownloadState.DOWNLOADING }
     val totalMs = tracks.sumOf { it.durationMs }
+    val surface = MaterialTheme.colorScheme.surface
+    val (dominant, _) = rememberArtColors(artwork)
+    val tint by animateColorAsState(
+        (dominant ?: MaterialTheme.colorScheme.primary).copy(alpha = 0.6f).compositeOver(surface), label = "tint",
+    )
 
     Scaffold(
         topBar = {
@@ -127,7 +147,7 @@ fun CollectionScreen(
                 navigationIcon = { IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
                 actions = {
                     if (menu.isNotEmpty()) Box {
-                        IconButton(onClick = { showMenu = true }) { Icon(Icons.Rounded.MoreVert, "More") }
+                        if (scrolled) IconButton(onClick = { showMenu = true }) { Icon(Icons.Rounded.MoreVert, "More") }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                             menu.forEach { m ->
                                 DropdownMenuItem(
@@ -139,42 +159,55 @@ fun CollectionScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (scrolled) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent,
+                    containerColor = if (scrolled) tint else Color.Transparent,
                 ),
             )
         },
     ) { padding ->
         val rows = remember(tracks, positions, missing) { mergeRows(tracks, positions, missing) }
-            LazyColumn(state = list, contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 24.dp)) {
-                item {
-                    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Artwork(artwork, Modifier.size(232.dp), artShape, artIcon)
+            LazyColumn(state = list, contentPadding = PaddingValues(bottom = 24.dp)) {
+                item(key = "header") {
+                    // spotify style: the cover's color fades down into the page behind a left-aligned header
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(Brush.verticalGradient(listOf(tint, tint.copy(alpha = 0.35f).compositeOver(surface), surface)))
+                            .padding(top = padding.calculateTopPadding())
+                            .padding(horizontal = 16.dp),
+                    ) {
+                        Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) {
+                            val artModifier = Modifier.size(240.dp).shadow(24.dp, artShape)
+                            if (artContent != null) artContent(artModifier) else Artwork(artwork, artModifier, artShape, artIcon)
+                        }
                         Spacer(Modifier.height(20.dp))
-                        Text(title, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            kind, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
                         Text(
                             buildList {
-                                add(kind)
                                 add("${tracks.size} songs")
                                 if (totalMs > 0) add(formatDuration(totalMs))
                                 if (downloaded > 0) add("$downloaded offline")
                             }.joinToString(" · "),
-                            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Spacer(Modifier.height(16.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            FilledTonalIconButton(
-                                onClick = {
-                                    when {
-                                        tracks.isEmpty() -> Unit
-                                        downloaded == tracks.size -> actions.toast("All downloaded")
-                                        else -> actions.download(tracks)
-                                    }
-                                },
-                                modifier = Modifier.size(52.dp),
-                            ) {
+                        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = {
                                 when {
-                                    tracks.isNotEmpty() && downloaded == tracks.size -> Icon(Icons.Rounded.DownloadDone, "Downloaded")
+                                    tracks.isEmpty() -> Unit
+                                    downloaded == tracks.size -> actions.toast("All downloaded")
+                                    else -> actions.download(tracks)
+                                }
+                            }) {
+                                when {
+                                    tracks.isNotEmpty() && downloaded == tracks.size ->
+                                        Icon(Icons.Rounded.DownloadDone, "Downloaded", tint = MaterialTheme.colorScheme.primary)
                                     downloading -> CircularProgressIndicator(
                                         progress = { if (tracks.isEmpty()) 0f else downloaded.toFloat() / tracks.size },
                                         modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp,
@@ -182,23 +215,31 @@ fun CollectionScreen(
                                     else -> Icon(Icons.Rounded.Download, "Download all")
                                 }
                             }
-                            FilledIconButton(
-                                onClick = { if (playingHere) actions.player.togglePlay() else actions.play(tracks) },
-                                modifier = Modifier.size(width = 104.dp, height = 64.dp),
-                                shape = MaterialTheme.shapes.large,
-                                enabled = tracks.isNotEmpty(),
-                            ) {
-                                Icon(
-                                    if (playingHere && isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    "Play", Modifier.size(34.dp),
-                                )
+                            if (menu.isNotEmpty()) IconButton(onClick = { showMenu = true }) { Icon(Icons.Rounded.MoreVert, "More") }
+                            Spacer(Modifier.weight(1f))
+                            IconButton(onClick = { actions.shuffle(tracks) }, enabled = tracks.isNotEmpty()) {
+                                Icon(Icons.Rounded.Shuffle, "Shuffle", Modifier.size(28.dp))
                             }
-                            FilledTonalIconButton(
-                                onClick = { actions.shuffle(tracks) }, modifier = Modifier.size(52.dp), enabled = tracks.isNotEmpty(),
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(),
-                            ) { Icon(Icons.Rounded.Shuffle, "Shuffle") }
+                            Spacer(Modifier.width(8.dp))
+                            // the big round play button
+                            Surface(
+                                onClick = { if (playingHere) actions.player.togglePlay() else actions.play(tracks) },
+                                enabled = tracks.isNotEmpty(),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                shadowElevation = 4.dp,
+                                modifier = Modifier.size(56.dp),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        if (playingHere && isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                        "Play", Modifier.size(32.dp),
+                                    )
+                                }
+                            }
                         }
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(4.dp))
                     }
                 }
                 if (missing.isNotEmpty()) item(key = "missing-note") {
@@ -239,6 +280,7 @@ fun PlaylistScreen(id: Long) {
     val tracks = remember(entries) { entries.map { it.track } }
     var renaming by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
+    var changingCover by remember { mutableStateOf(false) }
     val p = playlist ?: return
 
     CollectionScreen(
@@ -254,6 +296,7 @@ fun PlaylistScreen(id: Long) {
         artwork = p.coverUrl ?: tracks.firstOrNull()?.artworkUrl,
         menu = listOf(
             MenuEntry("Rename", Icons.Rounded.Edit) { renaming = true },
+            MenuEntry("Change cover", Icons.Rounded.Image) { changingCover = true },
             MenuEntry("Remove downloads", Icons.Rounded.RemoveCircleOutline) { actions.downloads.delete(tracks.filter { it.isDownloaded }) },
             MenuEntry("Delete playlist", Icons.Rounded.Delete) { deleting = true },
         ),
@@ -264,6 +307,7 @@ fun PlaylistScreen(id: Long) {
         },
     )
 
+    if (changingCover) PlaylistCoverDialog(id, onDismiss = { changingCover = false }, onMessage = actions::toast)
     if (renaming) NewPlaylistDialog(
         title = "Rename playlist", initial = p.name,
         onDismiss = { renaming = false },
@@ -299,7 +343,7 @@ fun LikedScreen() {
     val unmatched by remember { library.playlists.observeUnmatched(LIKED_PLAYLIST_ID) .calm() }.collectAsState(initial = emptyList())
     CollectionScreen(
         title = "Liked songs", kind = "Playlist", tracks = tracks, artwork = null, artIcon = Icons.Rounded.Favorite,
-        missing = unmatched,
+        missing = unmatched, artShape = MaterialTheme.shapes.small, artContent = { LikedArt(it) },
     )
 }
 

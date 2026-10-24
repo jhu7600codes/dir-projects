@@ -19,7 +19,9 @@ All six milestones from the plan are in this first build:
 - Home has Spotify-style quick-pick tiles, plus Google Play Music style "listen now" carousels: recently played, your playlists, on repeat, ready offline.
 - Search has a "browse all" grid (tonal Material You tiles instead of Spotify's fixed colors), provider filter chips, and results grouped by source. Long-press any song (or tap ⋮) for the Spotify-style action sheet.
 - Your library has filter chips: playlists, songs, albums, artists, downloaded.
-- Playlist/album pages have a big centered cover like GPM, with tonal download and shuffle buttons and a big play button.
+- Playlist/album pages are Spotify style: the cover's color fades down the page, big cover, left-aligned title, download / more on the left, shuffle and a big round play button on the right. Liked songs has a gradient heart tile.
+- The library has Spotify's Recents / Alphabetical sort and a list / grid switch.
+- The mini player is tinted with the cover's color, with a heart, play, and a thin progress line.
 - Now playing is a full-height sheet tinted with colors from the album art (androidx palette). The art shrinks with a bounce when paused, the play button morphs between pill and squircle, and there's a queue view.
 
 ## Moving playlists (background)
@@ -84,11 +86,11 @@ Songs that couldn't be found can be searched for again against all current sourc
 
 ## VocaDB
 
-`VocaDbProvider` uses vocadb.net's public API. Songs come out as their original YouTube upload, so they play and download like any YouTube song. `#teto`, `#miku`, `#gumi`, `#kaito`, `#rin`… (or just typing a voicebank name) lists songs by that voice, every version of it included (appends, SynthV…); other tags like `#vocarock` use VocaDB's own tags. Search has a "Vocaloid & synth voices" row of tiles.
+`VocaDbProvider` uses vocadb.net's public API. Songs come out as their original YouTube upload, so they play and download like any YouTube song. `#teto`, `#miku`, `#len`, `#meiko`… (or just typing a voicebank name) lists songs by that voice on every engine it has (on VocaDB, Teto UTAU and Teto SynthV are separate artists), taking turns between them. `#teto-utau`, `#teto-synthv`, `#miku-vocaloid` etc. pick one engine; each includes that voicebank's own updates (SV2, Kyuu, appends); other tags like `#vocarock` use VocaDB's own tags. Search has a "Vocaloid & synth voices" row of tiles.
 
 ## Covers
 
-Saved songs get their real album cover instead of a YouTube video thumbnail. For Spotify imports the cover comes from Spotify itself (public oEmbed, using the track URI from the link or the CSV). Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.
+Saved songs get their real album cover instead of a YouTube video thumbnail. For Spotify imports the cover comes from Spotify itself: the CSV's album image url, or public oEmbed with the track URI from the link. It's applied even when the matched song was already saved (older versions skipped those), and songs imported before that are fixed once in the background. Spotify covers are on `i.scdn.co`, which some networks block, so the app falls back to the same picture on Spotify's other CDN hosts. Playlists have "Change cover": a photo from the phone, or a Spotify playlist link (exportify's CSVs don't include the playlist's own cover). Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.
 
 ## Download size
 
