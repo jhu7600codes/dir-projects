@@ -321,6 +321,9 @@ class Resolver @Inject constructor(
         shortCache.remove(trackId)
     }
 
+    /** whether the stream last found for this song is hls; null if none is cached */
+    fun cachedHls(trackId: String): Boolean? = shortCache[trackId]?.source?.hls
+
     /** the stream broke mid-song: next time get this song through yt-dlp, the slow sure way */
     suspend fun retrySlow(trackId: String) {
         shortCache.remove(trackId)
@@ -454,8 +457,9 @@ class Resolver @Inject constructor(
     companion object {
         private const val TAG = "Resolver"
         private const val CACHE_MS = 15 * 60 * 1000L
-        private const val OVERALL_MS = 60_000L
-        private const val STEP_MS = 30_000L
+        // yt-dlp alone takes 35-45s on some phones; cutting it at 30s failed songs that would play
+        private const val OVERALL_MS = 90_000L
+        private const val STEP_MS = 60_000L
         private const val SEARCH_MS = 10_000L
     }
 }

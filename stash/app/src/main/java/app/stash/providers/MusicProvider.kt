@@ -8,6 +8,8 @@ data class StreamSource(
     val headers: Map<String, String> = emptyMap(),
     /** how it was found, for the playback log ("youtube fast", "yt-dlp", "downloaded"…) */
     val via: String = "",
+    /** an hls playlist (soundcloud), which the player has to open as one, not as a plain file */
+    val hls: Boolean = false,
 )
 
 sealed interface DownloadSource {

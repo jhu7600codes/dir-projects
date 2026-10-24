@@ -374,6 +374,12 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
                 "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
                 mapOf("deviceMake" to "Oculus", "deviceModel" to "Quest 3", "androidSdkVersion" to 32, "osName" to "Android", "osVersion" to "12L"),
             ),
+            // the android app without an sdk version: youtube doesn't ask it for a bot token either
+            PlayerClient(
+                "ANDROID", 3, "20.10.38",
+                "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip",
+                mapOf("osName" to "Android", "osVersion" to "11"),
+            ),
         )
         // search filter tabs, as music.youtube.com's chips send them
         private const val SONGS = "EgWKAQIIAWoMEAQQBRAQEBUQChAR"
