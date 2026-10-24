@@ -117,7 +117,7 @@ Settings live on the downloads screen. **High** keeps the best stream (about 130
 The queue only holds `stash://track/<id>` uris. When ExoPlayer opens one, `PlaybackService` resolves it right then (`ResolvingDataSource`):
 
 1. downloaded file, if there is one
-2. the track's own provider. YouTube first asks YouTube's own player API the way the Android VR app does (one request, no signature solving) and checks the link answers; only if that fails does yt-dlp run `-f bestaudio`. The url is kept in memory for 15 minutes so seeking doesn't re-run yt-dlp, and is never stored.
+2. the track's own provider. YouTube first asks YouTube's own player API the way its Android VR app does, then its iOS app (one request each, no signature solving), and checks the link answers; only if that fails does yt-dlp run `-f bestaudio`. The url is kept in memory for 15 minutes so seeking doesn't re-run yt-dlp, and is never stored.
 3. the fallback that worked last time (cached on the track)
 4. search every other enabled provider in order and match by title + artist + duration (`Matcher`), then remember the winner
 
@@ -143,7 +143,8 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 
 ## Keeping the phone happy
 
-- At most 2 downloads and 3 yt-dlp processes run at once (each yt-dlp is a whole Python). Queued downloads wait without a notification.
+- At most 2 downloads run at once, and downloads have their own 2 yt-dlp slots (each yt-dlp is a whole Python), so they never make a song you tapped wait. Queued downloads wait without a notification.
+- Songs stream: playback starts after half a second of audio and keeps buffering ahead. Finding a song's audio gives up after a minute with a reason, instead of loading forever.
 - Background progress (rescan, downloads) updates its notification at most about once a second. Posting one per song made Android's notification service stop responding.
 
 ## Building

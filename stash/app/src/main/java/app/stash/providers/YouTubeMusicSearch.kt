@@ -139,17 +139,22 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
      * yt-dlp's whole python (seconds on a phone). null when youtube wants more (bot check, age
      * gate…); yt-dlp handles those.
      */
-    suspend fun audioStream(videoId: String): StreamSource? = httpIo {
+    suspend fun audioStream(videoId: String): StreamSource? {
+        for (client in PLAYER_CLIENTS) {
+            runCatching { audioStream(videoId, client) }.getOrNull()?.let { return it }
+        }
+        return null
+    }
+
+    private class PlayerClient(val name: String, val id: Int, val version: String, val ua: String, val extra: Map<String, Any>)
+
+    private suspend fun audioStream(videoId: String, client: PlayerClient): StreamSource? = httpIo {
         val body = buildJsonObject {
             putJsonObject("context") {
                 putJsonObject("client") {
-                    put("clientName", "ANDROID_VR")
-                    put("clientVersion", VR_VERSION)
-                    put("deviceMake", "Oculus")
-                    put("deviceModel", "Quest 3")
-                    put("androidSdkVersion", 32)
-                    put("osName", "Android")
-                    put("osVersion", "12L")
+                    put("clientName", client.name)
+                    put("clientVersion", client.version)
+                    client.extra.forEach { (k, v) -> if (v is Int) put(k, v) else put(k, v.toString()) }
                     put("hl", "en")
                 }
             }
@@ -159,9 +164,9 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         }.toString()
         val req = Request.Builder()
             .url("https://www.youtube.com/youtubei/v1/player?prettyPrint=false")
-            .header("User-Agent", VR_UA)
-            .header("X-YouTube-Client-Name", "28")
-            .header("X-YouTube-Client-Version", VR_VERSION)
+            .header("User-Agent", client.ua)
+            .header("X-YouTube-Client-Name", client.id.toString())
+            .header("X-YouTube-Client-Version", client.version)
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
         val text = http.newCall(req).execute().use { r -> if (r.isSuccessful) r.body?.string() else null } ?: return@httpIo null
@@ -176,12 +181,12 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
             ?: return@httpIo null
         val url = best.str("url")!!
         // youtube sometimes hands out links that answer 403 once played (it wants a token yt-dlp
-        // knows how to get); ask for the first two bytes so those fall through to yt-dlp
+        // knows how to get); ask for the first two bytes so those fall through to the next client
         val ok = runCatching {
-            http.newCall(Request.Builder().url(url).header("User-Agent", VR_UA).header("Range", "bytes=0-1").build())
+            http.newCall(Request.Builder().url(url).header("User-Agent", client.ua).header("Range", "bytes=0-1").build())
                 .execute().use { it.code == 206 || it.code == 200 }
         }.getOrDefault(false)
-        if (ok) StreamSource(url, mapOf("User-Agent" to VR_UA)) else null
+        if (ok) StreamSource(url, mapOf("User-Agent" to client.ua)) else null
     }
 
     /** an artist's youtube music page: banner, bio, audience, top songs/videos, "fans also like" */
@@ -362,9 +367,19 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
 
     companion object {
         private const val CLIENT_VERSION = "1.20250929.03.00"
-        private const val VR_VERSION = "1.60.19"
-        private const val VR_UA =
-            "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip"
+        /** youtube's own apps whose stream links need no signature solving, tried in order */
+        private val PLAYER_CLIENTS = listOf(
+            PlayerClient(
+                "ANDROID_VR", 28, "1.60.19",
+                "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
+                mapOf("deviceMake" to "Oculus", "deviceModel" to "Quest 3", "androidSdkVersion" to 32, "osName" to "Android", "osVersion" to "12L"),
+            ),
+            PlayerClient(
+                "IOS", 5, "20.10.4",
+                "com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)",
+                mapOf("deviceMake" to "Apple", "deviceModel" to "iPhone16,2", "osName" to "iPhone", "osVersion" to "18.3.2.22D82"),
+            ),
+        )
         // search filter tabs, as music.youtube.com's chips send them
         private const val SONGS = "EgWKAQIIAWoMEAQQBRAQEBUQChAR"
         private const val VIDEOS = "EgWKAQIQAWoMEAQQBRAQEBUQChAR"
