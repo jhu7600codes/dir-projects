@@ -10,6 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // NewPipeExtractor is only published on jitpack
+        maven("https://jitpack.io") { content { includeGroupByRegex("com\\.github\\..*") } }
     }
 }
 

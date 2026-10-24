@@ -20,3 +20,15 @@
 -dontwarn org.objectweb.asm.**
 -dontwarn java.beans.**
 -dontwarn javax.annotation.**
+
+# NewPipeExtractor: services found by reflection, rhino runs youtube's player js
+-keep class org.schabi.newpipe.extractor.** { *; }
+-keep class org.mozilla.javascript.** { *; }
+-keep class org.mozilla.classfile.ClassFileWriter
+-dontwarn org.mozilla.javascript.**
+-dontwarn org.mozilla.classfile.**
+-dontwarn javax.script.**
+-dontwarn java.beans.**
+-dontwarn org.jsoup.**
+-dontwarn com.grack.nanojson.**
+-dontwarn org.schabi.newpipe.extractor.**
