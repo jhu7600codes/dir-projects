@@ -324,6 +324,13 @@ interface ImportDao {
     )
     suspend fun coverRepairs(): List<CoverRepair>
 
+    /** matched songs from imported liked songs, which have no playlist spot to look them up by */
+    @Query(
+        """SELECT jt.* FROM import_job_tracks jt JOIN import_jobs j ON j.id = jt.jobId
+           WHERE j.intoLiked = 1 AND jt.state = 'matched' AND (jt.artworkUrl IS NOT NULL OR jt.sourceUri LIKE 'spotify:track:%')"""
+    )
+    suspend fun likedImports(): List<ImportJobTrack>
+
     /** songs the current imports couldn't find, newest first */
     @Query(
         """SELECT * FROM unmatched WHERE playlistId IN (SELECT playlistId FROM import_jobs WHERE playlistId IS NOT NULL)

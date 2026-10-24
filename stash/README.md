@@ -49,6 +49,8 @@ Everything runs on the phone. Your plays and likes pick the seeds, and YouTube M
 - **genre mixes** ("For you by Stash"): every artist's main genre comes from Deezer's public API (cached), and the genres you listen to most each get a mix of your favourite artists from that genre plus similar songs.
 - **artist mixes** ("Overtonight Mix"): the artist's songs, yours and their popular ones, mixed with similar artists.
 
+Mix covers are drawn by the app, Spotify style (`MixArt`): daily mixes are the artist's photo with a colored "Daily Mix 2" band, artist mixes are "This is <artist>" over their photo, genre mixes put the genre's name over a top artist's photo with "For you by Stash", and Discover Weekly / Repeat Rewind are colored gradients. Artist photos come from Deezer's public API (exact name only). Every mix keeps its own color.
+
 Mixes are normal playlists (origin `mix`), so they can be downloaded. They aren't part of the cloud backup, since every phone rebuilds them.
 
 ## Home greetings

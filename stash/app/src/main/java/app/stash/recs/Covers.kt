@@ -95,6 +95,7 @@ class CoverWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         repairImports()
+        repairLiked()
         while (!isStopped) {
             val batch = checks.needingCovers()
             if (batch.isEmpty()) break
@@ -118,6 +119,21 @@ class CoverWorker @AssistedInject constructor(
             tracks.setCover(r.trackId, art, r.album)
         }
         prefs.edit().putInt("import_repair", 1).apply()
+    }
+
+    /** the same for imported liked songs, found through the importer's match cache */
+    private suspend fun repairLiked() {
+        val prefs = applicationContext.getSharedPreferences("stash_covers", Context.MODE_PRIVATE)
+        if (prefs.getInt("liked_repair", 0) >= 1) return
+        for (t in runCatching { checks.likedImports() }.getOrDefault(emptyList())) {
+            if (isStopped) return
+            val key = Matcher.normalize(t.artist.split(',').first()) + "|" + Matcher.normalize(t.title)
+            val trackId = checks.cached(key)?.trackId ?: continue
+            val track = tracks.get(trackId) ?: continue
+            val art = t.artworkUrl ?: covers.spotify(t.sourceUri)?.also { delay(200) } ?: continue
+            if (art != track.artworkUrl) tracks.setCover(trackId, art, t.album)
+        }
+        prefs.edit().putInt("liked_repair", 1).apply()
     }
 
     companion object {

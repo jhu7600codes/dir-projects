@@ -174,7 +174,7 @@ fun AddToPlaylistDialog(tracks: List<Track>, onDismiss: () -> Unit) {
                     ListItem(
                         headlineContent = { Text(p.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         supportingContent = { Text("${p.trackCount} songs") },
-                        leadingContent = { Artwork(p.coverUrl ?: p.firstArtwork, Modifier.size(44.dp)) },
+                        leadingContent = { Artwork(p.art, Modifier.size(44.dp)) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         modifier = Modifier.clickable {
                             actions.addToPlaylist(p.id, p.name, tracks); onDismiss()

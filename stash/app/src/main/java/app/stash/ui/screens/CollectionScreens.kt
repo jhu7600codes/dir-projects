@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import app.stash.ui.components.LikedArt
+import app.stash.data.db.MixCover
 import app.stash.ui.components.rememberArtColors
 import app.stash.data.calm
 import androidx.compose.animation.core.animateFloatAsState
@@ -293,7 +294,7 @@ fun PlaylistScreen(id: Long) {
         tracks = tracks,
         positions = entries.map { it.position },
         missing = unmatched,
-        artwork = p.coverUrl ?: tracks.firstOrNull()?.artworkUrl,
+        artwork = MixCover.of(p.origin, p.originId, p.name, p.coverUrl) ?: p.coverUrl ?: tracks.firstOrNull()?.artworkUrl,
         menu = listOf(
             MenuEntry("Rename", Icons.Rounded.Edit) { renaming = true },
             MenuEntry("Change cover", Icons.Rounded.Image) { changingCover = true },

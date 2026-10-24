@@ -80,6 +80,10 @@ fun Artwork(
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+        if (url is app.stash.data.db.MixCover) {
+            MixArt(url, Modifier.fillMaxSize())
+            return@Box
+        }
         // spotify covers come from i.scdn.co, which some networks block; the same picture is on
         // spotify's other cdn hosts, so try those before giving up
         val candidates = remember(url) { artCandidates(url) }
@@ -353,7 +357,8 @@ fun RescanStatus(modifier: Modifier = Modifier) {
 
 /** dominant + vibrant colors pulled from a cover, for tinted headers / players (spotify style) */
 @Composable
-fun rememberArtColors(url: Any?): Pair<Color?, Color?> {
+fun rememberArtColors(art: Any?): Pair<Color?, Color?> {
+    val url = if (art is app.stash.data.db.MixCover) art.photo ?: return mixAccent(art.mixId) to null else art
     val context = androidx.compose.ui.platform.LocalContext.current
     var colors by remember(url) { mutableStateOf<Pair<Color?, Color?>>(null to null) }
     androidx.compose.runtime.LaunchedEffect(url) {

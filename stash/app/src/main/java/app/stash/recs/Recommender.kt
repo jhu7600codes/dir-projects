@@ -1,5 +1,6 @@
 package app.stash.recs
 
+import android.content.Context
 import android.util.Log
 import androidx.room.withTransaction
 import app.stash.data.db.Playlist
@@ -32,6 +33,7 @@ import kotlin.random.Random
  */
 @Singleton
 class Recommender @Inject constructor(
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
     private val music: YouTubeMusicSearch,
     private val db: StashDatabase,
     private val tracks: TrackDao,
@@ -63,9 +65,13 @@ class Recommender @Inject constructor(
     }
 
     /** makes the mixes if they're missing or old: daily mixes once a day, discover once a week */
-    suspend fun refreshMixes(force: Boolean = false) = mixLock.withLock {
+    suspend fun refreshMixes(forceIt: Boolean = false) = mixLock.withLock {
         val taste = tracks.taste()
         if (taste.size < MIN_TASTE) return@withLock
+        // once after the update that added drawn mix covers, so every mix gets its artist photo
+        val prefs = context.getSharedPreferences("stash_mixes", Context.MODE_PRIVATE)
+        val force = forceIt || prefs.getInt("art", 0) < 1
+        prefs.edit().putInt("art", 1).apply()
         val existing = playlists.mixes().associateBy { it.originId }
         val today = startOfDay()
         if (force || (existing["daily-1"]?.updatedAt ?: 0) < today) {
@@ -98,11 +104,12 @@ class Recommender @Inject constructor(
                 val fresh = radio.filter { key(it) !in known }.capPerArtist(2).take(15)
                 val mix = interleave(familiar, fresh).take(30)
                 val names = mix.map { firstArtist(it.artist) }.distinct().take(3)
-                Triple("daily-${i + 1}", mix, "${names.joinToString(", ")} and more")
+                val photo = genres.picture(artist)
+                Triple("daily-${i + 1}", mix, "${names.joinToString(", ")} and more" to photo)
             }
         }.awaitAll()
         made.forEachIndexed { i, (id, mix, about) ->
-            if (mix.size >= 5) save(id, "Daily Mix ${i + 1}", about, mix)
+            if (mix.size >= 5) save(id, "Daily Mix ${i + 1}", about.first, mix, about.second)
         }
         // fewer top artists than before: drop the leftover mixes
         existing.keys.filterNotNull().filter { it.startsWith("daily-") && made.none { m -> m.first == it } }
@@ -141,10 +148,11 @@ class Recommender @Inject constructor(
                     async { runCatching { radioFor(songs.first()) }.getOrDefault(emptyList()) }
                 }.awaitAll().flatten().filter { key(it) !in known }.distinctBy { it.id }.capPerArtist(2).shuffled(random).take(15)
                 val names = list.take(3).joinToString(", ") { it.first }
-                Triple("genre-${genre.lowercase()}", genre, interleave(own, fresh).take(30) to "For you by Stash · $names and more")
+                val photo = genres.picture(list.first().first)
+                Triple("genre-${genre.lowercase()}", genre, Triple(interleave(own, fresh).take(30), "For you by Stash · $names and more", photo))
             }
         }.awaitAll()
-        made.forEach { (id, name, mix) -> if (mix.first.size >= 5) save(id, name, mix.second, mix.first) }
+        made.forEach { (id, name, mix) -> if (mix.first.size >= 5) save(id, name, mix.second, mix.first, mix.third) }
         dropStale(existing, "genre-", made.map { it.first })
     }
 
@@ -160,11 +168,11 @@ class Recommender @Inject constructor(
                 val similar = runCatching { radioFor(own.first()) }.getOrDefault(emptyList())
                     .filter { key(it) !in known && !firstArtist(it.artist).equals(artist, ignoreCase = true) }
                     .capPerArtist(1).take(12)
-                Triple("artist-${artist.lowercase()}", "$artist Mix", interleave(theirs, similar).take(30))
+                Triple("artist-${artist.lowercase()}", "$artist Mix", interleave(theirs, similar).take(30) to genres.picture(artist))
             }
         }.awaitAll()
         made.forEach { (id, name, mix) ->
-            if (mix.size >= 5) save(id, name, "${name.removeSuffix(" Mix")} and similar artists", mix)
+            if (mix.first.size >= 5) save(id, name, "${name.removeSuffix(" Mix")} and similar artists", mix.first, mix.second)
         }
         dropStale(existing, "artist-", made.map { it.first })
     }
@@ -196,9 +204,10 @@ class Recommender @Inject constructor(
         else if (existing != null) playlists.deleteFully(existing.id)
     }
 
-    private suspend fun save(mixId: String, name: String, description: String, list: List<Track>) = db.withTransaction {
+    /** [photo]: the artist picture the mix cover is drawn on (see MixArt); a song cover otherwise */
+    private suspend fun save(mixId: String, name: String, description: String, list: List<Track>, photo: String? = null) = db.withTransaction {
         val now = System.currentTimeMillis()
-        val cover = list.firstNotNullOfOrNull { it.artworkUrl }
+        val cover = photo ?: list.firstNotNullOfOrNull { it.artworkUrl }
         val current = playlists.findMix(mixId)
         val id = if (current == null) {
             playlists.insert(Playlist(name = name, description = description, coverUrl = cover, origin = "mix", originId = mixId))
