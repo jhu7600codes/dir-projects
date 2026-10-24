@@ -21,6 +21,7 @@ All six milestones from the plan are in this first build:
 - Your library has filter chips: playlists, songs, albums, artists, downloaded.
 - Playlist/album pages are Spotify style: the cover's color fades down the page, big cover, left-aligned title, download / more on the left, shuffle and a big round play button on the right. Liked songs has a gradient heart tile.
 - The library has Spotify's Recents / Alphabetical sort and a list / grid switch.
+- Playlists can be pinned (playlist ⋮ menu, or long-press in the library): pinned ones come first in home's quick picks and at the top of the library.
 - The mini player is tinted with the cover's color, with a heart, play, and a thin progress line.
 - Now playing is a full-height sheet tinted with colors from the album art (androidx palette). The art shrinks with a bounce when paused, the play button morphs between pill and squircle, and there's a queue view.
 
@@ -101,6 +102,9 @@ Exportify's files only have the playlist's name, and Spotify only gives a cover 
 
 - **Through Exportify**: opens exportify.net inside the app. You log in like you did for the CSVs, then "Grab covers" reads every page of Exportify's playlist list (each name links to the playlist) through a small script.
 - **Profile link**: your Spotify profile page lists your public playlists, but only about 10.
+- **Pasted links**: any number of playlist links pasted at once.
+
+The in-app Exportify page presents itself as plain Chrome (no WebView marker) with cookies on, since Spotify's login turns WebViews away.
 
 The ids are remembered by name (`PlaylistCovers`), so later Exportify imports get their cover by themselves. Everything else gets Apple Music's cover through the iTunes Search API. `CoverWorker` works through saved songs slowly in the background, because Apple allows about 20 lookups a minute.
 

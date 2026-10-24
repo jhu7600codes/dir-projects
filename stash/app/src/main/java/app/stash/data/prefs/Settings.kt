@@ -51,6 +51,8 @@ data class AppSettings(
     val autoplay: Boolean = true,
     val downloadQuality: DownloadQuality = DownloadQuality.BALANCED,
     val recentSearches: List<String> = emptyList(),
+    /** playlists pinned to the top of home and the library, in the order they were pinned */
+    val pinnedPlaylists: List<Long> = emptyList(),
 )
 
 @Singleton
@@ -60,6 +62,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val dynamic = booleanPreferencesKey("dynamic_color")
         val wifiOnly = booleanPreferencesKey("wifi_only")
         val disabled = stringSetPreferencesKey("disabled_providers")
+        val pinned = stringPreferencesKey("pinned_playlists")
         val jamendo = stringPreferencesKey("jamendo_client_id")
         val apple = stringPreferencesKey("apple_dev_token")
         val ytUpdated = longPreferencesKey("ytdlp_updated")
@@ -98,6 +101,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         locationGreetings = this[Keys.locationGreetings] ?: false,
         autoplay = this[Keys.autoplay] ?: true,
         recentSearches = this[Keys.recent]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),
+        pinnedPlaylists = this[Keys.pinned]?.split(',')?.mapNotNull { it.toLongOrNull() } ?: emptyList(),
         downloadQuality = this[Keys.quality]?.let { runCatching { DownloadQuality.valueOf(it) }.getOrNull() } ?: DownloadQuality.BALANCED,
     )
 
@@ -125,6 +129,11 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
     suspend fun removeRecentSearch(q: String) = store.edit {
         it[Keys.recent] = it[Keys.recent]?.split('\n').orEmpty().filter { old -> old != q }.joinToString("\n")
     }
+    suspend fun setPinned(playlistId: Long, pinned: Boolean) = store.edit {
+        val now = it[Keys.pinned]?.split(',')?.mapNotNull { s -> s.toLongOrNull() }.orEmpty() - playlistId
+        it[Keys.pinned] = (if (pinned) now + playlistId else now).joinToString(",")
+    }
+
     suspend fun setDownloadQuality(q: DownloadQuality) = store.edit { it[Keys.quality] = q.name }
     suspend fun setAutoplay(on: Boolean) = store.edit { it[Keys.autoplay] = on }
     suspend fun setLocationGreetings(on: Boolean) = store.edit { it[Keys.locationGreetings] = on }

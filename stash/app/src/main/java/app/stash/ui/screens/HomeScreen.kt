@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
@@ -77,6 +78,7 @@ fun HomeScreen() {
     val downloaded by remember { dao.observeDownloaded() .calm() }.collectAsState(initial = emptyList())
     val liked by remember { dao.observeLiked() .calm() }.collectAsState(initial = emptyList())
     val allPlaylists by actions.playlists.collectAsState()
+    val pinned by actions.pinned.collectAsState()
     val playlists = remember(allPlaylists) { allPlaylists.filter { it.origin != "mix" } }
     val allMixes = remember(allPlaylists) { allPlaylists.filter { it.origin == "mix" }.sortedBy { mixOrder(it.originId) } }
     val mixes = allMixes.filter { it.originId?.startsWith("genre-") != true && it.originId?.startsWith("artist-") != true }
@@ -140,9 +142,11 @@ fun HomeScreen() {
             // spotify-style quick picks: a two column grid of compact tiles
             item {
                 val tiles = buildList {
+                    // pinned playlists always come first, then the usual picks
+                    pinned.forEach { p -> add(QuickTile(p.name, p.art, null, pinned = true) { nav.navigate(Routes.playlist(p.id)) }) }
                     if (liked.isNotEmpty()) add(QuickTile("Liked songs", null, Icons.Rounded.Favorite) { nav.navigate(Routes.LIKED) })
-                    if (downloaded.isNotEmpty()) add(QuickTile("downloads", null, Icons.Rounded.Download) { nav.navigate(Routes.DOWNLOADS) })
-                    playlists.take(8 - size).forEach { p ->
+                    if (downloaded.isNotEmpty()) add(QuickTile("Downloads", null, Icons.Rounded.Download) { nav.navigate(Routes.DOWNLOADS) })
+                    playlists.filter { p -> pinned.none { it.id == p.id } }.take(maxOf(0, 8 - size)).forEach { p ->
                         add(QuickTile(p.name, p.art, null) { nav.navigate(Routes.playlist(p.id)) })
                     }
                 }
@@ -256,7 +260,13 @@ fun HomeScreen() {
     }
 }
 
-private data class QuickTile(val title: String, val art: Any?, val icon: ImageVector?, val onClick: () -> Unit)
+private data class QuickTile(
+    val title: String,
+    val art: Any?,
+    val icon: ImageVector?,
+    val pinned: Boolean = false,
+    val onClick: () -> Unit,
+)
 
 @Composable
 private fun QuickPick(tile: QuickTile, modifier: Modifier) {
@@ -278,6 +288,10 @@ private fun QuickPick(tile: QuickTile, modifier: Modifier) {
             Text(
                 tile.title, style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).padding(end = 8.dp),
+            )
+            if (tile.pinned) Icon(
+                Icons.Rounded.PushPin, "Pinned", Modifier.padding(end = 8.dp).size(14.dp),
+                tint = MaterialTheme.colorScheme.primary,
             )
         }
     }

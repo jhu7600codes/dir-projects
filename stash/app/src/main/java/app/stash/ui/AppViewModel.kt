@@ -102,6 +102,18 @@ class AppViewModel @Inject constructor(
 
     fun setLiked(track: Track, liked: Boolean) = library.setLiked(track, liked)
 
+    /** pinned playlists, in pin order (only ones that still exist) */
+    val pinned: StateFlow<List<PlaylistWithCount>> = kotlinx.coroutines.flow.combine(playlists, settings) { all, s ->
+        s?.pinnedPlaylists.orEmpty().mapNotNull { id -> all.firstOrNull { it.id == id } }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun isPinned(id: Long) = settings.value?.pinnedPlaylists?.contains(id) == true
+
+    fun setPinned(id: Long, pinned: Boolean) {
+        viewModelScope.launch { prefs.setPinned(id, pinned) }
+        toast(if (pinned) "Pinned to home" else "Unpinned")
+    }
+
     fun addToPlaylist(playlistId: Long, name: String, tracks: List<Track>) {
         library.addToPlaylist(playlistId, tracks); toast("Added to $name")
     }
