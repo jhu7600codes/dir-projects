@@ -256,10 +256,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
         val url = best.str("url")!!
         // youtube sometimes hands out links that answer 403 once played (it wants a token yt-dlp
         // knows how to get); ask for the first two bytes so those fall through to the next client
-        val ok = runCatching {
-            http.newCall(Request.Builder().url(url).header("User-Agent", client.ua).header("Range", "bytes=0-1").build())
-                .execute().use { it.code == 206 || it.code == 200 }
-        }.getOrDefault(false)
+        val ok = StreamCheck.plays(http, url, client.ua)
         if (ok) StreamSource(url, mapOf("User-Agent" to client.ua), via = "YouTube fast (${client.name.lowercase()})") else null
     }
 
@@ -455,12 +452,6 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
                 "ANDROID_VR", 28, "1.60.19",
                 "com.google.android.apps.youtube.vr.oculus/1.60.19 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip",
                 mapOf("deviceMake" to "Oculus", "deviceModel" to "Quest 3", "androidSdkVersion" to 32, "osName" to "Android", "osVersion" to "12L"),
-            ),
-            // the android app without an sdk version: youtube doesn't ask it for a bot token either
-            PlayerClient(
-                "ANDROID", 3, "20.10.38",
-                "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip",
-                mapOf("osName" to "Android", "osVersion" to "11"),
             ),
         )
         // search filter tabs, as music.youtube.com's chips send them
