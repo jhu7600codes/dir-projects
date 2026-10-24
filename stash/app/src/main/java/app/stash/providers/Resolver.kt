@@ -339,12 +339,16 @@ class Resolver @Inject constructor(
         shortCache.remove(trackId)
     }
 
+    /** songs whose lookup just failed, so the player's own quick retries don't each start over */
+    private val failedAt = ConcurrentHashMap<String, Pair<Long, String>>()
+
     /** whether the stream last found for this song is hls; null if none is cached */
     fun cachedHls(trackId: String): Boolean? = shortCache[trackId]?.source?.hls
 
     /** the stream broke mid-song: next time get this song through yt-dlp, the slow sure way */
     suspend fun retrySlow(trackId: String) {
         shortCache.remove(trackId)
+        failedAt.remove(trackId)
         val track = dao.get(trackId) ?: return
         val yt = registry.get("youtube") as? YouTubeProvider ?: return
         listOfNotNull(track.primaryLocator, track.fallbackLocator)
@@ -358,6 +362,9 @@ class Resolver @Inject constructor(
     private val _log = kotlinx.coroutines.flow.MutableStateFlow<List<LogEntry>>(emptyList())
     val log: kotlinx.coroutines.flow.StateFlow<List<LogEntry>> = _log
 
+    /** a song actually started making sound, [ms] after the player switched to it */
+    fun recordPlaying(title: String, ms: Long) = record(LogEntry(title, "▶ playing", ms, null))
+
     /** the player itself choked on a stream it was given (403, unsupported format…) */
     fun recordPlayerError(title: String, what: String) = record(LogEntry(title, "player error", 0, what))
 
@@ -365,18 +372,30 @@ class Resolver @Inject constructor(
         _log.value = (listOf(e) + _log.value).take(30)
     }
 
-    suspend fun streamFor(trackId: String): StreamSource {
+    /** [ahead]: looked up for an upcoming song, not one that's playing (marked so in the log) */
+    suspend fun streamFor(trackId: String, ahead: Boolean = false): StreamSource {
         val track = dao.get(trackId) ?: throw ProviderException("Unknown song $trackId")
         track.localPath?.let { path ->
             val f = File(path)
             if (f.exists() && f.length() > 0) return StreamSource(f.toURI().toString(), via = "downloaded")
         }
         shortCache[trackId]?.let { if (System.currentTimeMillis() < it.at) return it.source }
+        // the player retries a failed load on its own, a few times; without this each retry started
+        // the whole search over (up to 90s each), which is how a song could take minutes to fail
+        failedAt[trackId]?.let { (at, why) ->
+            if (System.currentTimeMillis() - at < FAIL_MEMORY_MS) throw ProviderException(why)
+        }
         val started = System.currentTimeMillis()
         return try {
-            lookUp(trackId, track).also { record(LogEntry(track.title, it.via.ifEmpty { track.provider }, System.currentTimeMillis() - started, null)) }
+            lookUp(trackId, track).also {
+                val via = it.via.ifEmpty { track.provider } + if (ahead) " · ready ahead" else ""
+                record(LogEntry(track.title, via, System.currentTimeMillis() - started, null))
+            }
         } catch (e: Exception) {
+            // cancelled (skipped, or the player gave up on that load) isn't a failure
+            if (e is kotlinx.coroutines.CancellationException) throw e
             record(LogEntry(track.title, "failed", System.currentTimeMillis() - started, e.message))
+            if (e !is kotlinx.coroutines.CancellationException) failedAt[trackId] = System.currentTimeMillis() to (e.message ?: "Couldn't play this")
             throw e
         }
     }
@@ -496,5 +515,6 @@ class Resolver @Inject constructor(
         private const val OVERALL_MS = 90_000L
         private const val STEP_MS = 60_000L
         private const val SEARCH_MS = 10_000L
+        private const val FAIL_MEMORY_MS = 60_000L
     }
 }

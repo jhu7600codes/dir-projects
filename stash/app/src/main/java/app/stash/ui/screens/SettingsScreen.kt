@@ -236,7 +236,7 @@ fun SettingsScreen() {
                                 "${"%.1f".format(e.ms / 1000.0)}s · ${e.via} · ${e.title}" + (e.error?.let { " · $it" } ?: ""),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (e.error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2,
+                                maxLines = 4,
                             )
                         }
                     }

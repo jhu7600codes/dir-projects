@@ -203,11 +203,21 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
      * yt-dlp's whole python (seconds on a phone). null when youtube wants more (bot check, age
      * gate…); yt-dlp handles those.
      */
-    suspend fun audioStream(videoId: String): StreamSource? {
-        for (client in PLAYER_CLIENTS) {
-            runCatching { audioStream(videoId, client) }.getOrNull()?.let { return it }
+    suspend fun audioStream(videoId: String): StreamSource? = kotlinx.coroutines.coroutineScope {
+        // every client at once, first link wins: one after the other, a refusing first client
+        // (vr, on some connections always) cost seconds on every song
+        val tries = PLAYER_CLIENTS.map { c -> async { runCatching { audioStream(videoId, c) }.getOrNull() } }
+        val pending = tries.toMutableList()
+        var found: StreamSource? = null
+        while (pending.isNotEmpty() && found == null) {
+            val (done, value) = kotlinx.coroutines.selects.select<Pair<kotlinx.coroutines.Deferred<StreamSource?>, StreamSource?>> {
+                pending.forEach { d -> d.onAwait { d to it } }
+            }
+            found = value
+            pending -= done
         }
-        return null
+        tries.forEach { it.cancel() }
+        found
     }
 
     private class PlayerClient(val name: String, val id: Int, val version: String, val ua: String, val extra: Map<String, Any>)
