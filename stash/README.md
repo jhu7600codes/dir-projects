@@ -156,6 +156,7 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 - SoundCloud streams are HLS playlists, and a song from elsewhere can fall back to SoundCloud. The queue marks those as HLS up front, a plain MP3 is used when SoundCloud still has one, and if the player still gets the wrong kind (`PARSING_CONTAINER_UNSUPPORTED`) it reopens the song as the other kind instead of skipping.
 - yt-dlp gets 60 seconds per try (90 overall); on some phones it needs 35-45.
 - If YouTube's fast link hasn't answered in 2.5 seconds, yt-dlp starts alongside it and whichever is first wins. If a song's stream breaks while playing, it's fetched again through yt-dlp and continues from the same spot; only a second failure skips it.
+- On connections where YouTube refuses the quick way (3 refusals in a row), it's skipped for 10 minutes and yt-dlp starts right away. yt-dlp gets a `--cache-dir`, so YouTube's signature code is solved once instead of on every song. Found links are kept until shortly before YouTube's `expire` stamp (up to 5 hours), and the next two songs in the queue are looked up while the current one plays.
 - Settings → Playback log shows how long the last songs took to start and how they were found.
 - Songs stream: playback starts after half a second of audio and keeps buffering ahead. Finding a song's audio gives up after a minute with a reason, instead of loading forever.
 - Background progress (rescan, downloads) updates its notification at most about once a second. Posting one per song made Android's notification service stop responding.
