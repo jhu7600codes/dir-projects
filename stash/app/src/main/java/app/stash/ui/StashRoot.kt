@@ -54,6 +54,7 @@ import app.stash.ui.screens.DownloadsScreen
 import app.stash.ui.screens.HomeScreen
 import app.stash.ui.screens.ImportProgressScreen
 import app.stash.ui.screens.RescanScreen
+import app.stash.ui.screens.CoverGrabScreen
 import app.stash.ui.screens.ImportScreen
 import app.stash.ui.screens.LibraryScreen
 import app.stash.ui.screens.LikedScreen
@@ -75,6 +76,7 @@ object Routes {
     const val IMPORT = "import?link={link}"
     const val IMPORT_PROGRESS = "import/progress"
     const val RESCAN = "rescan"
+    const val COVER_GRAB = "covers/exportify"
     const val FIX = "fix/{id}?q={q}"
     const val REMOTE_ARTIST = "rartist/{provider}/{id}?name={name}&art={art}"
 
@@ -175,6 +177,7 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 }
                 composable(Routes.IMPORT_PROGRESS) { ImportProgressScreen() }
                 composable(Routes.RESCAN) { RescanScreen() }
+                composable(Routes.COVER_GRAB) { CoverGrabScreen() }
                 composable(
                     Routes.FIX,
                     listOf(navArgument("id") { type = NavType.LongType }, navArgument("q") { defaultValue = "" }),

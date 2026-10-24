@@ -175,6 +175,10 @@ interface PlaylistDao {
     @Query("UPDATE playlists SET name = :name, updatedAt = :now WHERE id = :id")
     suspend fun rename(id: Long, name: String, now: Long = System.currentTimeMillis())
 
+    /** a playlist found on spotify: its real name, cover and id */
+    @Query("UPDATE playlists SET name = :name, coverUrl = :cover, originId = :spotifyId, updatedAt = :now WHERE id = :id")
+    suspend fun setSpotify(id: Long, name: String, cover: String, spotifyId: String, now: Long = System.currentTimeMillis())
+
     @Query("UPDATE playlists SET updatedAt = :now WHERE id = :id")
     suspend fun touch(id: Long, now: Long = System.currentTimeMillis())
 

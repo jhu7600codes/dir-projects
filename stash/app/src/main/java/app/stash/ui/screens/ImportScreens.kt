@@ -270,6 +270,7 @@ fun ImportScreen(sharedLink: String?) {
                     }
                 }
             }
+            item { PlaylistCoversCard() }
             error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
         }
     }
