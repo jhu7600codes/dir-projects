@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +45,8 @@ fun YouTubeLoginScreen() {
     val nav = LocalNav.current
     val actions = LocalActions.current
     var progress by remember { mutableIntStateOf(0) }
+    var pasting by remember { androidx.compose.runtime.mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -59,6 +62,9 @@ fun YouTubeLoginScreen() {
                     "The login stays on this phone.",
                 style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            androidx.compose.material3.TextButton(onClick = { pasting = true }, modifier = Modifier.padding(horizontal = 8.dp)) {
+                Text("Google won't let you log in here? Paste cookies instead")
+            }
             AndroidView(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 factory = { ctx ->
@@ -95,6 +101,72 @@ fun YouTubeLoginScreen() {
             )
         }
     }
+    if (pasting) PasteCookiesDialog(
+        onDismiss = { pasting = false },
+        onSave = { header ->
+            YouTubeLogin.save(context, header)
+            actions.toast("Logged in to YouTube")
+            pasting = false
+            nav.popBackStack()
+        },
+    )
+}
+
+/** the cookie-paste way in, with how to get them (same as youtube classic's) */
+@Composable
+private fun PasteCookiesDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var text by remember { androidx.compose.runtime.mutableStateOf("") }
+    var error by remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Paste YouTube cookies") },
+        text = {
+            Column(
+                Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+            ) {
+                Text("How to get them:", style = MaterialTheme.typography.titleSmall)
+                listOf(
+                    "1. Get Firefox (or Kiwi / Edge) on your phone, or use a computer.",
+                    "2. Install the \"Cookie-Editor\" extension (by cgagnier) from its add-ons store.",
+                    "3. Open youtube.com and log in to your account there.",
+                    "4. Tap Cookie-Editor on youtube.com → Export → \"Header String\" (Netscape or JSON work too). It's copied now.",
+                    "5. Come back here and tap \"Paste from clipboard\", then Save. (From a computer: send it to yourself first.)",
+                ).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                Text(
+                    "Treat these like a password: they log into your account. Stash keeps them on this phone and only " +
+                        "sends them to YouTube. Log out in settings removes them.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error,
+                )
+                androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.OutlinedButton(onClick = {
+                        runCatching {
+                            context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com")))
+                        }
+                    }) { Text("Open youtube.com") }
+                    androidx.compose.material3.FilledTonalButton(onClick = {
+                        val clip = (context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+                            .primaryClip?.getItemAt(0)?.coerceToText(context)?.toString()
+                        if (clip.isNullOrBlank()) error = "Clipboard is empty" else { text = clip; error = null }
+                    }) { Text("Paste from clipboard") }
+                }
+                androidx.compose.material3.OutlinedTextField(
+                    value = text, onValueChange = { text = it; error = null }, maxLines = 4,
+                    label = { Text("Cookies") }, modifier = Modifier.fillMaxWidth(),
+                )
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(enabled = text.isNotBlank(), onClick = {
+                val header = YouTubeLogin.parsePasted(text)
+                if (header == null) error = "No YouTube login in there (it needs SAPISID). Export again while logged in on youtube.com."
+                else onSave(header)
+            }) { Text("Save") }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 private const val LOGIN_URL = "https://accounts.google.com/ServiceLogin?service=youtube&continue=https://www.youtube.com/signin"

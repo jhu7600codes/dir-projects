@@ -86,6 +86,7 @@ Songs that couldn't be found can be searched for again against all current sourc
 - length, and a penalty for versions the original title doesn't mention (cover, remix, sped up, nightcore, piano…)
 - small typos in upload titles (two letters swapped, one missing), for words of 6+ letters
 - uploads that don't name the artist at all (the original on a fan channel, "巡音ルカ「ルカルカ★ナイトフィーバー」") count when the whole title is there, the length is within 3 seconds and nothing marks it as a cover (歌ってみた, off vocal, MMD…); they only just pass, so an upload naming the artist always wins. If "artist + title" finds nothing anywhere, YouTube and SoundCloud are searched by the bare title too
+- the playlist a song came from: soundtracks and Roblox music are often uploaded under the game's name ("untitled tag game OST: B0MB!!") rather than the artist's, so the playlist name's distinctive words are searched with (as a last try) and count like an album word
 - VocaDB, right after YouTube: it knows every vocaloid / utau / synthv song by its japanese, romaji and english names, so "Rolling Girl" finds "ローリンガール" (wowaka's own upload, not a remake)
 
 ## VocaDB
@@ -143,7 +144,7 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 
 ## YouTube login (optional, for playback only)
 
-Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Classic) do it: Google's own sign-in page in a WebView with a desktop Chrome identity and WebView's `X-Requested-With` header turned off (Google's main "this browser may not be secure" signal). Once youtube.com's cookies hold a session (`SAPISID`), they're written as a Netscape `cookies.txt` that yt-dlp gets with `--cookies`, so songs YouTube won't hand out anonymously still play. Search, artist pages and the catalog stay anonymous. Without a login, yt-dlp skips the watch page and client config requests (`player_skip=webpage,configs`) to get to the audio faster.
+Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Classic) do it: Google's own sign-in page in a WebView with a desktop Chrome identity and WebView's `X-Requested-With` header turned off (Google's main "this browser may not be secure" signal). Once youtube.com's cookies hold a session (`SAPISID`), they're written as a Netscape `cookies.txt` that yt-dlp gets with `--cookies`, so songs YouTube won't hand out anonymously still play. Search, artist pages and the catalog stay anonymous. If Google won't allow the login in a WebView, "Paste cookies instead" takes a cookie export (Cookie-Editor's header string, a Netscape cookies.txt or its JSON), with step-by-step instructions on the screen. Without a login, yt-dlp skips the watch page and client config requests (`player_skip=webpage,configs`) to get to the audio faster.
 
 ## Keeping the phone happy
 
