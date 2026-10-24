@@ -113,4 +113,30 @@ class MatcherTest {
         val v = video("Giga - '劣等上等'(BRING IT ON) ft.鏡音リン・レン【MV】", "Giga", 236)
         assertTrue(score(v, "劣等上等 feat. 鏡音リン・レン", "Giga, 鏡音リン・レン", 235_096) >= Matcher.ACCEPT)
     }
+
+    @Test
+    fun smallTyposInUploadTitles() {
+        // real result: the artist's own video spells it "illeagl", and it's a shorter edit
+        val v = video("Jaywalk RN - jaywalking is illeagl, go do it (Offical Music Video)", "Jaywalk RN", 39)
+        assertTrue(score(v, "jaywalking is illegal, go do it", "Jaywalk RN", 77_367) >= Matcher.ACCEPT)
+        // a changed letter is a different word
+        val other = yt("Guiding Night", "LSPLASH", 79)
+        assertTrue(Matcher.score(other, "Guiding Light", "LSPLASH", 79_416) < Matcher.score(yt("Guiding Light", "LSPLASH", 79), "Guiding Light", "LSPLASH", 79_416))
+    }
+
+    @Test
+    fun originalBeatsSomeoneElsesRemake() {
+        val original = yt("Rollin' Girl", "wowaka feat. Hatsune Miku", 196)
+        val remake = yt("Rolling Girl", "Kotaro Yamazaki feat. Hatsune Miku", 196)
+        val names = "ローリンガール Rollin' Girl Rolling Girl wowaka 現実逃避P"
+        val a = Matcher.score(original, "Rolling Girl", "wowaka, Hatsune Miku", 196_000, null, names)
+        val b = Matcher.score(remake, "Rolling Girl", "wowaka, Hatsune Miku", 196_000, null, "Rolling Girl")
+        assertTrue(a >= Matcher.ACCEPT && a > b)
+    }
+
+    @Test
+    fun stripsTitlesForNameSearch() {
+        assertEquals("Ochame Kinou", Matcher.stripForSearch("Ochame Kinou (feat. KASANE TETO) - Cover"))
+        assertEquals("∞", Matcher.stripForSearch("∞"))
+    }
 }

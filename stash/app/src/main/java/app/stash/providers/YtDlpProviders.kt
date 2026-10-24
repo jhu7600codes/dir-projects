@@ -135,7 +135,7 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
         runCatching { music.searchHits(tag ?: query, limit) }.getOrNull()?.takeIf { it.isNotEmpty() }
             ?: flatSearch("ytsearch$limit:${tag ?: query}").map { SearchHit(it) }
 
-    override suspend fun matchCandidates(query: String): List<SearchHit> =
+    override suspend fun matchCandidates(query: String, title: String?): List<SearchHit> =
         runCatching { music.matchCandidates(query) }.getOrNull()?.takeIf { it.isNotEmpty() }
             ?: flatSearch("ytsearch10:$query").map { SearchHit(it) }
 

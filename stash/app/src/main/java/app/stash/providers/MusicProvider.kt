@@ -39,9 +39,10 @@ interface MusicProvider {
 
     /**
      * results to pick an imported song from. youtube overrides it to look at both songs and
-     * videos, since underground songs are often only uploaded as videos.
+     * videos, since underground songs are often only uploaded as videos. [title] is the bare
+     * song title, for sources that only search song names (vocadb).
      */
-    suspend fun matchCandidates(query: String): List<SearchHit> = searchHits(query, 10)
+    suspend fun matchCandidates(query: String, title: String? = null): List<SearchHit> = searchHits(query, 10)
 
     /** artists matching [query]; empty for sources without artist pages */
     suspend fun searchArtists(query: String, limit: Int = 8): List<RemoteArtist> = emptyList()

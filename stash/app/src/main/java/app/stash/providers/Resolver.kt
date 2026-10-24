@@ -22,6 +22,7 @@ import kotlin.math.max
 class ProviderRegistry @Inject constructor(
     youtube: YouTubeProvider,
     soundcloud: SoundCloudProvider,
+    vocadb: VocaDbProvider,
     bandcamp: BandcampProvider,
     audius: AudiusProvider,
     jamendo: JamendoProvider,
@@ -29,7 +30,7 @@ class ProviderRegistry @Inject constructor(
     fma: FreeMusicArchiveProvider,
     private val settings: Settings,
 ) {
-    val all: List<MusicProvider> = listOf(youtube, soundcloud, audius, bandcamp, jamendo, archive, fma)
+    val all: List<MusicProvider> = listOf(youtube, vocadb, soundcloud, audius, bandcamp, jamendo, archive, fma)
 
     fun get(id: String): MusicProvider? = all.firstOrNull { it.id == id }
 
@@ -161,7 +162,24 @@ object Matcher {
 
     /** "covered" counts for "cover", "r4ns0m" for "r4ns0m": equal, or one starts the other (4+ letters) */
     private fun Set<String>.has(word: String) =
-        word in this || (word.length >= 4 && any { it.length >= 4 && (it.startsWith(word) || word.startsWith(it)) })
+        word in this || (word.length >= 4 && any { it.length >= 4 && (it.startsWith(word) || word.startsWith(it) || typo(it, word)) })
+
+    /**
+     * two letters swapped, or one missing / extra, for words of 6+ letters ("illeagl" = "illegal").
+     * a changed letter doesn't count: "light" and "night" are different songs.
+     */
+    private fun typo(a: String, b: String): Boolean {
+        if (a.length < 6 || b.length < 6 || abs(a.length - b.length) > 1) return false
+        val d = Array(a.length + 1) { IntArray(b.length + 1) }
+        for (i in 0..a.length) d[i][0] = i
+        for (j in 0..b.length) d[0][j] = j
+        for (i in 1..a.length) for (j in 1..b.length) {
+            val cost = if (a[i - 1] == b[j - 1]) 0 else 2
+            d[i][j] = minOf(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
+            if (i > 1 && j > 1 && a[i - 1] == b[j - 2] && a[i - 2] == b[j - 1]) d[i][j] = minOf(d[i][j], d[i - 2][j - 2] + 1)
+        }
+        return d[a.length][b.length] <= 1
+    }
 
     private fun share(want: Set<String>, have: Set<String>): Double =
         if (want.isEmpty()) 0.0 else want.count { have.has(it) }.toDouble() / want.size
@@ -206,7 +224,10 @@ object Matcher {
         val titleScore = share(wantTitle, haveAll)
         val wantArtistWords = credited.flatten().toSet()
         val extraWords = (haveTitle - wantTitle - wantArtistWords).size // words like "live", "remix", "cover"
-        var artistScore = credited.maxOfOrNull { a -> maxOf(share(a, haveArtist), share(a, haveAll)) } ?: 0.0
+        // the best credited artist counts most, but having all of them breaks ties: "wowaka feat.
+        // Hatsune Miku" beats someone else's remake that's also sung by miku
+        val perArtist = credited.map { a -> maxOf(share(a, haveArtist), share(a, haveAll)) }
+        var artistScore = if (perArtist.isEmpty()) 0.0 else perArtist.max() * 0.75 + perArtist.average() * 0.25
         var onlyAlbum = false
         if (artistScore == 0.0 && album != null) {
             val albumWords = tokens(album) - genericAlbumWords - wantTitle
@@ -244,6 +265,10 @@ object Matcher {
         if (credited.isNotEmpty() && artistScore == 0.0) s = minOf(s, 0.4)
         return s.coerceIn(0.0, 1.0)
     }
+
+    /** the title as typed, minus "(feat. …)", "[Remastered]" and " - Cover" style tails */
+    fun stripForSearch(title: String): String =
+        title.replace(brackets, " ").replace(feat, "").replace(Regex("""\s+[-–]\s+.*$"""), "").trim().ifEmpty { title }
 
     /** "LSPLASH, jasper.creations" -> "LSPLASH": searching with every credit buries the song */
     fun primaryArtist(artist: String) = artist.split(',', '&', ';', '、').first().trim()
@@ -345,7 +370,7 @@ class Resolver @Inject constructor(
         val providers = registry.active()
         val main = "${Matcher.primaryArtist(artist)} $title".trim()
         for (provider in providers) {
-            val hit = runCatching { pick(provider.matchCandidates(main), title, artist, durationMs, album) }
+            val hit = runCatching { pick(provider.matchCandidates(main, title), title, artist, durationMs, album) }
                 .onFailure { Log.w(TAG, "match via ${provider.id} failed", it) }
                 .getOrNull()
             if (hit != null) return hit

@@ -15,8 +15,8 @@ android {
         applicationId = "app.stash.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
 
         // yt-dlp ships a whole python per abi, so only keep arm64 (every recent phone) and
         // x86_64 (the emulator) to stop the apk from ballooning.
