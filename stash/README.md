@@ -58,6 +58,9 @@ Mixes are normal playlists (origin `mix`), so they can be downloaded. They aren'
 
 Now playing → Lyrics. Time-synced lyrics from lrclib.net (free, open, no key): looked up by artist + title + length, then by search, then by title alone with a matching length (for artists spelled another way, "サツキ" for "Satsuki"). The line being sung is lit in the cover's color and kept in view; tap a line to jump there. Songs with only unsynced lyrics show the text. Cached per song for the session.
 
+- **Musixmatch** (Settings → Lyrics, off by default): through Musixmatch's desktop-app API, the way Spotify lyrics plugins use it (an anonymous user token it hands out, kept and renewed when refused, `macro.subtitles.get` for synced lyrics). LRCLIB is used whenever it has nothing.
+- **Translation** (toggle in the lyrics screen or settings, language: the phone's or one picked): Musixmatch's community translation (`crowd.track.translations.get`) when the song came from Musixmatch and has one, otherwise Google Translate's free web endpoint for the whole song in one request, shown under each line.
+
 ## Home greetings
 
 The title follows the time of day, with a few variants each. With "greet me by place" on (settings, asks for location), the line under it follows where you are: airport, cafe, station or train (offers your most common playlist artist), driving, gym, library, and so on. The place comes from one location fix plus OpenStreetMap's Overpass API, cached for 10 minutes.

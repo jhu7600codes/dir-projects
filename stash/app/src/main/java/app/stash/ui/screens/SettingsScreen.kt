@@ -7,6 +7,7 @@ import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -241,6 +242,36 @@ fun SettingsScreen() {
                         }
                     }
                 }
+            }
+
+            item { SectionHeader("Lyrics") }
+            item {
+                SwitchRow(
+                    "Musixmatch", "Lyrics from Musixmatch first (with its translations), LRCLIB when it has none",
+                    settings.lyricsMusixmatch,
+                ) { vm.set { setLyricsMusixmatch(it) } }
+            }
+            item {
+                SwitchRow("Show translation", "A translation under every line: Musixmatch's when it has one, else machine translation", settings.lyricsTranslate) {
+                    vm.set { setLyricsTranslate(it) }
+                }
+            }
+            item {
+                val choices = listOf("" to "Phone's language", "en" to "English", "ru" to "Russian", "ja" to "Japanese", "uk" to "Ukrainian", "de" to "German", "es" to "Spanish")
+                var open by remember { mutableStateOf(false) }
+                ListItem(
+                    headlineContent = { Text("Translate to") },
+                    supportingContent = { Text(choices.firstOrNull { it.first == settings.translateTo }?.second ?: settings.translateTo) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable { open = true },
+                    trailingContent = {
+                        androidx.compose.material3.DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                            choices.forEach { (code, name) ->
+                                androidx.compose.material3.DropdownMenuItem(text = { Text(name) }, onClick = { open = false; vm.set { setTranslateTo(code) } })
+                            }
+                        }
+                    },
+                )
             }
 
             item { SectionHeader("Downloads") }

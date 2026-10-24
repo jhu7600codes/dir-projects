@@ -49,6 +49,12 @@ data class AppSettings(
     val locationGreetings: Boolean = false,
     /** keep playing similar songs when the queue runs out */
     val autoplay: Boolean = true,
+    /** lyrics from musixmatch first (lrclib when it has none) */
+    val lyricsMusixmatch: Boolean = false,
+    /** show a translation under each lyric line */
+    val lyricsTranslate: Boolean = false,
+    /** language code to translate lyrics into; empty = the phone's language */
+    val translateTo: String = "",
     val downloadQuality: DownloadQuality = DownloadQuality.BALANCED,
     val recentSearches: List<String> = emptyList(),
     /** playlists pinned to the top of home and the library, in the order they were pinned */
@@ -75,6 +81,9 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val cloudReady = booleanPreferencesKey("cloud_ready")
         val locationGreetings = booleanPreferencesKey("location_greetings")
         val autoplay = booleanPreferencesKey("autoplay")
+        val mxm = booleanPreferencesKey("lyrics_musixmatch")
+        val translate = booleanPreferencesKey("lyrics_translate")
+        val translateTo = stringPreferencesKey("lyrics_translate_to")
         val quality = stringPreferencesKey("download_quality")
         val recent = stringPreferencesKey("recent_searches")
         val scClient = stringPreferencesKey("soundcloud_client_id")
@@ -100,6 +109,9 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         cloudReady = this[Keys.cloudReady] ?: false,
         locationGreetings = this[Keys.locationGreetings] ?: false,
         autoplay = this[Keys.autoplay] ?: true,
+        lyricsMusixmatch = this[Keys.mxm] ?: false,
+        lyricsTranslate = this[Keys.translate] ?: false,
+        translateTo = this[Keys.translateTo] ?: "",
         recentSearches = this[Keys.recent]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),
         pinnedPlaylists = this[Keys.pinned]?.split(',')?.mapNotNull { it.toLongOrNull() } ?: emptyList(),
         downloadQuality = this[Keys.quality]?.let { runCatching { DownloadQuality.valueOf(it) }.getOrNull() } ?: DownloadQuality.BALANCED,
@@ -136,6 +148,9 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
 
     suspend fun setDownloadQuality(q: DownloadQuality) = store.edit { it[Keys.quality] = q.name }
     suspend fun setAutoplay(on: Boolean) = store.edit { it[Keys.autoplay] = on }
+    suspend fun setLyricsMusixmatch(on: Boolean) = store.edit { it[Keys.mxm] = on }
+    suspend fun setLyricsTranslate(on: Boolean) = store.edit { it[Keys.translate] = on }
+    suspend fun setTranslateTo(lang: String) = store.edit { it[Keys.translateTo] = lang }
     suspend fun setLocationGreetings(on: Boolean) = store.edit { it[Keys.locationGreetings] = on }
 
     // account session (supabase auth)
