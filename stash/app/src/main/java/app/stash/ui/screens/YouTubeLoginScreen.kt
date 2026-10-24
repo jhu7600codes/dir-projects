@@ -114,7 +114,7 @@ fun YouTubeLoginScreen() {
 
 /** the cookie-paste way in, with how to get them (same as youtube classic's) */
 @Composable
-private fun PasteCookiesDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
+fun PasteCookiesDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var text by remember { androidx.compose.runtime.mutableStateOf("") }
     var error by remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
