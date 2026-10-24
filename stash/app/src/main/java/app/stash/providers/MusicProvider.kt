@@ -3,7 +3,12 @@ package app.stash.providers
 import app.stash.data.db.Track
 
 /** a direct audio url plus whatever headers the host wants on the request */
-data class StreamSource(val url: String, val headers: Map<String, String> = emptyMap())
+data class StreamSource(
+    val url: String,
+    val headers: Map<String, String> = emptyMap(),
+    /** how it was found, for the playback log ("youtube fast", "yt-dlp", "downloaded"…) */
+    val via: String = "",
+)
 
 sealed interface DownloadSource {
     /** plain http file, downloaded with okhttp (range requests for resume) */

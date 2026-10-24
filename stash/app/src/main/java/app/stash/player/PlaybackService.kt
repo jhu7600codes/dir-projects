@@ -79,6 +79,9 @@ class PlaybackService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .build()
 
+        val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        // songs already given their one slow retry
+        val retried = mutableSetOf<String>()
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val id = mediaItem?.mediaId ?: return
@@ -93,8 +96,26 @@ class PlaybackService : MediaSessionService() {
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                // a dead stream url: forget it and move on instead of stopping the whole queue
-                player.currentMediaItem?.mediaId?.let(resolver::invalidate)
+                val id = player.currentMediaItem?.mediaId
+                // first failure of a song: youtube's fast link broke (it does that to some
+                // videos). get it again the slow sure way and carry on from the same spot
+                if (id != null && retried.add(id)) {
+                    val index = player.currentMediaItemIndex
+                    val position = player.currentPosition
+                    scope.launch {
+                        resolver.retrySlow(id)
+                    }.invokeOnCompletion {
+                        // the player only takes calls on the main thread
+                        mainHandler.post {
+                            player.seekTo(index, position)
+                            player.prepare()
+                            player.play()
+                        }
+                    }
+                    return
+                }
+                // failed the sure way too: forget it and move on instead of stopping the whole queue
+                id?.let(resolver::invalidate)
                 if (player.hasNextMediaItem()) {
                     player.seekToNextMediaItem()
                     player.prepare()

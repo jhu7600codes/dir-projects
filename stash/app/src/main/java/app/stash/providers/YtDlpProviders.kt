@@ -54,7 +54,7 @@ abstract class YtDlpProvider(protected val ytDlp: YtDlp) : MusicProvider {
                 lenientJson.parseToJsonElement(line).jsonObject.mapValues { it.value.jsonPrimitive.content }
             }.getOrNull()
         } ?: emptyMap()
-        return StreamSource(url, headers)
+        return StreamSource(url, headers, via = "yt-dlp")
     }
 
     override suspend fun metadata(sourceId: String): Track? {
@@ -141,12 +141,35 @@ class YouTubeProvider @Inject constructor(ytDlp: YtDlp, private val music: YouTu
 
     override suspend fun searchArtists(query: String, limit: Int) = music.searchArtists(query, limit)
 
+    private companion object {
+        const val FAST_HEAD_START_MS = 2_500L
+    }
+
+    /** videos whose fast link broke while playing: yt-dlp only, until the app restarts */
+    private val slowOnly = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    fun preferYtDlp(sourceId: String) {
+        slowOnly += sourceId
+    }
+
     /** youtube's own player api first (one request), yt-dlp when youtube asks for more */
     override suspend fun resolveStream(locator: Locator): StreamSource {
         val videoId = Regex("""[?&]v=([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
             ?: Regex("""youtu\.be/([A-Za-z0-9_-]{11})""").find(locator.sourceId)?.groupValues?.get(1)
-        if (videoId != null) runCatching { music.audioStream(videoId) }.getOrNull()?.let { return it }
-        return super.resolveStream(locator)
+        if (videoId == null || locator.sourceId in slowOnly) return super.resolveStream(locator)
+        // the fast way first; if it hasn't answered in a couple of seconds, start yt-dlp too and
+        // take whichever finishes first, so a slow or refused fast try never costs its full time
+        return kotlinx.coroutines.coroutineScope {
+            val fast = async { runCatching { music.audioStream(videoId) }.getOrNull() }
+            kotlinx.coroutines.withTimeoutOrNull(FAST_HEAD_START_MS) { fast.await() }?.let { return@coroutineScope it }
+            val slow = async { runCatching { super.resolveStream(locator) } }
+            val winner = kotlinx.coroutines.selects.select<StreamSource?> {
+                fast.onAwait { it }
+                slow.onAwait { it.getOrNull() }
+            } ?: if (fast.isCompleted) slow.await().getOrThrow() else fast.await() ?: slow.await().getOrThrow()
+            fast.cancel(); slow.cancel()
+            winner
+        }
     }
 
     override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =

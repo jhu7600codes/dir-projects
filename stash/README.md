@@ -121,7 +121,7 @@ The queue only holds `stash://track/<id>` uris. When ExoPlayer opens one, `Playb
 3. the fallback that worked last time (cached on the track)
 4. search every other enabled provider in order and match by title + artist + duration (`Matcher`), then remember the winner
 
-yt-dlp updates itself every time the app starts. There's also an "update now" button in settings.
+yt-dlp updates itself once a day at most (songs that need it wait while it updates). There's also an "update now" button in settings.
 
 ## Adding a provider
 
@@ -144,6 +144,8 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 ## Keeping the phone happy
 
 - At most 2 downloads run at once, and downloads have their own 2 yt-dlp slots (each yt-dlp is a whole Python), so they never make a song you tapped wait. Queued downloads wait without a notification.
+- If YouTube's fast link hasn't answered in 2.5 seconds, yt-dlp starts alongside it and whichever is first wins. If a song's stream breaks while playing, it's fetched again through yt-dlp and continues from the same spot; only a second failure skips it.
+- Settings → Playback log shows how long the last songs took to start and how they were found.
 - Songs stream: playback starts after half a second of audio and keeps buffering ahead. Finding a song's audio gives up after a minute with a reason, instead of loading forever.
 - Background progress (rescan, downloads) updates its notification at most about once a second. Posting one per song made Android's notification service stop responding.
 
