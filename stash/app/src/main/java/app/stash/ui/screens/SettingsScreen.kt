@@ -188,6 +188,7 @@ fun SettingsScreen() {
                 val nav = app.stash.ui.LocalNav.current
                 // re-read when coming back from the login screen
                 var loggedIn by remember { mutableStateOf(false) }
+                var pasting by remember { mutableStateOf(false) }
                 androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
                     loggedIn = app.stash.providers.YouTubeLogin.isLoggedIn(context)
                     onPauseOrDispose { }
@@ -195,16 +196,30 @@ fun SettingsScreen() {
                 ListItem(
                     headlineContent = { Text(if (loggedIn) "Logged in to YouTube" else "Log in to YouTube") },
                     supportingContent = {
-                        Text(
-                            "Helps songs that YouTube won't hand out anonymously (like PipePipe's login). " +
-                                "Only used for song audio, search stays anonymous.",
-                        )
+                        Column {
+                            Text(
+                                "Helps songs that YouTube won't hand out anonymously (like PipePipe's login). " +
+                                    "Only used for song audio, search stays anonymous.",
+                            )
+                            if (!loggedIn) androidx.compose.material3.OutlinedButton(
+                                onClick = { pasting = true }, modifier = Modifier.padding(top = 8.dp),
+                            ) { Text("Paste cookies instead (with guide)") }
+                        }
                     },
                     trailingContent = {
                         if (loggedIn) TextButton(onClick = { app.stash.providers.YouTubeLogin.logOut(context); loggedIn = false }) { Text("Log out") }
                         else TextButton(onClick = { nav.navigate(app.stash.ui.Routes.YOUTUBE_LOGIN) }) { Text("Log in") }
                     },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+                if (pasting) PasteCookiesDialog(
+                    onDismiss = { pasting = false },
+                    onSave = { header ->
+                        app.stash.providers.YouTubeLogin.save(context, header)
+                        loggedIn = true
+                        pasting = false
+                        actions.toast("Logged in to YouTube")
+                    },
                 )
             }
             item {
