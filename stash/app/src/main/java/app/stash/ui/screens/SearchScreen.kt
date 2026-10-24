@@ -97,6 +97,8 @@ data class SearchUi(
     val local: List<Track> = emptyList(),
     val results: Map<String, ProviderResults> = emptyMap(),
     val artists: List<RemoteArtist> = emptyList(),
+    /** youtube music playlists for the query, spotify style */
+    val playlists: List<app.stash.providers.RemotePlaylist> = emptyList(),
     val searched: String = "",
 )
 
@@ -105,6 +107,7 @@ class SearchViewModel @Inject constructor(
     private val registry: ProviderRegistry,
     private val library: Library,
     private val settings: Settings,
+    private val music: app.stash.providers.YouTubeMusicSearch,
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SearchUi())
     val ui: StateFlow<SearchUi> = _ui
@@ -121,7 +124,7 @@ class SearchViewModel @Inject constructor(
         debounce?.cancel()
         if (q.isBlank()) {
             job?.cancel()
-            _ui.update { it.copy(results = emptyMap(), local = emptyList(), artists = emptyList(), searched = "") }
+            _ui.update { it.copy(results = emptyMap(), local = emptyList(), artists = emptyList(), playlists = emptyList(), searched = "") }
             return
         }
         debounce = viewModelScope.launch {
@@ -152,12 +155,16 @@ class SearchViewModel @Inject constructor(
             settings.addRecentSearch(raw)
             val providers = registry.active().also { p -> _ui.update { it.copy(providers = p) } }
             _ui.update { s ->
-                s.copy(searched = raw, artists = emptyList(), results = providers.associate { it.id to ProviderResults() })
+                s.copy(searched = raw, artists = emptyList(), playlists = emptyList(), results = providers.associate { it.id to ProviderResults() })
             }
             launch {
                 val local = if (query.tag != null) emptyList()
                 else runCatching { library.tracks.searchLibrary(query.text) }.getOrDefault(emptyList())
                 _ui.update { it.copy(local = local) }
+            }
+            launch {
+                val found = runCatching { music.searchPlaylists(query.text) }.getOrDefault(emptyList())
+                _ui.update { it.copy(playlists = found) }
             }
             // underground mode asks every source for more, since the big hits get filtered out
             val limit = if (_ui.value.underground) 30 else 20
@@ -293,6 +300,18 @@ fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
                         }
                     }
                 }
+            }
+            if (ui.playlists.isNotEmpty() && !picking) {
+                item { Text("Playlists", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 20.dp, top = 12.dp)) }
+                item {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(ui.playlists, key = { it.id }) { p ->
+                            app.stash.ui.components.CoverCard(p.title, p.subtitle, p.coverUrl, onClick = { nav.navigate(Routes.ytPlaylist(p.id)) })
+                        }
+                    }
+                }
+            }
+            if ((artists.isNotEmpty() || ui.playlists.isNotEmpty()) && !picking) {
                 item { Text("Songs", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 20.dp, top = 4.dp)) }
             }
             if (!loading && songs.isEmpty()) item {

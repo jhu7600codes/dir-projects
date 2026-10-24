@@ -228,7 +228,7 @@ fun ImportScreen(sharedLink: String?) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(painterResource(R.drawable.ic_apple_music), null, Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Spotify or Apple Music, the playlist has to be public. Share → copy link, or share it straight to Stash.",
+                        Text("Spotify, Apple Music or YouTube Music, the playlist has to be public. Share → copy link, or share it straight to Stash.",
                             style = MaterialTheme.typography.bodySmall)
                     }
                     Spacer(Modifier.height(8.dp))
@@ -240,7 +240,12 @@ fun ImportScreen(sharedLink: String?) {
                     Spacer(Modifier.height(8.dp))
                     FilledTonalButton(
                         enabled = link.isNotBlank() && !checking,
-                        onClick = { vm.importLink(vm.cleanLink(link)) { nav.navigate(Routes.IMPORT_PROGRESS) } },
+                        onClick = {
+                            // youtube (music) playlists are already youtube songs: open them, nothing to match
+                            val ytList = Regex("""(?:youtube\.com|youtu\.be)\S*[?&]list=([A-Za-z0-9_-]+)""").find(link)?.groupValues?.get(1)
+                            if (ytList != null) nav.navigate(Routes.ytPlaylist("VL$ytList"))
+                            else vm.importLink(vm.cleanLink(link)) { nav.navigate(Routes.IMPORT_PROGRESS) }
+                        },
                     ) {
                         if (checking) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("Import")
                     }

@@ -67,6 +67,10 @@ The title follows the time of day, with a few variants each. With "greet me by p
 - **Audius** (independent artists, open API, plain MP3 streams) is a source now. SoundCloud search and playback go through SoundCloud's own web API (client id read from their site), which is much faster than yt-dlp. SoundCloud only serves HLS now, so its songs are queued as HLS (`stash://track/<id>.m3u8`).
 - Recent searches show when the box is empty.
 
+## YouTube Music playlists
+
+Search shows a Playlists row (YouTube Music's community playlists for the query, like Spotify's). A playlist opens on its own page with play, shuffle and download, and "Save to your library" makes a normal Stash playlist from it with its cover. YouTube / YouTube Music playlist links pasted (or shared) in the importer open the same page; they're YouTube songs already, so nothing needs matching. Pages of 100 are followed up to 1000 songs.
+
 ## Artist pages
 
 Any artist (from search, "go to artist", or your library) gets a full page: banner, round profile picture, fans, monthly listeners, location, an expandable bio, a link to them on the source, play / shuffle / artist radio, your own songs by them, their popular songs, and "fans also like". It comes from YouTube Music's artist page, SoundCloud (user, visuals, top tracks, related artists) or Audius (profile, cover photo, tracks, related). Library artists are looked up by exact name on those three, in that order.
