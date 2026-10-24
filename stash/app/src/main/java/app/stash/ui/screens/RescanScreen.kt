@@ -51,7 +51,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.stash.data.calm
 import app.stash.data.db.LIKED_PLAYLIST_ID
-import app.stash.importer.ImportQueue
+import app.stash.data.db.PlaylistDao
 import app.stash.ui.LocalActions
 import app.stash.ui.LocalNav
 import app.stash.ui.Routes
@@ -61,8 +61,8 @@ import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class RescanViewModel @Inject constructor(queue: ImportQueue) : ViewModel() {
-    val missing = queue.missing.calm().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+class RescanViewModel @Inject constructor(playlists: PlaylistDao) : ViewModel() {
+    val missing = playlists.observeAllUnmatched().calm().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 }
 
 /** "rescan failed songs" as its own screen: big progress, the song it's on, found and still missing */
@@ -125,6 +125,14 @@ fun RescanScreen() {
                                     "Keeps going in the background if you leave this screen.",
                                     style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 10.dp),
                                 )
+                                Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    FilledTonalButton(onClick = { actions.rescanMissing(restart = true) }) {
+                                        Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Restart")
+                                    }
+                                    TextButton(onClick = { actions.stopRescan() }) { Text("Stop") }
+                                }
                             }
                             else -> {
                                 Text(
@@ -149,7 +157,7 @@ fun RescanScreen() {
                                 ) {
                                     Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp))
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Rescan now")
+                                    Text(if (r != null && r.total > 0) "Rescan again" else "Rescan now")
                                 }
                             }
                         }

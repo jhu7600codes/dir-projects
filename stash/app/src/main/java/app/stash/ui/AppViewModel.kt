@@ -73,9 +73,14 @@ class AppViewModel @Inject constructor(
 
     val rescan: StateFlow<RescanProgress?> = imports.rescan.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    fun rescanMissing() {
-        imports.rescanMissing()
-        toast("Searching for missing songs again in the background")
+    fun rescanMissing(restart: Boolean = false) {
+        imports.rescanMissing(restart)
+        toast(if (restart) "Rescan started over" else "Searching for missing songs again in the background")
+    }
+
+    fun stopRescan() {
+        imports.stopRescan()
+        toast("Rescan stopped")
     }
 
     fun playNext(track: Track) {
