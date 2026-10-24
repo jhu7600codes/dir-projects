@@ -35,6 +35,7 @@ class AppViewModel @Inject constructor(
     private val recommender: Recommender,
     private val imports: ImportQueue,
     val prefs: Settings,
+    val lyrics: app.stash.recs.Lyrics,
 ) : ViewModel() {
 
     val settings: StateFlow<AppSettings?> = prefs.flow.stateIn(viewModelScope, SharingStarted.Eagerly, null)

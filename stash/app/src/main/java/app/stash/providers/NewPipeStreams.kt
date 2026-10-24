@@ -46,10 +46,7 @@ class NewPipeStreams @Inject constructor(private val client: OkHttpClient) {
             else -> UA
         }
         // first two bytes: a refused link falls through to yt-dlp instead of failing in the player
-        val ok = runCatching {
-            client.newCall(OkRequest.Builder().url(url).header("User-Agent", ua).header("Range", "bytes=0-1").build())
-                .execute().use { it.code == 206 || it.code == 200 }
-        }.getOrDefault(false)
+        val ok = StreamCheck.plays(client, url, ua)
         if (ok) StreamSource(url, mapOf("User-Agent" to ua), via = "NewPipe") else null
     }
 

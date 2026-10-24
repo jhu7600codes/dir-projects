@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -94,7 +95,7 @@ import kotlinx.coroutines.delay
 
 /** polls the controller position while on screen; media3 doesn't push position updates */
 @Composable
-private fun rememberPosition(): Pair<Long, Long> {
+private fun rememberPosition(everyMs: Long = 500): Pair<Long, Long> {
     val player = LocalActions.current.player
     var pos by remember { mutableLongStateOf(player.positionMs) }
     var buf by remember { mutableLongStateOf(player.bufferedMs) }
@@ -102,7 +103,7 @@ private fun rememberPosition(): Pair<Long, Long> {
         while (true) {
             pos = player.positionMs
             buf = player.bufferedMs
-            delay(500)
+            delay(everyMs)
         }
     }
     return pos to buf
@@ -191,6 +192,7 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
         label = "accent",
     )
     var showQueue by remember { mutableStateOf(false) }
+    var showLyrics by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -202,17 +204,25 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
         Box(
             Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(top, base, base)))
         ) {
-            if (showQueue) {
-                QueueView(state, accent, onClose = { showQueue = false })
-            } else {
-                NowPlayingContent(state, accent, onCollapse = onDismiss, onQueue = { showQueue = true })
+            when {
+                showQueue -> QueueView(state, accent, onClose = { showQueue = false })
+                showLyrics -> LyricsView(state, accent, onClose = { showLyrics = false })
+                else -> NowPlayingContent(
+                    state, accent, onCollapse = onDismiss, onQueue = { showQueue = true }, onLyrics = { showLyrics = true },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: () -> Unit, onQueue: () -> Unit) {
+private fun NowPlayingContent(
+    state: PlayerUiState,
+    accent: Color,
+    onCollapse: () -> Unit,
+    onQueue: () -> Unit,
+    onLyrics: () -> Unit,
+) {
     val actions = LocalActions.current
     val player = actions.player
     val trackFlow = remember(state.currentId) { actions.library.tracks.observe(state.currentId ?: "").calm() }
@@ -348,6 +358,18 @@ private fun NowPlayingContent(state: PlayerUiState, accent: Color, onCollapse: (
 
         Spacer(Modifier.weight(0.4f))
         Surface(
+            onClick = onLyrics,
+            shape = MaterialTheme.shapes.extraLarge,
+            color = accent.copy(alpha = 0.22f).compositeOver(MaterialTheme.colorScheme.surfaceContainerHigh),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        ) {
+            Row(Modifier.padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.Lyrics, null)
+                Spacer(Modifier.width(12.dp))
+                Text("Lyrics", style = MaterialTheme.typography.titleSmall)
+            }
+        }
+        Surface(
             onClick = onQueue,
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -405,6 +427,77 @@ private fun QueueView(state: PlayerUiState, accent: Color, onClose: () -> Unit) 
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     if (!current) IconButton(onClick = { player.removeAt(i) }) { Icon(Icons.Rounded.Close, "Remove") }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * live lyrics (lrclib.net): the line being sung lit up in the cover's color and kept in view,
+ * the rest dimmed, tap a line to jump there. unsynced lyrics just scroll.
+ */
+@Composable
+private fun LyricsView(state: PlayerUiState, accent: Color, onClose: () -> Unit) {
+    val actions = LocalActions.current
+    var lyrics by remember(state.currentId) { mutableStateOf<app.stash.recs.SongLyrics?>(null) }
+    var loading by remember(state.currentId) { mutableStateOf(true) }
+    LaunchedEffect(state.currentId) {
+        val id = state.currentId ?: return@LaunchedEffect
+        val track = actions.library.tracks.get(id)
+        lyrics = runCatching {
+            actions.lyrics.forSong(state.title, state.artist, track?.durationMs?.takeIf { it > 0 } ?: state.durationMs)
+        }.getOrNull()
+        loading = false
+    }
+    val (pos, _) = rememberPosition(everyMs = 200)
+    val lines = lyrics?.lines.orEmpty()
+    val current = remember(pos, lines) { lines.indexOfLast { it.first <= pos + 300 } }
+    val list = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(current) {
+        if (current >= 0) list.animateScrollToItem((current - 2).coerceAtLeast(0))
+    }
+
+    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Back") }
+            Column(Modifier.weight(1f)) {
+                Text(state.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(state.artist, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        when {
+            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = accent) }
+            lyrics == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No lyrics found for this one", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            lines.isEmpty() -> androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize().padding(top = 16.dp)) {
+                item {
+                    Text(lyrics!!.plain.orEmpty(), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 48.dp))
+                }
+            }
+            else -> androidx.compose.foundation.lazy.LazyColumn(
+                state = list, modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 24.dp, bottom = 240.dp),
+            ) {
+                items(lines.size) { i ->
+                    val (at, text) = lines[i]
+                    val now = i == current
+                    val color by animateColorAsState(
+                        when {
+                            now -> accent
+                            i < current -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                            else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                        },
+                        label = "line",
+                    )
+                    Text(
+                        text.ifBlank { "♪" },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = if (now) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        color = color,
+                        modifier = Modifier.fillMaxWidth().clickable { actions.player.seekTo(at) }.padding(vertical = 10.dp),
+                    )
                 }
             }
         }
