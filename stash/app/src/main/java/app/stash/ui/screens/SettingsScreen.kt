@@ -184,6 +184,30 @@ fun SettingsScreen() {
             }
 
             item {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val nav = app.stash.ui.LocalNav.current
+                // re-read when coming back from the login screen
+                var loggedIn by remember { mutableStateOf(false) }
+                androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+                    loggedIn = app.stash.providers.YouTubeLogin.isLoggedIn(context)
+                    onPauseOrDispose { }
+                }
+                ListItem(
+                    headlineContent = { Text(if (loggedIn) "Logged in to YouTube" else "Log in to YouTube") },
+                    supportingContent = {
+                        Text(
+                            "Helps songs that YouTube won't hand out anonymously (like PipePipe's login). " +
+                                "Only used for song audio, search stays anonymous.",
+                        )
+                    },
+                    trailingContent = {
+                        if (loggedIn) TextButton(onClick = { app.stash.providers.YouTubeLogin.logOut(context); loggedIn = false }) { Text("Log out") }
+                        else TextButton(onClick = { nav.navigate(app.stash.ui.Routes.YOUTUBE_LOGIN) }) { Text("Log in") }
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            item {
                 val log by vm.playbackLog.collectAsState()
                 var open by remember { mutableStateOf(false) }
                 Column(Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) {

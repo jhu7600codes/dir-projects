@@ -111,6 +111,17 @@ class YtDlp @Inject constructor(
         val request = YoutubeDLRequest(target).apply {
             addOption("--no-warnings")
             addOption("--no-check-certificates")
+            if ("youtube.com" in target || "youtu.be" in target || target.startsWith("ytsearch")) {
+                val cookies = YouTubeLogin.cookieFile(context)
+                if (cookies.exists()) {
+                    // logged in: yt-dlp acts as your browser session, past the bot checks
+                    addOption("--cookies", cookies.absolutePath)
+                } else {
+                    // anonymous: skip loading the watch page and client configs, which is most of
+                    // the requests yt-dlp makes before it even asks for the audio
+                    addOption("--extractor-args", "youtube:player_skip=webpage,configs")
+                }
+            }
             options.forEach { (k, v) -> if (v == null) addOption(k) else addOption(k, v) }
         }
         return suspendCancellableCoroutine { cont ->
