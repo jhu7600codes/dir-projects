@@ -103,6 +103,9 @@ class AppViewModel @Inject constructor(
 
     fun setLiked(track: Track, liked: Boolean) = library.setLiked(track, liked)
 
+    /** youtube music's radio for a song, for the player's "similar songs" */
+    suspend fun similarTo(track: Track): List<Track> = recommender.radioFor(track)
+
     fun setLyricsTranslate(on: Boolean) {
         viewModelScope.launch { prefs.setLyricsTranslate(on) }
     }
