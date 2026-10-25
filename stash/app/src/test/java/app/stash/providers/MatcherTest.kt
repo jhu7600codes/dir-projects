@@ -2,6 +2,7 @@ package app.stash.providers
 
 import app.stash.data.db.Track
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -156,5 +157,12 @@ class MatcherTest {
     fun stripsVersionTails() {
         assertEquals("ルカルカ★ナイトフィーバー", Matcher.stripForSearch("ルカルカ★ナイトフィーバー -Miku ver.-"))
         assertEquals("1/6", Matcher.stripForSearch("1/6 -out of the gravity-"))
+    }
+
+    @Test
+    fun `utg in the playlist name is untitled tag game in the upload`() {
+        assertTrue(Matcher.acronymMatch("UTG", "untitled tag game OST: B0MB!!"))
+        assertTrue(Matcher.acronymMatch("UTG ~ CRASHOUT", "untitled tag game roblox ost"))
+        assertFalse(Matcher.acronymMatch("ok", "only kids"))
     }
 }

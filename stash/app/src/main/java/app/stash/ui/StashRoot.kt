@@ -1,5 +1,21 @@
 package app.stash.ui
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -11,6 +27,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Search
@@ -46,6 +63,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.stash.providers.RemoteArtist
+import app.stash.ui.components.CreateSheet
 import app.stash.ui.player.MiniPlayer
 import app.stash.ui.player.NowPlayingSheet
 import app.stash.ui.screens.AlbumScreen
@@ -112,6 +130,7 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
     // so position / buffering updates don't redraw the whole app
     val currentId by app.player.currentId.collectAsState()
     var showPlayer by rememberSaveable { mutableStateOf(false) }
+    var creating by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { app.messages.collect { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(it) } }
     LaunchedEffect(Unit) { navRequests.collect { nav.navigate(it) { launchSingleTop = true } } }
@@ -167,6 +186,13 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                                 label = { Text(tab.label) },
                             )
                         }
+                        // spotify's create button: not a page, a menu of ways to make something
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { creating = true },
+                            icon = { Icon(Icons.Rounded.Add, null) },
+                            label = { Text("Create") },
+                        )
                     }
                 }
             },
@@ -213,9 +239,16 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
             }
         }
 
-        if (showPlayer && currentId != null) {
+        if (creating) CreateSheet(onDismiss = { creating = false })
+        // slides up over everything, bottom bar included
+        AnimatedVisibility(
+            visible = showPlayer && currentId != null,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+        ) {
             val player by app.player.state.collectAsState()
             NowPlayingSheet(state = player, onDismiss = { showPlayer = false })
         }
     }
 }
+

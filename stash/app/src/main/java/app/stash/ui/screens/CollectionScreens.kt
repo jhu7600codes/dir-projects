@@ -2,6 +2,7 @@ package app.stash.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
@@ -286,6 +287,9 @@ fun PlaylistScreen(id: Long) {
     val pinnedList by actions.pinned.collectAsState()
     val pinnedHere = pinnedList.any { it.id == id }
     val p = playlist ?: return
+    val settings by actions.settings.collectAsState()
+    val mixId = p.originId?.takeIf { p.origin == "mix" }
+    val savedMix = mixId != null && mixId in settings?.savedMixes.orEmpty()
 
     CollectionScreen(
         title = p.name,
@@ -299,6 +303,10 @@ fun PlaylistScreen(id: Long) {
         missing = unmatched,
         artwork = MixCover.of(p.origin, p.originId, p.name, p.coverUrl) ?: p.coverUrl ?: tracks.firstOrNull()?.artworkUrl,
         menu = listOf(
+            *listOfNotNull(mixId?.let { m ->
+                if (savedMix) MenuEntry("Remove from your library", Icons.Rounded.RemoveCircleOutline) { actions.setMixSaved(m, false) }
+                else MenuEntry("Save to your library", Icons.Rounded.LibraryAdd) { actions.setMixSaved(m, true) }
+            }).toTypedArray(),
             MenuEntry("Rename", Icons.Rounded.Edit) { renaming = true },
             MenuEntry("Change cover", Icons.Rounded.Image) { changingCover = true },
             if (pinnedHere) MenuEntry("Unpin", Icons.Rounded.PushPin) { actions.setPinned(id, false) }

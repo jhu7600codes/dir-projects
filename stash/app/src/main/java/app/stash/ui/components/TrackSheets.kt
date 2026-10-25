@@ -102,8 +102,11 @@ fun TrackOptionsSheet(track: Track, onDismiss: () -> Unit) {
                 }
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            SheetRow(if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (t.liked) "Remove from liked songs" else "Like") {
-                actions.setLiked(t, !t.liked); close {}
+            // the heart's playlist (liked songs unless changed in settings)
+            val hearted by remember(t.id) { actions.hearted(t.id) }.collectAsState(initial = t.liked)
+            val heartName = actions.heartTarget.collectAsState().value?.name ?: "liked songs"
+            SheetRow(if (hearted) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (hearted) "Remove from $heartName" else "Add to $heartName") {
+                actions.toggleHeart(t, hearted); close {}
             }
             SheetRow(Icons.Rounded.Radio, "Start radio") { actions.startRadio(t); close {} }
             SheetRow(Icons.Rounded.PlaylistPlay, "Play next") { actions.playNext(t); close {} }

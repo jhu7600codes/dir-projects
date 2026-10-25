@@ -10,6 +10,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -149,13 +152,9 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit) {
                     )
                 }
                 track?.let { t ->
-                    IconButton(onClick = { actions.setLiked(t, !t.liked) }) {
-                        Icon(
-                            if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                            if (t.liked) "Remove from liked songs" else "Add to liked songs",
-                            tint = if (t.liked) scheme.primary.takeIf { bg.luminance() > 0.2f } ?: scheme.inversePrimary else fg,
-                        )
-                    }
+                    app.stash.ui.components.HeartButton(
+                        t, onColor = scheme.primary.takeIf { bg.luminance() > 0.2f } ?: scheme.inversePrimary, offColor = fg,
+                    )
                 }
                 IconButton(onClick = { actions.player.togglePlay() }) {
                     if (state.isBuffering && !state.isPlaying) {
@@ -187,7 +186,6 @@ private fun MiniProgress(durationMs: Long, color: Color) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
-    val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scheme = MaterialTheme.colorScheme
     val (dominant, vibrant) = rememberArtColors(state.artworkUri)
     val base = scheme.surface
@@ -201,12 +199,25 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
     var showLyrics by remember { mutableStateOf(false) }
     var showRelated by remember { mutableStateOf(false) }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheet,
-        dragHandle = null,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = base,
+    // the whole screen, edge to edge (a bottom sheet left a gap at the top and rounded corners
+    // showing the app behind). back or a drag down closes it
+    androidx.activity.compose.BackHandler(onBack = onDismiss)
+    // back from the queue / lyrics / similar songs goes to the player first
+    androidx.activity.compose.BackHandler(enabled = showQueue || showLyrics || showRelated) {
+        showQueue = false; showLyrics = false; showRelated = false
+    }
+    var dragY by remember { mutableFloatStateOf(0f) }
+    val settle by animateFloatAsState(dragY, label = "drag")
+    Box(
+        Modifier.fillMaxSize()
+            .graphicsLayer { translationY = settle.coerceAtLeast(0f) }
+            .draggable(
+                orientation = androidx.compose.foundation.gestures.Orientation.Vertical,
+                state = androidx.compose.foundation.gestures.rememberDraggableState { dragY = (dragY + it).coerceAtLeast(0f) },
+                onDragStopped = { velocity -> if (dragY > 300f || velocity > 2500f) onDismiss() else dragY = 0f },
+            )
+            // swallow taps so they don't reach the app underneath
+            .pointerInput(Unit) { detectTapGestures { } },
     ) {
         // lyrics sit on the cover's own color, like spotify's lyrics card; dark enough for white text
         val lyricsBg by animateColorAsState(
@@ -319,12 +330,7 @@ private fun NowPlayingContent(
                         else -> Icon(Icons.Rounded.Download, "Download")
                     }
                 }
-                IconButton(onClick = { actions.setLiked(t, !t.liked) }) {
-                    Icon(
-                        if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, "Like",
-                        tint = if (t.liked) accent else MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+                app.stash.ui.components.HeartButton(t, onColor = accent, offColor = MaterialTheme.colorScheme.onSurface, size = 26.dp)
             }
         }
 

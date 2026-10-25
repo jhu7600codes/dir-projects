@@ -215,6 +215,12 @@ interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTrack(ref: PlaylistTrack): Long
 
+    @Query("SELECT EXISTS(SELECT 1 FROM playlist_tracks WHERE playlistId = :playlistId AND trackId = :trackId)")
+    fun observeContains(playlistId: Long, trackId: String): Flow<Boolean>
+
+    @Query("DELETE FROM playlist_tracks WHERE playlistId = :playlistId AND trackId = :trackId")
+    suspend fun removeTrack(playlistId: Long, trackId: String)
+
     @Query("DELETE FROM playlist_tracks WHERE playlistId = :playlistId AND position = :position")
     suspend fun removeAt(playlistId: Long, position: Int)
 

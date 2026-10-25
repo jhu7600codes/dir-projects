@@ -89,7 +89,7 @@ fun LibraryScreen() {
     var creating by remember { mutableStateOf(false) }
     var alphabetical by rememberSaveable { mutableStateOf(false) }
     var grid by rememberSaveable { mutableStateOf(false) }
-    val playlists by actions.playlists.collectAsState()
+    val playlists by actions.libraryPlaylists.collectAsState()
     val songs by remember { dao.observeLibrary() .calm() }.collectAsState(initial = emptyList())
     val liked by remember { dao.observeLiked() .calm() }.collectAsState(initial = emptyList())
     val albums by remember { dao.observeAlbums() .calm() }.collectAsState(initial = emptyList())
@@ -106,7 +106,6 @@ fun LibraryScreen() {
             LargeTopAppBar(
                 title = { Text("Your library") },
                 actions = {
-                    IconButton(onClick = { nav.navigate(Routes.import()) }) { Icon(Icons.Rounded.SwapHoriz, "Import playlists") }
                     IconButton(onClick = { creating = true }) { Icon(Icons.Rounded.Add, "New playlist") }
                 },
                 scrollBehavior = scroll,
@@ -141,7 +140,8 @@ fun LibraryScreen() {
                 LibFilter.PLAYLISTS -> {
                     val pinnedIds = pinned.map { it.id }.toSet()
                     // pinned ones stay on top, like spotify's library
-                    val sorted = pinned + (if (alphabetical) playlists.sortedBy { it.name.lowercase() } else playlists)
+                    val pinnedHere = pinned.filter { pp -> playlists.any { it.id == pp.id } }
+                    val sorted = pinnedHere + (if (alphabetical) playlists.sortedBy { it.name.lowercase() } else playlists)
                         .filter { it.id !in pinnedIds }
                     if (!grid) item {
                         LibraryRow(
