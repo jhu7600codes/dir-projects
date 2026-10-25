@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FindReplace
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LibraryAddCheck
@@ -122,6 +123,10 @@ fun TrackOptionsSheet(track: Track, onDismiss: () -> Unit) {
                 DownloadState.QUEUED, DownloadState.DOWNLOADING ->
                     SheetRow(Icons.Rounded.RemoveCircleOutline, "Cancel download") { actions.downloads.cancel(t); close {} }
                 else -> SheetRow(Icons.Rounded.Download, "Download") { actions.download(listOf(t)); close {} }
+            }
+            // the matcher picked a live version / cover / wrong song: pick the right one by hand
+            if (!t.isDownloaded) SheetRow(Icons.Rounded.FindReplace, "Wrong song? Pick the right one") {
+                close { nav.navigate(app.stash.ui.Routes.rematch(t.id, "${t.artist} ${t.title}")) }
             }
             if (t.artist.isNotBlank()) SheetRow(Icons.Rounded.Person, "Go to artist") {
                 close { nav.navigate(Routes.artist(t.artist)) }

@@ -10,6 +10,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.ui.input.pointer.pointerInput
@@ -241,6 +242,8 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
                     )
                 )
             }
+            // no bottom sheet anymore to set the text color: without this, text and icons came out black
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides scheme.onSurface) {
             when {
                 showQueue -> QueueView(state, accent, onClose = { showQueue = false })
                 showLyrics -> LyricsView(state, lyricsBg, onClose = { showLyrics = false })
@@ -249,6 +252,7 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
                     state, accent, onCollapse = onDismiss, onQueue = { showQueue = true }, onLyrics = { showLyrics = true },
                     onRelated = { showRelated = true },
                 )
+            }
             }
         }
     }
@@ -346,11 +350,12 @@ private fun NowPlayingContent(
 
         Spacer(Modifier.height(12.dp))
         val duration = state.durationMs.coerceAtLeast(1)
-        Slider(
-            value = if (scrubbing) scrub else (pos.toFloat() / duration).coerceIn(0f, 1f),
-            onValueChange = { scrubbing = true; scrub = it },
-            onValueChangeFinished = { player.seekTo((scrub * duration).toLong()); scrubbing = false },
-            colors = SliderDefaults.colors(thumbColor = accent, activeTrackColor = accent),
+        SeekBar(
+            fraction = if (scrubbing) scrub else (pos.toFloat() / duration).coerceIn(0f, 1f),
+            buffered = (buffered.toFloat() / duration).coerceIn(0f, 1f),
+            color = accent,
+            onScrub = { scrubbing = true; scrub = it },
+            onScrubEnd = { player.seekTo((scrub * duration).toLong()); scrubbing = false },
         )
         Row(Modifier.fillMaxWidth()) {
             Text(formatDuration(if (scrubbing) (scrub * duration).toLong() else pos).ifEmpty { "0:00" },
@@ -637,6 +642,42 @@ private fun RelatedView(state: PlayerUiState, accent: Color, onClose: () -> Unit
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * a thin seek bar: played part in the cover's color, buffered part lighter, a small round thumb
+ * that grows while dragging. tap anywhere to jump there.
+ */
+@Composable
+private fun SeekBar(fraction: Float, buffered: Float, color: Color, onScrub: (Float) -> Unit, onScrubEnd: () -> Unit) {
+    var dragging by remember { mutableStateOf(false) }
+    val thumb by androidx.compose.animation.core.animateDpAsState(if (dragging) 16.dp else 12.dp, label = "thumb")
+    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
+    val loaded = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+    Box(
+        Modifier.fillMaxWidth().height(32.dp)
+            .pointerInput(Unit) {
+                detectTapGestures { o -> onScrub((o.x / size.width).coerceIn(0f, 1f)); onScrubEnd() }
+            }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { o -> dragging = true; onScrub((o.x / size.width).coerceIn(0f, 1f)) },
+                    onDragEnd = { dragging = false; onScrubEnd() },
+                    onDragCancel = { dragging = false; onScrubEnd() },
+                ) { change, _ -> onScrub((change.position.x / size.width).coerceIn(0f, 1f)) }
+            },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(thumb)) {
+            val y = size.height / 2
+            val h = 4.dp.toPx()
+            val cap = androidx.compose.ui.graphics.StrokeCap.Round
+            drawLine(track, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width, y), h, cap)
+            drawLine(loaded, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width * buffered, y), h, cap)
+            drawLine(color, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width * fraction, y), h, cap)
+            drawCircle(color, radius = size.height / 2, center = androidx.compose.ui.geometry.Offset(size.width * fraction, y))
         }
     }
 }

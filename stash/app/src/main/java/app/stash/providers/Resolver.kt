@@ -184,10 +184,16 @@ object Matcher {
     private fun share(want: Set<String>, have: Set<String>): Double =
         if (want.isEmpty()) 0.0 else want.count { have.has(it) }.toDouble() / want.size
 
+    /** titles made only of these (and numbers) don't say which song it is */
+    private val genericTitleWords = setOf("untitled", "track", "intro", "outro", "interlude", "skit", "smaskifa")
+
     /** words that mean "not the original recording" */
     private val versionWords = setOf(
         "cover", "remix", "live", "sped", "slowed", "nightcore", "karaoke", "piano", "instrumental",
         "reverb", "8d", "mashup", "acoustic", "tutorial", "reaction", "extended", "loop",
+        // rhythm-game charts, game ports and edits: the song is in there, but not as itself
+        "port", "ports", "osu", "ddr", "flowmove", "gameplay", "chart", "flip", "bootleg", "hour", "hours",
+        "rhythia", "arrange", "arranged", "attempt", "acc", "mmd", "hyper",
     )
 
     /** covers / playthroughs, written the japanese way or as phrases the word list can't catch */
@@ -195,7 +201,7 @@ object Matcher {
         "歌ってみた", "踊ってみた", "弾いてみた", "叩いてみた", "演奏してみた", "描いてみた", "作ってみた", "カバー", "カラオケ",
         "off vocal", "オフボーカル", "instrumental", "mmd", "guitar cover", "bass cover", "drum cover", "violin", "ピアノ",
         "ギター", "ベース", "dance practice", "midi", "8-bit", "music box", "オルゴール", "sped up", "mashup", "マッシュアップ",
-        "tutorial", "piano cover", "歌枠",
+        "tutorial", "piano cover", "歌枠", "耐久", "替え歌", "sm64", "pump it up", "beat saber", "fnf", "challenge", "lv.",
     )
 
     /** words in album names that say nothing about who made it */
@@ -282,9 +288,11 @@ object Matcher {
         var s = titleScore * 0.55 + artistScore * 0.3 - minOf(extraWords, 4) * 0.03
         // "metal cover", "sped up", "piano" etc. that the wanted title doesn't have: a different version
         val rawText = (candidate.title + " " + extra.orEmpty()).lowercase()
-        val otherVersion = raw.any { it in versionWords && !wantTitle.has(it) } ||
+        // "covered" counts as "cover", "remixed" as "remix"
+        val otherVersion = raw.any { w -> versionWords.any { v -> w == v || (v.length >= 4 && w.startsWith(v)) } && !wantTitle.has(w) } ||
             versionMarkers.any { it in rawText && it !in title.lowercase() }
-        if (otherVersion) s -= 0.2
+        // big enough that a perfect cover / chart video still loses to the plain song
+        if (otherVersion) s -= 0.35
         val diff = if (durationMs > 0 && candidate.durationMs > 0) abs(durationMs - candidate.durationMs) / 1000 else null
         // an album word alone is weak evidence: it also needs the length to line up
         if (onlyAlbum && (diff == null || diff > 8)) s = minOf(s, 0.5)
@@ -293,11 +301,17 @@ object Matcher {
                 diff <= 3 -> 0.15
                 diff <= 8 -> 0.1
                 diff <= 20 -> 0.0
-                else -> -0.2
+                diff <= 60 -> -0.2
+                // a minute or more off: a different cut, a loop, a medley
+                else -> -0.35
             }
         } else {
             s += 0.05
         }
+        // "Untitled #1", "Track 3", "Intro": a title that names nothing (sigur rós has a whole album of
+        // untitleds, smáskífa comes in several cuts). only the length can tell which one it is
+        val generic = wantTitle.isNotEmpty() && wantTitle.all { it in genericTitleWords || it.all(Char::isDigit) }
+        if (generic && (diff == null || diff > 4)) s = minOf(s, 0.5)
         // right title by a different artist is usually a cover, not the song...
         if (credited.isNotEmpty() && artistScore == 0.0) {
             // ...unless the whole title is there, the length is within 3 seconds and nothing says
@@ -313,7 +327,10 @@ object Matcher {
     /** the title as typed, minus "(feat. …)", "[Remastered]" and " - Cover" style tails */
     fun stripForSearch(title: String): String =
         title.replace(brackets, " ").replace(feat, "")
-            .replace(Regex("""\s+[-–]\s+.*$"""), "") // "Song - Remastered 2011"
+            // "Song - Remastered 2011", but not "Untitled #1 - Vaka" (there the tail is the name)
+            .replace(Regex("""\s+[-–]\s+.*$""")) { m ->
+                if (Regex("""^\s*untitled\s*#?\s*\d+\s*$""", RegexOption.IGNORE_CASE).matches(title.substring(0, m.range.first))) m.value else ""
+            }
             .replace(Regex("""\s*[-~～][^-~～]+[-~～]\s*$"""), "") // "ルカルカ★ナイトフィーバー -Miku ver.-"
             .trim().ifEmpty { title }
 
@@ -485,7 +502,8 @@ class Resolver @Inject constructor(
         pick(provider.search("${Matcher.primaryArtist(artist)} $title".trim(), 8).map { SearchHit(it) }, title, artist, durationMs, null)
 
     private fun pick(hits: List<SearchHit>, title: String, artist: String, durationMs: Long, album: String?): Track? =
-        hits.map { h -> h.track to Matcher.score(h.track, title, artist, durationMs, album, h.byline ?: h.uploader?.name) }
+        // a youtube music "song" (the label's own audio) beats an equally good video upload
+        hits.map { h -> h.track to Matcher.score(h.track, title, artist, durationMs, album, h.byline ?: h.uploader?.name) + if (h.official) 0.05 else 0.0 }
             .filter { it.second >= Matcher.ACCEPT }
             .maxByOrNull { it.second }?.first
 
@@ -510,7 +528,7 @@ class Resolver @Inject constructor(
         // title and the artist (or the playlist's game) still have to be there
         val hint = listOfNotNull(album, context).joinToString(" ").ifBlank { null }
         return seen.distinctBy { it.track.id }
-            .map { h -> h.track to Matcher.score(h.track, title, artist, 0, hint, h.byline ?: h.uploader?.name) }
+            .map { h -> h.track to Matcher.score(h.track, title, artist, 0, hint, h.byline ?: h.uploader?.name) + if (h.official) 0.05 else 0.0 }
             .filter { it.second >= Matcher.ACCEPT }
             .maxByOrNull { it.second }?.first
     }

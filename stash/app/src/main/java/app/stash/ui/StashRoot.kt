@@ -100,6 +100,7 @@ object Routes {
     const val YOUTUBE_LOGIN = "youtube/login"
     const val YT_PLAYLIST = "ytplaylist/{id}"
     const val FIX = "fix/{id}?q={q}"
+    const val REMATCH = "rematch/{id}?q={q}"
     const val REMOTE_ARTIST = "rartist/{provider}/{id}?name={name}&art={art}"
 
     fun playlist(id: Long) = "playlist/$id"
@@ -107,6 +108,7 @@ object Routes {
     fun artist(name: String) = "artist?name=${Uri.encode(name)}"
     fun import(link: String? = null) = if (link == null) "import" else "import?link=${Uri.encode(link)}"
     fun fix(unmatchedId: Long, query: String) = "fix/$unmatchedId?q=${Uri.encode(query)}"
+    fun rematch(trackId: String, query: String) = "rematch/${Uri.encode(trackId)}?q=${Uri.encode(query)}"
     fun ytPlaylist(id: String) = "ytplaylist/${Uri.encode(id)}"
     fun remoteArtist(a: RemoteArtist) =
         "rartist/${a.provider}/${Uri.encode(a.id)}?name=${Uri.encode(a.name)}&art=${Uri.encode(a.avatarUrl ?: "")}"
@@ -230,6 +232,9 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 composable(Routes.COVER_GRAB) { CoverGrabScreen() }
                 composable(Routes.YOUTUBE_LOGIN) { YouTubeLoginScreen() }
                 composable(Routes.YT_PLAYLIST, listOf(navArgument("id") {})) { YtPlaylistScreen() }
+                composable(Routes.REMATCH, listOf(navArgument("id") {}, navArgument("q") { defaultValue = "" })) {
+                    SearchScreen(fixTrackId = it.arguments!!.getString("id")!!, initialQuery = it.arguments!!.getString("q")!!)
+                }
                 composable(
                     Routes.FIX,
                     listOf(navArgument("id") { type = NavType.LongType }, navArgument("q") { defaultValue = "" }),

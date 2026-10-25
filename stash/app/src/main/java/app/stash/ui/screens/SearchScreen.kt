@@ -202,7 +202,7 @@ private val undergroundTiles = listOf(
 )
 
 @Composable
-fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
+fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "", fixTrackId: String? = null) {
     val vm: SearchViewModel = hiltViewModel()
     val ui by vm.ui.collectAsState()
     val recent by vm.recent.collectAsState()
@@ -210,14 +210,17 @@ fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
     val nav = LocalNav.current
     val keyboard = LocalSoftwareKeyboardController.current
     val currentId by actions.player.currentId.collectAsState()
-    val picking = fixUnmatchedId != null
+    val picking = fixUnmatchedId != null || fixTrackId != null
 
     LaunchedEffect(initialQuery) {
         if (initialQuery.isNotBlank() && ui.query.isBlank()) vm.setQuery(initialQuery, immediate = true)
     }
 
     fun onPick(list: List<Track>, index: Int) {
-        if (fixUnmatchedId != null) {
+        if (fixTrackId != null) {
+            actions.rematch(fixTrackId, list[index])
+            nav.popBackStack()
+        } else if (fixUnmatchedId != null) {
             actions.library.resolveUnmatched(fixUnmatchedId, list[index])
             actions.toast("Matched")
             nav.popBackStack()
