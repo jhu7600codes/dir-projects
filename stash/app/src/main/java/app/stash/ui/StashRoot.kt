@@ -170,29 +170,29 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                         val player by app.player.state.collectAsState()
                         MiniPlayer(state = player, onOpen = { showPlayer = true })
                     }
-                    // spotify-style bar: no pill, the page fading into it, the picked tab bright
-                    val bg = MaterialTheme.colorScheme.background
-                    Row(
-                        Modifier.fillMaxWidth()
-                            .background(Brush.verticalGradient(listOf(bg.copy(alpha = 0.92f), bg)))
-                            .navigationBarsPadding()
-                            .height(62.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                    NavigationBar {
                         tabs.forEach { tab ->
                             val selected = backStack?.destination?.hierarchy?.any { it.route == tab.route } == true
-                            BarItem(
-                                if (selected) tab.selectedIcon else tab.icon, tab.label, selected, Modifier.weight(1f),
-                            ) {
-                                nav.navigate(tab.route) {
-                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    nav.navigate(tab.route) {
+                                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
+                                label = { Text(tab.label) },
+                            )
                         }
                         // spotify's create button: not a page, a menu of ways to make something
-                        BarItem(Icons.Rounded.Add, "Create", creating, Modifier.weight(1f)) { creating = true }
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { creating = true },
+                            icon = { Icon(Icons.Rounded.Add, null) },
+                            label = { Text("Create") },
+                        )
                     }
                 }
             },
@@ -240,33 +240,15 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
         }
 
         if (creating) CreateSheet(onDismiss = { creating = false })
-        if (showPlayer && currentId != null) {
+        // slides up over everything, bottom bar included
+        AnimatedVisibility(
+            visible = showPlayer && currentId != null,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+        ) {
             val player by app.player.state.collectAsState()
             NowPlayingSheet(state = player, onDismiss = { showPlayer = false })
         }
     }
 }
 
-@Composable
-private fun BarItem(icon: ImageVector, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val color by androidx.compose.animation.animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
-        label = "tab",
-    )
-    val scale by androidx.compose.animation.core.animateFloatAsState(if (selected) 1.08f else 1f, label = "tabScale")
-    Column(
-        modifier.fillMaxHeight().clickable(
-            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-            indication = null, onClick = onClick,
-        ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(icon, null, tint = color, modifier = Modifier.size(26.dp).graphicsLayer { scaleX = scale; scaleY = scale })
-        Spacer(Modifier.height(3.dp))
-        Text(
-            label, color = color, style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-        )
-    }
-}

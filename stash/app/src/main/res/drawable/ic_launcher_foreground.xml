@@ -1,55 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- stash: lavender drawer with two sheets of music sticking out. 108dp canvas, art kept inside the 66dp safe zone. -->
+<!-- stash: three rounded bars, long / short / middle, like a sound meter. 108dp canvas, inside the 66dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-
-    <!-- drawer interior -->
     <path
-        android:fillColor="#8F78D1"
-        android:pathData="M31,56h46a2,2 0 0 1 2,2v6h-50v-6a2,2 0 0 1 2,-2z" />
-
-    <!-- back sheet -->
-    <group
-        android:pivotX="52"
-        android:pivotY="62"
-        android:rotation="-9">
-        <path
-            android:fillColor="#E6DEF8"
-            android:pathData="M39,27h24a2,2 0 0 1 2,2v35h-28v-35a2,2 0 0 1 2,-2z" />
-    </group>
-
-    <!-- front sheet with a staff and two beamed notes -->
-    <group
-        android:pivotX="58"
-        android:pivotY="62"
-        android:rotation="7">
-        <path
-            android:fillColor="#FBF9FF"
-            android:pathData="M46,31h24a2,2 0 0 1 2,2v31h-28v-31a2,2 0 0 1 2,-2z" />
-        <path
-            android:strokeColor="#3B2D5C"
-            android:strokeWidth="0.8"
-            android:pathData="M48.5,38h21M48.5,41h21M48.5,44h21M48.5,47h21M48.5,50h21" />
-        <path
-            android:fillColor="#3B2D5C"
-            android:pathData="M51.6,49.6a2.5,1.9 -20 1,0 5,0a2.5,1.9 -20 1,0 -5,0zM60.6,47.6a2.5,1.9 -20 1,0 5,0a2.5,1.9 -20 1,0 -5,0z" />
-        <path
-            android:strokeColor="#3B2D5C"
-            android:strokeWidth="1"
-            android:pathData="M56.2,49.2V38.6M65.2,47.2V36.6" />
-        <path
-            android:fillColor="#3B2D5C"
-            android:pathData="M55.7,37.4L65.7,35.4L65.7,37.8L55.7,39.8z" />
-    </group>
-
-    <!-- drawer front + handle -->
-    <path
-        android:fillColor="#C8B6F5"
-        android:pathData="M30,60h48a4,4 0 0 1 4,4v16a4,4 0 0 1 -4,4h-48a4,4 0 0 1 -4,-4v-16a4,4 0 0 1 4,-4z" />
-    <path
-        android:fillColor="#3B2D5C"
-        android:pathData="M47,69h14a2,2 0 0 1 0,4h-14a2,2 0 0 1 0,-4z" />
+        android:fillColor="#0B1E33"
+        android:pathData="M37.5,29a5.5,5.5 0 0 1 5.5,5.5v39a5.5,5.5 0 0 1 -11,0v-39a5.5,5.5 0 0 1 5.5,-5.5zM54,44a5.5,5.5 0 0 1 5.5,5.5v9a5.5,5.5 0 0 1 -11,0v-9a5.5,5.5 0 0 1 5.5,-5.5zM70.5,36a5.5,5.5 0 0 1 5.5,5.5v25a5.5,5.5 0 0 1 -11,0v-25a5.5,5.5 0 0 1 5.5,-5.5z" />
 </vector>

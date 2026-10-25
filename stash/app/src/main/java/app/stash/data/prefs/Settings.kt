@@ -34,7 +34,7 @@ enum class DownloadQuality(val label: String, val about: String, val ytFormat: S
 
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val dynamicColor: Boolean = false,
+    val dynamicColor: Boolean = true,
     val wifiOnlyDownloads: Boolean = false,
     val disabledProviders: Set<String> = emptySet(),
     val jamendoClientId: String = "",
@@ -103,7 +103,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
 
     private fun Preferences.toSettings() = AppSettings(
         themeMode = this[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
-        dynamicColor = this[Keys.dynamic] ?: false,
+        dynamicColor = this[Keys.dynamic] ?: true,
         wifiOnlyDownloads = this[Keys.wifiOnly] ?: false,
         disabledProviders = this[Keys.disabled] ?: emptySet(),
         jamendoClientId = this[Keys.jamendo] ?: "",

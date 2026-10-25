@@ -2,13 +2,6 @@ package app.stash.ui.screens
 
 import app.stash.data.calm
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.draw.clip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.aspectRatio
@@ -110,17 +103,8 @@ fun LibraryScreen() {
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
-            androidx.compose.material3.TopAppBar(
-                // spotify's library header: a round badge, a big bold title, actions on the right
-                navigationIcon = {
-                    Box(
-                        Modifier.padding(start = 12.dp, end = 4.dp).size(34.dp).clip(CircleShape)
-                            .background(Brush.linearGradient(listOf(Color(0xFF6A3DF0), Color(0xFFFF4F8B))))
-                            .clickable { nav.navigate(Routes.SETTINGS) },
-                        contentAlignment = Alignment.Center,
-                    ) { Text("S", color = Color.White, fontWeight = FontWeight.Black) }
-                },
-                title = { Text("Your library", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold) },
+            LargeTopAppBar(
+                title = { Text("Your library") },
                 actions = {
                     IconButton(onClick = { creating = true }) { Icon(Icons.Rounded.Add, "New playlist") }
                 },
@@ -132,15 +116,7 @@ fun LibraryScreen() {
             item {
                 LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(LibFilter.entries) { f ->
-                        FilterChip(
-                            selected = filter == f, onClick = { filter = f }, label = { Text(f.label) },
-                            shape = RoundedCornerShape(50), border = null,
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
-                        )
+                        FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) })
                     }
                 }
                 // spotify's "Recents" sort and list / grid switch

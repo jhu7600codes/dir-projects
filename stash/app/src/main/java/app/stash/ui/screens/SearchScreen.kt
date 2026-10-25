@@ -227,11 +227,6 @@ fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        // spotify's search page: a big title, then a bright search bar
-        if (!picking) Text(
-            "Search", style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
-        )
         Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             if (picking) {
                 IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
@@ -245,21 +240,12 @@ fun SearchScreen(fixUnmatchedId: Long? = null, initialQuery: String = "") {
                     if (ui.query.isNotEmpty()) IconButton(onClick = { vm.setQuery("") }) { Icon(Icons.Rounded.Close, "Clear") }
                 },
                 singleLine = true,
-                shape = MaterialTheme.shapes.small,
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    focusedContainerColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.onSurface,
-                    focusedTextColor = MaterialTheme.colorScheme.surface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.surface,
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-                    focusedLeadingIconColor = MaterialTheme.colorScheme.surface,
-                    unfocusedLeadingIconColor = MaterialTheme.colorScheme.surface,
-                    focusedTrailingIconColor = MaterialTheme.colorScheme.surface,
-                    unfocusedTrailingIconColor = MaterialTheme.colorScheme.surface,
-                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); vm.search(force = true) }),
