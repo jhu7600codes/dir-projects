@@ -53,6 +53,7 @@ class PlaybackService : MediaSessionService() {
     @Inject lateinit var http: OkHttpClient
     @Inject lateinit var recommender: Recommender
     @Inject lateinit var settings: Settings
+    @Inject lateinit var web: WebViewPlayer
 
     private var session: MediaSession? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -88,6 +89,9 @@ class PlaybackService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val id = mediaItem?.mediaId ?: return
+                // moved on from a song the webview was playing (or being asked about)
+                if (web.active.value?.trackId?.let { it != id } == true) web.stop()
+                if (web.offer.value?.let { it != id } == true) web.dismiss()
                 scope.launch { dao.markPlayed(id) }
                 // look up the next song's stream now, so the switch doesn't wait on yt-dlp
                 // get the next two songs ready while this one plays: on connections where youtube
@@ -161,8 +165,31 @@ class PlaybackService : MediaSessionService() {
                     }
                     return
                 }
-                // failed the sure way too: forget it and move on instead of stopping the whole queue
+                // failed the sure way too: forget it, then offer the last resort (music.youtube.com in
+                // a hidden webview); a no, or no answer, moves on instead of stopping the whole queue
                 id?.let(resolver::invalidate)
+                if (id == null) return skip(player)
+                player.pause()
+                if (web.active.value?.trackId == id) return
+                val index = player.currentMediaItemIndex
+                val meta = player.currentMediaItem?.mediaMetadata
+                val query = "${meta?.artist ?: ""} ${meta?.title ?: ""}".trim()
+                web.offer(
+                    id,
+                    accept = { tid ->
+                        scope.launch {
+                            val videoId = resolver.youtubeIdFor(tid)
+                            web.start(tid, videoId, query) {
+                                // the webview finished the song: carry on with the queue
+                                mainHandler.post { if (player.currentMediaItemIndex == index) skip(player) }
+                            }
+                        }
+                    },
+                    decline = { mainHandler.post { if (player.currentMediaItemIndex == index) skip(player) } },
+                )
+            }
+
+            private fun skip(player: Player) {
                 if (player.hasNextMediaItem()) {
                     player.seekToNextMediaItem()
                     player.prepare()
@@ -240,6 +267,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        web.stop()
         session?.run {
             player.release()
             release()

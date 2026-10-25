@@ -356,6 +356,18 @@ class Resolver @Inject constructor(
             .forEach { yt.preferYtDlp(it.sourceId) }
     }
 
+    /** the youtube video for a song (its own, the one it was matched to, or a search), for the webview player */
+    suspend fun youtubeIdFor(trackId: String): String? {
+        val track = dao.get(trackId) ?: return null
+        val idIn = { s: String -> Regex("""(?:[?&]v=|youtu\.be/)([A-Za-z0-9_-]{11})""").find(s)?.groupValues?.get(1) }
+        listOfNotNull(track.fallbackLocator, track.primaryLocator).firstOrNull { it.provider == "youtube" }
+            ?.let { idIn(it.sourceId) }?.let { return it }
+        val yt = registry.get("youtube") ?: return null
+        return runCatching {
+            kotlinx.coroutines.withTimeout(SEARCH_MS) { bestMatch(yt, track.title, track.artist, track.durationMs) }
+        }.getOrNull()?.let { idIn(it.sourceId) }
+    }
+
     /** the last songs looked up and how long it took, newest first (settings → playback log) */
     data class LogEntry(val title: String, val via: String, val ms: Long, val error: String?)
 

@@ -37,6 +37,8 @@ data class PlayerUiState(
     val queue: List<MediaItem> = emptyList(),
     val queueIndex: Int = 0,
     val error: String? = null,
+    /** playing through the hidden webview (music.youtube.com) */
+    val viaWeb: Boolean = false,
 )
 
 /** the ui's handle on [PlaybackService], through a media3 controller */
@@ -44,6 +46,7 @@ data class PlayerUiState(
 class PlayerConnection @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dao: TrackDao,
+    val web: WebViewPlayer,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var controller: MediaController? = null
@@ -59,6 +62,13 @@ class PlayerConnection @Inject constructor(
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying
     private var queueCache: List<MediaItem> = emptyList()
+
+    init {
+        scope.launch { web.active.collect { refresh(queueChanged = false) } }
+    }
+
+    /** the webview's playback, when it's the song on now */
+    private fun webNow() = web.active.value?.takeIf { it.trackId == controller?.currentMediaItem?.mediaId }
 
     fun connect() {
         if (controller != null) return
@@ -91,25 +101,27 @@ class PlayerConnection @Inject constructor(
         // copying a long queue on every event is wasteful; only when it actually changed
         if (queueChanged) queueCache = (0 until c.mediaItemCount).map { c.getMediaItemAt(it) }
         val queue = queueCache
+        val w = webNow()
         _currentId.value = item?.mediaId
-        _isPlaying.value = c.isPlaying
+        _isPlaying.value = w?.playing ?: c.isPlaying
         _state.value = PlayerUiState(
             currentId = item?.mediaId,
             title = item?.mediaMetadata?.title?.toString() ?: "",
             artist = item?.mediaMetadata?.artist?.toString() ?: "",
             artworkUri = item?.mediaMetadata?.artworkUri,
-            isPlaying = c.isPlaying,
-            isBuffering = c.playbackState == Player.STATE_BUFFERING,
-            durationMs = c.duration.takeIf { it > 0 } ?: 0,
+            isPlaying = w?.playing ?: c.isPlaying,
+            isBuffering = w?.loading ?: (c.playbackState == Player.STATE_BUFFERING),
+            durationMs = w?.durationMs ?: (c.duration.takeIf { it > 0 } ?: 0),
             shuffle = c.shuffleModeEnabled,
             repeatMode = c.repeatMode,
             queue = queue,
             queueIndex = c.currentMediaItemIndex,
-            error = c.playerError?.let { it.cause?.message ?: it.message },
+            error = if (w != null) null else c.playerError?.let { it.cause?.message ?: it.message },
+            viaWeb = w != null,
         )
     }
 
-    val positionMs: Long get() = controller?.currentPosition ?: 0
+    val positionMs: Long get() = webNow()?.positionMs ?: controller?.currentPosition ?: 0
     val bufferedMs: Long get() = controller?.bufferedPosition ?: 0
 
     private suspend fun save(tracks: List<Track>) = withContext(Dispatchers.IO) {
@@ -150,14 +162,20 @@ class PlayerConnection @Inject constructor(
         }
     }
 
-    fun togglePlay() = withController { c ->
-        if (c.playbackState == Player.STATE_IDLE) c.prepare()
-        if (c.isPlaying) c.pause() else c.play()
+    fun togglePlay() {
+        // a song the webview is playing: play / pause it there
+        webNow()?.let { if (it.playing) web.pause() else web.play(); return }
+        withController { c ->
+            if (c.playbackState == Player.STATE_IDLE) c.prepare()
+            if (c.isPlaying) c.pause() else c.play()
+        }
     }
 
     fun next() = withController { it.seekToNext() }
     fun previous() = withController { it.seekToPrevious() }
-    fun seekTo(ms: Long) = withController { it.seekTo(ms) }
+    fun seekTo(ms: Long) {
+        if (webNow() != null) web.seekTo(ms) else withController { it.seekTo(ms) }
+    }
     fun skipTo(index: Int) = withController { it.seekTo(index, 0); it.play() }
     fun removeAt(index: Int) = withController { it.removeMediaItem(index) }
     fun move(from: Int, to: Int) = withController { it.moveMediaItem(from, to) }

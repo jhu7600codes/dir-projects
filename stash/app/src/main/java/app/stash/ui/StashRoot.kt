@@ -117,6 +117,25 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
     LaunchedEffect(Unit) { navRequests.collect { nav.navigate(it) { launchSingleTop = true } } }
     LaunchedEffect(Unit) { openPlayerRequests.collect { showPlayer = true } }
 
+    // the last resort: nothing could play the song, ask before handing it to the hidden webview
+    val webOffer by app.player.web.offer.collectAsState()
+    webOffer?.let { _ ->
+        val title = app.player.state.collectAsState().value.title
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { app.player.web.decline() },
+            title = { Text("Song can't be loaded, we can use a WebView to deliver it.") },
+            text = {
+                Text(
+                    (if (title.isNotBlank()) "\"$title\" didn't play from any source. " else "") +
+                        "Stash can play it from music.youtube.com in a hidden WebView, with your YouTube login if you have one. " +
+                        "Skips to the next song by itself in 30 seconds."
+                )
+            },
+            confirmButton = { androidx.compose.material3.TextButton(onClick = { app.player.web.accept() }) { Text("Use WebView") } },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { app.player.web.decline() }) { Text("Skip") } },
+        )
+    }
+
     CompositionLocalProvider(LocalActions provides app, LocalNav provides nav) {
         val backStack by nav.currentBackStackEntryAsState()
         Scaffold(
