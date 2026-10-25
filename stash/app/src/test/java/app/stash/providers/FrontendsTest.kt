@@ -16,10 +16,11 @@ class FrontendsTest {
                 Frontends.Instance("invidious", "http://b.example"),
                 Frontends.Instance("piped", "http://pipedapi.x.info"),
                 Frontends.Instance("piped", "http://1.2.3.4:8091/api"),
+                Frontends.Instance("yt2009", "http://c.example"),
             ),
             list,
         )
-        assertEquals("1.2.3.4:8091", list.last().host)
+        assertEquals("1.2.3.4:8091", list[3].host)
     }
 
     @Test

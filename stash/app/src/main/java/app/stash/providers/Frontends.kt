@@ -40,6 +40,8 @@ class Frontends @Inject constructor(
 
     // instances are often slow home servers: don't let one hang a song
     private val http = http.newBuilder().connectTimeout(5, TimeUnit.SECONDS).readTimeout(8, TimeUnit.SECONDS).build()
+    // yt2009 redirects only once its copy exists
+    private val slowHttp = http.newBuilder().connectTimeout(6, TimeUnit.SECONDS).readTimeout(25, TimeUnit.SECONDS).build()
     private val file get() = File(context.filesDir, "frontends.json")
     private val prefs get() = context.getSharedPreferences("frontends", Context.MODE_PRIVATE)
 
@@ -82,10 +84,27 @@ class Frontends @Inject constructor(
         }
     }
 
-    /** a playable audio link for [videoId] from whichever instance answers first with one that plays */
-    suspend fun audioStream(videoId: String): StreamSource? {
+    /**
+     * a playable audio link for [videoId] from whichever instance answers first with one that
+     * plays: invidious / piped in waves, and yt2009 alongside (slower: it serves its own cached mp4s)
+     */
+    suspend fun audioStream(videoId: String): StreamSource? = coroutineScope {
+        val mirrors = async { invidiousOrPiped(videoId) }
+        val old = async { yt2009(videoId) }
+        val pending = mutableListOf(mirrors, old)
+        var found: StreamSource? = null
+        while (pending.isNotEmpty() && found == null) {
+            val (done, value) = select<Pair<Deferred<StreamSource?>, StreamSource?>> { pending.forEach { d -> d.onAwait { d to it } } }
+            found = value
+            pending -= done
+        }
+        pending.forEach { it.cancel() }
+        found
+    }
+
+    private suspend fun invidiousOrPiped(videoId: String): StreamSource? {
         // known-good first, then never tried, then the ones that keep failing
-        val ordered = load().sortedWith(
+        val ordered = load().filter { it.kind != "yt2009" }.sortedWith(
             compareByDescending<Instance> { lastOk[it.api] ?: 0L }.thenBy { fails[it.api] ?: 0 }
         )
         if (ordered.isEmpty()) return null
@@ -139,6 +158,45 @@ class Frontends @Inject constructor(
         if (StreamCheck.plays(http, url, UA)) StreamSource(url, mapOf("User-Agent" to UA), via = "${inst.kind.replaceFirstChar { it.uppercase() }} (${inst.host})") else null
     }
 
+    /**
+     * yt2009 serves youtube videos as its own mp4 copies: /get_video?video_id=ID/mp4 redirects
+     * to /assets/ID.mp4 once it has one. a song it doesn't have yet takes it minutes to build,
+     * so this gives up after [YT2009_MS]; asking still makes it start, so next time it's quick.
+     */
+    private suspend fun yt2009(videoId: String): StreamSource? {
+        val servers = load().filter { it.kind == "yt2009" }
+        if (servers.isEmpty()) return null
+        return withTimeoutOrNull(YT2009_MS) {
+            coroutineScope {
+                val tries = servers.map { inst ->
+                    async {
+                        runCatching {
+                            httpIo {
+                                val req = Request.Builder().url("${inst.api}/get_video?video_id=$videoId/mp4")
+                                    .header("User-Agent", UA).header("Range", "bytes=0-4095").build()
+                                slowHttp.newCall(req).execute().use { r ->
+                                    val type = r.header("Content-Type").orEmpty()
+                                    if ((r.code == 206 || r.code == 200) && type.startsWith("video/mp4"))
+                                        StreamSource(r.request.url.toString(), mapOf("User-Agent" to UA), via = "yt2009 (${inst.host})")
+                                    else null
+                                }
+                            }
+                        }.getOrNull().also { record(inst, it != null) }
+                    }
+                }
+                val pending = tries.toMutableList()
+                var found: StreamSource? = null
+                while (pending.isNotEmpty() && found == null) {
+                    val (done, value) = select<Pair<Deferred<StreamSource?>, StreamSource?>> { pending.forEach { d -> d.onAwait { d to it } } }
+                    found = value
+                    pending -= done
+                }
+                tries.forEach { it.cancel() }
+                found
+            }
+        }
+    }
+
     private fun get(url: String): JsonObject? =
         http.newCall(Request.Builder().url(url).header("User-Agent", UA).build()).execute().use { r ->
             if (r.isSuccessful) r.body?.string()?.let { lenientJson.parseToJsonElement(it).jsonObject } else null
@@ -149,14 +207,16 @@ class Frontends @Inject constructor(
         const val LIST_URL = "http://144.31.189.129/notPipe.json"
         private const val WAVE = 4
         private const val WAVE_MS = 9_000L
+        private const val YT2009_MS = 25_000L
         private const val UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
 
-        /** {"invidious": [url…], "piped": ["api,proxy"…], …}: only the kinds that give audio */
+        /** {"invidious": [url…], "piped": ["api,proxy"…], "yt2009": […], …}: the kinds that give audio */
         fun parse(text: String): List<Instance> {
             val root = runCatching { lenientJson.parseToJsonElement(text).jsonObject }.getOrNull() ?: return emptyList()
             fun urls(key: String) = (root[key] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { runCatching { it.jsonPrimitive.content }.getOrNull() }.orEmpty()
             return urls("invidious").map { Instance("invidious", it.trimEnd('/')) } +
-                urls("piped").map { Instance("piped", it.substringBefore(',').trim().trimEnd('/')) }
+                urls("piped").map { Instance("piped", it.substringBefore(',').trim().trimEnd('/')) } +
+                urls("yt2009").map { Instance("yt2009", it.trimEnd('/')) }
         }
     }
 }
