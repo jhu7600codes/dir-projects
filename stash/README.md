@@ -129,7 +129,7 @@ Settings live on the downloads screen. **High** keeps the best stream (about 130
 The queue only holds `stash://track/<id>` uris. When ExoPlayer opens one, `PlaybackService` resolves it right then (`ResolvingDataSource`):
 
 1. downloaded file, if there is one
-2. the track's own provider. For YouTube, two quick ways start together: YouTube's own player API the way its Android VR app asks (skipped for 10 minutes after it keeps refusing), and NewPipeExtractor (the library NewPipe, PipePipe and YouTube Classic use: plain Java with Rhino for YouTube's player code, 1-3 seconds). Each link is checked with a 2-byte request and sent with the app identity it was made for. yt-dlp (a whole Python, 30+ seconds on some phones) only starts if neither has a link after 8 seconds.
+2. the track's own provider. For YouTube, three quick ways start together: community YouTube frontends (below), YouTube's own player API the way its Android VR app asks (skipped for 10 minutes after it keeps refusing), and NewPipeExtractor (the library NewPipe, PipePipe and YouTube Classic use: plain Java with Rhino for YouTube's player code, 1-3 seconds). Each link is checked with a 2-byte request and sent with the app identity it was made for. yt-dlp (a whole Python, 30+ seconds on some phones) only starts if neither has a link after 8 seconds.
 3. the fallback that worked last time (cached on the track)
 4. search every other enabled provider in order and match by title + artist + duration (`Matcher`), then remember the winner
 
@@ -156,6 +156,10 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 ## YouTube login (optional, for playback only)
 
 Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Classic) do it: Google's own sign-in page in a WebView with a desktop Chrome identity and WebView's `X-Requested-With` header turned off (Google's main "this browser may not be secure" signal). Once youtube.com's cookies hold a session (`SAPISID`), they're written as a Netscape `cookies.txt` that yt-dlp gets with `--cookies`, so songs YouTube won't hand out anonymously still play. Search, artist pages and the catalog stay anonymous. If Google won't allow the login in a WebView, "Paste cookies instead" takes a cookie export (Cookie-Editor's header string, a Netscape cookies.txt or its JSON), with step-by-step instructions on the screen. Without a login, yt-dlp skips the watch page and client config requests (`player_skip=webpage,configs`) to get to the audio faster.
+
+## YouTube frontends (no VPN needed)
+
+Invidious and Piped servers fetch the audio from YouTube themselves and pass it on, so YouTube never sees the phone's connection (no VPN bot checks, no regional slowdown). The instance list is a community-kept JSON (`http://144.31.189.129/notPipe.json`, thanks gohoski); it's bundled as `assets/frontends.json`, refreshed on launch when older than 6 hours, and Settings → Playback → YouTube frontends → Update now. Invidious is asked with `local=true` (the instance proxies the audio), Piped returns proxied links already. Instances are tried 4 at a time, every link is checked before use, and ones that worked go first next time. Most instances are plain http, so cleartext traffic is allowed (`network_security_config.xml`). yt2009 / typetype entries aren't used yet.
 
 ## Keeping the phone happy
 

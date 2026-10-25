@@ -26,6 +26,7 @@ class StashApp : Application(), Configuration.Provider {
     @Inject lateinit var imports: ImportQueue
     @Inject lateinit var cloud: CloudBackup
     @Inject lateinit var recommender: Recommender
+    @Inject lateinit var frontends: app.stash.providers.Frontends
     @Inject lateinit var covers: Covers
 
     override val workManagerConfiguration: Configuration
@@ -47,6 +48,8 @@ class StashApp : Application(), Configuration.Provider {
         covers.fixInBackground()
         // daily mixes / discover weekly, only rebuilt when they're out of date
         ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) { recommender.refreshMixes() }
+        // the community list of youtube frontends changes often: refresh it on launch
+        ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) { frontends.update() }
     }
 
     companion object {

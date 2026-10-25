@@ -125,6 +125,7 @@ class YouTubeProvider @Inject constructor(
     ytDlp: YtDlp,
     private val music: YouTubeMusicSearch,
     private val newPipe: NewPipeStreams,
+    private val frontends: Frontends,
 ) : YtDlpProvider(ytDlp) {
     override val id = "youtube"
     override val displayName = "YouTube"
@@ -146,7 +147,7 @@ class YouTubeProvider @Inject constructor(
     override suspend fun searchArtists(query: String, limit: Int) = music.searchArtists(query, limit)
 
     private companion object {
-        const val YTDLP_AFTER_MS = 8_000L
+        const val YTDLP_AFTER_MS = 12_000L
     }
 
     private val fastFailures = java.util.concurrent.atomic.AtomicInteger(0)
@@ -186,7 +187,9 @@ class YouTubeProvider @Inject constructor(
                     .getOrNull()
                     .also { if (it == null && pipeWhy == "no link") pipeWhy = "link refused (403)" }
             }
-            val quick = listOf(fast, pipe)
+            // community frontends (invidious / piped): they fetch from youtube themselves
+            val mirror = async { runCatching { frontends.audioStream(videoId) }.getOrNull() }
+            val quick = listOf(fast, pipe, mirror)
             firstNonNull(quick, YTDLP_AFTER_MS)?.let { quick.forEach { it.cancel() }; return@coroutineScope it }
             val slow = async { runCatching { super.resolveStream(locator) } }
             val result = firstNonNull(quick + async { slow.await().getOrNull() }, Long.MAX_VALUE)

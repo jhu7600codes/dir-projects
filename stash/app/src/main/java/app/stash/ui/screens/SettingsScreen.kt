@@ -79,8 +79,15 @@ class SettingsViewModel @Inject constructor(
     private val account: Account,
     private val cloud: CloudBackup,
     resolver: app.stash.providers.Resolver,
+    val frontends: app.stash.providers.Frontends,
 ) : ViewModel() {
     val playbackLog = resolver.log
+    val frontendBusy = MutableStateFlow(false)
+
+    fun updateFrontends() {
+        frontendBusy.value = true
+        viewModelScope.launch { frontends.update(force = true); frontendBusy.value = false }
+    }
     val ytStatus = ytDlp.status
     val updateResult = MutableStateFlow<String?>(null)
     val accountBusy = MutableStateFlow(false)
@@ -242,6 +249,26 @@ fun SettingsScreen() {
                         }
                     }
                 }
+            }
+
+            item {
+                val info by vm.frontends.info.collectAsState()
+                val busy by vm.frontendBusy.collectAsState()
+                ListItem(
+                    headlineContent = { Text("YouTube frontends") },
+                    supportingContent = {
+                        Text(
+                            "Invidious / Piped servers that fetch YouTube for you, so it plays without a VPN. " +
+                                "${info.instances} on the list" +
+                                (if (info.updatedAt > 0) ", updated " + android.text.format.DateUtils.getRelativeTimeSpanString(info.updatedAt) else "") +
+                                (info.error?.let { ". Last update failed: $it" } ?: "") + ". Updates by itself on launch.",
+                        )
+                    },
+                    trailingContent = {
+                        TextButton(onClick = { vm.updateFrontends() }, enabled = !busy) { Text(if (busy) "Updating…" else "Update now") }
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
             }
 
             item { SectionHeader("Lyrics") }
