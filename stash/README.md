@@ -162,7 +162,7 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 - The bottom bar has Home, Search, Your library and **Create**. Create opens a menu: create a playlist, move playlists (import), find missing songs (rescan) and get playlist covers (Exportify).
 - The **heart** adds to liked songs by default, or to any playlist you pick (Settings → Heart button). It's filled when the song is in that playlist.
 - **Made-for-you** mixes (daily mixes, "This is" artist mixes, genre mixes, discover, rewind) live on home only; open one and pick "Save to your library" to keep it in the library.
-- The icon: a light blue circle with three rounded bars (long, short, middle).
+- The icon: a light blue circle with three rounded bars (long, short, middle). While the app is dark it switches to black with white bars (two launcher activity-aliases, `AppIcon`); Settings → Dark icon in dark mode turns that off.
 - The player covers the whole screen; back or a drag down closes it.
 - Rescans (Create → Find missing songs) end with a looser pass over the same results that ignores length, and "UTG" in a playlist name counts as "untitled tag game" in an upload (any 3-5 letter abbreviation, both ways).
 

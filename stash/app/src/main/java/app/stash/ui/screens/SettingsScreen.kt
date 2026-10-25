@@ -173,6 +173,7 @@ fun SettingsScreen() {
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) item {
                 SwitchRow("Colors from wallpaper", "Material You dynamic color", settings.dynamicColor) { vm.set { setDynamicColor(it) } }
+                SwitchRow("Dark icon in dark mode", "Black icon with white bars while the app is dark", settings.darkIcon) { vm.set { setDarkIcon(it) } }
             }
 
             item {
