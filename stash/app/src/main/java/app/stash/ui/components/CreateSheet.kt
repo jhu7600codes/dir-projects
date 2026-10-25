@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.ManageSearch
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -46,9 +45,7 @@ fun CreateSheet(onDismiss: () -> Unit) {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val missing by actions.missingCount.collectAsState()
-    val heart by actions.heartTarget.collectAsState()
     var naming by remember { mutableStateOf(false) }
-    var heartPicking by remember { mutableStateOf(false) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
@@ -63,7 +60,6 @@ fun CreateSheet(onDismiss: () -> Unit) {
             Option(Icons.Rounded.Image, "Get playlist covers", "Copy your Spotify playlists' covers over") {
                 onDismiss(); nav.navigate(Routes.COVER_GRAB)
             }
-            Option(Icons.Rounded.Favorite, "Heart button", "Adds songs to ${heart?.name ?: "Liked songs"}") { heartPicking = true }
         }
     }
 
@@ -77,7 +73,6 @@ fun CreateSheet(onDismiss: () -> Unit) {
             }
         },
     )
-    if (heartPicking) HeartTargetDialog(onDismiss = { heartPicking = false; onDismiss() })
 }
 
 @Composable

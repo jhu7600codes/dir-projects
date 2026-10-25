@@ -1,8 +1,6 @@
 package app.stash.ui.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
@@ -39,18 +37,15 @@ import app.stash.ui.LocalActions
 
 /**
  * the heart, muzix style: it adds to whatever playlist you pick (liked songs by default) and is
- * filled when the song is in it. tap to add / remove, long-press to pick where it adds.
+ * filled when the song is in it. tap to add / remove; where it adds is picked in settings.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HeartButton(track: Track, onColor: Color, offColor: Color, size: androidx.compose.ui.unit.Dp = 24.dp) {
     val actions = LocalActions.current
     val hearted by remember(track.id) { actions.hearted(track.id) }.collectAsState(initial = track.liked)
     val target by actions.heartTarget.collectAsState()
-    var picking by remember { mutableStateOf(false) }
     Box(
-        Modifier.size(48.dp).clip(CircleShape)
-            .combinedClickable(onClick = { actions.toggleHeart(track, hearted) }, onLongClick = { picking = true }),
+        Modifier.size(48.dp).clip(CircleShape).clickable { actions.toggleHeart(track, hearted) },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -59,7 +54,6 @@ fun HeartButton(track: Track, onColor: Color, offColor: Color, size: androidx.co
             tint = if (hearted) onColor else offColor, modifier = Modifier.size(size),
         )
     }
-    if (picking) HeartTargetDialog(onDismiss = { picking = false })
 }
 
 /** "the heart adds to…": liked songs or one of your playlists */
