@@ -169,51 +169,40 @@ class YouTubeProvider @Inject constructor(
         // youtube's quick way (skipped for a while after it keeps refusing) and NewPipe (java,
         // a second or two) start together; yt-dlp (a whole python, 30s+ on some phones) only
         // joins if neither has answered in a few seconds. first one with a link wins.
-        return kotlinx.coroutines.coroutineScope {
-            // a song whose quick link was cut off mid-play goes NewPipe → yt-dlp instead
-            val quickBlocked = locator.sourceId in slowOnly ||
-                (fastFailures.get() >= 3 && System.currentTimeMillis() < fastRetryAt)
-            val fast = async {
-                if (quickBlocked) null
-                else runCatching { music.audioStream(videoId) }.getOrNull().also { r ->
-                    if (r != null) fastFailures.set(0)
-                    else if (fastFailures.incrementAndGet() >= 3) fastRetryAt = System.currentTimeMillis() + 10 * 60 * 1000L
-                }
+        // a song whose quick link was cut off mid-play goes NewPipe → yt-dlp instead
+        val quickBlocked = locator.sourceId in slowOnly ||
+            (fastFailures.get() >= 3 && System.currentTimeMillis() < fastRetryAt)
+        val fast = racer {
+            if (quickBlocked) null
+            else runCatching { music.audioStream(videoId) }.getOrNull().also { r ->
+                if (r != null) fastFailures.set(0)
+                else if (fastFailures.incrementAndGet() >= 3) fastRetryAt = System.currentTimeMillis() + 10 * 60 * 1000L
             }
-            var pipeWhy = "no link"
-            val pipe = async {
-                runCatching { newPipe.audioStream(url) }
-                    .onFailure { pipeWhy = "${it.javaClass.simpleName}: ${it.message.orEmpty()}".take(90) }
-                    .getOrNull()
-                    .also { if (it == null && pipeWhy == "no link") pipeWhy = "link refused (403)" }
-            }
-            // community frontends (invidious / piped): they fetch from youtube themselves
-            val mirror = async { runCatching { frontends.audioStream(videoId) }.getOrNull() }
-            val quick = listOf(fast, pipe, mirror)
-            firstNonNull(quick, YTDLP_AFTER_MS)?.let { quick.forEach { it.cancel() }; return@coroutineScope it }
-            val slow = async { runCatching { super.resolveStream(locator) } }
-            val result = firstNonNull(quick + async { slow.await().getOrNull() }, Long.MAX_VALUE)
-            quick.forEach { it.cancel() }
-            slow.cancel()
+        }
+        var pipeWhy = "no link"
+        val pipe = racer {
+            runCatching { newPipe.audioStream(url) }
+                .onFailure { pipeWhy = "${it.javaClass.simpleName}: ${it.message.orEmpty()}".take(90) }
+                .getOrNull()
+                .also { if (it == null && pipeWhy == "no link") pipeWhy = "link refused (403)" }
+        }
+        // community frontends (invidious / piped / yt2009): they fetch from youtube themselves
+        val mirror = racer { frontends.audioStream(videoId) }
+        val quick = listOf(fast, pipe, mirror)
+        var slow: kotlinx.coroutines.Deferred<Result<StreamSource>>? = null
+        try {
+            firstNonNull(quick, YTDLP_AFTER_MS)?.let { return it }
+            val s = raceScope.async { runCatching { super.resolveStream(locator) } }
+            slow = s
+            val result = firstNonNull(quick + raceScope.async { s.await().getOrNull() })
             // when yt-dlp had to do it, say why the quick ways didn't (settings → playback log)
             val why = " (quick: ${if (quickBlocked) "skipped" else "refused"}; NewPipe: $pipeWhy)"
-            (result ?: slow.await().getOrThrow()).let { if (it.via == "yt-dlp") it.copy(via = it.via + why) else it }
+            return (result ?: s.await().getOrThrow()).let { if (it.via == "yt-dlp") it.copy(via = it.via + why) else it }
+        } finally {
+            quick.forEach { it.cancel() }
+            slow?.cancel()
         }
     }
-
-    /** the first non-null result of [jobs] within [timeoutMs], or null if all end empty or time runs out */
-    private suspend fun firstNonNull(jobs: List<kotlinx.coroutines.Deferred<StreamSource?>>, timeoutMs: Long): StreamSource? =
-        kotlinx.coroutines.withTimeoutOrNull(timeoutMs) {
-            val pending = jobs.toMutableList()
-            while (pending.isNotEmpty()) {
-                val (done, value) = kotlinx.coroutines.selects.select<Pair<kotlinx.coroutines.Deferred<StreamSource?>, StreamSource?>> {
-                    pending.forEach { d -> d.onAwait { d to it } }
-                }
-                if (value != null) return@withTimeoutOrNull value
-                pending -= done
-            }
-            null
-        }
 
     override suspend fun artistTracks(artistId: String, limit: Int): List<Track> =
         music.artist(artistId)?.popular.orEmpty().take(limit)

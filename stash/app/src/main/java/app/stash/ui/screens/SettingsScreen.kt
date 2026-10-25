@@ -11,6 +11,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -239,14 +247,13 @@ fun SettingsScreen() {
                     }
                     if (open) {
                         if (log.isEmpty()) Text("Play something first.", style = MaterialTheme.typography.bodySmall)
-                        log.forEach { e ->
-                            Text(
-                                "${"%.1f".format(e.ms / 1000.0)}s · ${e.via} · ${e.title}" + (e.error?.let { " · $it" } ?: ""),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (e.error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 4,
-                            )
-                        }
+                        val starts = log.filter { it.via == "▶ playing" }
+                        if (starts.isNotEmpty()) Text(
+                            "Songs start in ${"%.1f".format(starts.map { it.ms }.average() / 1000)}s on average " +
+                                "(${starts.size} played, ${log.count { it.error != null }} failed)",
+                            style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        log.forEach { e -> LogRow(e) }
                     }
                 }
             }
@@ -453,6 +460,32 @@ private fun AccountCard(vm: SettingsViewModel, email: String, lastBackupAt: Long
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             message?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+        }
+    }
+}
+
+/** one playback log line: a time pill (green quick, amber slow, red failed), the song, where it came from */
+@Composable
+private fun LogRow(e: app.stash.providers.Resolver.LogEntry) {
+    val secs = e.ms / 1000.0
+    val pill = when {
+        e.error != null -> MaterialTheme.colorScheme.error
+        secs < 5 -> Color(0xFF2E7D32)
+        secs < 15 -> Color(0xFFB26A00)
+        else -> Color(0xFFC62828)
+    }
+    Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.width(58.dp).clip(RoundedCornerShape(50)).background(pill.copy(alpha = 0.2f)).padding(vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) { Text(if (e.error != null) "failed" else "%.1fs".format(secs), style = MaterialTheme.typography.labelMedium, color = pill) }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(e.title, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                e.error ?: e.via, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                color = if (e.error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

@@ -4,6 +4,7 @@ import android.graphics.drawable.BitmapDrawable
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -72,7 +73,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -81,6 +84,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import androidx.palette.graphics.Palette
 import app.stash.data.calm
@@ -204,12 +208,31 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor = base,
     ) {
+        // lyrics sit on the cover's own color, like spotify's lyrics card; dark enough for white text
+        val lyricsBg by animateColorAsState(
+            dominant?.let { d -> androidx.compose.ui.graphics.lerp(d, Color.Black, if (d.luminance() > 0.4f) 0.55f else 0.3f) }
+                ?: scheme.surfaceContainerHigh,
+            label = "lyricsBg",
+        )
         Box(
-            Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(top, base, base)))
+            Modifier.fillMaxSize().background(if (showLyrics) lyricsBg else base)
         ) {
+            if (!showLyrics) {
+                // the cover itself, blurred big behind everything (android 12+ can blur), then the color wash
+                if (android.os.Build.VERSION.SDK_INT >= 31 && state.artworkUri != null) coil.compose.AsyncImage(
+                    model = state.artworkUri, contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().blur(70.dp).graphicsLayer { alpha = 0.6f },
+                )
+                Box(
+                    Modifier.fillMaxSize().background(
+                        Brush.verticalGradient(listOf(top.copy(alpha = 0.55f), base.copy(alpha = 0.8f), base))
+                    )
+                )
+            }
             when {
                 showQueue -> QueueView(state, accent, onClose = { showQueue = false })
-                showLyrics -> LyricsView(state, accent, onClose = { showLyrics = false })
+                showLyrics -> LyricsView(state, lyricsBg, onClose = { showLyrics = false })
                 showRelated -> RelatedView(state, accent, onClose = { showRelated = false })
                 else -> NowPlayingContent(
                     state, accent, onCollapse = onDismiss, onQueue = { showQueue = true }, onLyrics = { showLyrics = true },
@@ -421,11 +444,11 @@ private fun QueueView(state: PlayerUiState, accent: Color, onClose: () -> Unit) 
 }
 
 /**
- * live lyrics (lrclib.net): the line being sung lit up in the cover's color and kept in view,
- * the rest dimmed, tap a line to jump there. unsynced lyrics just scroll.
+ * live lyrics, spotify style: big bold lines on the cover's color, what's been sung white, what's
+ * coming dimmed, the current line kept in view. tap a line to jump there. unsynced lyrics just scroll.
  */
 @Composable
-private fun LyricsView(state: PlayerUiState, accent: Color, onClose: () -> Unit) {
+private fun LyricsView(state: PlayerUiState, bg: Color, onClose: () -> Unit) {
     val actions = LocalActions.current
     val settings by actions.settings.collectAsState()
     val mxm = settings?.lyricsMusixmatch == true
@@ -455,76 +478,111 @@ private fun LyricsView(state: PlayerUiState, accent: Color, onClose: () -> Unit)
     val (pos, _) = rememberPosition(everyMs = 200)
     val lines = lyrics?.lines.orEmpty()
     val current = remember(pos, lines) { lines.indexOfLast { it.first <= pos + 300 } }
-    val list = androidx.compose.foundation.lazy.rememberLazyListState()
+    val list = rememberLazyListState()
     LaunchedEffect(current) {
         if (current >= 0) list.animateScrollToItem((current - 2).coerceAtLeast(0))
     }
+    val sung = Color.White
+    val coming = Color.Black.copy(alpha = 0.5f)
+    val big = MaterialTheme.typography.headlineMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, lineHeight = 36.sp)
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Back") }
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+        Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Back", tint = Color.White) }
             Column(Modifier.weight(1f)) {
-                Text(state.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(state.title, style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    listOfNotNull(state.artist, lyrics?.source?.let { "lyrics: $it" }).joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    state.artist, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.75f),
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
             }
             // translation on / off right here (also in settings)
-            androidx.compose.material3.FilterChip(
-                selected = translateOn,
+            Surface(
                 onClick = { actions.setLyricsTranslate(!translateOn) },
-                label = { Text(if (translating) "Translating…" else "Translate") },
-                leadingIcon = { Icon(Icons.Rounded.Translate, null, Modifier.size(16.dp)) },
-            )
-        }
-        if (translateOn && !translating && translated == null && lyrics != null) Text(
-            "No translation available for this one",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        when {
-            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = accent) }
-            lyrics == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No lyrics found for this one", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            lines.isEmpty() -> androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize().padding(top = 16.dp)) {
-                val plainLines = lyrics!!.plain.orEmpty().lines()
-                items(plainLines.size) { i ->
-                    Text(plainLines[i], style = MaterialTheme.typography.headlineSmall)
-                    translated?.getOrNull(i)?.let {
-                        Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Spacer(Modifier.height(6.dp))
+                shape = RoundedCornerShape(50),
+                color = if (translateOn) Color.White else Color.Black.copy(alpha = 0.25f),
+                contentColor = if (translateOn) Color.Black else Color.White,
+            ) {
+                Row(Modifier.padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.Translate, null, Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (translating) "Translating…" else "Translate", style = MaterialTheme.typography.labelLarge)
                 }
             }
-            else -> androidx.compose.foundation.lazy.LazyColumn(
-                state = list, modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 24.dp, bottom = 240.dp),
-            ) {
-                items(lines.size) { i ->
-                    val (at, text) = lines[i]
-                    val now = i == current
-                    val color by animateColorAsState(
-                        when {
-                            now -> accent
-                            i < current -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-                            else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
-                        },
-                        label = "line",
+        }
+        if (translateOn && !translating && translated == null && lyrics != null) Text(
+            "No translation for this one",
+            style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f),
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            when {
+                loading -> LyricsPlaceholder()
+                lyrics == null -> Column(Modifier.align(Alignment.Center).padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Rounded.Lyrics, null, Modifier.size(48.dp), tint = Color.White.copy(alpha = 0.6f))
+                    Spacer(Modifier.height(12.dp))
+                    Text("No lyrics for this one", style = MaterialTheme.typography.titleLarge, color = Color.White)
+                    Text(
+                        "Neither LRCLIB nor Musixmatch has it, or they didn't answer in time.",
+                        style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 4.dp),
                     )
-                    Column(Modifier.fillMaxWidth().clickable { actions.player.seekTo(at) }.padding(vertical = 10.dp)) {
-                        Text(
-                            text.ifBlank { "♪" },
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = if (now) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.SemiBold,
-                            color = color,
-                        )
-                        translated?.getOrNull(i)?.let { tr ->
-                            Text(tr, style = MaterialTheme.typography.titleMedium, color = color.copy(alpha = color.alpha * 0.8f))
+                }
+                lines.isEmpty() -> LazyColumn(
+                    Modifier.fillMaxSize(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 80.dp),
+                ) {
+                    val plainLines = lyrics!!.plain.orEmpty().lines()
+                    items(plainLines.size) { i ->
+                        Text(plainLines[i], style = big, color = sung)
+                        translated?.getOrNull(i)?.let {
+                            Text(it, style = MaterialTheme.typography.titleMedium, color = Color.White.copy(alpha = 0.7f))
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+                else -> LazyColumn(
+                    state = list, modifier = Modifier.fillMaxSize(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 280.dp),
+                ) {
+                    items(lines.size) { i ->
+                        val (at, text) = lines[i]
+                        val color by animateColorAsState(if (i <= current) sung else coming, label = "line")
+                        Column(
+                            Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small)
+                                .clickable { actions.player.seekTo(at) }.padding(vertical = 8.dp)
+                        ) {
+                            Text(text.ifBlank { "♪" }, style = big, color = color)
+                            translated?.getOrNull(i)?.let { tr ->
+                                Text(tr, style = MaterialTheme.typography.titleMedium, color = color.copy(alpha = color.alpha * 0.75f))
+                            }
                         }
                     }
                 }
             }
+            // soft fade at the top and bottom edges, so lines slide in instead of being cut
+            Box(Modifier.fillMaxWidth().height(24.dp).align(Alignment.TopCenter).background(Brush.verticalGradient(listOf(bg, Color.Transparent))))
+        }
+        lyrics?.source?.let {
+            Text(
+                "Lyrics from $it", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.6f),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+            )
+        }
+    }
+}
+
+/** pulsing bars where the lines will be, instead of a lone spinner */
+@Composable
+private fun LyricsPlaceholder() {
+    val pulse by androidx.compose.animation.core.rememberInfiniteTransition(label = "pulse").animateFloat(
+        0.12f, 0.28f,
+        androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(800), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "a",
+    )
+    Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        listOf(0.8f, 0.6f, 0.9f, 0.5f, 0.75f, 0.65f, 0.85f).forEach { w ->
+            Box(Modifier.fillMaxWidth(w).height(26.dp).clip(RoundedCornerShape(8.dp)).background(Color.White.copy(alpha = pulse)))
         }
     }
 }

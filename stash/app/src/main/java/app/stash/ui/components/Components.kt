@@ -211,7 +211,7 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: (@Compos
         modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 20.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
         action?.invoke()
     }
 }
@@ -259,7 +259,8 @@ fun CoverCard(
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        // no box around it, just the cover and its name, like spotify
+        color = Color.Transparent,
         modifier = modifier.width(size + 16.dp),
     ) {
         Column(Modifier.padding(8.dp)) {
