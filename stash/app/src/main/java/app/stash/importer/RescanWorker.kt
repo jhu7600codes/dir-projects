@@ -64,7 +64,7 @@ class RescanWorker @AssistedInject constructor(
                     gate.withPermit {
                         if (isStopped) return@withPermit
                         if (due()) setProgress(progress(done.get(), missing.size, found.get(), "${u.artist} - ${u.title}", foundNames))
-                        val hit = runCatching { resolver.match(u.title, u.artist, u.durationMs, u.album, names[u.playlistId]) }.getOrNull()
+                        val hit = runCatching { resolver.match(u.title, u.artist, u.durationMs, u.album, names[u.playlistId], loose = true) }.getOrNull()
                         if (hit != null) {
                             place(u, hit)
                             found.incrementAndGet()

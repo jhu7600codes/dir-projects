@@ -207,6 +207,19 @@ object Matcher {
         "best", "liked", "favorites", "favourites", "tracks", "gaming", "and", "for", "in", "on",
     )
 
+    /**
+     * a 3-5 letter word of [short] that's the initials of words next to each other in [long]:
+     * "UTG" and "untitled tag game", "PJSK" and "project sekai…" style abbreviations
+     */
+    fun acronymMatch(short: String, long: String): Boolean {
+        val abbreviations = words(short, false).split(' ').filter { it.length in 3..5 && it.all(Char::isLetter) }.toSet()
+        if (abbreviations.isEmpty()) return false
+        val seq = words(long, false).split(' ').filter { it.isNotEmpty() }
+        return abbreviations.any { a ->
+            seq.indices.any { i -> i + a.length <= seq.size && (0 until a.length).all { k -> seq[i + k].first() == a[k] } }
+        }
+    }
+
     /** the words of [name] as written (not romanized), keeping only [keep]'s ones, for searching */
     fun originalWords(name: String, keep: Set<String>): String =
         name.split(Regex("""\s+""")).filter { w -> tokens(w).any { it in keep } }.joinToString(" ")
@@ -249,7 +262,10 @@ object Matcher {
         var onlyAlbum = false
         if (artistScore == 0.0 && album != null) {
             val albumWords = distinctiveWords(album) - wantTitle
-            if (albumWords.isNotEmpty() && share(albumWords, haveAll) >= 0.5) {
+            val text = candidate.title + " " + candidate.artist + " " + extra.orEmpty()
+            // "utg" in the playlist name finds "untitled tag game" uploads, and the other way round
+            val shortHit = acronymMatch(album, text) || acronymMatch(text, album)
+            if (shortHit || albumWords.isNotEmpty() && share(albumWords, haveAll) >= 0.5) {
                 artistScore = 0.5
                 onlyAlbum = true
             }
@@ -483,12 +499,30 @@ class Resolver @Inject constructor(
      * uploaded under the game's name ("untitled tag game OST: B0MB!!") rather than the artist's,
      * so the playlist name is searched with and counts like an album word.
      */
-    suspend fun match(title: String, artist: String, durationMs: Long, album: String? = null, context: String? = null): Track? {
+    suspend fun match(
+        title: String, artist: String, durationMs: Long, album: String? = null, context: String? = null, loose: Boolean = false,
+    ): Track? {
+        val seen = mutableListOf<SearchHit>()
+        val hit = matchStrict(title, artist, durationMs, album, context, seen)
+        if (hit != null || !loose) return hit
+        // a rescan, so everything above already failed once: the same candidates, ignoring the
+        // length (the spotify version is often a different cut than the youtube upload). the
+        // title and the artist (or the playlist's game) still have to be there
+        val hint = listOfNotNull(album, context).joinToString(" ").ifBlank { null }
+        return seen.distinctBy { it.track.id }
+            .map { h -> h.track to Matcher.score(h.track, title, artist, 0, hint, h.byline ?: h.uploader?.name) }
+            .filter { it.second >= Matcher.ACCEPT }
+            .maxByOrNull { it.second }?.first
+    }
+
+    private suspend fun matchStrict(
+        title: String, artist: String, durationMs: Long, album: String?, context: String?, seen: MutableList<SearchHit>,
+    ): Track? {
         val providers = registry.active()
         val hint = listOfNotNull(album, context).joinToString(" ").ifBlank { null }
         val main = "${Matcher.primaryArtist(artist)} $title".trim()
         for (provider in providers) {
-            val hit = runCatching { pick(provider.matchCandidates(main, title), title, artist, durationMs, hint) }
+            val hit = runCatching { pick(provider.matchCandidates(main, title).also { seen += it }, title, artist, durationMs, hint) }
                 .onFailure { Log.w(TAG, "match via ${provider.id} failed", it) }
                 .getOrNull()
             if (hit != null) return hit
@@ -497,13 +531,13 @@ class Resolver @Inject constructor(
         val bare = Matcher.stripForSearch(title)
         // (vocadb already searched by the bare title above)
         for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
-            val hit = runCatching { pick(provider.matchCandidates(bare, bare), title, artist, durationMs, hint) }.getOrNull()
+            val hit = runCatching { pick(provider.matchCandidates(bare, bare).also { seen += it }, title, artist, durationMs, hint) }.getOrNull()
             if (hit != null) return hit
         }
         val albumWords = album?.replace(Regex("""\s*[(\[].*?[)\]]"""), "")?.substringBefore(" - ")?.trim()
         if (!albumWords.isNullOrBlank() && !albumWords.equals(title, ignoreCase = true)) {
             for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
-                val hit = runCatching { pick(provider.matchCandidates("$title $albumWords"), title, artist, durationMs, hint) }
+                val hit = runCatching { pick(provider.matchCandidates("$title $albumWords").also { seen += it }, title, artist, durationMs, hint) }
                     .getOrNull()
                 if (hit != null) return hit
             }
@@ -513,7 +547,7 @@ class Resolver @Inject constructor(
         if (contextWords.isNotEmpty()) {
             val q = "$bare ${Matcher.originalWords(context!!, contextWords)}"
             for (provider in providers.filter { it.id == "youtube" || it.id == "soundcloud" }) {
-                val hit = runCatching { pick(provider.matchCandidates(q), title, artist, durationMs, hint) }.getOrNull()
+                val hit = runCatching { pick(provider.matchCandidates(q).also { seen += it }, title, artist, durationMs, hint) }.getOrNull()
                 if (hit != null) return hit
             }
         }

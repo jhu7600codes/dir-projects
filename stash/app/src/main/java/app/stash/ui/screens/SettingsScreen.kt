@@ -278,6 +278,16 @@ fun SettingsScreen() {
                 )
             }
 
+            item {
+                val target by actions.heartTarget.collectAsState()
+                var picking by remember { mutableStateOf(false) }
+                ListItem(
+                    headlineContent = { Text("Heart button") },
+                    supportingContent = { Text("Adds songs to ${target?.name ?: "Liked songs"}. Long-press any heart to change it too.") },
+                    modifier = Modifier.clickable { picking = true },
+                )
+                if (picking) app.stash.ui.components.HeartTargetDialog(onDismiss = { picking = false })
+            }
             item { SectionHeader("Lyrics") }
             item {
                 SwitchRow(

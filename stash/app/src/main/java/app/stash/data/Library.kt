@@ -51,6 +51,12 @@ class Library @Inject constructor(
         addToPlaylist(id, items).join()
     }
 
+    /** takes every copy of [track] out of the playlist */
+    fun removeTrackFromPlaylist(playlistId: Long, track: Track) = scope.launch {
+        playlists.removeTrack(playlistId, track.id)
+        playlists.touch(playlistId)
+    }
+
     fun removeFromPlaylist(playlistId: Long, position: Int) = scope.launch {
         playlists.removeAt(playlistId, position)
         playlists.touch(playlistId)

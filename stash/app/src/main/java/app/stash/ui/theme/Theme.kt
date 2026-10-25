@@ -18,75 +18,94 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import app.stash.data.prefs.ThemeMode
 
-// static fallback for android < 12: the lavender from the icon
+// stash's own look (dynamic wallpaper colors are an option in settings): near-black with a
+// violet-to-pink accent, the colors of the icon. the light theme is the same, inverted.
 private val LightScheme = lightColorScheme(
-    primary = Color(0xFF6A4FB0),
+    primary = Color(0xFF6B3FE0),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE9DDFF),
-    onPrimaryContainer = Color(0xFF23005C),
-    secondary = Color(0xFF635B70),
-    secondaryContainer = Color(0xFFE9DEF8),
-    onSecondaryContainer = Color(0xFF1F182B),
-    tertiary = Color(0xFF7E525D),
-    tertiaryContainer = Color(0xFFFFD9E1),
-    onTertiaryContainer = Color(0xFF31101B),
-    background = Color(0xFFFEF7FF),
-    surface = Color(0xFFFEF7FF),
-    surfaceVariant = Color(0xFFE7E0EB),
+    primaryContainer = Color(0xFFE6DCFF),
+    onPrimaryContainer = Color(0xFF22005D),
+    inversePrimary = Color(0xFFC4B0FF),
+    secondary = Color(0xFFC2185B),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFFD9E4),
+    onSecondaryContainer = Color(0xFF3E0020),
+    tertiary = Color(0xFF00897B),
+    tertiaryContainer = Color(0xFFCDEFEA),
+    onTertiaryContainer = Color(0xFF00201C),
+    background = Color(0xFFFBFAFE),
+    onBackground = Color(0xFF121216),
+    surface = Color(0xFFFBFAFE),
+    onSurface = Color(0xFF121216),
+    onSurfaceVariant = Color(0xFF5D5B66),
+    surfaceVariant = Color(0xFFE7E5EE),
+    outline = Color(0xFF8E8B98),
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFF8F1FA),
-    surfaceContainer = Color(0xFFF2ECF4),
-    surfaceContainerHigh = Color(0xFFECE6EE),
-    surfaceContainerHighest = Color(0xFFE6E0E9),
+    surfaceContainerLow = Color(0xFFF5F3FA),
+    surfaceContainer = Color(0xFFEFEDF5),
+    surfaceContainerHigh = Color(0xFFE9E7F0),
+    surfaceContainerHighest = Color(0xFFE2E0EA),
 )
 
 private val DarkScheme = darkColorScheme(
-    primary = Color(0xFFD0BCFF),
-    onPrimary = Color(0xFF3B1F80),
-    primaryContainer = Color(0xFF523797),
-    onPrimaryContainer = Color(0xFFE9DDFF),
-    secondary = Color(0xFFCDC2DB),
-    secondaryContainer = Color(0xFF4B4358),
-    onSecondaryContainer = Color(0xFFE9DEF8),
-    tertiary = Color(0xFFF0B7C5),
-    tertiaryContainer = Color(0xFF643B46),
-    onTertiaryContainer = Color(0xFFFFD9E1),
-    background = Color(0xFF141218),
-    surface = Color(0xFF141218),
-    surfaceVariant = Color(0xFF49454E),
-    surfaceContainerLowest = Color(0xFF0F0D13),
-    surfaceContainerLow = Color(0xFF1D1B20),
-    surfaceContainer = Color(0xFF211F26),
-    surfaceContainerHigh = Color(0xFF2B2930),
-    surfaceContainerHighest = Color(0xFF36343B),
+    primary = Color(0xFFB9A2FF),
+    onPrimary = Color(0xFF250A6B),
+    primaryContainer = Color(0xFF3F2A86),
+    onPrimaryContainer = Color(0xFFE6DCFF),
+    inversePrimary = Color(0xFF6B3FE0),
+    secondary = Color(0xFFFF84B4),
+    onSecondary = Color(0xFF4A0025),
+    secondaryContainer = Color(0xFF5E1A3B),
+    onSecondaryContainer = Color(0xFFFFD9E4),
+    tertiary = Color(0xFF5FDBC9),
+    tertiaryContainer = Color(0xFF0E3D37),
+    onTertiaryContainer = Color(0xFFB8F5EC),
+    background = Color(0xFF09090C),
+    onBackground = Color(0xFFF2F1F6),
+    surface = Color(0xFF09090C),
+    onSurface = Color(0xFFF2F1F6),
+    onSurfaceVariant = Color(0xFFA9A7B3),
+    surfaceVariant = Color(0xFF2A2933),
+    outline = Color(0xFF6E6C78),
+    surfaceContainerLowest = Color(0xFF050507),
+    surfaceContainerLow = Color(0xFF111116),
+    surfaceContainer = Color(0xFF17171E),
+    surfaceContainerHigh = Color(0xFF1F1F28),
+    surfaceContainerHighest = Color(0xFF292933),
 )
 
-// bigger, rounder corners than the m3 defaults for the expressive look
+// tighter corners than before, closer to spotify's covers and cards
 val StashShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(36.dp),
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(30.dp),
 )
 
 private val base = Typography()
+// heavy, tight headlines and bold titles: big confident type, like spotify's
 val StashTypography = Typography(
-    displaySmall = base.displaySmall.copy(fontWeight = FontWeight.SemiBold),
-    headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.SemiBold),
-    headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
-    headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
-    titleLarge = base.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+    displayLarge = base.displayLarge.copy(fontWeight = FontWeight.Black, letterSpacing = (-1).sp),
+    displayMedium = base.displayMedium.copy(fontWeight = FontWeight.Black, letterSpacing = (-0.5).sp),
+    displaySmall = base.displaySmall.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
+    headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
+    headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp),
+    headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.Bold),
+    titleLarge = base.titleLarge.copy(fontWeight = FontWeight.Bold),
     titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+    titleSmall = base.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+    labelLarge = base.labelLarge.copy(fontWeight = FontWeight.SemiBold),
 )
 
 @Composable
 fun StashTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val dark = when (themeMode) {

@@ -1,5 +1,21 @@
 package app.stash.ui
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -11,6 +27,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Search
@@ -46,6 +63,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.stash.providers.RemoteArtist
+import app.stash.ui.components.CreateSheet
 import app.stash.ui.player.MiniPlayer
 import app.stash.ui.player.NowPlayingSheet
 import app.stash.ui.screens.AlbumScreen
@@ -112,6 +130,7 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
     // so position / buffering updates don't redraw the whole app
     val currentId by app.player.currentId.collectAsState()
     var showPlayer by rememberSaveable { mutableStateOf(false) }
+    var creating by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { app.messages.collect { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(it) } }
     LaunchedEffect(Unit) { navRequests.collect { nav.navigate(it) { launchSingleTop = true } } }
@@ -151,22 +170,29 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                         val player by app.player.state.collectAsState()
                         MiniPlayer(state = player, onOpen = { showPlayer = true })
                     }
-                    NavigationBar {
+                    // spotify-style bar: no pill, the page fading into it, the picked tab bright
+                    val bg = MaterialTheme.colorScheme.background
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .background(Brush.verticalGradient(listOf(bg.copy(alpha = 0.92f), bg)))
+                            .navigationBarsPadding()
+                            .height(62.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         tabs.forEach { tab ->
                             val selected = backStack?.destination?.hierarchy?.any { it.route == tab.route } == true
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    nav.navigate(tab.route) {
-                                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
-                                label = { Text(tab.label) },
-                            )
+                            BarItem(
+                                if (selected) tab.selectedIcon else tab.icon, tab.label, selected, Modifier.weight(1f),
+                            ) {
+                                nav.navigate(tab.route) {
+                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
                         }
+                        // spotify's create button: not a page, a menu of ways to make something
+                        BarItem(Icons.Rounded.Add, "Create", creating, Modifier.weight(1f)) { creating = true }
                     }
                 }
             },
@@ -213,9 +239,34 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
             }
         }
 
+        if (creating) CreateSheet(onDismiss = { creating = false })
         if (showPlayer && currentId != null) {
             val player by app.player.state.collectAsState()
             NowPlayingSheet(state = player, onDismiss = { showPlayer = false })
         }
+    }
+}
+
+@Composable
+private fun BarItem(icon: ImageVector, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val color by androidx.compose.animation.animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+        label = "tab",
+    )
+    val scale by androidx.compose.animation.core.animateFloatAsState(if (selected) 1.08f else 1f, label = "tabScale")
+    Column(
+        modifier.fillMaxHeight().clickable(
+            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+            indication = null, onClick = onClick,
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(icon, null, tint = color, modifier = Modifier.size(26.dp).graphicsLayer { scaleX = scale; scaleY = scale })
+        Spacer(Modifier.height(3.dp))
+        Text(
+            label, color = color, style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+        )
     }
 }

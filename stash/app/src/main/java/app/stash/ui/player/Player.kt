@@ -149,13 +149,9 @@ fun MiniPlayer(state: PlayerUiState, onOpen: () -> Unit) {
                     )
                 }
                 track?.let { t ->
-                    IconButton(onClick = { actions.setLiked(t, !t.liked) }) {
-                        Icon(
-                            if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                            if (t.liked) "Remove from liked songs" else "Add to liked songs",
-                            tint = if (t.liked) scheme.primary.takeIf { bg.luminance() > 0.2f } ?: scheme.inversePrimary else fg,
-                        )
-                    }
+                    app.stash.ui.components.HeartButton(
+                        t, onColor = scheme.primary.takeIf { bg.luminance() > 0.2f } ?: scheme.inversePrimary, offColor = fg,
+                    )
                 }
                 IconButton(onClick = { actions.player.togglePlay() }) {
                     if (state.isBuffering && !state.isPlaying) {
@@ -319,12 +315,7 @@ private fun NowPlayingContent(
                         else -> Icon(Icons.Rounded.Download, "Download")
                     }
                 }
-                IconButton(onClick = { actions.setLiked(t, !t.liked) }) {
-                    Icon(
-                        if (t.liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, "Like",
-                        tint = if (t.liked) accent else MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+                app.stash.ui.components.HeartButton(t, onColor = accent, offColor = MaterialTheme.colorScheme.onSurface, size = 26.dp)
             }
         }
 

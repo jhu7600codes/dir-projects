@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -103,6 +106,33 @@ class AppViewModel @Inject constructor(
 
     fun setLiked(track: Track, liked: Boolean) = library.setLiked(track, liked)
 
+    /** the playlist the heart button fills, null = liked songs (settings, or long-press a heart) */
+    val heartTarget: StateFlow<PlaylistWithCount?> = kotlinx.coroutines.flow.combine(playlists, settings) { all, s ->
+        s?.heartPlaylist?.let { id -> all.firstOrNull { it.id == id } }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** is the heart filled for [trackId]: liked, or in the heart's playlist */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    fun hearted(trackId: String): kotlinx.coroutines.flow.Flow<Boolean> =
+        heartTarget.map { it?.id }.distinctUntilChanged().flatMapLatest { id ->
+            if (id == null) library.tracks.observe(trackId).map { it?.liked == true }
+            else library.playlists.observeContains(id, trackId)
+        }.distinctUntilChanged()
+
+    fun toggleHeart(track: Track, hearted: Boolean) {
+        val target = heartTarget.value
+        when {
+            target == null -> setLiked(track, !hearted)
+            hearted -> { library.removeTrackFromPlaylist(target.id, track); toast("Removed from ${target.name}") }
+            else -> { library.addToPlaylist(target.id, listOf(track)); toast("Added to ${target.name}") }
+        }
+    }
+
+    fun setHeartTarget(playlist: PlaylistWithCount?) {
+        viewModelScope.launch { prefs.setHeartPlaylist(playlist?.id) }
+        toast("The heart now adds to ${playlist?.name ?: "Liked songs"}")
+    }
+
     /** youtube music's radio for a song, for the player's "similar songs" */
     suspend fun similarTo(track: Track): List<Track> = recommender.radioFor(track)
 
@@ -114,6 +144,17 @@ class AppViewModel @Inject constructor(
     val pinned: StateFlow<List<PlaylistWithCount>> = kotlinx.coroutines.flow.combine(playlists, settings) { all, s ->
         s?.pinnedPlaylists.orEmpty().mapNotNull { id -> all.firstOrNull { it.id == id } }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** the library's playlists: made-for-you mixes only once saved */
+    val libraryPlaylists: StateFlow<List<PlaylistWithCount>> = kotlinx.coroutines.flow.combine(playlists, settings) { all, s ->
+        val saved = s?.savedMixes.orEmpty()
+        all.filter { it.origin != "mix" || it.originId in saved }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun setMixSaved(mixId: String, saved: Boolean) {
+        viewModelScope.launch { prefs.setMixSaved(mixId, saved) }
+        toast(if (saved) "Saved to your library" else "Removed from your library")
+    }
 
     fun isPinned(id: Long) = settings.value?.pinnedPlaylists?.contains(id) == true
 

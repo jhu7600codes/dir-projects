@@ -34,7 +34,7 @@ enum class DownloadQuality(val label: String, val about: String, val ytFormat: S
 
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val dynamicColor: Boolean = true,
+    val dynamicColor: Boolean = false,
     val wifiOnlyDownloads: Boolean = false,
     val disabledProviders: Set<String> = emptySet(),
     val jamendoClientId: String = "",
@@ -59,6 +59,10 @@ data class AppSettings(
     val recentSearches: List<String> = emptyList(),
     /** playlists pinned to the top of home and the library, in the order they were pinned */
     val pinnedPlaylists: List<Long> = emptyList(),
+    /** made-for-you mixes (by their mix id, "daily-1", "artist-…") saved to the library; the rest stay on home only */
+    val savedMixes: Set<String> = emptySet(),
+    /** where the heart button puts songs: null = liked songs, else that playlist */
+    val heartPlaylist: Long? = null,
 )
 
 @Singleton
@@ -69,6 +73,8 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val wifiOnly = booleanPreferencesKey("wifi_only")
         val disabled = stringSetPreferencesKey("disabled_providers")
         val pinned = stringPreferencesKey("pinned_playlists")
+        val savedMixes = stringSetPreferencesKey("saved_mixes")
+        val heart = longPreferencesKey("heart_playlist")
         val jamendo = stringPreferencesKey("jamendo_client_id")
         val apple = stringPreferencesKey("apple_dev_token")
         val ytUpdated = longPreferencesKey("ytdlp_updated")
@@ -97,7 +103,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
 
     private fun Preferences.toSettings() = AppSettings(
         themeMode = this[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
-        dynamicColor = this[Keys.dynamic] ?: true,
+        dynamicColor = this[Keys.dynamic] ?: false,
         wifiOnlyDownloads = this[Keys.wifiOnly] ?: false,
         disabledProviders = this[Keys.disabled] ?: emptySet(),
         jamendoClientId = this[Keys.jamendo] ?: "",
@@ -113,6 +119,8 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         lyricsTranslate = this[Keys.translate] ?: false,
         translateTo = this[Keys.translateTo] ?: "",
         recentSearches = this[Keys.recent]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),
+        savedMixes = this[Keys.savedMixes] ?: emptySet(),
+        heartPlaylist = this[Keys.heart]?.takeIf { it > 0 },
         pinnedPlaylists = this[Keys.pinned]?.split(',')?.mapNotNull { it.toLongOrNull() } ?: emptyList(),
         downloadQuality = this[Keys.quality]?.let { runCatching { DownloadQuality.valueOf(it) }.getOrNull() } ?: DownloadQuality.BALANCED,
     )
@@ -145,6 +153,14 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         val now = it[Keys.pinned]?.split(',')?.mapNotNull { s -> s.toLongOrNull() }.orEmpty() - playlistId
         it[Keys.pinned] = (if (pinned) now + playlistId else now).joinToString(",")
     }
+
+    suspend fun setMixSaved(mixId: String, saved: Boolean) = store.edit {
+        val now = it[Keys.savedMixes].orEmpty()
+        it[Keys.savedMixes] = if (saved) now + mixId else now - mixId
+    }
+
+    /** null = liked songs */
+    suspend fun setHeartPlaylist(id: Long?) = store.edit { it[Keys.heart] = id ?: 0L }
 
     suspend fun setDownloadQuality(q: DownloadQuality) = store.edit { it[Keys.quality] = q.name }
     suspend fun setAutoplay(on: Boolean) = store.edit { it[Keys.autoplay] = on }

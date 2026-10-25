@@ -157,6 +157,13 @@ Implement `MusicProvider` (search, resolveStream, metadata, downloadSource) and 
 
 Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Classic) do it: Google's own sign-in page in a WebView with a desktop Chrome identity and WebView's `X-Requested-With` header turned off (Google's main "this browser may not be secure" signal). Once youtube.com's cookies hold a session (`SAPISID`), they're written as a Netscape `cookies.txt` that yt-dlp gets with `--cookies`, so songs YouTube won't hand out anonymously still play. Search, artist pages and the catalog stay anonymous. If Google won't allow the login in a WebView, "Paste cookies instead" takes a cookie export (Cookie-Editor's header string, a Netscape cookies.txt or its JSON), with step-by-step instructions on the screen. Without a login, yt-dlp skips the watch page and client config requests (`player_skip=webpage,configs`) to get to the audio faster.
 
+## Create, heart, made for you
+
+- The bottom bar has Home, Search, Your library and **Create**. Create opens a menu: create a playlist, move playlists (import), find missing songs (rescan), get playlist covers (Exportify), and where the heart adds songs.
+- The **heart** adds to liked songs by default, or to any playlist you pick (Create → Heart button, Settings, or long-press any heart). It's filled when the song is in that playlist.
+- **Made-for-you** mixes (daily mixes, "This is" artist mixes, genre mixes, discover, rewind) live on home only; open one and pick "Save to your library" to keep it in the library.
+- Rescans (Create → Find missing songs) end with a looser pass over the same results that ignores length, and "UTG" in a playlist name counts as "untitled tag game" in an upload (any 3-5 letter abbreviation, both ways).
+
 ## WebView player (last resort)
 
 When a song fails every source (and its one slow retry), the player pauses and asks: "Song can't be loaded, we can use a WebView to deliver it." Yes plays it from music.youtube.com in a hidden WebView (desktop Chrome identity, the YouTube login's cookies shared into it, given a 1280x720 size so the page builds its player). A bit of JavaScript twice a second keeps it playing or paused as asked, skips ads, opens the first result when the song had no YouTube match and only a search could be loaded, and reports position and length, so the player screen, seek bar and play button drive it like any song. When YouTube Music moves on to its own next video, the queue moves on. No answer in 30 seconds, or Skip, goes to the next song like before. It plays inside the WebView, so it can't be downloaded or sent through the equalizer.
