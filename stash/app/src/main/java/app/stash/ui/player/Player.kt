@@ -328,6 +328,11 @@ private fun NowPlayingContent(
             }
         }
 
+        if (state.viaWeb) Text(
+            if (state.isBuffering) "Loading in the WebView (music.youtube.com)…" else "Playing through the WebView (music.youtube.com)",
+            color = accent, style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        )
         state.error?.let {
             Text("Can't play this one: $it", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp), maxLines = 2)
