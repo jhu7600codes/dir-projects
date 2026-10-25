@@ -3,13 +3,8 @@ package app.stash.providers
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.selects.select
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -88,19 +83,8 @@ class Frontends @Inject constructor(
      * a playable audio link for [videoId] from whichever instance answers first with one that
      * plays: invidious / piped in waves, and yt2009 alongside (slower: it serves its own cached mp4s)
      */
-    suspend fun audioStream(videoId: String): StreamSource? = coroutineScope {
-        val mirrors = async { invidiousOrPiped(videoId) }
-        val old = async { yt2009(videoId) }
-        val pending = mutableListOf(mirrors, old)
-        var found: StreamSource? = null
-        while (pending.isNotEmpty() && found == null) {
-            val (done, value) = select<Pair<Deferred<StreamSource?>, StreamSource?>> { pending.forEach { d -> d.onAwait { d to it } } }
-            found = value
-            pending -= done
-        }
-        pending.forEach { it.cancel() }
-        found
-    }
+    suspend fun audioStream(videoId: String): StreamSource? =
+        race(listOf({ invidiousOrPiped(videoId) }, { yt2009(videoId) }))
 
     private suspend fun invidiousOrPiped(videoId: String): StreamSource? {
         // known-good first, then never tried, then the ones that keep failing
@@ -110,12 +94,7 @@ class Frontends @Inject constructor(
         if (ordered.isEmpty()) return null
         // a few at a time, so a dead instance never costs more than one wave
         for (wave in ordered.chunked(WAVE)) {
-            val found = coroutineScope {
-                val tries: List<Deferred<StreamSource?>> = wave.map { inst ->
-                    async { runCatching { fromInstance(inst, videoId) }.getOrNull().also { record(inst, it != null) } }
-                }
-                firstNonNull(tries).also { tries.forEach { it.cancel() } }
-            }
+            val found = race(wave.map { inst -> suspend { runCatching { fromInstance(inst, videoId) }.getOrNull().also { record(inst, it != null) } } }, WAVE_MS)
             if (found != null) return found
         }
         return null
@@ -125,17 +104,6 @@ class Frontends @Inject constructor(
         if (ok) { lastOk[inst.api] = System.currentTimeMillis(); fails.remove(inst.api) }
         else fails.merge(inst.api, 1, Int::plus)
     }
-
-    private suspend fun firstNonNull(jobs: List<Deferred<StreamSource?>>): StreamSource? =
-        withTimeoutOrNull(WAVE_MS) {
-            val pending = jobs.toMutableList()
-            while (pending.isNotEmpty()) {
-                val (done, value) = select<Pair<Deferred<StreamSource?>, StreamSource?>> { pending.forEach { d -> d.onAwait { d to it } } }
-                if (value != null) return@withTimeoutOrNull value
-                pending -= done
-            }
-            null
-        }
 
     private suspend fun fromInstance(inst: Instance, videoId: String): StreamSource? = httpIo {
         val url = when (inst.kind) {
@@ -166,35 +134,25 @@ class Frontends @Inject constructor(
     private suspend fun yt2009(videoId: String): StreamSource? {
         val servers = load().filter { it.kind == "yt2009" }
         if (servers.isEmpty()) return null
-        return withTimeoutOrNull(YT2009_MS) {
-            coroutineScope {
-                val tries = servers.map { inst ->
-                    async {
-                        runCatching {
-                            httpIo {
-                                val req = Request.Builder().url("${inst.api}/get_video?video_id=$videoId/mp4")
-                                    .header("User-Agent", UA).header("Range", "bytes=0-4095").build()
-                                slowHttp.newCall(req).execute().use { r ->
-                                    val type = r.header("Content-Type").orEmpty()
-                                    if ((r.code == 206 || r.code == 200) && type.startsWith("video/mp4"))
-                                        StreamSource(r.request.url.toString(), mapOf("User-Agent" to UA), via = "yt2009 (${inst.host})")
-                                    else null
-                                }
+        return race(
+            servers.map { inst ->
+                suspend {
+                    runCatching {
+                        httpIo {
+                            val req = Request.Builder().url("${inst.api}/get_video?video_id=$videoId/mp4")
+                                .header("User-Agent", UA).header("Range", "bytes=0-4095").build()
+                            slowHttp.newCall(req).execute().use { r ->
+                                val type = r.header("Content-Type").orEmpty()
+                                if ((r.code == 206 || r.code == 200) && type.startsWith("video/mp4"))
+                                    StreamSource(r.request.url.toString(), mapOf("User-Agent" to UA), via = "yt2009 (${inst.host})")
+                                else null
                             }
-                        }.getOrNull().also { record(inst, it != null) }
-                    }
+                        }
+                    }.getOrNull().also { record(inst, it != null) }
                 }
-                val pending = tries.toMutableList()
-                var found: StreamSource? = null
-                while (pending.isNotEmpty() && found == null) {
-                    val (done, value) = select<Pair<Deferred<StreamSource?>, StreamSource?>> { pending.forEach { d -> d.onAwait { d to it } } }
-                    found = value
-                    pending -= done
-                }
-                tries.forEach { it.cancel() }
-                found
-            }
-        }
+            },
+            YT2009_MS,
+        )
     }
 
     private fun get(url: String): JsonObject? =

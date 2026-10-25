@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -105,11 +106,21 @@ fun HomeScreen() {
         }
     }
 
+    // spotify's home glow: the top of the screen takes the color of what's playing (or played last)
+    val nowArt = actions.player.state.collectAsState().value.artworkUri
+    val (glow, _) = app.stash.ui.components.rememberArtColors(nowArt ?: recent.firstOrNull()?.artworkUrl)
+    val glowColor by androidx.compose.animation.animateColorAsState(
+        glow?.copy(alpha = 0.45f) ?: Color.Transparent, androidx.compose.animation.core.tween(600), label = "glow",
+    )
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+    Box(Modifier.fillMaxWidth().height(340.dp).background(Brush.verticalGradient(listOf(glowColor, Color.Transparent))))
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
+        containerColor = Color.Transparent,
         topBar = {
             LargeTopAppBar(
-                title = { Text(greeting.title) },
+                colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = Color.Transparent),
+                title = { Text(greeting.title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { nav.navigate(Routes.DOWNLOADS) }) { Icon(Icons.Rounded.DownloadForOffline, "downloads") }
                     IconButton(onClick = { nav.navigate(Routes.SETTINGS) }) { Icon(Icons.Rounded.Settings, "settings") }
@@ -258,6 +269,7 @@ fun HomeScreen() {
             }
         }
     }
+    }
 }
 
 private data class QuickTile(
@@ -273,7 +285,7 @@ private fun QuickPick(tile: QuickTile, modifier: Modifier) {
     Surface(
         onClick = tile.onClick,
         shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
         modifier = modifier.height(56.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -286,7 +298,8 @@ private fun QuickPick(tile: QuickTile, modifier: Modifier) {
             }
             Spacer(Modifier.width(10.dp))
             Text(
-                tile.title, style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                tile.title, style = MaterialTheme.typography.labelLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                maxLines = 2, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).padding(end = 8.dp),
             )
             if (tile.pinned) Icon(

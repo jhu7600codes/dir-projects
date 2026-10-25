@@ -6,7 +6,10 @@ import app.stash.providers.getText
 import app.stash.providers.httpIo
 import app.stash.providers.lenientJson
 import app.stash.providers.num
+import app.stash.providers.race
+import app.stash.providers.racer
 import app.stash.providers.str
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -40,17 +43,28 @@ class Lyrics @Inject constructor(
     private val cache = ConcurrentHashMap<String, SongLyrics>()
     private val translations = ConcurrentHashMap<String, List<String?>>()
 
-    /** [preferMusixmatch]: musixmatch first, lrclib if it has nothing */
+    /**
+     * [preferMusixmatch]: musixmatch first, lrclib if it has nothing. both are asked at once, and
+     * after [GIVE_UP_MS] it's "no lyrics" instead of a spinner that never ends (a blocked site
+     * can hang a request for minutes).
+     */
     suspend fun forSong(title: String, artist: String, durationMs: Long, preferMusixmatch: Boolean = false): SongLyrics? {
         val key = "$artist|$title|$preferMusixmatch"
         cache[key]?.let { return it }
-        if (preferMusixmatch) {
-            runCatching { musixmatch.lyrics(title, artist, durationMs) }.getOrNull()?.let { f ->
-                val l = f.lyrics.copy(commontrackId = f.commontrackId)
-                cache[key] = l
-                return l
-            }
+        val lrc = racer { lrclib(title, artist, durationMs) }
+        val mxm = if (preferMusixmatch) racer {
+            musixmatch.lyrics(title, artist, durationMs)?.let { f -> f.lyrics.copy(commontrackId = f.commontrackId) }
+        } else null
+        val found = try {
+            withTimeoutOrNull(GIVE_UP_MS) { mxm?.await() ?: lrc.await() }
+        } finally {
+            lrc.cancel(); mxm?.cancel()
         }
+        found?.let { cache[key] = it }
+        return found
+    }
+
+    private suspend fun lrclib(title: String, artist: String, durationMs: Long): SongLyrics? {
         val cleanTitle = Matcher.stripForSearch(title)
         val firstArtist = Matcher.primaryArtist(artist)
         val exact = runCatching {
@@ -85,7 +99,6 @@ class Lyrics @Inject constructor(
             ?: return null
         val lyrics = SongLyrics(parseLrc(found.str("syncedLyrics").orEmpty()), found.str("plainLyrics"))
         if (!lyrics.synced && lyrics.plain == null) return null
-        cache[key] = lyrics
         return lyrics
     }
 
@@ -97,9 +110,10 @@ class Lyrics @Inject constructor(
         val texts = if (lyrics.synced) lyrics.lines.map { it.second } else lyrics.plain.orEmpty().lines()
         val key = "${texts.hashCode()}|$lang"
         translations[key]?.let { return it }
-        val community = lyrics.commontrackId?.let { id -> runCatching { musixmatch.translation(id, lang) }.getOrNull() }
-        val result = if (community != null) texts.map { community[it.trim()] }
-        else runCatching { machine(texts, lang) }.getOrNull() ?: return null
+        val result = race(listOf(suspend {
+            val community = lyrics.commontrackId?.let { id -> runCatching { musixmatch.translation(id, lang) }.getOrNull() }
+            if (community != null) texts.map { community[it.trim()] } else machine(texts, lang)
+        }), GIVE_UP_MS) ?: return null
         translations[key] = result
         return result
     }
@@ -129,6 +143,7 @@ class Lyrics @Inject constructor(
 
     companion object {
         private const val UA = "Stash (personal music app)"
+        private const val GIVE_UP_MS = 15_000L
         private val stamp = Regex("""\[(\d+):(\d+(?:\.\d+)?)]""")
 
         /** "[01:02.50] line" (several stamps per line allowed) -> sorted (ms, text) */
