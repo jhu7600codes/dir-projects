@@ -15,6 +15,7 @@ import cc.nnproject.json.JSONException;
 import cc.nnproject.json.JSONObject;
 import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.Comment;
+import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.Video;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.http.HttpClient;
@@ -26,7 +27,7 @@ import io.github.gohoski.notpipe.Utils;
  * Implementation of Invidious API (https://docs.invidious.io/api/)
  */
 
-class Invidious implements Metadata, VideoStream {
+class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream {
     private String baseUrl;
     private static final int VIDEO_THUMB = 4;
     private static final int AUTHOR_THUMB = 2;
@@ -224,6 +225,45 @@ class Invidious implements Metadata, VideoStream {
             }
         }
         return videos;
+    }
+
+    @Override
+    public Playlist getPlaylist(String id) throws IOException {
+        HttpRequest req = new HttpRequest(baseUrl, "/api/v1/playlists/" + id);
+        JSONObject json = JSON.getObject(HttpClient.executeToString(req));
+        try {
+            if (json.getString("error").length() > 0)
+                throw new ContentUnavailableException(json.getString("error"));
+        } catch (JSONException ignored) {}
+        JSONArray arr = json.getArray("videos");
+        List<VideoInfo> videos = new ArrayList<VideoInfo>();
+        for (int i = 0; i < arr.size(); i++) {
+            try {
+                JSONObject j = arr.getObject(i);
+                String videoId = j.getString("videoId");
+                videos.add(new VideoInfo(videoId, j.getString("title"), getThumbnail(videoId),
+                        j.getString("author", ""), "", j.getString("authorId", ""),
+                        Utils.formatDuration(j.getInt("lengthSeconds", 0)), -1, null));
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        if (videos.isEmpty()) throw new IOException("Empty playlist"); // let the next instance try
+        return new Playlist(id, json.getString("title"), json.getString("author", ""),
+                videos.isEmpty() ? "" : videos.get(0).thumbnail, json.getInt("videoCount", videos.size()), videos);
+    }
+
+    /**
+     * itag 140 = AAC 128 kbps in an M4A container, proxied through the instance.
+     * The redirects (latest_version → companion → videoplayback) are followed here and kept on our HTTP base URL,
+     * since some instances redirect to HTTPS, which old MediaPlayers can't open.
+     */
+    @Override
+    public String getAudioUrl(String id) throws IOException {
+        String path = "/latest_version?id=" + id + "&itag=140&local=true";
+        for (int hop = 0; hop < 4 && path.contains("latest_version"); hop++) {
+            String location = HttpClient.getRedirectUrl(baseUrl, path).substring(baseUrl.length());
+            path = Utils.parseUrl(baseUrl, location).substring(baseUrl.length());
+        }
+        return baseUrl + path;
     }
 
     private List<VideoInfo> parseChannelVideos(JSONArray arr) {

@@ -1,6 +1,8 @@
 # notPipe
 **English** / [русский](README.ru.md)
 
+> This copy is based on [gohoski/notPipe](https://github.com/gohoski/notPipe) (`56a6497`, WTFPL) with every feature from its TODO list implemented: downloads, music mode, playlists, local subscriptions and YouTube sign in via yt2009.
+
 A working YouTube client for **Android 1.5+** utilizing multiple backend APIs. Made with ❤ and longevity in mind. Instead of depending on a single instance that might suddenly fail, the app leverages multiple instances concurrently for maximum reliability.
 * **Telegram channel for updates**: [@AppDataApps](https://t.me/AppDataApps)
 * Join our **[Retro Android Group](https://t.me/retroandroidgroup)** on Telegram!
@@ -10,10 +12,10 @@ A working YouTube client for **Android 1.5+** utilizing multiple backend APIs. M
 <img src="img/scr1.png" alt="Screenshot" width="200"/> <img src="img/scr2.png" alt="Screenshot" width="200"/> <img src="img/scr3.png" alt="Screenshot" width="200"/> <img src="img/scr4.png" alt="Screenshot" width="200"/> <img src="img/scr5.png" alt="Screenshot" width="200"/> <img src="img/scr6.png" alt="Screenshot" width="200"/>
 
 List of supported APIs:
-* [Invidious](https://docs.invidious.io/api/) (metadata, 360p)
-* [yt2009](https://github.com/ftde0/yt2009) (all qualities, conversion, channels)
-* [Piped](https://docs.piped.video/docs/api-documentation/) (metadata, 360p)
-* [YtAPILegacy](https://github.com/ZendoMusic/yt-api-legacy) (metadata, all qualities, conversion)
+* [Invidious](https://docs.invidious.io/api/) (metadata, 360p, playlists, audio)
+* [yt2009](https://github.com/ftde0/yt2009) (all qualities, conversion, channels, playlists, YouTube account)
+* [Piped](https://docs.piped.video/docs/api-documentation/) (metadata, 360p, playlists, audio)
+* [YtAPILegacy](https://github.com/ZendoMusic/yt-api-legacy) (metadata, all qualities, conversion, playlists)
 
 ## 📥 Download
 * [GitHub Releases](https://github.com/gohoski/notPipe/releases)
@@ -34,12 +36,23 @@ List of supported APIs:
 * Video conversion for devices that do not support H.264 to MPEG-4 Visual and H.263 codecs
 * Automatic updates of the list of instances from a URL
 * Tablet UI
-### TODO
-* Video download
-* Audio download or music mode
-* YouTube account authorization via YTFixer/yt2009 (recommendations, subscriptions, history, etc.)
-* Playlists
-* Local account for subscriptions (NewPipe-like)
+* **Downloads** of videos (360p–1080p, converted if conversion is on) or audio only (M4A) to `notPipe/downloads` on the SD card, in a background queue with a progress notification
+* **Music mode**: listen to a video, a playlist or a whole list in the background with a notification (pause / next / stop). Downloaded files are played offline
+* **Playlists**: open any YouTube playlist (paste a link in search or use *Library → Open YouTube playlist*), plus local playlists ("Add to playlist" in a video's menu)
+* **Local subscriptions** (NewPipe-like): subscribe from a channel's menu, then *Library → What's new* shows the latest videos of all your channels
+* **Watch history** kept on the device
+* **YouTube account via yt2009**: recommendations, watch later, your playlists and importing your subscriptions. See [Signing in](#signing-in-with-yt2009)
+
+All of this is in the new **Library** screen (menu → Library).
+
+### Signing in with yt2009
+notPipe uses yt2009's "mobile helper" sign in, the same one its patched APKs use:
+1. *Library → Sign in via yt2009* and pick an instance.
+2. On a PC, open `http://<instance>/gsign`, enter the device code notPipe shows and sign in with Google there.
+3. Tap *Done* in notPipe.
+
+> [!WARNING]
+> The instance owner gets access to the linked YouTube account. Only sign in through instances you trust (or host your own).
 
 ## Solving issues on Android ≤2.3
 *(videos lag or do not play at all)*

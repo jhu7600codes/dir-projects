@@ -38,6 +38,8 @@ public class Manager {
     private List<VideoStream> hqInstances; //high-quality instances (480p+)
     private List<Conversion> conversionInstances; // Tracks instances capable of conversion
     private List<ChannelApi> channelApiInstances; // Tracks instances capable of ChannelApi
+    private List<PlaylistApi> playlistInstances;
+    private List<AudioStream> audioInstances;
 
     private Manager() {
         random = new Random();
@@ -64,12 +66,16 @@ public class Manager {
             hqInstances = new ArrayList<VideoStream>();
             conversionInstances = new ArrayList<Conversion>();
             channelApiInstances = new ArrayList<ChannelApi>();
+            playlistInstances = new ArrayList<PlaylistApi>();
+            audioInstances = new ArrayList<AudioStream>();
         } else {
             metadataInstances.clear();
             videoInstances.clear();
             hqInstances.clear();
             conversionInstances.clear();
             channelApiInstances.clear();
+            playlistInstances.clear();
+            audioInstances.clear();
         }
 
         if (configManager == null) {
@@ -83,6 +89,8 @@ public class Manager {
             Invidious inv = new Invidious(invInstances.get(i));
             metadataInstances.add(inv);
             videoInstances.add(inv);
+            playlistInstances.add(inv);
+            audioInstances.add(inv);
         }
 
         List<String> yt2009List = config.getYt2009Instances();
@@ -92,6 +100,7 @@ public class Manager {
             hqInstances.add(yt2009);
             conversionInstances.add(yt2009);
             channelApiInstances.add(yt2009);
+            playlistInstances.add(yt2009);
         }
 
         List<String> pipedList = config.getPipedInstances();
@@ -102,6 +111,8 @@ public class Manager {
             Piped piped = new Piped(baseUrl, proxyUrl);
             metadataInstances.add(piped);
             videoInstances.add(piped);
+            playlistInstances.add(piped);
+            audioInstances.add(piped);
         }
 
         List<String> ytApiInstances = config.getYtApiLegacyInstances();
@@ -111,6 +122,7 @@ public class Manager {
             videoInstances.add(ytApi);
             hqInstances.add(ytApi);
             conversionInstances.add(ytApi);
+            playlistInstances.add(ytApi);
         }
     }
 
@@ -162,6 +174,43 @@ public class Manager {
     public ChannelApi getChannelApi() {
         if (channelApiInstances.isEmpty()) throw new IllegalStateException("No ChannelApi instances");
         return createStatefulFallbackProxy(ChannelApi.class, channelApiInstances);
+    }
+
+    public PlaylistApi getPlaylistApi() {
+        if (playlistInstances.isEmpty()) throw new IllegalStateException("No PlaylistApi instances");
+        return createStatefulFallbackProxy(PlaylistApi.class, playlistInstances);
+    }
+
+    /**
+     * Returns an audio-only stream URL. If no instance can give one (e.g. only yt2009/YtAPILegacy are configured),
+     * falls back to the 360p video stream—MediaPlayer plays its audio track fine without a surface.
+     */
+    public String getAudioUrl(String videoId) throws IOException {
+        String url = getAudioOnlyUrl(videoId);
+        if (url != null) return url;
+        return getVideoUrl(videoId, "360", HttpClient.VIDEO_TIMEOUT);
+    }
+
+    /**
+     * @return an audio-only stream URL, or null if no instance could provide one
+     */
+    public String getAudioOnlyUrl(String videoId) throws IOException {
+        List<AudioStream> targetList = new ArrayList<AudioStream>(audioInstances);
+        java.util.Collections.shuffle(targetList, random);
+        for (int i = 0; i < targetList.size(); i++) {
+            AudioStream currentInstance = targetList.get(i);
+            try {
+                return currentInstance.getAudioUrl(videoId);
+            } catch (ContentUnavailableException e) {
+                throw e;
+            } catch (Exception e) {
+                e.printStackTrace();
+                if (isDeadInstanceError(e)) {
+                    removeDeadInstance(currentInstance);
+                }
+            }
+        }
+        return null;
     }
 
     public List<Conversion> getConversion() {
@@ -344,6 +393,8 @@ public class Manager {
         removeByHost(hqInstances, host);
         removeByHost(conversionInstances, host);
         removeByHost(channelApiInstances, host);
+        removeByHost(playlistInstances, host);
+        removeByHost(audioInstances, host);
     }
 
     private void removeByHost(List list, String host) {

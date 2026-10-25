@@ -14,6 +14,7 @@ import cc.nnproject.json.JSONObject;
 import io.github.gohoski.notpipe.Utils;
 import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.Comment;
+import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.Video;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.http.HttpClient;
@@ -22,7 +23,7 @@ import io.github.gohoski.notpipe.http.HttpRequest;
 /**
  * Created by Gleb on 05.06.2026.
  */
-class Piped implements Metadata, VideoStream {
+class Piped implements Metadata, VideoStream, PlaylistApi, AudioStream {
     private String baseUrl, proxyUrl;
     Piped(String baseUrl, String proxyUrl) {
         this.baseUrl = baseUrl;
@@ -212,6 +213,53 @@ class Piped implements Metadata, VideoStream {
             } catch(Exception e) { e.printStackTrace(); }
         }
         return videos;
+    }
+
+    @Override
+    public Playlist getPlaylist(String id) throws IOException {
+        HttpRequest req = new HttpRequest(baseUrl, "/playlists/" + id);
+        JSONObject json = JSON.getObject(HttpClient.executeToString(req));
+        try {
+            String error = json.getString("error");
+            if (error.length() > 0)
+                throw new ContentUnavailableException(json.getString("message", error));
+        } catch (JSONException ignored) {}
+        List<VideoInfo> videos = new ArrayList<VideoInfo>();
+        JSONArray arr = json.getArray("relatedStreams");
+        for (int i = 0; i < arr.size(); i++) {
+            try {
+                JSONObject j = arr.getObject(i);
+                String videoId = j.getString("url").substring(9);
+                String uploaderUrl = j.getString("uploaderUrl", "");
+                videos.add(new VideoInfo(videoId, j.getString("title"), getThumbnail(videoId),
+                        j.getString("uploaderName", ""), "",
+                        uploaderUrl.length() > 9 ? uploaderUrl.substring(9) : "",
+                        Utils.formatDuration(j.getInt("duration", 0)), j.getLong("views", -1), null));
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        if (videos.isEmpty()) throw new IOException("Empty playlist"); // let the next instance try
+        return new Playlist(id, json.getString("name"), json.getString("uploader", ""),
+                videos.isEmpty() ? "" : videos.get(0).thumbnail, json.getInt("videos", videos.size()), videos);
+    }
+
+    /** Picks the highest bitrate M4A (AAC) stream since older Android can't play WebM/Opus */
+    @Override
+    public String getAudioUrl(String id) throws IOException {
+        HttpRequest req = new HttpRequest(baseUrl, "/streams/" + id);
+        JSONArray arr = JSON.getObject(HttpClient.executeToString(req)).getArray("audioStreams");
+        String best = null;
+        int bestBitrate = -1;
+        for (int i = 0; i < arr.size(); i++) {
+            JSONObject j = arr.getObject(i);
+            String mime = j.getString("mimeType", "");
+            int bitrate = j.getInt("bitrate", 0);
+            if (mime.startsWith("audio/mp4") && bitrate > bestBitrate) {
+                best = j.getString("url");
+                bestBitrate = bitrate;
+            }
+        }
+        if (best == null) throw new IOException("No M4A audio stream");
+        return Utils.parseUrl(proxyUrl, best);
     }
 
     /**

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_play_all"
+        android:title="@string/play_all_audio"
+        android:icon="@android:drawable/ic_media_play"/>
+    <item
+        android:id="@+id/action_shuffle"
+        android:title="@string/shuffle_audio"
+        android:icon="@android:drawable/ic_menu_rotate"/>
+    <item
+        android:id="@+id/action_download_all"
+        android:title="@string/download_all_audio"
+        android:icon="@android:drawable/ic_menu_save"/>
+    <item
+        android:id="@+id/action_save_playlist"
+        android:title="@string/save_playlist"
+        android:icon="@android:drawable/ic_menu_add"/>
+    <item
+        android:id="@+id/action_delete_playlist"
+        android:title="@string/delete_playlist"
+        android:icon="@android:drawable/ic_menu_delete"/>
+    <item
+        android:id="@+id/action_clear_history"
+        android:title="@string/clear_history"
+        android:icon="@android:drawable/ic_menu_delete"/>
+    <item
+        android:id="@+id/action_refresh"
+        android:title="@string/refresh"
+        android:icon="@android:drawable/ic_menu_rotate"/>
+</menu>

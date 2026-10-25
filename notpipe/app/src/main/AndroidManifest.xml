@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:name=".NotPipe"
         android:allowBackup="true"
@@ -49,5 +50,25 @@
         </activity>
         <activity android:name=".ChannelActivity"
             android:label="@string/channel" />
+        <activity android:name=".LibraryActivity"
+            android:label="@string/library" />
+        <activity android:name=".DownloadsActivity"
+            android:label="@string/downloads" />
+        <activity android:name=".VideoListActivity"
+            android:label="@string/playlist">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="www.youtube.com" />
+                <data android:host="m.youtube.com" />
+                <data android:host="youtube.com" />
+                <data android:pathPrefix="/playlist" />
+            </intent-filter>
+        </activity>
+        <service android:name=".MusicService" />
+        <service android:name=".DownloadService" />
     </application>
 </manifest>

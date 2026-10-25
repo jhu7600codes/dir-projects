@@ -189,6 +189,12 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             public void onClick(View v) {
                 final String query = searchQuery.getText().toString().trim();
                 if (query.length() != 0) {
+                    String playlistId = VideoListActivity.extractPlaylistId(query);
+                    if (playlistId != null && extractYouTubeId(query) == null) {
+                        hideKeyboard();
+                        VideoListActivity.open(MainActivity.this, VideoListActivity.SOURCE_PLAYLIST, playlistId, getString(R.string.playlist));
+                        return;
+                    }
                     String videoId = extractYouTubeId(query);
                     if (videoId != null) {
                         hideKeyboard();
@@ -375,7 +381,10 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menu_settings) {
+        if (item.getItemId() == R.id.menu_library) {
+            startActivity(new Intent(this, LibraryActivity.class));
+            return true;
+        } else if (item.getItemId() == R.id.menu_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             finish();
             return true;

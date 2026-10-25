@@ -2,4 +2,11 @@
 <resources>
     <style name="AppTheme" parent="@android:style/Theme">
     </style>
+    <style name="NotificationTitle" parent="@android:style/TextAppearance.Medium">
+        <item name="android:textColor">#FF000000</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="NotificationText" parent="@android:style/TextAppearance.Small">
+        <item name="android:textColor">#FF444444</item>
+    </style>
 </resources>

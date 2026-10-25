@@ -35,7 +35,9 @@ import io.github.gohoski.notpipe.api.ContentUnavailableException;
 import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
+import io.github.gohoski.notpipe.util.Compat;
 import io.github.gohoski.notpipe.util.ImageLoader;
+import io.github.gohoski.notpipe.util.LocalLibrary;
 
 /**
  * Created by Gleb on 12.03.2026.
@@ -245,30 +247,44 @@ public class ChannelActivity extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (NotPipe.SDK < 11) {
-            getMenuInflater().inflate(R.menu.menu_channel, menu);
-            return true;
-        }
-        return false;
+        getMenuInflater().inflate(R.menu.menu_channel, menu);
+        return true;
     }
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        if (NotPipe.SDK < 11) {
-            MenuItem latestItem = menu.findItem(R.id.action_sort_latest);
-            MenuItem popularItem = menu.findItem(R.id.action_sort_popular);
-            if (latestItem != null) {
-                latestItem.setVisible(currentSort != 0);
-            }
-            if (popularItem != null) {
-                popularItem.setVisible(currentSort != 1);
-            }
+        MenuItem subscribeItem = menu.findItem(R.id.action_subscribe);
+        if (subscribeItem != null) {
+            subscribeItem.setVisible(channel != null);
+            subscribeItem.setTitle(channel != null && LocalLibrary.getInstance().isSubscribed(channel.id)
+                    ? R.string.unsubscribe : R.string.subscribe);
+        }
+        MenuItem latestItem = menu.findItem(R.id.action_sort_latest);
+        MenuItem popularItem = menu.findItem(R.id.action_sort_popular);
+        if (latestItem != null) {
+            latestItem.setVisible(NotPipe.SDK < 11 && currentSort != 0);
+        }
+        if (popularItem != null) {
+            popularItem.setVisible(NotPipe.SDK < 11 && currentSort != 1);
         }
         return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_subscribe) {
+            if (channel == null) return true;
+            LocalLibrary library = LocalLibrary.getInstance();
+            if (library.isSubscribed(channel.id)) {
+                library.unsubscribe(channel.id);
+                Toast.makeText(context, getString(R.string.unsubscribed, channel.title), Toast.LENGTH_SHORT).show();
+            } else {
+                library.subscribe(channel.id, channel.title, channel.thumbnail);
+                Toast.makeText(context, getString(R.string.subscribed, channel.title), Toast.LENGTH_SHORT).show();
+            }
+            Compat.invalidateOptionsMenu(this);
+            return true;
+        }
         if (NotPipe.SDK < 11) {
             if (item.getItemId() == R.id.action_sort_latest) {
                 if (currentSort != 0) {
@@ -331,6 +347,7 @@ public class ChannelActivity extends Activity {
             }
             channel = fetched;
             channelId = channel.id;
+            Compat.invalidateOptionsMenu(ChannelActivity.this);
 
             ((TextView) findViewById(R.id.title)).setText(channel.title);
             ((TextView) findViewById(R.id.subscribers)).setText(getString(R.string.subscribers, Utils.formatNumber(context, channel.subscriberCount)));

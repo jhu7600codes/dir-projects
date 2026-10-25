@@ -16,6 +16,7 @@ import cc.nnproject.json.JSONObject;
 import io.github.gohoski.notpipe.Utils;
 import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.Comment;
+import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.Video;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.http.HttpClient;
@@ -26,7 +27,7 @@ import io.github.gohoski.notpipe.http.HttpRequest;
  * Implementation of YtAPILegacy (https://github.com/ZendoMusic/yt-api-legacy)
  */
 
-class YtApiLegacy implements Metadata, VideoStream, Conversion {
+class YtApiLegacy implements Metadata, VideoStream, Conversion, PlaylistApi {
     private String baseUrl;
 
     YtApiLegacy(String baseUrl) {
@@ -245,6 +246,30 @@ class YtApiLegacy implements Metadata, VideoStream, Conversion {
                     null, null, null, "", views, publishedAt));
         }
         return videos;
+    }
+
+    @Override
+    public Playlist getPlaylist(String id) throws IOException {
+        HttpRequest req = new HttpRequest(baseUrl, "/playlist/" + id);
+        JSONObject json = JSON.getObject(HttpClient.executeToString(req));
+        JSONArray arr = json.getArray("videos");
+        List<VideoInfo> videos = new ArrayList<VideoInfo>();
+        for (int i = 0; i < arr.size(); i++) {
+            JSONObject j = arr.getObject(i);
+            long views; try {
+                views = Long.parseLong(j.getString("views").replaceAll("[^0-9]", ""));
+            } catch(Exception ignored) { views = -1; }
+            videos.add(new VideoInfo(j.getString("video_id"), j.getString("title"), Utils.parseUrl(baseUrl, j.getString("thumbnail")),
+                    j.getString("author", ""), "", j.getString("channel_id", ""), j.getString("duration", ""), views, null));
+        }
+        if (videos.isEmpty()) throw new IOException("Empty playlist"); // let the next instance try
+        String title = json.getString("title", null);
+        if (title == null) {
+            try {
+                title = json.getObject("playlist_info").getString("title");
+            } catch (Exception ignored) { title = id; }
+        }
+        return new Playlist(id, title, "", videos.isEmpty() ? "" : videos.get(0).thumbnail, videos.size(), videos);
     }
 
     /**

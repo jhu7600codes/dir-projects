@@ -6,6 +6,7 @@ import android.os.Build;
 
 import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.config.ConfigManager;
+import io.github.gohoski.notpipe.util.Compat;
 
 /**
  * Created by Gleb on 25.01.2026.
@@ -26,6 +27,7 @@ public class NotPipe extends Application {
         ConfigManager.getInstance().ensureInstancesConfigured();
         Manager.init();
         SSLDisabler.disableSSLCertificateChecking();
+        Compat.allowFileUris();
 //        System.setProperty("http.keepAlive", "false");
     }
 

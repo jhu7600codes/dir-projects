@@ -60,9 +60,11 @@ import io.github.gohoski.notpipe.http.HttpClient;
 import io.github.gohoski.notpipe.ui.AdapterLinearLayout;
 import io.github.gohoski.notpipe.ui.AspectRatioVideoView;
 import io.github.gohoski.notpipe.ui.CommentAdapter;
+import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.ChannelIconResolver;
 import io.github.gohoski.notpipe.util.ImageLoader;
+import io.github.gohoski.notpipe.util.LocalLibrary;
 
 public class VideoActivity extends Activity {
     String videoId;
@@ -1704,6 +1706,7 @@ public class VideoActivity extends Activity {
 
     private void onVideoDataLoaded(final Video fetchedVideo) {
         video = fetchedVideo;
+        LocalLibrary.getInstance().addToHistory(video);
 
         if (video.channelId != null && video.channelThumbnail != null && video.channelThumbnail.length() > 0)
             ChannelIconResolver.setResolved(video.channelId, video.channelThumbnail);
@@ -1784,8 +1787,40 @@ public class VideoActivity extends Activity {
         } else if (itemId == R.id.action_full_screen) {
             enterFullscreenByConfig();
             return true;
+        } else if (itemId == R.id.action_listen_background || itemId == R.id.action_download
+                || itemId == R.id.action_add_playlist) {
+            if (video == null) {
+                Toast.makeText(context, "Please wait for video to load", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            if (itemId == R.id.action_listen_background) {
+                listenInBackground();
+            } else if (itemId == R.id.action_download) {
+                VideoActions.showDownloadDialog(this, video);
+            } else {
+                VideoActions.showAddToPlaylistDialog(this, video);
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Music mode: stops the video player and continues with audio only in MusicService.
+     */
+    private void listenInBackground() {
+        if (videoView != null && videoPlaying) {
+            try {
+                if (videoPrepared) videoView.pause();
+            } catch (Exception ignored) {}
+        }
+        List<VideoInfo> queue = new ArrayList<VideoInfo>();
+        queue.add(video);
+        for (int i = 0; i < relatedVideos.size() && i < 20; i++) {
+            queue.add(relatedVideos.get(i));
+        }
+        MusicService.play(this, queue, 0);
+        Toast.makeText(context, R.string.playing_in_background, Toast.LENGTH_SHORT).show();
     }
 
     private void enterFullscreenByConfig() {

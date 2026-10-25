@@ -8,4 +8,16 @@
         android:id="@+id/action_full_screen"
         android:title="@string/full_screen"
         android:icon="@drawable/ic_full_screen" />
+    <item
+        android:id="@+id/action_listen_background"
+        android:title="@string/play_in_background"
+        android:icon="@android:drawable/ic_media_play" />
+    <item
+        android:id="@+id/action_download"
+        android:title="@string/download"
+        android:icon="@android:drawable/ic_menu_save" />
+    <item
+        android:id="@+id/action_add_playlist"
+        android:title="@string/add_to_playlist"
+        android:icon="@android:drawable/ic_menu_add" />
 </menu>

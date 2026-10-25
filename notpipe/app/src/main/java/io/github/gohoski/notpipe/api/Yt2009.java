@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.gohoski.notpipe.Utils;
+import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.http.HttpClient;
 import io.github.gohoski.notpipe.http.HttpRequest;
@@ -16,7 +17,7 @@ import io.github.gohoski.notpipe.http.HttpRequest;
  * Implementation of yt2009's video endpoints
  * yt2009 isn't quite designed to be used as an API—it's more a frontend, however the video endpoints and HTML are straightforward
  */
- class Yt2009 implements VideoStream, Conversion, ChannelApi {
+ class Yt2009 implements VideoStream, Conversion, ChannelApi, PlaylistApi {
     private String baseUrl;
 
     Yt2009(String baseUrl) {
@@ -90,5 +91,14 @@ import io.github.gohoski.notpipe.http.HttpRequest;
             videos.add(new VideoInfo(videoId, title.trim(), baseUrl + "/thumb_proxy?v=" + videoId, "", "", "", null, views, date));
         }
         return videos;
+    }
+
+    /** Uses yt2009's GData playlist feed (/feeds/api/playlists/ID) */
+    @Override
+    public Playlist getPlaylist(String id) throws IOException {
+        String xml = HttpClient.executeToString(new HttpRequest(baseUrl, "/feeds/api/playlists/" + id));
+        List<VideoInfo> videos = GdataParser.parseVideos(baseUrl, xml);
+        if (videos.isEmpty()) throw new IOException("Empty playlist feed");
+        return new Playlist(id, GdataParser.parseFeedTitle(xml), "", videos.get(0).thumbnail, videos.size(), videos);
     }
 }
