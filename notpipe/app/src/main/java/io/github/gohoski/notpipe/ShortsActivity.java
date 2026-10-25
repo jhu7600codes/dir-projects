@@ -45,6 +45,7 @@ import io.github.gohoski.notpipe.util.LocalLibrary;
 public class ShortsActivity extends Activity {
     public static final String EXTRA_CHANNEL = "channel";
     private static final int MIN_FLING_DISTANCE = 80;
+    private static final int MAX_RETRIES = 2;
 
     private final List<VideoInfo> shorts = new ArrayList<VideoInfo>();
     private int index = 0;
@@ -57,6 +58,7 @@ public class ShortsActivity extends Activity {
     private boolean prepared = false;
     private boolean isDestroyedFlag = false;
     private int requestToken = 0;
+    private int retries = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,8 +85,15 @@ public class ShortsActivity extends Activity {
         videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-                Toast.makeText(context, R.string.unsupported_format, Toast.LENGTH_SHORT).show();
+                // Stream errors (often a dying instance): resolve again, Manager picks instances at random
+                if (retries < MAX_RETRIES && !shorts.isEmpty()) {
+                    retries++;
+                    playCurrent();
+                    return true;
+                }
+                Toast.makeText(context, R.string.unsupported_format, Toast.LENGTH_LONG).show();
                 findViewById(R.id.short_loading).setVisibility(View.GONE);
+                thumbnail.setVisibility(View.VISIBLE);
                 return true;
             }
         });
@@ -151,6 +160,7 @@ public class ShortsActivity extends Activity {
         int next = index + delta;
         if (shorts.isEmpty() || next < 0 || next >= shorts.size()) return;
         index = next;
+        retries = 0;
         playCurrent();
     }
 

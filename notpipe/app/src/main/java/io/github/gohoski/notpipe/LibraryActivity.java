@@ -124,13 +124,13 @@ public class LibraryActivity extends Activity {
 
         rows.add(new Row(HEADER, getString(R.string.subscriptions), null, null));
         int subs = library.getSubscriptions().size();
-        rows.add(new Row(FEED, getString(R.string.subscriptions_feed), getString(R.string.channels_count, subs), null));
+        rows.add(new Row(FEED, getString(R.string.subscriptions_feed), getResources().getQuantityString(R.plurals.channels_count, subs, subs), null));
         rows.add(new Row(CHANNELS, getString(R.string.channels), null, null));
 
         rows.add(new Row(HEADER, getString(R.string.playlists), null, null));
         List<String> names = library.getPlaylistNames();
         for (int i = 0; i < names.size(); i++) {
-            rows.add(new Row(PLAYLIST, names.get(i), getString(R.string.video_count_short, library.getPlaylistSize(names.get(i))), names.get(i)));
+            rows.add(new Row(PLAYLIST, names.get(i), getResources().getQuantityString(R.plurals.video_count_short, library.getPlaylistSize(names.get(i)), library.getPlaylistSize(names.get(i))), names.get(i)));
         }
         rows.add(new Row(NEW_PLAYLIST, getString(R.string.new_playlist), null, null));
         rows.add(new Row(OPEN_PLAYLIST, getString(R.string.open_playlist), getString(R.string.open_playlist_), null));

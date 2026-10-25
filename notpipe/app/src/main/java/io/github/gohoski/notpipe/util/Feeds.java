@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import io.github.gohoski.notpipe.Utils;
 import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.api.ShortsApi;
 import io.github.gohoski.notpipe.api.Yt2009Account;
@@ -78,7 +79,7 @@ public class Feeds {
 
     /**
      * @param channelId Shorts of one channel, or null for a feed made of the subscribed channels' Shorts
-     *                  (falls back to searching #shorts when there are no subscriptions)
+     *                  (falls back to the channels of popular videos, then to searching #shorts)
      */
     public static List<VideoInfo> loadShorts(String channelId) throws InterruptedException {
         final ShortsApi api = Manager.getInstance().getShortsApi();
@@ -94,6 +95,9 @@ public class Feeds {
 
         List<VideoInfo> result = new ArrayList<VideoInfo>();
         List<Channel> channels = LocalLibrary.getInstance().getSubscriptions();
+        if (api != null && channels.isEmpty()) {
+            channels = popularChannels();
+        }
         if (api != null && !channels.isEmpty()) {
             Collections.shuffle(channels);
             final List<List<VideoInfo>> buckets = new ArrayList<List<VideoInfo>>();
@@ -135,6 +139,25 @@ public class Feeds {
             }
         }
         return result;
+    }
+
+    /** Channels of the current popular videos, used for Shorts when there are no subscriptions */
+    private static List<Channel> popularChannels() {
+        List<Channel> channels = new ArrayList<Channel>();
+        try {
+            // Through PlaylistApi rather than Metadata.getPopularVideos(), since empty Piped playlists fall through to the next instance there
+            List<VideoInfo> popular = Manager.getInstance().getPlaylistApi().getPlaylist(Utils.getHypePlaylist()).videos;
+            Set<String> seen = new HashSet<String>();
+            for (int i = 0; i < popular.size(); i++) {
+                VideoInfo v = popular.get(i);
+                if (v.channelId != null && v.channelId.startsWith("UC") && seen.add(v.channelId)) {
+                    channels.add(new Channel(v.channelId, v.channel, v.channelThumbnail, "", "", -1, null));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return channels;
     }
 
     private static List<VideoInfo> interleave(List<List<VideoInfo>> buckets, Set<String> skip, int max) {

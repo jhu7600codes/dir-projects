@@ -179,13 +179,11 @@
     <string name="open_playlist">Открыть плейлист YouTube</string>
     <string name="open_playlist_">Ссылка или ID плейлиста</string>
     <string name="incorrect_playlist">Введите ссылку или ID плейлиста</string>
-    <string name="video_count_short">Видео: %d</string>
     <string name="refresh">Обновить</string>
     <string name="load_failed">Не удалось загрузить, попробуйте снова</string>
     <string name="subscriptions">Подписки</string>
     <string name="subscriptions_feed">Новое</string>
     <string name="channels">Каналы</string>
-    <string name="channels_count">Каналов: %d</string>
     <string name="subscribe">Подписаться</string>
     <string name="unsubscribe">Отписаться</string>
     <string name="subscribed">Вы подписались на %s</string>
@@ -222,7 +220,7 @@
     <string name="show_recommended">Главная: рекомендации</string>
     <string name="show_popular">Главная: популярное</string>
     <string name="shorts">Shorts</string>
-    <string name="shorts_">Из ваших подписок, листайте вверх</string>
+    <string name="shorts_">Из ваших подписок или популярных каналов</string>
     <string name="no_shorts">Shorts не найдены</string>
     <string name="no_shorts_instances">Для Shorts нужен инстанс Invidious. Добавьте его в настройках.</string>
     <string name="your_videos">Ваши видео</string>
@@ -260,4 +258,16 @@
         <item>По ссылке</item>
         <item>Приватный</item>
     </string-array>
+    <plurals name="channels_count">
+        <item quantity="one">%d канал</item>
+        <item quantity="few">%d канала</item>
+        <item quantity="many">%d каналов</item>
+        <item quantity="other">%d канала</item>
+    </plurals>
+    <plurals name="video_count_short">
+        <item quantity="one">%d видео</item>
+        <item quantity="few">%d видео</item>
+        <item quantity="many">%d видео</item>
+        <item quantity="other">%d видео</item>
+    </plurals>
 </resources>

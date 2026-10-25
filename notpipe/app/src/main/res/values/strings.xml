@@ -164,13 +164,11 @@
     <string name="open_playlist">Open YouTube playlist</string>
     <string name="open_playlist_">Playlist link or ID</string>
     <string name="incorrect_playlist">Please enter a playlist link or ID</string>
-    <string name="video_count_short">%d videos</string>
     <string name="refresh">Refresh</string>
     <string name="load_failed">Failed to load, please try again</string>
     <string name="subscriptions">Subscriptions</string>
     <string name="subscriptions_feed">What\'s new</string>
     <string name="channels">Channels</string>
-    <string name="channels_count">%d channels</string>
     <string name="subscribe">Subscribe</string>
     <string name="unsubscribe">Unsubscribe</string>
     <string name="subscribed">Subscribed to %s</string>
@@ -207,7 +205,7 @@
     <string name="show_recommended">Home: recommended</string>
     <string name="show_popular">Home: popular</string>
     <string name="shorts">Shorts</string>
-    <string name="shorts_">From your subscriptions, swipe up for the next one</string>
+    <string name="shorts_">From your subscriptions or popular channels</string>
     <string name="no_shorts">No Shorts found</string>
     <string name="no_shorts_instances">Shorts need an Invidious instance. Add one in the settings.</string>
     <string name="your_videos">Your videos</string>
@@ -245,4 +243,12 @@
         <item>Unlisted</item>
         <item>Private</item>
     </string-array>
+    <plurals name="channels_count">
+        <item quantity="one">%d channel</item>
+        <item quantity="other">%d channels</item>
+    </plurals>
+    <plurals name="video_count_short">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
 </resources>

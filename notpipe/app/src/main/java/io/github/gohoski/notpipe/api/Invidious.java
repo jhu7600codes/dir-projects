@@ -31,6 +31,7 @@ class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream, Shor
     private String baseUrl;
     private static final int VIDEO_THUMB = 4;
     private static final int AUTHOR_THUMB = 2;
+    private static final int AUDIO_TIMEOUT = 10000;
 
     Invidious(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -260,7 +261,8 @@ class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream, Shor
     public String getAudioUrl(String id) throws IOException {
         String path = "/latest_version?id=" + id + "&itag=140&local=true";
         for (int hop = 0; hop < 4 && path.contains("latest_version"); hop++) {
-            String location = HttpClient.getRedirectUrl(baseUrl, path).substring(baseUrl.length());
+            // Short timeout: dead instances would otherwise stall the background player for 40 s each
+            String location = HttpClient.getRedirectUrl(baseUrl, path, AUDIO_TIMEOUT).substring(baseUrl.length());
             path = Utils.parseUrl(baseUrl, location).substring(baseUrl.length());
         }
         return baseUrl + path;
