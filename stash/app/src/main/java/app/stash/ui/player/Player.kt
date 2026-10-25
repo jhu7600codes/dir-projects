@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -194,6 +195,7 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
     )
     var showQueue by remember { mutableStateOf(false) }
     var showLyrics by remember { mutableStateOf(false) }
+    var showRelated by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -208,8 +210,10 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
             when {
                 showQueue -> QueueView(state, accent, onClose = { showQueue = false })
                 showLyrics -> LyricsView(state, accent, onClose = { showLyrics = false })
+                showRelated -> RelatedView(state, accent, onClose = { showRelated = false })
                 else -> NowPlayingContent(
                     state, accent, onCollapse = onDismiss, onQueue = { showQueue = true }, onLyrics = { showLyrics = true },
+                    onRelated = { showRelated = true },
                 )
             }
         }
@@ -223,6 +227,7 @@ private fun NowPlayingContent(
     onCollapse: () -> Unit,
     onQueue: () -> Unit,
     onLyrics: () -> Unit,
+    onRelated: () -> Unit,
 ) {
     val actions = LocalActions.current
     val player = actions.player
@@ -358,33 +363,14 @@ private fun NowPlayingContent(
         }
 
         Spacer(Modifier.weight(0.4f))
-        Surface(
-            onClick = onLyrics,
-            shape = MaterialTheme.shapes.extraLarge,
-            color = accent.copy(alpha = 0.22f).compositeOver(MaterialTheme.colorScheme.surfaceContainerHigh),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        // apple music style: just three icons along the bottom
+        Row(
+            Modifier.fillMaxWidth().padding(bottom = 20.dp, start = 24.dp, end = 24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(Modifier.padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.Lyrics, null)
-                Spacer(Modifier.width(12.dp))
-                Text("Lyrics", style = MaterialTheme.typography.titleSmall)
-            }
-        }
-        Surface(
-            onClick = onQueue,
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-        ) {
-            Row(Modifier.padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null)
-                Spacer(Modifier.width(12.dp))
-                val upNext = state.queue.getOrNull(state.queueIndex + 1)
-                Text(
-                    upNext?.let { "up next: ${it.mediaMetadata.title}" } ?: "Queue",
-                    style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
-            }
+            IconButton(onClick = onLyrics, modifier = Modifier.size(52.dp)) { Icon(Icons.Rounded.Lyrics, "Lyrics", Modifier.size(26.dp)) }
+            IconButton(onClick = onRelated, modifier = Modifier.size(52.dp)) { Icon(Icons.Rounded.AutoAwesome, "Similar songs", Modifier.size(26.dp)) }
+            IconButton(onClick = onQueue, modifier = Modifier.size(52.dp)) { Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Queue", Modifier.size(26.dp)) }
         }
     }
 
@@ -537,6 +523,49 @@ private fun LyricsView(state: PlayerUiState, accent: Color, onClose: () -> Unit)
                             Text(tr, style = MaterialTheme.typography.titleMedium, color = color.copy(alpha = color.alpha * 0.8f))
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/** "similar songs": youtube music's radio for what's playing, play one or add them all */
+@Composable
+private fun RelatedView(state: PlayerUiState, accent: Color, onClose: () -> Unit) {
+    val actions = LocalActions.current
+    var songs by remember(state.currentId) { mutableStateOf<List<app.stash.data.db.Track>?>(null) }
+    LaunchedEffect(state.currentId) {
+        val id = state.currentId ?: return@LaunchedEffect
+        val track = actions.library.tracks.get(id) ?: return@LaunchedEffect
+        songs = runCatching { actions.similarTo(track) }.getOrDefault(emptyList())
+    }
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+        Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onClose) { Icon(Icons.Rounded.KeyboardArrowDown, "Back") }
+            Column(Modifier.weight(1f)) {
+                Text("Similar to", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(state.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            val list = songs
+            if (!list.isNullOrEmpty()) androidx.compose.material3.TextButton(onClick = { actions.addToQueue(list) }) { Text("Add all", color = accent) }
+        }
+        val list = songs
+        when {
+            list == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = accent) }
+            list.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Couldn't find similar songs", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            else -> androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize()) {
+                items(list.size) { i ->
+                    val t = list[i]
+                    app.stash.ui.components.TrackRow(
+                        t, onClick = { actions.playNext(t); actions.player.next() },
+                        trailing = {
+                            IconButton(onClick = { actions.addToQueue(listOf(t)) }) {
+                                Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        },
+                    )
                 }
             }
         }

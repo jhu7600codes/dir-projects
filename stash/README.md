@@ -23,7 +23,7 @@ All six milestones from the plan are in this first build:
 - The library has Spotify's Recents / Alphabetical sort and a list / grid switch.
 - Playlists can be pinned (playlist ⋮ menu, or long-press in the library): pinned ones come first in home's quick picks and at the top of the library.
 - The mini player is tinted with the cover's color, with a heart, play, and a thin progress line.
-- Now playing is a full-height sheet tinted with colors from the album art (androidx palette). The art shrinks with a bounce when paused, the play button morphs between pill and squircle, and there's a queue view.
+- Now playing is a full-height sheet tinted with colors from the album art (androidx palette). The art shrinks with a bounce when paused, and the play button morphs between pill and squircle. Along the bottom, Apple Music style, three plain icons: lyrics, similar songs (YouTube Music's radio for the song: play one or add them all) and the queue.
 
 ## Moving playlists (background)
 
