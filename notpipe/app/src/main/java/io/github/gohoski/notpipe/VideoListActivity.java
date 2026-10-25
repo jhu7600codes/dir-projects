@@ -33,6 +33,7 @@ import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
+import io.github.gohoski.notpipe.util.Feeds;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.LocalLibrary;
 
@@ -54,6 +55,8 @@ public class VideoListActivity extends Activity {
     public static final String SOURCE_RECOMMENDATIONS = "recommendations";
     public static final String SOURCE_WATCH_LATER = "watch_later";
     public static final String SOURCE_HISTORY = "history";
+    public static final String SOURCE_FOR_YOU = "for_you";
+    public static final String SOURCE_UPLOADS = "uploads";
 
     private static final int FEED_VIDEOS_PER_CHANNEL = 10;
     private static final int FEED_MAX_VIDEOS = 150;
@@ -153,7 +156,9 @@ public class VideoListActivity extends Activity {
         items.add(getString(R.string.download));
         items.add(getString(R.string.add_to_playlist));
         if (video.channelId != null && video.channelId.length() > 0) items.add(getString(R.string.channel));
-        if (SOURCE_LOCAL.equals(source)) items.add(getString(R.string.remove_from_playlist));
+        if (SOURCE_LOCAL.equals(source) || SOURCE_ACCOUNT_PLAYLIST.equals(source) || SOURCE_WATCH_LATER.equals(source)) {
+            items.add(getString(R.string.remove_from_playlist));
+        }
         final String[] array = items.toArray(new String[items.size()]);
         new AlertDialog.Builder(this)
                 .setTitle(video.title)
@@ -172,7 +177,16 @@ public class VideoListActivity extends Activity {
                             intent.putExtra("ID", video.channelId);
                             startActivity(intent);
                         } else if (item.equals(getString(R.string.remove_from_playlist))) {
-                            LocalLibrary.getInstance().removeFromPlaylist(arg, video.id);
+                            if (!SOURCE_LOCAL.equals(source)) {
+                                final String playlistId = SOURCE_WATCH_LATER.equals(source) ? "WL" : arg;
+                                VideoActions.runAccountAction(VideoListActivity.this, new VideoActions.AccountAction() {
+                                    public void run(Yt2009Account account) throws Exception {
+                                        account.removeFromPlaylist(playlistId, video.id);
+                                    }
+                                }, R.string.removed);
+                            } else {
+                                LocalLibrary.getInstance().removeFromPlaylist(arg, video.id);
+                            }
                             videos.remove(position);
                             adapter.notifyDataSetChanged();
                             updateEmpty();
@@ -189,7 +203,8 @@ public class VideoListActivity extends Activity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        boolean remote = !SOURCE_LOCAL.equals(source) && !SOURCE_FEED.equals(source) && !SOURCE_HISTORY.equals(source);
+        boolean remote = !SOURCE_LOCAL.equals(source) && !SOURCE_FEED.equals(source) && !SOURCE_HISTORY.equals(source)
+                && !SOURCE_FOR_YOU.equals(source);
         menu.findItem(R.id.action_save_playlist).setVisible(remote);
         menu.findItem(R.id.action_delete_playlist).setVisible(SOURCE_LOCAL.equals(source));
         menu.findItem(R.id.action_clear_history).setVisible(SOURCE_HISTORY.equals(source));
@@ -261,8 +276,13 @@ public class VideoListActivity extends Activity {
 
     private void updateEmpty() {
         TextView empty = (TextView) findViewById(R.id.empty);
-        empty.setText(SOURCE_FEED.equals(source) && LocalLibrary.getInstance().getSubscriptions().isEmpty()
-                ? R.string.no_subscriptions : R.string.no_videos);
+        if (SOURCE_FEED.equals(source) && LocalLibrary.getInstance().getSubscriptions().isEmpty()) {
+            empty.setText(R.string.no_subscriptions);
+        } else if (SOURCE_FOR_YOU.equals(source)) {
+            empty.setText(R.string.no_recommendations);
+        } else {
+            empty.setText(R.string.no_videos);
+        }
         empty.setVisibility(videos.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
@@ -347,6 +367,10 @@ public class VideoListActivity extends Activity {
                     return loadFeed();
                 } else if (SOURCE_HISTORY.equals(source)) {
                     return LocalLibrary.getInstance().getHistory();
+                } else if (SOURCE_FOR_YOU.equals(source)) {
+                    return Feeds.loadRecommendations();
+                } else if (SOURCE_UPLOADS.equals(source)) {
+                    return Yt2009Account.getInstance().getUploads();
                 } else if (SOURCE_RECOMMENDATIONS.equals(source)) {
                     return Yt2009Account.getInstance().getRecommendations();
                 } else if (SOURCE_WATCH_LATER.equals(source)) {

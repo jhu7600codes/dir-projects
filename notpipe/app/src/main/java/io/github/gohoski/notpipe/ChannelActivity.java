@@ -3,6 +3,7 @@ package io.github.gohoski.notpipe;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,11 +30,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.gohoski.notpipe.api.ChannelApi;
+import io.github.gohoski.notpipe.api.ContentUnavailableException;
 import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.api.Metadata;
-import io.github.gohoski.notpipe.api.ContentUnavailableException;
+import io.github.gohoski.notpipe.api.Yt2009Account;
 import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.VideoInfo;
+import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.Compat;
 import io.github.gohoski.notpipe.util.ImageLoader;
@@ -259,6 +262,10 @@ public class ChannelActivity extends Activity {
             subscribeItem.setTitle(channel != null && LocalLibrary.getInstance().isSubscribed(channel.id)
                     ? R.string.unsubscribe : R.string.subscribe);
         }
+        MenuItem youtubeItem = menu.findItem(R.id.action_subscribe_youtube);
+        if (youtubeItem != null) {
+            youtubeItem.setVisible(channel != null && Yt2009Account.getInstance().isSignedIn());
+        }
         MenuItem latestItem = menu.findItem(R.id.action_sort_latest);
         MenuItem popularItem = menu.findItem(R.id.action_sort_popular);
         if (latestItem != null) {
@@ -283,6 +290,32 @@ public class ChannelActivity extends Activity {
                 Toast.makeText(context, getString(R.string.subscribed, channel.title), Toast.LENGTH_SHORT).show();
             }
             Compat.invalidateOptionsMenu(this);
+            return true;
+        }
+        if (item.getItemId() == R.id.action_shorts) {
+            Intent intent = new Intent(this, ShortsActivity.class);
+            intent.putExtra(ShortsActivity.EXTRA_CHANNEL, channel != null ? channel.id : channelId);
+            startActivity(intent);
+            return true;
+        }
+        if (item.getItemId() == R.id.action_subscribe_youtube) {
+            if (channel == null) return true;
+            new AlertDialog.Builder(context)
+                    .setTitle(R.string.youtube_account)
+                    .setItems(new String[]{getString(R.string.subscribe), getString(R.string.unsubscribe)},
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    final boolean subscribe = which == 0;
+                                    final String id = channel.id;
+                                    VideoActions.runAccountAction(ChannelActivity.this,
+                                            new VideoActions.AccountAction() {
+                                                public void run(Yt2009Account account) throws Exception {
+                                                    account.setSubscribed(id, subscribe);
+                                                }
+                                            }, subscribe ? R.string.subscribed_youtube : R.string.unsubscribed_youtube);
+                                }
+                            }).show();
             return true;
         }
         if (NotPipe.SDK < 11) {

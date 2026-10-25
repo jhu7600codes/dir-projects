@@ -40,6 +40,7 @@ public class Manager {
     private List<ChannelApi> channelApiInstances; // Tracks instances capable of ChannelApi
     private List<PlaylistApi> playlistInstances;
     private List<AudioStream> audioInstances;
+    private List<ShortsApi> shortsInstances;
 
     private Manager() {
         random = new Random();
@@ -68,6 +69,7 @@ public class Manager {
             channelApiInstances = new ArrayList<ChannelApi>();
             playlistInstances = new ArrayList<PlaylistApi>();
             audioInstances = new ArrayList<AudioStream>();
+            shortsInstances = new ArrayList<ShortsApi>();
         } else {
             metadataInstances.clear();
             videoInstances.clear();
@@ -76,6 +78,7 @@ public class Manager {
             channelApiInstances.clear();
             playlistInstances.clear();
             audioInstances.clear();
+            shortsInstances.clear();
         }
 
         if (configManager == null) {
@@ -91,6 +94,7 @@ public class Manager {
             videoInstances.add(inv);
             playlistInstances.add(inv);
             audioInstances.add(inv);
+            shortsInstances.add(inv);
         }
 
         List<String> yt2009List = config.getYt2009Instances();
@@ -179,6 +183,14 @@ public class Manager {
     public PlaylistApi getPlaylistApi() {
         if (playlistInstances.isEmpty()) throw new IllegalStateException("No PlaylistApi instances");
         return createStatefulFallbackProxy(PlaylistApi.class, playlistInstances);
+    }
+
+    /**
+     * @return null if no instance supports channel Shorts (only Invidious does)
+     */
+    public ShortsApi getShortsApi() {
+        if (shortsInstances.isEmpty()) return null;
+        return createStatefulFallbackProxy(ShortsApi.class, shortsInstances);
     }
 
     /**
@@ -395,6 +407,7 @@ public class Manager {
         removeByHost(channelApiInstances, host);
         removeByHost(playlistInstances, host);
         removeByHost(audioInstances, host);
+        removeByHost(shortsInstances, host);
     }
 
     private void removeByHost(List list, String host) {

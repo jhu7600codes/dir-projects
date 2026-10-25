@@ -7,12 +7,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -203,20 +201,12 @@ public class DownloadsActivity extends Activity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             File file = files.get(position);
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
-            LinearLayout layout = new LinearLayout(context);
-            layout.setOrientation(LinearLayout.VERTICAL);
-            layout.setPadding(padding, padding, padding, padding);
-            TextView title = new TextView(context);
-            title.setText(titleOf(file));
-            title.setTextSize(16);
-            layout.addView(title);
-            TextView info = new TextView(context);
-            info.setText(getString(isAudio(file) ? R.string.audio : R.string.video) + " · "
-                    + String.format("%.1f MB", file.length() / 1048576.0));
-            info.setTextSize(12);
-            layout.addView(info);
-            return layout;
+            View item = convertView != null ? convertView
+                    : getLayoutInflater().inflate(android.R.layout.simple_list_item_2, parent, false);
+            ((TextView) item.findViewById(android.R.id.text1)).setText(titleOf(file));
+            ((TextView) item.findViewById(android.R.id.text2)).setText(getString(isAudio(file) ? R.string.audio : R.string.video)
+                    + " · " + String.format("%.1f MB", file.length() / 1048576.0));
+            return item;
         }
     }
 }

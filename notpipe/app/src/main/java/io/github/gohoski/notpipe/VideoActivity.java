@@ -46,16 +46,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
+import io.github.gohoski.notpipe.api.ContentUnavailableException;
 import io.github.gohoski.notpipe.api.Conversion;
 import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.api.Metadata;
 import io.github.gohoski.notpipe.api.VideoStream;
+import io.github.gohoski.notpipe.api.Yt2009Account;
 import io.github.gohoski.notpipe.config.Config;
 import io.github.gohoski.notpipe.config.ConfigManager;
 import io.github.gohoski.notpipe.data.Comment;
 import io.github.gohoski.notpipe.data.Video;
 import io.github.gohoski.notpipe.data.VideoInfo;
-import io.github.gohoski.notpipe.api.ContentUnavailableException;
 import io.github.gohoski.notpipe.http.HttpClient;
 import io.github.gohoski.notpipe.ui.AdapterLinearLayout;
 import io.github.gohoski.notpipe.ui.AspectRatioVideoView;
@@ -1337,6 +1338,20 @@ public class VideoActivity extends Activity {
                         }).show();
             }
         });
+
+        View.OnClickListener rateListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final boolean like = view.getId() == R.id.like;
+                VideoActions.runAccountAction(VideoActivity.this, new VideoActions.AccountAction() {
+                    public void run(Yt2009Account account) throws Exception {
+                        account.rate(videoId, like);
+                    }
+                }, like ? R.string.liked : R.string.disliked);
+            }
+        };
+        findViewById(R.id.like).setOnClickListener(rateListener);
+        findViewById(R.id.dislike).setOnClickListener(rateListener);
 
         findViewById(R.id.video_meta).setOnClickListener(new View.OnClickListener() {
             @Override

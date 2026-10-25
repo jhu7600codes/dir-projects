@@ -214,4 +214,50 @@
     <string name="history">История</string>
     <string name="on_this_device">На этом устройстве</string>
     <string name="clear_history">Очистить историю</string>
+    <string name="discover">Обзор</string>
+    <string name="recommended_for_you">Рекомендации для вас</string>
+    <string name="recommended_account">Из вашего аккаунта YouTube</string>
+    <string name="recommended_history">На основе просмотренного</string>
+    <string name="no_recommendations">Пока нечего рекомендовать. Посмотрите несколько видео или войдите через yt2009.</string>
+    <string name="show_recommended">Главная: рекомендации</string>
+    <string name="show_popular">Главная: популярное</string>
+    <string name="shorts">Shorts</string>
+    <string name="shorts_">Из ваших подписок, листайте вверх</string>
+    <string name="no_shorts">Shorts не найдены</string>
+    <string name="no_shorts_instances">Для Shorts нужен инстанс Invidious. Добавьте его в настройках.</string>
+    <string name="your_videos">Ваши видео</string>
+    <string name="upload_video">Загрузить видео</string>
+    <string name="upload_video_">На ваш канал YouTube</string>
+    <string name="upload">Загрузить</string>
+    <string name="choose_video">Выбрать видео</string>
+    <string name="no_file_chosen">Видео не выбрано</string>
+    <string name="no_picker">Нет приложения для выбора видео</string>
+    <string name="upload_title">Название</string>
+    <string name="upload_tags">Теги (через пробел)</string>
+    <string name="privacy">Доступ</string>
+    <string name="enter_title">Введите название</string>
+    <string name="upload_note">Видео загружается через инстанс yt2009, который обычно принимает файлы до 10 МБ.</string>
+    <string name="uploading">Загрузка…</string>
+    <string name="uploading_percent">Загрузка… %1$d%%</string>
+    <string name="uploaded">Загружено!</string>
+    <string name="uploaded_">YouTube может понадобиться несколько минут на обработку видео.</string>
+    <string name="upload_failed">Ошибка загрузки: %s</string>
+    <string name="instance_token">Токен инстанса</string>
+    <string name="instance_token_">Этому инстансу yt2009 нужен токен доступа для загрузки. Попросите его у владельца.</string>
+    <string name="sign_in_required">Сначала войдите через yt2009 в Библиотеке</string>
+    <string name="action_failed">Ошибка: %s</string>
+    <string name="liked">Понравилось</string>
+    <string name="disliked">Не понравилось</string>
+    <string name="loading_playlists">Загрузка плейлистов…</string>
+    <string name="new_youtube_playlist">Новый плейлист YouTube…</string>
+    <string name="private_playlist">Приватный</string>
+    <string name="saved_to_youtube">Сохранено в аккаунт YouTube</string>
+    <string name="removed">Удалено</string>
+    <string name="subscribed_youtube">Подписка оформлена на YouTube</string>
+    <string name="unsubscribed_youtube">Подписка отменена на YouTube</string>
+    <string-array name="privacy_options">
+        <item>Открытый</item>
+        <item>По ссылке</item>
+        <item>Приватный</item>
+    </string-array>
 </resources>

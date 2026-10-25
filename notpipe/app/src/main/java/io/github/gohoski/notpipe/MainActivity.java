@@ -39,12 +39,16 @@ import io.github.gohoski.notpipe.config.ConfigManager;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.ui.AutoCompleteAdapter;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
+import io.github.gohoski.notpipe.util.Compat;
+import io.github.gohoski.notpipe.util.Feeds;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.InstancesUpdater;
 
 public class MainActivity extends Activity implements InstancesUpdater.OnInstancesUpdatedListener {
     private static final String STATE_SEARCH_QUERY = "search_query";
     private static final String STATE_IS_SEARCH_MODE = "is_search_mode";
+    private static final String PREFS_UI = "notPipe_ui";
+    private static final String KEY_HOME_RECOMMENDED = "home_recommended";
 
     private VideoAdapter adapter;
     private List<VideoInfo> videos;
@@ -380,9 +384,36 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem homeFeed = menu.findItem(R.id.menu_home_feed);
+        if (homeFeed != null) {
+            homeFeed.setTitle(isHomeRecommended() ? R.string.show_popular : R.string.show_recommended);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    /** Home shows recommendations (yt2009 account or watch history based) instead of popular videos */
+    private boolean isHomeRecommended() {
+        return getSharedPreferences(PREFS_UI, MODE_PRIVATE).getBoolean(KEY_HOME_RECOMMENDED, false);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_library) {
             startActivity(new Intent(this, LibraryActivity.class));
+            return true;
+        } else if (item.getItemId() == R.id.menu_shorts) {
+            startActivity(new Intent(this, ShortsActivity.class));
+            return true;
+        } else if (item.getItemId() == R.id.menu_home_feed) {
+            boolean recommended = !isHomeRecommended();
+            getSharedPreferences(PREFS_UI, MODE_PRIVATE).edit().putBoolean(KEY_HOME_RECOMMENDED, recommended).commit();
+            Compat.invalidateOptionsMenu(this);
+            if (!isSearchMode) {
+                findViewById(R.id.no_popular).setVisibility(View.GONE);
+                findViewById(R.id.loading).setVisibility(View.VISIBLE);
+                new PopularTask().execute();
+            }
             return true;
         } else if (item.getItemId() == R.id.menu_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
@@ -495,6 +526,17 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
         @Override
         protected PopularResult doInBackground(Void... params) {
             PopularResult result = new PopularResult();
+            if (isHomeRecommended()) {
+                try {
+                    List<VideoInfo> recommended = Feeds.loadRecommendations();
+                    if (!recommended.isEmpty()) {
+                        result.videos = recommended;
+                        return result;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             try {
                 Metadata popularApi = null;
                 try {
@@ -536,7 +578,8 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             } else {
                 if (noPopularView != null) noPopularView.setVisibility(View.GONE);
                 videos = result.videos;
-                int layout = result.videos.get(0).channelThumbnail.length() > 0 ? R.layout.item_video : R.layout.item_video_compact;
+                String channelThumbnail = result.videos.get(0).channelThumbnail;
+                int layout = channelThumbnail != null && channelThumbnail.length() > 0 ? R.layout.item_video : R.layout.item_video_compact;
                 adapter = new VideoAdapter(context, layout, videos);
                 if (listView != null) {
                     setAdapterForView(listView, adapter);

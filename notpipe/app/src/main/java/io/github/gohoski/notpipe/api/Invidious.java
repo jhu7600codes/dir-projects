@@ -27,7 +27,7 @@ import io.github.gohoski.notpipe.Utils;
  * Implementation of Invidious API (https://docs.invidious.io/api/)
  */
 
-class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream {
+class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream, ShortsApi {
     private String baseUrl;
     private static final int VIDEO_THUMB = 4;
     private static final int AUTHOR_THUMB = 2;
@@ -264,6 +264,31 @@ class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream {
             path = Utils.parseUrl(baseUrl, location).substring(baseUrl.length());
         }
         return baseUrl + path;
+    }
+
+    @Override
+    public List<VideoInfo> getChannelShorts(String id) throws IOException {
+        HttpRequest req = new HttpRequest(baseUrl, "/api/v1/channels/" + id + "/shorts");
+        JSONObject json = JSON.getObject(HttpClient.executeToString(req));
+        try {
+            if (json.getString("error").length() > 0)
+                throw new ContentUnavailableException(json.getString("error"));
+        } catch (JSONException ignored) {}
+        JSONArray arr = json.getArray("videos");
+        List<VideoInfo> videos = new ArrayList<VideoInfo>();
+        for (int i = 0; i < arr.size(); i++) {
+            try {
+                JSONObject j = arr.getObject(i);
+                if (!"video".equals(j.getString("type", ""))) continue;
+                long published = j.getLong("published", 0);
+                String videoId = j.getString("videoId");
+                videos.add(new VideoInfo(videoId, j.getString("title"), getThumbnail(videoId),
+                        j.getString("author", ""), "", j.getString("authorId", id),
+                        Utils.formatDuration(j.getInt("lengthSeconds", 0)), j.getLong("viewCount", -1),
+                        published > 0 ? new Date(published * 1000L) : null));
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        return videos;
     }
 
     private List<VideoInfo> parseChannelVideos(JSONArray arr) {

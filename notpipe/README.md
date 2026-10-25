@@ -41,7 +41,9 @@ List of supported APIs:
 * **Playlists**: open any YouTube playlist (paste a link in search or use *Library → Open YouTube playlist*), plus local playlists ("Add to playlist" in a video's menu)
 * **Local subscriptions** (NewPipe-like): subscribe from a channel's menu, then *Library → What's new* shows the latest videos of all your channels
 * **Watch history** kept on the device
-* **YouTube account via yt2009**: recommendations, watch later, your playlists and importing your subscriptions. See [Signing in](#signing-in-with-yt2009)
+* **Recommended for you**: from your yt2009 account, or built from your watch history. Can also replace popular videos on the home screen (menu → Home: recommended)
+* **Shorts**: a full-screen vertical player with swipe / D-pad navigation, from your subscriptions (or #shorts search), plus a channel's Shorts from its menu. Needs an Invidious instance
+* **YouTube account via yt2009**: recommendations, watch later, your playlists and videos, importing subscriptions, plus saving to your playlists / watch later, creating playlists, like / dislike, subscribing and **uploading videos**. See [Signing in](#signing-in-with-yt2009)
 
 All of this is in the new **Library** screen (menu → Library).
 

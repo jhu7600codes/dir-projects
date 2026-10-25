@@ -5,11 +5,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,7 +14,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,8 +35,9 @@ import io.github.gohoski.notpipe.util.LocalLibrary;
 
 public class LibraryActivity extends Activity {
     private static final int NOW_PLAYING = 0, FEED = 1, CHANNELS = 2, PLAYLIST = 3, NEW_PLAYLIST = 4,
-            OPEN_PLAYLIST = 5, DOWNLOADS = 6, SIGN_IN = 7, RECOMMENDATIONS = 8, WATCH_LATER = 9,
-            ACCOUNT_SUBS = 10, ACCOUNT_PLAYLISTS = 11, SIGN_OUT = 12, HEADER = 13, HISTORY = 14;
+            OPEN_PLAYLIST = 5, DOWNLOADS = 6, SIGN_IN = 7, WATCH_LATER = 9,
+            ACCOUNT_SUBS = 10, ACCOUNT_PLAYLISTS = 11, SIGN_OUT = 12, HEADER = 13, HISTORY = 14, FOR_YOU = 15,
+            SHORTS = 16, UPLOADS = 17, UPLOAD = 18;
 
     private Context context;
     private final List<Row> rows = new ArrayList<Row>();
@@ -119,6 +116,12 @@ public class LibraryActivity extends Activity {
                     getString(MusicService.isPaused() ? R.string.paused : R.string.playing), null));
         }
 
+        Yt2009Account account = Yt2009Account.getInstance();
+        rows.add(new Row(HEADER, getString(R.string.discover), null, null));
+        rows.add(new Row(FOR_YOU, getString(R.string.recommended_for_you), getString(account.isSignedIn()
+                ? R.string.recommended_account : R.string.recommended_history), null));
+        rows.add(new Row(SHORTS, getString(R.string.shorts), getString(R.string.shorts_), null));
+
         rows.add(new Row(HEADER, getString(R.string.subscriptions), null, null));
         int subs = library.getSubscriptions().size();
         rows.add(new Row(FEED, getString(R.string.subscriptions_feed), getString(R.string.channels_count, subs), null));
@@ -136,12 +139,12 @@ public class LibraryActivity extends Activity {
         rows.add(new Row(HISTORY, getString(R.string.history), null, null));
         rows.add(new Row(DOWNLOADS, getString(R.string.downloads), null, null));
 
-        Yt2009Account account = Yt2009Account.getInstance();
         rows.add(new Row(HEADER, getString(R.string.youtube_account), null, null));
         if (account.isSignedIn()) {
-            rows.add(new Row(RECOMMENDATIONS, getString(R.string.recommendations), null, null));
             rows.add(new Row(WATCH_LATER, getString(R.string.watch_later), null, null));
             rows.add(new Row(ACCOUNT_PLAYLISTS, getString(R.string.your_playlists), null, null));
+            rows.add(new Row(UPLOADS, getString(R.string.your_videos), null, null));
+            rows.add(new Row(UPLOAD, getString(R.string.upload_video), getString(R.string.upload_video_), null));
             rows.add(new Row(ACCOUNT_SUBS, getString(R.string.import_subscriptions), getString(R.string.import_subscriptions_), null));
             rows.add(new Row(SIGN_OUT, getString(R.string.sign_out), getString(R.string.signed_in_via, account.getInstanceHost()), null));
         } else {
@@ -175,6 +178,18 @@ public class LibraryActivity extends Activity {
             case OPEN_PLAYLIST:
                 showOpenPlaylistDialog();
                 break;
+            case FOR_YOU:
+                VideoListActivity.open(this, VideoListActivity.SOURCE_FOR_YOU, null, getString(R.string.recommended_for_you));
+                break;
+            case SHORTS:
+                startActivity(new Intent(this, ShortsActivity.class));
+                break;
+            case UPLOADS:
+                VideoListActivity.open(this, VideoListActivity.SOURCE_UPLOADS, null, getString(R.string.your_videos));
+                break;
+            case UPLOAD:
+                startActivity(new Intent(this, UploadActivity.class));
+                break;
             case HISTORY:
                 VideoListActivity.open(this, VideoListActivity.SOURCE_HISTORY, null, getString(R.string.history));
                 break;
@@ -183,9 +198,6 @@ public class LibraryActivity extends Activity {
                 break;
             case SIGN_IN:
                 showSignIn();
-                break;
-            case RECOMMENDATIONS:
-                VideoListActivity.open(this, VideoListActivity.SOURCE_RECOMMENDATIONS, null, getString(R.string.recommendations));
                 break;
             case WATCH_LATER:
                 VideoListActivity.open(this, VideoListActivity.SOURCE_WATCH_LATER, null, getString(R.string.watch_later));
@@ -566,33 +578,32 @@ public class LibraryActivity extends Activity {
         }
 
         @Override
+        public int getViewTypeCount() {
+            return 2;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return rows.get(position).kind == HEADER ? 0 : 1;
+        }
+
+        @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             Row row = rows.get(position);
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
             if (row.kind == HEADER) {
-                TextView header = new TextView(context);
+                // Same section header style as system lists: the blue Holo divider on 3.0+, the grey bar before
+                TextView header = convertView instanceof TextView ? (TextView) convertView
+                        : new TextView(context, null, android.R.attr.listSeparatorTextViewStyle);
                 header.setText(row.text);
-                header.setPadding(padding, padding / 2, padding, padding / 2);
-                header.setTypeface(null, Typeface.BOLD);
-                header.setTextColor(Color.WHITE);
-                header.setBackgroundColor(Color.DKGRAY);
-                header.setTextSize(12);
                 return header;
             }
-            LinearLayout layout = new LinearLayout(context);
-            layout.setOrientation(LinearLayout.VERTICAL);
-            layout.setPadding(padding * 2, padding, padding, padding);
-            TextView text = new TextView(context);
-            text.setText(row.text);
-            text.setTextSize(17);
-            layout.addView(text);
-            if (row.subtext != null) {
-                TextView sub = new TextView(context);
-                sub.setText(row.subtext);
-                sub.setTextSize(13);
-                layout.addView(sub);
-            }
-            return layout;
+            View item = convertView != null ? convertView
+                    : getLayoutInflater().inflate(android.R.layout.simple_list_item_2, parent, false);
+            ((TextView) item.findViewById(android.R.id.text1)).setText(row.text);
+            TextView sub = (TextView) item.findViewById(android.R.id.text2);
+            sub.setText(row.subtext);
+            sub.setVisibility(row.subtext == null ? View.GONE : View.VISIBLE);
+            return item;
         }
     }
 }

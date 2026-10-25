@@ -3,6 +3,9 @@ package io.github.gohoski.notpipe.ui;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -10,6 +13,8 @@ import java.util.List;
 
 import io.github.gohoski.notpipe.DownloadService;
 import io.github.gohoski.notpipe.R;
+import io.github.gohoski.notpipe.api.Yt2009Account;
+import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.util.Compat;
 import io.github.gohoski.notpipe.util.LocalLibrary;
@@ -61,9 +66,159 @@ public class VideoActions {
     }
 
     /**
-     * Shows local playlists plus a "New playlist" entry and adds the video to the chosen one.
+     * When signed in through yt2009, first asks whether to save on the device or to the YouTube account.
      */
     public static void showAddToPlaylistDialog(final Activity activity, final VideoInfo video) {
+        if (!Yt2009Account.getInstance().isSignedIn()) {
+            showLocalPlaylistDialog(activity, video);
+            return;
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.add_to_playlist)
+                .setItems(new String[]{activity.getString(R.string.on_this_device), activity.getString(R.string.youtube_account)},
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (which == 0) showLocalPlaylistDialog(activity, video);
+                                else new AccountPlaylistsTask(activity, video).execute();
+                            }
+                        })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /**
+     * Runs an account action in the background and toasts the result.
+     */
+    public static void runAccountAction(final Activity activity, final AccountAction action, final int successText) {
+        if (!Yt2009Account.getInstance().isSignedIn()) {
+            Toast.makeText(activity, R.string.sign_in_required, Toast.LENGTH_LONG).show();
+            return;
+        }
+        new AsyncTask<Void, Void, Exception>() {
+            @Override
+            protected Exception doInBackground(Void... params) {
+                try {
+                    action.run(Yt2009Account.getInstance());
+                    return null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return e;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Exception e) {
+                Toast.makeText(activity, e == null ? activity.getString(successText)
+                        : activity.getString(R.string.action_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
+            }
+        }.execute();
+    }
+
+    public interface AccountAction {
+        void run(Yt2009Account account) throws Exception;
+    }
+
+    private static class AccountPlaylistsTask extends AsyncTask<Void, Void, List<Playlist>> {
+        private final Activity activity;
+        private final VideoInfo video;
+
+        AccountPlaylistsTask(Activity activity, VideoInfo video) {
+            this.activity = activity;
+            this.video = video;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            Toast.makeText(activity, R.string.loading_playlists, Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        protected List<Playlist> doInBackground(Void... params) {
+            try {
+                return Yt2009Account.getInstance().getPlaylists();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final List<Playlist> playlists) {
+            if (activity.isFinishing()) return;
+            if (playlists == null) {
+                Toast.makeText(activity, R.string.load_failed, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            final String[] items = new String[playlists.size() + 2];
+            items[0] = activity.getString(R.string.watch_later);
+            items[1] = activity.getString(R.string.new_youtube_playlist);
+            for (int i = 0; i < playlists.size(); i++) {
+                items[i + 2] = playlists.get(i).title;
+            }
+            new AlertDialog.Builder(activity)
+                    .setTitle(R.string.youtube_account)
+                    .setItems(items, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == 0) {
+                                runAccountAction(activity, new AccountAction() {
+                                    public void run(Yt2009Account account) throws Exception {
+                                        account.addToWatchLater(video.id);
+                                    }
+                                }, R.string.saved_to_youtube);
+                            } else if (which == 1) {
+                                showNewYoutubePlaylistDialog(activity, video);
+                            } else {
+                                final Playlist playlist = playlists.get(which - 2);
+                                runAccountAction(activity, new AccountAction() {
+                                    public void run(Yt2009Account account) throws Exception {
+                                        account.addToPlaylist(playlist.id, video.id);
+                                    }
+                                }, R.string.saved_to_youtube);
+                            }
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        }
+    }
+
+    private static void showNewYoutubePlaylistDialog(final Activity activity, final VideoInfo video) {
+        LinearLayout layout = new LinearLayout(activity);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(15, 5, 15, 5);
+        final EditText input = new EditText(activity);
+        input.setSingleLine(true);
+        input.setHint(R.string.playlist_name);
+        layout.addView(input);
+        final CheckBox isPrivate = new CheckBox(activity);
+        isPrivate.setText(R.string.private_playlist);
+        layout.addView(isPrivate);
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.new_youtube_playlist)
+                .setView(layout)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String name = input.getText().toString().trim();
+                        if (name.length() == 0) return;
+                        final boolean priv = isPrivate.isChecked();
+                        runAccountAction(activity, new AccountAction() {
+                            public void run(Yt2009Account account) throws Exception {
+                                account.createPlaylist(name, video == null ? null : video.id, priv);
+                            }
+                        }, R.string.saved_to_youtube);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /**
+     * Shows local playlists plus a "New playlist" entry and adds the video to the chosen one.
+     */
+    public static void showLocalPlaylistDialog(final Activity activity, final VideoInfo video) {
         final LocalLibrary library = LocalLibrary.getInstance();
         final List<String> names = library.getPlaylistNames();
         final String[] items = new String[names.size() + 1];

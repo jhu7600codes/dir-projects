@@ -5,6 +5,14 @@
         android:title="@string/library"
         android:icon="@android:drawable/ic_menu_agenda"/>
     <item
+        android:id="@+id/menu_shorts"
+        android:title="@string/shorts"
+        android:icon="@android:drawable/ic_media_play"/>
+    <item
+        android:id="@+id/menu_home_feed"
+        android:title="@string/show_recommended"
+        android:icon="@android:drawable/ic_menu_today"/>
+    <item
         android:id="@+id/menu_settings"
         android:title="@string/settings"
         android:icon="@android:drawable/ic_menu_preferences"/>

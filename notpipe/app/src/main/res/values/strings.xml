@@ -199,4 +199,50 @@
     <string name="history">History</string>
     <string name="on_this_device">On this device</string>
     <string name="clear_history">Clear history</string>
+    <string name="discover">Discover</string>
+    <string name="recommended_for_you">Recommended for you</string>
+    <string name="recommended_account">From your YouTube account</string>
+    <string name="recommended_history">Based on what you watched</string>
+    <string name="no_recommendations">Nothing to recommend yet. Watch a few videos or sign in via yt2009.</string>
+    <string name="show_recommended">Home: recommended</string>
+    <string name="show_popular">Home: popular</string>
+    <string name="shorts">Shorts</string>
+    <string name="shorts_">From your subscriptions, swipe up for the next one</string>
+    <string name="no_shorts">No Shorts found</string>
+    <string name="no_shorts_instances">Shorts need an Invidious instance. Add one in the settings.</string>
+    <string name="your_videos">Your videos</string>
+    <string name="upload_video">Upload a video</string>
+    <string name="upload_video_">To your YouTube channel</string>
+    <string name="upload">Upload</string>
+    <string name="choose_video">Choose a video</string>
+    <string name="no_file_chosen">No video chosen</string>
+    <string name="no_picker">No app found to choose a video</string>
+    <string name="upload_title">Title</string>
+    <string name="upload_tags">Tags (space separated)</string>
+    <string name="privacy">Privacy</string>
+    <string name="enter_title">Please enter a title</string>
+    <string name="upload_note">The video goes through the yt2009 instance, which usually accepts files up to 10 MB.</string>
+    <string name="uploading">Uploading…</string>
+    <string name="uploading_percent">Uploading… %1$d%%</string>
+    <string name="uploaded">Uploaded!</string>
+    <string name="uploaded_">YouTube may need a few minutes to process the video.</string>
+    <string name="upload_failed">Upload failed: %s</string>
+    <string name="instance_token">Instance token</string>
+    <string name="instance_token_">This yt2009 instance needs an access token for uploads. Ask its owner for one.</string>
+    <string name="sign_in_required">Sign in via yt2009 in the Library first</string>
+    <string name="action_failed">Failed: %s</string>
+    <string name="liked">Liked</string>
+    <string name="disliked">Disliked</string>
+    <string name="loading_playlists">Loading playlists…</string>
+    <string name="new_youtube_playlist">New YouTube playlist…</string>
+    <string name="private_playlist">Private</string>
+    <string name="saved_to_youtube">Saved to your YouTube account</string>
+    <string name="removed">Removed</string>
+    <string name="subscribed_youtube">Subscribed on YouTube</string>
+    <string name="unsubscribed_youtube">Unsubscribed on YouTube</string>
+    <string-array name="privacy_options">
+        <item>Public</item>
+        <item>Unlisted</item>
+        <item>Private</item>
+    </string-array>
 </resources>

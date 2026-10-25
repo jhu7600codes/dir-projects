@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_open_video"
+        android:title="@string/open_video"
+        android:icon="@android:drawable/ic_menu_view"/>
+    <item
+        android:id="@+id/action_channel"
+        android:title="@string/channel"
+        android:icon="@android:drawable/ic_menu_myplaces"/>
+    <item
+        android:id="@+id/action_listen_background"
+        android:title="@string/play_in_background"
+        android:icon="@android:drawable/ic_media_play"/>
+    <item
+        android:id="@+id/action_download"
+        android:title="@string/download"
+        android:icon="@android:drawable/ic_menu_save"/>
+    <item
+        android:id="@+id/action_add_playlist"
+        android:title="@string/add_to_playlist"
+        android:icon="@android:drawable/ic_menu_add"/>
+</menu>

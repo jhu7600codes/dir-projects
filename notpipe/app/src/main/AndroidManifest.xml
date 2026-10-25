@@ -68,6 +68,12 @@
                 <data android:pathPrefix="/playlist" />
             </intent-filter>
         </activity>
+        <activity android:name=".ShortsActivity"
+            android:label="@string/shorts"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout" />
+        <activity android:name=".UploadActivity"
+            android:label="@string/upload_video"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout" />
         <service android:name=".MusicService" />
         <service android:name=".DownloadService" />
     </application>
