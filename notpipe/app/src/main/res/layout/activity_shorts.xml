@@ -35,16 +35,6 @@
         android:textSize="18sp"
         android:visibility="gone"/>
 
-    <TextView
-        android:id="@+id/short_position"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|left"
-        android:padding="12dp"
-        android:textColor="#CCFFFFFF"
-        android:shadowColor="#FF000000"
-        android:shadowRadius="3"
-        tools:text="3/40"/>
 
     <LinearLayout
         android:layout_width="wrap_content"

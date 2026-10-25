@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Focus highlight for D-pad navigation on TV (list selectors get the list's focused/pressed states) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#5533B5E5"/>
+            <stroke android:width="3dp" android:color="#FF33B5E5"/>
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#3333B5E5"/>
+            <stroke android:width="3dp" android:color="#FF33B5E5"/>
+        </shape>
+    </item>
+    <item android:drawable="@android:color/transparent"/>
+</selector>

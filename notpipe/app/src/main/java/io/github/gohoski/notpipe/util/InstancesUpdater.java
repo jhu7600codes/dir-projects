@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import cc.nnproject.json.JSON;
@@ -32,6 +33,28 @@ public class InstancesUpdater {
         this.context = context;
         this.config = ConfigManager.getInstance().getConfig();
         this.listener = listener;
+    }
+
+    /**
+     * @return true if updating from URL is on and the configured number of days has passed since the last update
+     */
+    public static boolean isUpdateDue() {
+        Config config = ConfigManager.getInstance().getConfig();
+        if (!config.isUpdateInstancesFromUrl()) return false;
+        Calendar now = Calendar.getInstance();
+        Calendar lastUpdate = Calendar.getInstance();
+        now.setTimeInMillis(System.currentTimeMillis());
+        lastUpdate.setTimeInMillis(config.getLastUpdate());
+        now.set(Calendar.HOUR_OF_DAY, 0);
+        now.set(Calendar.MINUTE, 0);
+        now.set(Calendar.SECOND, 0);
+        now.set(Calendar.MILLISECOND, 0);
+        lastUpdate.set(Calendar.HOUR_OF_DAY, 0);
+        lastUpdate.set(Calendar.MINUTE, 0);
+        lastUpdate.set(Calendar.SECOND, 0);
+        lastUpdate.set(Calendar.MILLISECOND, 0);
+        return Math.round((double) ((now.getTimeInMillis() - lastUpdate.getTimeInMillis()) / (24L * 60 * 60 * 1000)))
+                >= config.getUpdateFrequency();
     }
 
     /**

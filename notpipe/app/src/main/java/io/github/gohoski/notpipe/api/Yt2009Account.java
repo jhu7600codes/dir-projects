@@ -98,6 +98,40 @@ public class Yt2009Account {
         return device;
     }
 
+    /** Google's Android device setup sign-in page, the one yt2009's gsign instructions use */
+    public static final String GOOGLE_SIGN_IN_URL = "https://accounts.google.com/embedded/setup/v2/android"
+            + "?source=com.google.android.gms&xoauth_display_name=Android%20Phone&lang=en&langCountry=en_us&hl=en-US"
+            + "&cc=us&multilogin=1&hide_status_bar=0&use_native_navigation=0&alignment=center";
+
+    /**
+     * On-device version of yt2009's gsign: hands the oauth2_4 token that Google's sign-in page sets as the
+     * "oauth_token" cookie to the instance (what the PC page asks you to copy from the dev tools).
+     * @param token token with or without the "oauth2_4/" prefix
+     */
+    public void submitGoogleToken(String email, String token) throws IOException {
+        if (token.startsWith("oauth2_4/")) token = token.substring(9);
+        int quote = token.indexOf('"');
+        if (quote >= 0) token = token.substring(0, quote);
+        String reversed = new StringBuilder(token).reverse().toString();
+        String scrambled = "\u0001" + reversed.substring(0, 4) + "\u0001" + reversed.substring(4);
+        HttpURLConnection connection = open("/gsign_submit", HttpClient.CONVERSION_TIMEOUT);
+        connection.setRequestProperty("device", getDeviceCode());
+        connection.setRequestProperty("Content-Type", "text/plain");
+        byte[] body = (email.trim() + "\u0000" + scrambled).getBytes("UTF-8");
+        connection.setDoOutput(true);
+        connection.setFixedLengthStreamingMode(body.length);
+        OutputStream out = connection.getOutputStream();
+        out.write(body);
+        out.close();
+        readResponse(connection);
+        checkLinked();
+    }
+
+    /** yt2009's page for picking which channel (brand account) of the Google account to use */
+    public String getAccountPickerUrl() {
+        return getInstanceUrl() + "/mobile/mobilehelper/account_picker.html?device=" + getDeviceCode();
+    }
+
     /**
      * Checks whether the user has finished signing in on the PC.
      * @return true if the device code is now linked to a YouTube account
@@ -278,9 +312,55 @@ public class Yt2009Account {
         return id.find() ? id.group(1) : null;
     }
 
+    /* ---------- Watch history on YouTube (so its recommendations learn from what you watch here) ---------- */
+
+    private static final Pattern PLAYBACK_PID = Pattern.compile("playbackIdShorthand = \"([^\"]+)\"");
+    private static final Pattern WATCHTIME_PID = Pattern.compile("watchtimeIdShorthand = \"([^\"]+)\"");
+
+    /** IDs yt2009 hands out for YouTube's playback/watchtime stats URLs of one video */
+    public static class WatchSession {
+        final String playbackPid, watchtimePid;
+
+        WatchSession(String playbackPid, String watchtimePid) {
+            this.playbackPid = playbackPid;
+            this.watchtimePid = watchtimePid;
+        }
+    }
+
+    /**
+     * Tells YouTube the video started playing, the same way yt2009's own player does,
+     * so it lands in the account's watch history and shapes its recommendations.
+     * @return session for {@link #reportWatchtime}, or null if the instance didn't provide stats URLs
+     */
+    public WatchSession startWatch(String videoId) throws IOException {
+        if (!isSignedIn()) return null;
+        String page = readResponse(open("/watch?v=" + videoId + "&with_pchelper=1", "GET", HttpClient.VIDEO_TIMEOUT));
+        Matcher playback = PLAYBACK_PID.matcher(page);
+        Matcher watchtime = WATCHTIME_PID.matcher(page);
+        if (!playback.find() || !watchtime.find()) return null;
+        WatchSession session = new WatchSession(playback.group(1), watchtime.group(1));
+        readResponse(open("/playback_progress_report?pid=" + session.playbackPid, "GET", HttpClient.VIDEO_TIMEOUT));
+        return session;
+    }
+
+    /**
+     * @param seconds current playback position
+     * @param finalReport true when the user leaves the video
+     */
+    public void reportWatchtime(WatchSession session, float seconds, boolean playing, boolean finalReport) throws IOException {
+        if (session == null) return;
+        readResponse(open("/playback_progress_report?pid=" + session.watchtimePid + "&rt=" + System.currentTimeMillis()
+                + "&st=" + String.format("%.1f", seconds).replace(',', '.') + "&state=" + (playing ? "playing" : "paused")
+                + (finalReport ? "&final=1" : ""), "GET", HttpClient.VIDEO_TIMEOUT));
+    }
+
     private HttpURLConnection open(String endpoint, int timeout) throws IOException {
+        return open(endpoint, "POST", timeout);
+    }
+
+    private HttpURLConnection open(String endpoint, String method, int timeout) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(getInstanceUrl() + endpoint).openConnection();
-        connection.setRequestMethod("POST");
+        connection.setRequestMethod(method);
         connection.setConnectTimeout(9999);
         connection.setReadTimeout(timeout);
         connection.setInstanceFollowRedirects(false);

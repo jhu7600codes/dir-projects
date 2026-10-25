@@ -118,6 +118,9 @@ public class VideoActivity extends Activity {
     private boolean isActivityStopped = false;
 
     private int videoBufferTimeout = 60000;
+    private boolean watchStarted = false;
+    private int watchtimeTicks = 0;
+    private Yt2009Account.WatchSession watchSession;
     private static final String DIR_VIDEOS = "notPipe/videos";
 
     private Handler systemUiHandler = new Handler();
@@ -341,6 +344,8 @@ public class VideoActivity extends Activity {
                         if (pos > 0) {
                             videoPosition = pos;
                         }
+                        // YouTube's own players send watchtime pings regularly, ~every 30 s here
+                        if (++watchtimeTicks % 6 == 0) reportYoutubeWatchtime(false);
                     }
                 } catch (Exception ignored) {}
             }
@@ -649,6 +654,7 @@ public class VideoActivity extends Activity {
                                 mp.start(); startPositionTracking();
                             }
                         }
+                        startYoutubeWatch();
                     }
                 });
             }
@@ -872,8 +878,52 @@ public class VideoActivity extends Activity {
         if (loadRelatedTask != null) loadRelatedTask.cancel(true);
     }
 
+    /**
+     * When signed in through yt2009, reports the playback to YouTube so it goes into the account's
+     * watch history and YouTube's recommendations learn from it. Runs once per video.
+     */
+    private void startYoutubeWatch() {
+        if (watchStarted || !Yt2009Account.getInstance().isSignedIn()) return;
+        watchStarted = true;
+        final String id = videoId;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    watchSession = Yt2009Account.getInstance().startWatch(id);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private void reportYoutubeWatchtime(final boolean finalReport) {
+        final Yt2009Account.WatchSession session = watchSession;
+        if (session == null || videoView == null || !videoPrepared) return;
+        final float seconds;
+        final boolean playing;
+        try {
+            seconds = videoView.getCurrentPosition() / 1000f;
+            playing = videoView.isPlaying();
+        } catch (Exception e) {
+            return;
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Yt2009Account.getInstance().reportWatchtime(session, seconds, playing, finalReport);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
     @Override
     protected void onPause() {
+        reportYoutubeWatchtime(isFinishing());
         super.onPause();
         stopPositionTracking();
         if (videoView != null) {

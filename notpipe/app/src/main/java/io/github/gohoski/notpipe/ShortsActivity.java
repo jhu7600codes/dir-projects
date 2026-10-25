@@ -173,7 +173,6 @@ public class ShortsActivity extends Activity {
         } catch (Exception ignored) {}
         ((TextView) findViewById(R.id.short_title)).setText(video.title);
         ((TextView) findViewById(R.id.short_channel)).setText(video.channel);
-        ((TextView) findViewById(R.id.short_position)).setText((index + 1) + "/" + shorts.size());
         findViewById(R.id.short_loading).setVisibility(View.VISIBLE);
         thumbnail.setVisibility(View.VISIBLE);
         ImageLoader.loadImage(video.thumbnail, thumbnail, false);

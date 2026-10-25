@@ -29,11 +29,11 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Calendar;
 import java.util.List;
 
 import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.api.Metadata;
+import io.github.gohoski.notpipe.api.Yt2009Account;
 import io.github.gohoski.notpipe.config.Config;
 import io.github.gohoski.notpipe.config.ConfigManager;
 import io.github.gohoski.notpipe.data.VideoInfo;
@@ -89,6 +89,11 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (Compat.isTelevision(this)) {
+            startActivity(new Intent(this, TvActivity.class));
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_main);
 
         listView = (AbsListView) findViewById(R.id.videos);
@@ -222,23 +227,9 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
 
         if (videos == null) {
             boolean isUpdatingInstances = false;
-            if (config.isUpdateInstancesFromUrl()) {
-                Calendar now = Calendar.getInstance();
-                Calendar lastUpdate = Calendar.getInstance();
-                now.setTimeInMillis(System.currentTimeMillis());
-                lastUpdate.setTimeInMillis(config.getLastUpdate());
-                now.set(Calendar.HOUR_OF_DAY, 0);
-                now.set(Calendar.MINUTE, 0);
-                now.set(Calendar.SECOND, 0);
-                now.set(Calendar.MILLISECOND, 0);
-                lastUpdate.set(Calendar.HOUR_OF_DAY, 0);
-                lastUpdate.set(Calendar.MINUTE, 0);
-                lastUpdate.set(Calendar.SECOND, 0);
-                lastUpdate.set(Calendar.MILLISECOND, 0);
-                if (Math.round((double) ((now.getTimeInMillis() - lastUpdate.getTimeInMillis()) / (24L * 60 * 60 * 1000))) >= config.getUpdateFrequency()) {
-                    isUpdatingInstances = true;
-                    new InstancesUpdater(this, this).updateInstances();
-                }
+            if (InstancesUpdater.isUpdateDue()) {
+                isUpdatingInstances = true;
+                new InstancesUpdater(this, this).updateInstances();
             }
 
             if (!isUpdatingInstances) {
@@ -394,7 +385,9 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
 
     /** Home shows recommendations (yt2009 account or watch history based) instead of popular videos */
     private boolean isHomeRecommended() {
-        return getSharedPreferences(PREFS_UI, MODE_PRIVATE).getBoolean(KEY_HOME_RECOMMENDED, false);
+        // Signed in, the account's YouTube home feed is the default, like on YouTube itself
+        return getSharedPreferences(PREFS_UI, MODE_PRIVATE).getBoolean(KEY_HOME_RECOMMENDED,
+                Yt2009Account.getInstance().isSignedIn());
     }
 
     @Override

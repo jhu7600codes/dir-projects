@@ -366,6 +366,35 @@ public class LibraryActivity extends Activity {
                 .setNegativeButton(android.R.string.cancel, null).show();
     }
 
+    /** Google sign-in on this device (WebView) or yt2009's original PC page with the device code */
+    private void chooseSignInPlace(final String baseUrl, final String code) {
+        if (isDestroyedFlag) return;
+        // Google's sign-in page needs a modern WebView (Android 5.0+), older devices only have the PC way
+        if (NotPipe.SDK < 21) {
+            showCodeDialog(baseUrl, code);
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.sign_in_where)
+                .setItems(new String[]{getString(R.string.sign_in_here), getString(R.string.sign_in_pc)},
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (which == 0) {
+                                    startActivity(new Intent(context, GsignActivity.class));
+                                } else {
+                                    showCodeDialog(baseUrl, code);
+                                }
+                            }
+                        })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Yt2009Account.getInstance().signOut();
+                    }
+                }).show();
+    }
+
     private void showCodeDialog(final String baseUrl, final String code) {
         if (isDestroyedFlag) return;
         new AlertDialog.Builder(this)
@@ -417,7 +446,7 @@ public class LibraryActivity extends Activity {
                 Toast.makeText(context, R.string.sign_in_failed, Toast.LENGTH_LONG).show();
                 return;
             }
-            showCodeDialog(baseUrl, code);
+            chooseSignInPlace(baseUrl, code);
         }
     }
 

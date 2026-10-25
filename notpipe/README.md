@@ -41,7 +41,8 @@ List of supported APIs:
 * **Playlists**: open any YouTube playlist (paste a link in search or use *Library → Open YouTube playlist*), plus local playlists ("Add to playlist" in a video's menu)
 * **Local subscriptions** (NewPipe-like): subscribe from a channel's menu, then *Library → What's new* shows the latest videos of all your channels
 * **Watch history** kept on the device
-* **Recommended for you**: from your yt2009 account, or built from your watch history. Can also replace popular videos on the home screen (menu → Home: recommended)
+* **Recommended for you** using YouTube's own algorithm: your account's YouTube home feed when signed in (videos you watch in notPipe are reported to YouTube's watch history, so it keeps learning), otherwise YouTube's "up next" picks for what you watched. Signed in, it's the home screen by default (menu → Home: popular/recommended)
+* **TV app**: shows up in the Android TV launcher, with a side menu and a big card grid made for the remote
 * **Shorts**: a full-screen vertical player with swipe / D-pad navigation, from your subscriptions (or #shorts search), plus a channel's Shorts from its menu. Needs an Invidious instance
 * **YouTube account via yt2009**: recommendations, watch later, your playlists and videos, importing subscriptions, plus saving to your playlists / watch later, creating playlists, like / dislike, subscribing and **uploading videos**. See [Signing in](#signing-in-with-yt2009)
 
@@ -50,8 +51,8 @@ All of this is in the new **Library** screen (menu → Library).
 ### Signing in with yt2009
 notPipe uses yt2009's "mobile helper" sign in, the same one its patched APKs use:
 1. *Library → Sign in via yt2009* and pick an instance.
-2. On a PC, open `http://<instance>/gsign`, enter the device code notPipe shows and sign in with Google there.
-3. Tap *Done* in notPipe.
+2. Choose *On this device*: sign in to Google in the page notPipe opens, enter the email you used, pick your channel and tap *Done*. (Android 5.0+; older devices use the PC way.)
+3. Or choose *On a PC*: open `http://<instance>/gsign` there, enter the device code notPipe shows and follow the steps, then tap *Done* in notPipe.
 
 > [!WARNING]
 > The instance owner gets access to the linked YouTube account. Only sign in through instances you trust (or host your own).

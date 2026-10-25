@@ -214,8 +214,8 @@
     <string name="clear_history">Очистить историю</string>
     <string name="discover">Обзор</string>
     <string name="recommended_for_you">Рекомендации для вас</string>
-    <string name="recommended_account">Из вашего аккаунта YouTube</string>
-    <string name="recommended_history">На основе просмотренного</string>
+    <string name="recommended_account">Главная YouTube для вашего аккаунта</string>
+    <string name="recommended_history">«Следующие» видео YouTube по вашим просмотрам</string>
     <string name="no_recommendations">Пока нечего рекомендовать. Посмотрите несколько видео или войдите через yt2009.</string>
     <string name="show_recommended">Главная: рекомендации</string>
     <string name="show_popular">Главная: популярное</string>
@@ -270,4 +270,13 @@
         <item quantity="many">%d видео</item>
         <item quantity="other">%d видео</item>
     </plurals>
+    <string name="search">Поиск</string>
+    <string name="sign_in_where">Где войти в Google?</string>
+    <string name="sign_in_here">На этом устройстве</string>
+    <string name="sign_in_pc">На компьютере (ввести код)</string>
+    <string name="gsign_step_google">Войдите в аккаунт Google ниже. После «Принимаю» notPipe продолжит сам, даже если страница покажет ошибку.</string>
+    <string name="gsign_email">Аккаунт Google</string>
+    <string name="gsign_email_">С какой почтой вы только что вошли?</string>
+    <string name="gsign_linking">Привязка аккаунта к инстансу…</string>
+    <string name="gsign_step_channel">Вход выполнен! Если каналов несколько, выберите нужный ниже и нажмите «Готово».</string>
 </resources>

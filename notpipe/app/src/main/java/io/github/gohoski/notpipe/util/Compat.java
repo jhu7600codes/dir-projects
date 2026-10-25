@@ -3,6 +3,8 @@ package io.github.gohoski.notpipe.util;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.Service;
+import android.content.Context;
+import android.content.res.Configuration;
 
 import java.lang.reflect.Method;
 
@@ -46,6 +48,20 @@ public class Compat {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * @return true on Android TV / Google TV (Configuration.uiMode is Android 2.2+)
+     */
+    public static boolean isTelevision(Context context) {
+        if (NotPipe.SDK < 8) return false;
+        try {
+            Configuration config = context.getResources().getConfiguration();
+            int uiMode = Configuration.class.getField("uiMode").getInt(config);
+            return (uiMode & 0x0f) == 4; // UI_MODE_TYPE_TELEVISION
+        } catch (Exception e) {
+            return false;
         }
     }
 

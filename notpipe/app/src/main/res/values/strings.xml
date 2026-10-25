@@ -199,8 +199,8 @@
     <string name="clear_history">Clear history</string>
     <string name="discover">Discover</string>
     <string name="recommended_for_you">Recommended for you</string>
-    <string name="recommended_account">From your YouTube account</string>
-    <string name="recommended_history">Based on what you watched</string>
+    <string name="recommended_account">YouTube\'s home feed for your account</string>
+    <string name="recommended_history">YouTube\'s \"up next\" picks for what you watched</string>
     <string name="no_recommendations">Nothing to recommend yet. Watch a few videos or sign in via yt2009.</string>
     <string name="show_recommended">Home: recommended</string>
     <string name="show_popular">Home: popular</string>
@@ -251,4 +251,13 @@
         <item quantity="one">%d video</item>
         <item quantity="other">%d videos</item>
     </plurals>
+    <string name="search">Search</string>
+    <string name="sign_in_where">Where do you want to sign in to Google?</string>
+    <string name="sign_in_here">On this device</string>
+    <string name="sign_in_pc">On a PC (enter a code there)</string>
+    <string name="gsign_step_google">Sign in with your Google account below. After \"I agree\" notPipe continues by itself, even if the page says something went wrong.</string>
+    <string name="gsign_email">Google account</string>
+    <string name="gsign_email_">Which email did you just sign in with?</string>
+    <string name="gsign_linking">Linking your account to the instance…</string>
+    <string name="gsign_step_channel">Signed in! Pick the channel to use below if you have several, then tap Done.</string>
 </resources>

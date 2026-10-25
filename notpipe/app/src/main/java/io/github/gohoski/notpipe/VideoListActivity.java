@@ -18,17 +18,11 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import io.github.gohoski.notpipe.api.ContentUnavailableException;
 import io.github.gohoski.notpipe.api.Manager;
-import io.github.gohoski.notpipe.api.Metadata;
 import io.github.gohoski.notpipe.api.Yt2009Account;
-import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.ui.VideoActions;
@@ -58,8 +52,6 @@ public class VideoListActivity extends Activity {
     public static final String SOURCE_FOR_YOU = "for_you";
     public static final String SOURCE_UPLOADS = "uploads";
 
-    private static final int FEED_VIDEOS_PER_CHANNEL = 10;
-    private static final int FEED_MAX_VIDEOS = 150;
 
     private String source, arg, title;
     private List<VideoInfo> videos = new ArrayList<VideoInfo>();
@@ -306,54 +298,6 @@ public class VideoListActivity extends Activity {
         if (isFinishing()) ImageLoader.clearCache();
     }
 
-    private List<VideoInfo> loadFeed() throws InterruptedException {
-        List<Channel> channels = LocalLibrary.getInstance().getSubscriptions();
-        final List<VideoInfo> result = Collections.synchronizedList(new ArrayList<VideoInfo>());
-        ExecutorService executor = Executors.newFixedThreadPool(4);
-        for (int i = 0; i < channels.size(); i++) {
-            final Channel channel = channels.get(i);
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    if (isDestroyedFlag) return;
-                    List<VideoInfo> channelVideos = null;
-                    try {
-                        Metadata metadata = Manager.getInstance().getMetadata();
-                        channelVideos = metadata.getChannelVideos(channel.id, 0);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    if (channelVideos == null || channelVideos.isEmpty()) {
-                        try {
-                            channelVideos = Manager.getInstance().getChannelApi().getChannelVideos(channel.id, 0);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (channelVideos == null) return;
-                    for (int j = 0; j < channelVideos.size() && j < FEED_VIDEOS_PER_CHANNEL; j++) {
-                        VideoInfo v = channelVideos.get(j);
-                        result.add(new VideoInfo(v.id, v.title, v.thumbnail, channel.title, channel.thumbnail,
-                                channel.id, v.duration, v.views, v.publishedAt));
-                    }
-                }
-            });
-        }
-        executor.shutdown();
-        executor.awaitTermination(5, TimeUnit.MINUTES);
-        List<VideoInfo> sorted = new ArrayList<VideoInfo>(result);
-        Collections.sort(sorted, new Comparator<VideoInfo>() {
-            @Override
-            public int compare(VideoInfo a, VideoInfo b) {
-                if (a.publishedAt == null && b.publishedAt == null) return 0;
-                if (a.publishedAt == null) return 1;
-                if (b.publishedAt == null) return -1;
-                return b.publishedAt.compareTo(a.publishedAt);
-            }
-        });
-        return sorted.size() > FEED_MAX_VIDEOS ? new ArrayList<VideoInfo>(sorted.subList(0, FEED_MAX_VIDEOS)) : sorted;
-    }
-
     private class LoadTask extends AsyncTask<Void, Void, List<VideoInfo>> {
         private Exception error;
         private String loadedTitle;
@@ -364,7 +308,7 @@ public class VideoListActivity extends Activity {
                 if (SOURCE_LOCAL.equals(source)) {
                     return LocalLibrary.getInstance().getPlaylistVideos(arg);
                 } else if (SOURCE_FEED.equals(source)) {
-                    return loadFeed();
+                    return Feeds.loadSubscriptions();
                 } else if (SOURCE_HISTORY.equals(source)) {
                     return LocalLibrary.getInstance().getHistory();
                 } else if (SOURCE_FOR_YOU.equals(source)) {
