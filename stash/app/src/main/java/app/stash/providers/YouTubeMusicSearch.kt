@@ -38,7 +38,7 @@ class YouTubeMusicSearch @Inject constructor(private val http: OkHttpClient) {
      * (and isn't there at all in some countries), lots of underground music is only a video.
      */
     suspend fun matchCandidates(query: String): List<SearchHit> = kotlinx.coroutines.coroutineScope {
-        val songs = async { runCatching { request(query, SONGS).mapNotNull(::toHit) }.getOrDefault(emptyList()) }
+        val songs = async { runCatching { request(query, SONGS).mapNotNull(::toHit).map { it.copy(official = true) } }.getOrDefault(emptyList()) }
         val videos = async { runCatching { request(query, VIDEOS).mapNotNull(::toHit) }.getOrDefault(emptyList()) }
         (songs.await().take(8) + videos.await().take(12)).distinctBy { it.track.id }
     }

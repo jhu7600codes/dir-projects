@@ -39,6 +39,7 @@ class AppViewModel @Inject constructor(
     private val imports: ImportQueue,
     val prefs: Settings,
     val lyrics: app.stash.recs.Lyrics,
+    private val resolver: app.stash.providers.Resolver,
 ) : ViewModel() {
 
     val settings: StateFlow<AppSettings?> = prefs.flow.stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -105,6 +106,15 @@ class AppViewModel @Inject constructor(
     }
 
     fun setLiked(track: Track, liked: Boolean) = library.setLiked(track, liked)
+
+    /** "wrong song": from now on [trackId] plays [right] (picked by hand in search) */
+    fun rematch(trackId: String, right: Track) {
+        viewModelScope.launch {
+            library.tracks.setResolved(trackId, right.provider, right.sourceId, right.streamHint)
+            resolver.invalidate(trackId)
+            toast("Fixed: plays ${right.title} now")
+        }
+    }
 
     /** the playlist the heart button fills, null = liked songs (settings, or long-press a heart) */
     val heartTarget: StateFlow<PlaylistWithCount?> = kotlinx.coroutines.flow.combine(playlists, settings) { all, s ->

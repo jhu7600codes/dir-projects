@@ -78,6 +78,8 @@ data class SearchHit(
     val uploader: RemoteArtist? = null,
     /** the channel and raw upload title, for the matcher ("LSPLASH" behind "DOORS OST - Here I Come") */
     val byline: String? = null,
+    /** youtube music's "songs" tab: the label's own audio, not someone's video */
+    val official: Boolean = false,
 )
 
 /** an artist on some source (soundcloud user, audius user, youtube channel) */

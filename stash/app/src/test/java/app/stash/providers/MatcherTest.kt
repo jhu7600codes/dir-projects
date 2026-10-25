@@ -165,4 +165,13 @@ class MatcherTest {
         assertTrue(Matcher.acronymMatch("UTG ~ CRASHOUT", "untitled tag game roblox ost"))
         assertFalse(Matcher.acronymMatch("ok", "only kids"))
     }
+
+    @Test
+    fun `untitled songs need the right length`() {
+        val right = Track(id = "a", title = "Untitled #1", artist = "Sigur Rós", durationMs = 396_000, provider = "youtube", sourceId = "a")
+        val other = right.copy(id = "b", durationMs = 520_000)
+        assertTrue(Matcher.score(right, "Untitled #1", "Sigur Rós", 398_000) >= Matcher.ACCEPT)
+        assertTrue(Matcher.score(other, "Untitled #1", "Sigur Rós", 398_000) < Matcher.ACCEPT)
+        assertEquals("Untitled #1 - Vaka", Matcher.stripForSearch("Untitled #1 - Vaka"))
+    }
 }

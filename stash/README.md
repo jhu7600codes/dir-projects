@@ -166,6 +166,13 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 - The player covers the whole screen; back or a drag down closes it.
 - Rescans (Create → Find missing songs) end with a looser pass over the same results that ignores length, and "UTG" in a playlist name counts as "untitled tag game" in an upload (any 3-5 letter abbreviation, both ways).
 
+## Matching fixes (1.20)
+
+- Covers, rhythm-game charts (osu, DDR, Pump It Up, Rhythia, Beat Saber), game ports, MMDs, loops and "1 hour" uploads count as other versions and lose clearly to the song itself (−0.35); a length off by a minute or more costs more too.
+- YouTube Music "songs" (the label's own audio) get a small edge over equally good video uploads.
+- Titles that name nothing ("Untitled #1", "Track 3", "Intro") need the length within 4 seconds; "Untitled #1 - Vaka" keeps its "Vaka" when searching.
+- Any song's menu has "Wrong song? Pick the right one": search, tap the right result, and the song plays that from then on.
+
 ## WebView player (last resort)
 
 When a song fails every source (and its one slow retry), the player pauses and asks: "Song can't be loaded, we can use a WebView to deliver it." Yes plays it from music.youtube.com in a hidden WebView (desktop Chrome identity, the YouTube login's cookies shared into it, given a 1280x720 size so the page builds its player). A bit of JavaScript twice a second keeps it playing or paused as asked, skips ads, opens the first result when the song had no YouTube match and only a search could be loaded, and reports position and length, so the player screen, seek bar and play button drive it like any song. When YouTube Music moves on to its own next video, the queue moves on. No answer in 30 seconds, or Skip, goes to the next song like before. It plays inside the WebView, so it can't be downloaded or sent through the equalizer.

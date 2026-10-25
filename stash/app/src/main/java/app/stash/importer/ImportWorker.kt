@@ -213,6 +213,6 @@ class ImportWorker @AssistedInject constructor(
         private const val RETRY_MISSES_AFTER = 3L * 24 * 60 * 60 * 1000
         /** 1.10.0: playlist name as context (soundtracks under the game's name). bump when matching gets better again */
         const val MATCHER_CHANGED_AT = 1_792_972_800_000L
-        const val MATCHER_VERSION = 5
+        const val MATCHER_VERSION = 6
     }
 }
