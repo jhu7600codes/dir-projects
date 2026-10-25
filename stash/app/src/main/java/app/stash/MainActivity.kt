@@ -46,6 +46,18 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val settings by app.settings.collectAsState()
+            // the launcher icon follows the app: dark icon while the app is dark (unless turned off)
+            val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
+            settings?.let { s ->
+                val dark = when (s.themeMode) {
+                    ThemeMode.DARK -> true
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.SYSTEM -> systemDark
+                }
+                androidx.compose.runtime.LaunchedEffect(dark && s.darkIcon) {
+                    runCatching { AppIcon.apply(this@MainActivity, dark && s.darkIcon) }
+                }
+            }
             StashTheme(
                 themeMode = settings?.themeMode ?: ThemeMode.SYSTEM,
                 dynamicColor = settings?.dynamicColor ?: true,

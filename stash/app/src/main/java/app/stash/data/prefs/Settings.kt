@@ -35,6 +35,8 @@ enum class DownloadQuality(val label: String, val about: String, val ytFormat: S
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = true,
+    /** black launcher icon with white bars while the app is dark */
+    val darkIcon: Boolean = true,
     val wifiOnlyDownloads: Boolean = false,
     val disabledProviders: Set<String> = emptySet(),
     val jamendoClientId: String = "",
@@ -70,6 +72,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
     private object Keys {
         val theme = stringPreferencesKey("theme")
         val dynamic = booleanPreferencesKey("dynamic_color")
+        val darkIcon = booleanPreferencesKey("dark_icon")
         val wifiOnly = booleanPreferencesKey("wifi_only")
         val disabled = stringSetPreferencesKey("disabled_providers")
         val pinned = stringPreferencesKey("pinned_playlists")
@@ -104,6 +107,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
     private fun Preferences.toSettings() = AppSettings(
         themeMode = this[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
         dynamicColor = this[Keys.dynamic] ?: true,
+        darkIcon = this[Keys.darkIcon] ?: true,
         wifiOnlyDownloads = this[Keys.wifiOnly] ?: false,
         disabledProviders = this[Keys.disabled] ?: emptySet(),
         jamendoClientId = this[Keys.jamendo] ?: "",
@@ -127,6 +131,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
 
     suspend fun setTheme(mode: ThemeMode) = store.edit { it[Keys.theme] = mode.name }
     suspend fun setDynamicColor(on: Boolean) = store.edit { it[Keys.dynamic] = on }
+    suspend fun setDarkIcon(on: Boolean) = store.edit { it[Keys.darkIcon] = on }
     suspend fun setWifiOnly(on: Boolean) = store.edit { it[Keys.wifiOnly] = on }
     suspend fun setProviderEnabled(id: String, enabled: Boolean) = store.edit {
         val set = (it[Keys.disabled] ?: emptySet()).toMutableSet()
