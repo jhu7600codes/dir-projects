@@ -159,8 +159,8 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 
 ## Create, heart, made for you
 
-- The bottom bar has Home, Search, Your library and **Create**. Create opens a menu: create a playlist, move playlists (import), find missing songs (rescan), get playlist covers (Exportify), and where the heart adds songs.
-- The **heart** adds to liked songs by default, or to any playlist you pick (Create → Heart button, Settings, or long-press any heart). It's filled when the song is in that playlist.
+- The bottom bar has Home, Search, Your library and **Create**. Create opens a menu: create a playlist, move playlists (import), find missing songs (rescan) and get playlist covers (Exportify).
+- The **heart** adds to liked songs by default, or to any playlist you pick (Settings → Heart button). It's filled when the song is in that playlist.
 - **Made-for-you** mixes (daily mixes, "This is" artist mixes, genre mixes, discover, rewind) live on home only; open one and pick "Save to your library" to keep it in the library.
 - The icon: a light blue circle with three rounded bars (long, short, middle).
 - The player covers the whole screen; back or a drag down closes it.
