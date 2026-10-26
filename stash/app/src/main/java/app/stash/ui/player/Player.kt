@@ -2,6 +2,7 @@ package app.stash.ui.player
 
 import android.graphics.drawable.BitmapDrawable
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
@@ -226,10 +227,12 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
                 ?: scheme.surfaceContainerHigh,
             label = "lyricsBg",
         )
+        val bg by animateColorAsState(if (showLyrics) lyricsBg else base, androidx.compose.animation.core.tween(320), label = "bg")
+        val artAlpha by animateFloatAsState(if (showLyrics) 0f else 1f, androidx.compose.animation.core.tween(320), label = "artAlpha")
         Box(
-            Modifier.fillMaxSize().background(if (showLyrics) lyricsBg else base)
+            Modifier.fillMaxSize().background(bg)
         ) {
-            if (!showLyrics) {
+            if (artAlpha > 0f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = artAlpha }) {
                 // the cover itself, blurred big behind everything (android 12+ can blur), then the color wash
                 if (android.os.Build.VERSION.SDK_INT >= 31 && state.artworkUri != null) coil.compose.AsyncImage(
                     model = state.artworkUri, contentDescription = null,
@@ -244,14 +247,38 @@ fun NowPlayingSheet(state: PlayerUiState, onDismiss: () -> Unit) {
             }
             // no bottom sheet anymore to set the text color: without this, text and icons came out black
             androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides scheme.onSurface) {
-            when {
-                showQueue -> QueueView(state, accent, onClose = { showQueue = false })
-                showLyrics -> LyricsView(state, lyricsBg, onClose = { showLyrics = false })
-                showRelated -> RelatedView(state, accent, onClose = { showRelated = false })
-                else -> NowPlayingContent(
-                    state, accent, onCollapse = onDismiss, onQueue = { showQueue = true }, onLyrics = { showLyrics = true },
-                    onRelated = { showRelated = true },
-                )
+            // lyrics / queue / similar songs rise in over the player and sink back out
+            val panel = when {
+                showQueue -> 1
+                showLyrics -> 2
+                showRelated -> 3
+                else -> 0
+            }
+            androidx.compose.animation.AnimatedContent(
+                targetState = panel,
+                transitionSpec = {
+                    val ease = androidx.compose.animation.core.FastOutSlowInEasing
+                    if (targetState != 0) {
+                        (androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(320, easing = ease)) { it / 5 } +
+                            androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(240))) togetherWith
+                            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(160))
+                    } else {
+                        androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(240, delayMillis = 60)) togetherWith
+                            (androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(280, easing = ease)) { it / 5 } +
+                                androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(200)))
+                    }
+                },
+                label = "panel",
+            ) { which ->
+                when (which) {
+                    1 -> QueueView(state, accent, onClose = { showQueue = false })
+                    2 -> LyricsView(state, lyricsBg, onClose = { showLyrics = false })
+                    3 -> RelatedView(state, accent, onClose = { showRelated = false })
+                    else -> NowPlayingContent(
+                        state, accent, onCollapse = onDismiss, onQueue = { showQueue = true }, onLyrics = { showLyrics = true },
+                        onRelated = { showRelated = true },
+                    )
+                }
             }
             }
         }
@@ -268,6 +295,7 @@ private fun NowPlayingContent(
     onRelated: () -> Unit,
 ) {
     val actions = LocalActions.current
+    val nav = app.stash.ui.LocalNav.current
     val player = actions.player
     val trackFlow = remember(state.currentId) { actions.library.tracks.observe(state.currentId ?: "").calm() }
     val track by trackFlow.collectAsState(initial = null)
@@ -293,7 +321,13 @@ private fun NowPlayingContent(
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Now playing", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 track?.album?.let {
-                    Text(it, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        it, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.clickable {
+                            onCollapse()
+                            nav.navigate(app.stash.ui.Routes.album(it, track?.artist.orEmpty()))
+                        },
+                    )
                 }
             }
             IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, "More") }
@@ -313,9 +347,14 @@ private fun NowPlayingContent(
                     state.title, style = MaterialTheme.typography.headlineSmall, maxLines = 1,
                     modifier = Modifier.basicMarquee(),
                 )
+                // tap the artist to go to their page (the first one, when there are several)
                 Text(
                     state.artist, style = MaterialTheme.typography.titleMedium, maxLines = 1,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clip(MaterialTheme.shapes.extraSmall).clickable(enabled = state.artist.isNotBlank()) {
+                        onCollapse()
+                        nav.navigate(app.stash.ui.Routes.artist(app.stash.providers.Matcher.primaryArtist(state.artist)))
+                    },
                 )
             }
             track?.let { t ->

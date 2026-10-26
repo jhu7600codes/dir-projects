@@ -1,5 +1,6 @@
 package app.stash
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import android.Manifest
 import android.content.Intent
 import android.os.Build
@@ -37,6 +38,15 @@ class MainActivity : ComponentActivity() {
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // the splash (the icon's bars), then the bars grow and fade into the app
+        installSplashScreen().setOnExitAnimationListener { splash ->
+            val view = splash.view
+            val icon = splash.iconView
+            icon.animate().scaleX(1.6f).scaleY(1.6f).alpha(0f).setDuration(320)
+                .setInterpolator(android.view.animation.AccelerateInterpolator()).start()
+            view.animate().alpha(0f).setStartDelay(120).setDuration(280)
+                .withEndAction { splash.remove() }.start()
+        }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 

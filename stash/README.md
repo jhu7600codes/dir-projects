@@ -166,6 +166,13 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 - The player covers the whole screen; back or a drag down closes it.
 - Rescans (Create → Find missing songs) end with a looser pass over the same results that ignores length, and "UTG" in a playlist name counts as "untitled tag game" in an upload (any 3-5 letter abbreviation, both ways).
 
+## Motion (1.21)
+
+- Splash screen with the icon's bars on its color (black with white bars in dark mode, `core-splashscreen`); the bars grow and fade, then the app rises in.
+- Pages slide a little and fade; going back slides the other way. The player slides up / down with eased timing.
+- Lyrics, queue and similar songs rise in over the player and sink back out; the background fades to the lyrics color.
+- In the player, tap the artist for their page, or the album name above the cover for the album.
+
 ## Matching fixes (1.20)
 
 - Covers, rhythm-game charts (osu, DDR, Pump It Up, Rhythia, Beat Saber), game ports, MMDs, loops and "1 hour" uploads count as other versions and lose clearly to the song itself (−0.35); a length off by a minute or more costs more too.

@@ -1,5 +1,10 @@
 package app.stash.ui
 
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.graphicsLayer
@@ -157,17 +162,27 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
         )
     }
 
+    // opening the app: everything rises a little and fades in as the splash's bars fade out
+    val appear = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(Unit) { appear.animateTo(1f, tween(500, delayMillis = 80, easing = androidx.compose.animation.core.FastOutSlowInEasing)) }
+
     CompositionLocalProvider(LocalActions provides app, LocalNav provides nav) {
         val backStack by nav.currentBackStackEntryAsState()
         Scaffold(
+            modifier = Modifier.graphicsLayer {
+                alpha = appear.value
+                val sc = 0.96f + 0.04f * appear.value
+                scaleX = sc; scaleY = sc
+                translationY = (1f - appear.value) * 24.dp.toPx()
+            },
             snackbarHost = { SnackbarHost(snackbar) },
             contentWindowInsets = WindowInsets(0),
             bottomBar = {
                 Column {
                     AnimatedVisibility(
                         visible = currentId != null,
-                        enter = slideInVertically { it } + fadeIn(),
-                        exit = slideOutVertically { it } + fadeOut(),
+                        enter = slideInVertically(tween(300, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(250)),
+                        exit = slideOutVertically(tween(250, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(200)),
                     ) {
                         val player by app.player.state.collectAsState()
                         MiniPlayer(state = player, onOpen = { showPlayer = true })
@@ -203,6 +218,11 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 navController = nav,
                 startDestination = Routes.HOME,
                 modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+                // pages slide in a little from the side and fade, going back slides the other way
+                enterTransition = { fadeIn(tween(260, easing = LinearOutSlowInEasing)) + slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { it / 12 } },
+                exitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 24 } },
+                popEnterTransition = { fadeIn(tween(260, easing = LinearOutSlowInEasing)) + slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 24 } },
+                popExitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { it / 12 } },
             ) {
                 composable(Routes.HOME) { HomeScreen() }
                 composable(Routes.SEARCH) { SearchScreen() }
@@ -248,8 +268,8 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
         // slides up over everything, bottom bar included
         AnimatedVisibility(
             visible = showPlayer && currentId != null,
-            enter = slideInVertically { it } + fadeIn(),
-            exit = slideOutVertically { it } + fadeOut(),
+            enter = slideInVertically(tween(380, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(200)),
+            exit = slideOutVertically(tween(320, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(260, delayMillis = 60)),
         ) {
             val player by app.player.state.collectAsState()
             NowPlayingSheet(state = player, onDismiss = { showPlayer = false })

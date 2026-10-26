@@ -15,8 +15,8 @@ android {
         applicationId = "app.stash.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 34
-        versionName = "1.20.0"
+        versionCode = 35
+        versionName = "1.21.0"
 
         // yt-dlp ships a whole python per abi, so only keep arm64 (every recent phone) and
         // x86_64 (the emulator) to stop the apk from ballooning.
@@ -96,6 +96,7 @@ dependencies {
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
