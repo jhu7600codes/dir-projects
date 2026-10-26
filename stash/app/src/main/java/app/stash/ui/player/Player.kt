@@ -312,8 +312,14 @@ private fun NowPlayingContent(
     )
     val playCorner by animateDpAsState(if (state.isPlaying) 28.dp else 48.dp, label = "corner")
 
+    // tablets / landscape: the cover on the left, everything else on the right
+    val wide = androidx.compose.ui.platform.LocalConfiguration.current.let { it.screenWidthDp > it.screenHeightDp && it.screenWidthDp >= 600 }
+    Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+    if (wide) Box(Modifier.weight(1f).fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+        Artwork(state.artworkUri, Modifier.fillMaxSize(0.9f).aspectRatio(1f).scale(artScale), MaterialTheme.shapes.extraLarge)
+    }
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp),
+        Modifier.weight(1f).fillMaxSize().padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -334,12 +340,14 @@ private fun NowPlayingContent(
         }
 
         Spacer(Modifier.weight(0.6f))
-        Artwork(
-            state.artworkUri,
-            Modifier.fillMaxWidth().aspectRatio(1f).scale(artScale),
-            MaterialTheme.shapes.extraLarge,
-        )
-        Spacer(Modifier.weight(0.6f))
+        if (!wide) {
+            Artwork(
+                state.artworkUri,
+                Modifier.fillMaxWidth().aspectRatio(1f).scale(artScale),
+                MaterialTheme.shapes.extraLarge,
+            )
+            Spacer(Modifier.weight(0.6f))
+        }
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -450,6 +458,7 @@ private fun NowPlayingContent(
             IconButton(onClick = onRelated, modifier = Modifier.size(52.dp)) { Icon(Icons.Rounded.AutoAwesome, "Similar songs", Modifier.size(26.dp)) }
             IconButton(onClick = onQueue, modifier = Modifier.size(52.dp)) { Icon(Icons.AutoMirrored.Rounded.QueueMusic, "Queue", Modifier.size(26.dp)) }
         }
+    }
     }
 
     if (menu) track?.let { TrackOptionsSheet(it, onDismiss = { menu = false }) }

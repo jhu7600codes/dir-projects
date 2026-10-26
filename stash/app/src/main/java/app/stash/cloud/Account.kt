@@ -95,6 +95,12 @@ class Account @Inject constructor(
         save(o, email)
     }
 
+    /** a one-time login from pairing (see Pairing): swapped for this device's own session */
+    suspend fun signInWithTokenHash(tokenHash: String, email: String) {
+        val o = post("/auth/v1/verify", buildJsonObject { put("type", "magiclink"); put("token_hash", tokenHash) }.toString())
+        save(o, email)
+    }
+
     suspend fun signOut() = settings.clearSession()
 
     companion object {

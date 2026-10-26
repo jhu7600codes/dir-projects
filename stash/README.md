@@ -166,6 +166,13 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 - The player covers the whole screen; back or a drag down closes it.
 - Rescans (Create → Find missing songs) end with a looser pass over the same results that ignores length, and "UTG" in a playlist name counts as "untitled tag game" in an upload (any 3-5 letter abbreviation, both ways).
 
+## TV, tablets and pairing (1.22)
+
+- **Android TV / Google TV:** the same APK. On a TV (leanback feature) Stash opens its remote-friendly app (`ui/tv/TvApp.kt`): a rail on the left (Search, Home, Library, Now playing, Account), big cards, D-pad focus with a white outline, a full-screen player with big controls. It's in the TV's app row (LEANBACK_LAUNCHER, `tv_banner`). Always dark, Stash's own colors.
+- **Pairing:** a TV (or tablet) shows a 6-character code; on a logged-in phone, Create → Pair a device → type it. The `pair` Supabase edge function (table `device_pairing`, RLS on, service role only) makes a one-time magic-link token for that account; the TV swaps it at `/auth/v1/verify` for its own session (`cloud/Pairing.kt`), then restores playlists like a normal login. Codes last 10 minutes, one use each; the phone's own login never leaves the phone.
+- **Tablets:** 600dp+ wide gets a navigation rail instead of the bottom bar; the player puts the cover on the left in landscape.
+- **Splash follows the icon:** on Android 12+ the app's night mode is pinned with `UiModeManager.setApplicationNightMode` to match the icon (black only while the dark icon is on), and the app reads the system's dark mode itself for its own colors.
+
 ## Motion (1.21)
 
 - Splash screen with the icon's bars on its color (black with white bars in dark mode, `core-splashscreen`); the bars grow and fade, then the app rises in.
