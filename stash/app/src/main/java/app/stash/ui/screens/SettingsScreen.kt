@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -123,6 +124,11 @@ class SettingsViewModel @Inject constructor(
     fun backupNow() = accountAction { cloud.backup(); "Backed up" }
     fun restore() = accountAction { "restored ${cloud.restore()} playlists" }
     fun signOut() = accountAction { account.signOut(); null }
+
+    /** how many devices are logged in (this phone, tvs, tablets) */
+    val sessions = MutableStateFlow<Int?>(null)
+    fun refreshSessions() = viewModelScope.launch { sessions.value = runCatching { account.sessionCount() }.getOrNull() }
+    fun logOutOthers() = accountAction { account.logOutOthers(); sessions.value = 1; "Logged out every other device" }
 
     fun updateYtDlp() = viewModelScope.launch {
         updateResult.value = "Checking…"
@@ -471,7 +477,15 @@ private fun AccountCard(vm: SettingsViewModel, email: String, lastBackupAt: Long
                     FilledTonalButton(onClick = { vm.backupNow() }, enabled = !busy) { Text("Back up now") }
                     OutlinedButton(onClick = { vm.restore() }, enabled = !busy) { Text("Restore") }
                 }
-                TextButton(onClick = { vm.signOut() }, enabled = !busy) { Text("Log out") }
+                val sessions by vm.sessions.collectAsState()
+                LaunchedEffect(email) { vm.refreshSessions() }
+                sessions?.let { n ->
+                    Text(if (n <= 1) "Logged in on this device only" else "Logged in on $n devices", style = MaterialTheme.typography.bodySmall)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { vm.signOut() }, enabled = !busy) { Text("Log out") }
+                    if ((sessions ?: 0) > 1) TextButton(onClick = { vm.logOutOthers() }, enabled = !busy) { Text("Log out other devices") }
+                }
             } else {
                 Text("Save your playlists to a Stash account so they survive a reinstall or a new phone.",
                     style = MaterialTheme.typography.bodySmall)

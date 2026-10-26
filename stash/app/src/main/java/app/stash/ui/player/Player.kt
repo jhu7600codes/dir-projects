@@ -513,7 +513,7 @@ private fun QueueView(state: PlayerUiState, accent: Color, onClose: () -> Unit) 
  * coming dimmed, the current line kept in view. tap a line to jump there. unsynced lyrics just scroll.
  */
 @Composable
-private fun LyricsView(state: PlayerUiState, bg: Color, onClose: () -> Unit) {
+internal fun LyricsView(state: PlayerUiState, bg: Color, onClose: () -> Unit) {
     val actions = LocalActions.current
     val settings by actions.settings.collectAsState()
     val mxm = settings?.lyricsMusixmatch == true

@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import app.stash.cloud.Account
 import app.stash.cloud.CloudBackup
 import app.stash.ui.tv.TvApp
+import app.stash.ui.tv.TvHooks
 import app.stash.data.prefs.ThemeMode
 import app.stash.ui.AppViewModel
 import app.stash.ui.Routes
@@ -104,17 +105,31 @@ class MainActivity : ComponentActivity() {
                 },
                 dynamicColor = !isTv && (settings?.dynamicColor ?: true),
             ) {
-                if (isTv) TvApp(
-                    app,
-                    onPaired = {
-                        val added = runCatching { cloud.firstSync() }.getOrDefault(0)
-                        app.toast(if (added > 0) "Logged in, got $added playlists" else "Logged in")
-                    },
-                    onLogOut = { account.signOut() },
-                )
+                if (isTv) TvApp(app, tvHooks)
                 else StashRoot(app, navRequests.receiveAsFlow(), openPlayer.receiveAsFlow())
             }
         }
+    }
+
+    private val tvSyncing = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /** the tv app's account bits. the sync runs on the activity's scope: started from the pairing
+     *  screen, it used to get cancelled the moment the login swapped that screen out (0 playlists) */
+    private val tvHooks by lazy {
+        TvHooks(
+            sync = {
+                if (tvSyncing.compareAndSet(false, true)) lifecycleScope.launch {
+                    app.toast("Getting your playlists…")
+                    runCatching { cloud.firstSync() }
+                        .onSuccess { added -> app.toast(if (added > 0) "Got $added playlists" else "Your library is up to date") }
+                        .onFailure { app.toast("Couldn't get your playlists: ${it.message}") }
+                    tvSyncing.set(false)
+                }
+            },
+            logOut = { account.signOut(); Unit },
+            sessions = { account.sessionCount() },
+            logOutOthers = { account.logOutOthers() },
+        )
     }
 
     /** android tv / google tv: the remote-friendly app (ui/tv) instead of the phone one */
