@@ -20,9 +20,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * musixmatch through its desktop app's api, the way spotify lyrics plugins use it (no key, a
- * token the api hands out): synced lyrics plus musixmatch's community translations. optional
- * (settings → lyrics); lrclib is used whenever this has nothing or refuses.
+ * musixmatch through its iphone app's api, the way EeveeSpotify does it: synced lyrics, with
+ * musixmatch's community translation in the same request. it needs a user token: your own
+ * (settings → lyrics → musixmatch token: the musixmatch app's "copy debug info", or the token
+ * itself) or, without one, an anonymous token the api hands out. lrclib is used whenever this
+ * has nothing or refuses.
  */
 @Singleton
 class Musixmatch @Inject constructor(
@@ -31,6 +33,17 @@ class Musixmatch @Inject constructor(
 ) {
     data class Found(val lyrics: SongLyrics, val commontrackId: Long?)
 
+    /** a token pasted in settings (yours, from the musixmatch app); null = anonymous */
+    val userToken: String? get() = prefs.getString("user_token", null)
+
+    /** takes the musixmatch app's debug info or a bare token; false if there's no token in it */
+    fun setUserToken(raw: String?): Boolean {
+        if (raw.isNullOrBlank()) { prefs.edit().remove("user_token").apply(); return true }
+        val token = parseToken(raw) ?: return false
+        prefs.edit().putString("user_token", token).apply()
+        return true
+    }
+
     private val prefs get() = context.getSharedPreferences("musixmatch", Context.MODE_PRIVATE)
 
     private fun url(method: String) = "$BASE$method".toHttpUrl().newBuilder()
@@ -38,29 +51,32 @@ class Musixmatch @Inject constructor(
         .addQueryParameter("format", "json")
 
     private suspend fun call(url: HttpUrl): JsonObject? = httpIo {
-        val req = Request.Builder().url(url)
-            .header("Cookie", "AWSELB=unknown; x-mxm-user-id=; x-mxm-token-guid=")
-            .header("User-Agent", UA)
-            .build()
-        http.newCall(req).execute().use { r -> if (r.isSuccessful) r.body?.string() else null }
+        http.newCall(Request.Builder().url(url).build()).execute().use { r -> if (r.isSuccessful) r.body?.string() else null }
             ?.let { lenientJson.parseToJsonElement(it).jsonObject.obj("message") }
     }
 
-    /** the anonymous user token, kept (they last a long time) and renewed when refused */
+    /** your token if you gave one, else the anonymous one (kept, renewed when refused) */
     private suspend fun token(renew: Boolean = false): String? {
-        if (!renew) prefs.getString("token", null)?.let { return it }
-        val body = call(url("token.get").addQueryParameter("user_language", "en").build())?.obj("body") ?: return null
+        userToken?.let { return it }
+        if (!renew) prefs.getString("anon_token", null)?.let { return it }
+        val body = call(url("token.get").build())?.obj("body") ?: return null
         val token = body.str("user_token")?.takeIf { it.isNotBlank() && !it.all { c -> c == '0' } && "Upgrade" !in it } ?: return null
-        prefs.edit().putString("token", token).apply()
+        prefs.edit().putString("anon_token", token).apply()
         return token
     }
 
-    suspend fun lyrics(title: String, artist: String, durationMs: Long): Found? {
+    /** [translateTo]: also musixmatch's translation into that language, line by line, when it has one */
+    suspend fun lyrics(title: String, artist: String, durationMs: Long, translateTo: String? = null): Found? {
         for (attempt in 0..1) {
             val t = token(renew = attempt == 1) ?: return null
             val u = url("macro.subtitles.get")
-                .addQueryParameter("namespace", "lyrics_richsynched")
                 .addQueryParameter("subtitle_format", "mxm")
+                .apply {
+                    if (translateTo != null) {
+                        addQueryParameter("selected_language", translateTo)
+                        addQueryParameter("part", "subtitle_translated")
+                    }
+                }
                 .addQueryParameter("q_artist", Matcher.primaryArtist(artist))
                 .addQueryParameter("q_track", Matcher.stripForSearch(title))
                 .apply {
@@ -76,8 +92,20 @@ class Musixmatch @Inject constructor(
             if (msg.obj("header")?.num("status_code")?.toInt() == 401) continue
             val calls = msg.obj("body")?.obj("macro_calls") ?: return null
             val track = calls.obj("matcher.track.get")?.obj("message")?.obj("body")?.obj("track")
-            val subtitle = calls.obj("track.subtitles.get")?.obj("message")?.obj("body")?.get("subtitle_list")
-                .asObjectList().firstOrNull()?.obj("subtitle")?.str("subtitle_body")
+            val sub = calls.obj("track.subtitles.get")?.obj("message")?.obj("body")?.get("subtitle_list")
+                .asObjectList().firstOrNull()?.obj("subtitle")
+            val subtitle = sub?.str("subtitle_body")
+            // the translation comes along, one entry per line, same order (skipped when the song is
+            // already in that language)
+            val translated = sub?.obj("subtitle_translated")?.str("subtitle_body")
+                ?.takeIf { translateTo != null && sub.str("subtitle_language") != translateTo }
+                ?.let { body ->
+                    runCatching {
+                        (lenientJson.parseToJsonElement(body) as JsonArray).map { el ->
+                            (el as? JsonObject)?.str("text")?.takeIf { it.isNotBlank() }
+                        }
+                    }.getOrNull()
+                }
             val lines = subtitle?.let { body ->
                 runCatching {
                     (lenientJson.parseToJsonElement(body) as JsonArray).mapNotNull { el ->
@@ -90,7 +118,12 @@ class Musixmatch @Inject constructor(
             val plain = calls.obj("track.lyrics.get")?.obj("message")?.obj("body")?.obj("lyrics")?.str("lyrics_body")
                 ?.substringBefore("*******")?.trim()
             if (lines.isEmpty() && plain.isNullOrBlank()) return null
-            return Found(SongLyrics(lines, plain, source = "Musixmatch"), track?.num("commontrack_id")?.toLong())
+            val lyrics = SongLyrics(
+                lines, plain, source = "Musixmatch",
+                translated = translated?.takeIf { it.size == lines.size && it.any { t -> t != null } },
+                translatedTo = translateTo,
+            )
+            return Found(lyrics, track?.num("commontrack_id")?.toLong())
         }
         return null
     }
@@ -115,9 +148,15 @@ class Musixmatch @Inject constructor(
         return map.ifEmpty { null }
     }
 
-    private companion object {
-        const val BASE = "https://apic-desktop.musixmatch.com/ws/1.1/"
-        const val APP_ID = "web-desktop-app-v1.0"
-        const val UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Musixmatch/0.19.4 Chrome/58.0.3029.110 Electron/1.7.6 Safari/537.36"
+    companion object {
+        private const val BASE = "https://apic.musixmatch.com/ws/1.1/"
+        // the iphone app's id: its anonymous tokens work (the desktop app's come back all zeros now)
+        private const val APP_ID = "mac-ios-v2.0"
+
+        /** "[UserToken]: 2610…" from the app's debug info, or the bare 54-character token */
+        fun parseToken(raw: String): String? {
+            Regex("""\[UserToken]:\s*([a-f0-9]+)""").find(raw)?.let { return it.groupValues[1] }
+            return raw.trim().takeIf { Regex("""^[a-f0-9]{40,64}$""").matches(it) }
+        }
     }
 }
