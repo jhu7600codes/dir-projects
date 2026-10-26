@@ -30,6 +30,17 @@ import io.github.gohoski.notpipe.api.Yt2009Account;
 public class GsignActivity extends Activity {
     private static final String GOOGLE_COOKIE_URL = "https://accounts.google.com";
     private static final int COOKIE_POLL_INTERVAL = 1500;
+    /**
+     * The token also shows up in the page's own "batchexecute" responses (that's where yt2009's PC guide finds it),
+     * so XHR/fetch responses are scanned too in case the cookie never becomes readable
+     */
+    private static final String TOKEN_HOOK = "javascript:(function(){if(window.__notpipe)return;window.__notpipe=1;"
+            + "var re=/oauth2_4(?:\\\\\\/|\\\\u002[fF]|\\/)([A-Za-z0-9_\\-\\.]+)/;"
+            + "function scan(t){try{var m=re.exec(String(t));if(m)notpipe.token('oauth2_4/'+m[1]);}catch(e){}}"
+            + "var send=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.send=function(){var x=this;"
+            + "x.addEventListener('load',function(){try{scan(x.responseText)}catch(e){}});return send.apply(this,arguments)};"
+            + "if(window.fetch){var f=window.fetch;window.fetch=function(){return f.apply(this,arguments).then(function(r){"
+            + "try{r.clone().text().then(scan)}catch(e){}return r})}}scan(document.cookie);scan(document.body&&document.body.innerHTML)})()";
 
     private WebView web;
     private Context context;
@@ -76,6 +87,7 @@ public class GsignActivity extends Activity {
             WebSettings.class.getMethod("setDomStorageEnabled", boolean.class).invoke(settings, true);
         } catch (Exception ignored) {}
         web.addJavascriptInterface(new MinuteMaidBridge(), "mm");
+        web.addJavascriptInterface(new TokenBridge(), "notpipe");
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -85,6 +97,7 @@ public class GsignActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 checkCookie();
+                if (url != null && url.contains("google.com")) view.loadUrl(TOKEN_HOOK);
             }
         });
         web.loadUrl(Yt2009Account.GOOGLE_SIGN_IN_URL);
@@ -101,21 +114,27 @@ public class GsignActivity extends Activity {
     private void checkCookie() {
         if (tokenFound) return;
         String cookies = CookieManager.getInstance().getCookie(GOOGLE_COOKIE_URL);
+        String other = CookieManager.getInstance().getCookie("https://accounts.google.com/embedded/setup/v2/android");
+        if (other != null) cookies = cookies == null ? other : cookies + ";" + other;
         if (cookies == null) return;
         String[] parts = cookies.split(";");
         for (int i = 0; i < parts.length; i++) {
             String part = parts[i].trim();
             if (part.startsWith("oauth_token=") && part.length() > 12) {
-                tokenFound = true;
-                String token = part.substring(12);
-                if (accountEmail != null && accountEmail.contains("@")) {
-                    web.stopLoading();
-                    new SubmitTask(accountEmail, token).execute();
-                } else {
-                    askEmail(token);
-                }
+                onToken(part.substring(12));
                 return;
             }
+        }
+    }
+
+    private void onToken(String token) {
+        if (tokenFound || isDestroyedFlag || token == null || token.length() < 20) return;
+        tokenFound = true;
+        if (accountEmail != null && accountEmail.contains("@")) {
+            web.stopLoading();
+            new SubmitTask(accountEmail, token).execute();
+        } else {
+            askEmail(token);
         }
     }
 
@@ -142,6 +161,19 @@ public class GsignActivity extends Activity {
                         finish();
                     }
                 }).show();
+    }
+
+    /** Receives a token the injected script found in the page's network responses */
+    private class TokenBridge {
+        @JavascriptInterface
+        public void token(final String token) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    onToken(token);
+                }
+            });
+        }
     }
 
     /**

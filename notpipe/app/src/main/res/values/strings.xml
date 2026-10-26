@@ -260,4 +260,8 @@
     <string name="gsign_email_">Which email did you just sign in with?</string>
     <string name="gsign_linking">Linking your account to the instance…</string>
     <string name="gsign_step_channel">Signed in! Pick the channel to use below if you have several, then tap Done.</string>
+    <string name="dislike">Dislike</string>
+    <string name="more">More</string>
+    <string name="liked_videos">Liked videos</string>
+    <string name="saved_to_liked">Saved to Liked videos</string>
 </resources>

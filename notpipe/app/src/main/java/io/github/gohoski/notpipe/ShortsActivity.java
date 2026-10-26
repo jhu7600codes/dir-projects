@@ -59,6 +59,8 @@ public class ShortsActivity extends Activity {
     private boolean isDestroyedFlag = false;
     private int requestToken = 0;
     private int retries = 0;
+    private final java.util.Map<String, String> prefetched =
+            java.util.Collections.synchronizedMap(new java.util.HashMap<String, String>());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,18 +127,27 @@ public class ShortsActivity extends Activity {
                 return gestures.onTouchEvent(event);
             }
         });
-        findViewById(R.id.short_previous).setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener actions = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                move(-1);
+                if (shorts.isEmpty()) return;
+                VideoInfo video = shorts.get(index);
+                int id = v.getId();
+                if (id == R.id.short_like) {
+                    VideoActions.like(ShortsActivity.this, video, true);
+                } else if (id == R.id.short_dislike) {
+                    VideoActions.like(ShortsActivity.this, video, false);
+                } else if (id == R.id.short_share) {
+                    VideoActions.share(ShortsActivity.this, video);
+                } else if (id == R.id.short_download) {
+                    VideoActions.showDownloadDialog(ShortsActivity.this, video);
+                }
             }
-        });
-        findViewById(R.id.short_next).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                move(1);
-            }
-        });
+        };
+        findViewById(R.id.short_like).setOnClickListener(actions);
+        findViewById(R.id.short_dislike).setOnClickListener(actions);
+        findViewById(R.id.short_share).setOnClickListener(actions);
+        findViewById(R.id.short_download).setOnClickListener(actions);
         findViewById(R.id.short_more).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -181,12 +192,15 @@ public class ShortsActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String source = null;
-                try {
-                    source = resolveSource(video.id);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                String source = retries > 0 ? null : prefetched.remove(video.id);
+                if (source == null) {
+                    try {
+                        source = resolveSource(video.id);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
+                prefetchNext(token);
                 final String resolved = source;
                 handler.post(new Runnable() {
                     @Override
@@ -203,6 +217,22 @@ public class ShortsActivity extends Activity {
                 });
             }
         }).start();
+    }
+
+    /**
+     * Resolves the next Short's URL in the background so swiping to it starts right away.
+     */
+    private void prefetchNext(int token) {
+        int next = index + 1;
+        if (token != requestToken || next >= shorts.size()) return;
+        String id = shorts.get(next).id;
+        if (prefetched.containsKey(id)) return;
+        try {
+            String url = resolveSource(id);
+            if (url != null) prefetched.put(id, url);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

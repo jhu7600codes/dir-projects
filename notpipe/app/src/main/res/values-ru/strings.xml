@@ -279,4 +279,8 @@
     <string name="gsign_email_">С какой почтой вы только что вошли?</string>
     <string name="gsign_linking">Привязка аккаунта к инстансу…</string>
     <string name="gsign_step_channel">Вход выполнен! Если каналов несколько, выберите нужный ниже и нажмите «Готово».</string>
+    <string name="dislike">Не нравится</string>
+    <string name="more">Ещё</string>
+    <string name="liked_videos">Понравившиеся</string>
+    <string name="saved_to_liked">Добавлено в «Понравившиеся»</string>
 </resources>

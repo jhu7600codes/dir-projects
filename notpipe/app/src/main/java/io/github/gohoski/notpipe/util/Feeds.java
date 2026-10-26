@@ -26,7 +26,11 @@ import io.github.gohoski.notpipe.data.VideoInfo;
 public class Feeds {
     private static final int HISTORY_SEEDS = 6;
     private static final int MAX_RECOMMENDATIONS = 60;
-    private static final int SHORTS_CHANNELS = 15;
+    private static final int SHORTS_CHANNELS = 10;
+    private static final int SHORTS_WAIT_SECONDS = 20;
+    private static final long SHORTS_CACHE_MS = 20 * 60 * 1000L;
+    private static List<VideoInfo> cachedShorts;
+    private static long cachedShortsTime;
     private static final int MAX_SHORT_SECONDS = 180;
     private static final int FEED_VIDEOS_PER_CHANNEL = 10;
     private static final int FEED_MAX_VIDEOS = 150;
@@ -136,6 +140,20 @@ public class Feeds {
      *                  (falls back to the channels of popular videos, then to searching #shorts)
      */
     public static List<VideoInfo> loadShorts(String channelId) throws InterruptedException {
+        if (channelId == null && cachedShorts != null && System.currentTimeMillis() - cachedShortsTime < SHORTS_CACHE_MS) {
+            List<VideoInfo> copy = new ArrayList<VideoInfo>(cachedShorts);
+            Collections.shuffle(copy);
+            return copy;
+        }
+        List<VideoInfo> result = loadShortsUncached(channelId);
+        if (channelId == null && !result.isEmpty()) {
+            cachedShorts = new ArrayList<VideoInfo>(result);
+            cachedShortsTime = System.currentTimeMillis();
+        }
+        return result;
+    }
+
+    private static List<VideoInfo> loadShortsUncached(String channelId) throws InterruptedException {
         final ShortsApi api = Manager.getInstance().getShortsApi();
         if (channelId != null) {
             if (api == null) return new ArrayList<VideoInfo>();
@@ -155,7 +173,7 @@ public class Feeds {
         if (api != null && !channels.isEmpty()) {
             Collections.shuffle(channels);
             final List<List<VideoInfo>> buckets = new ArrayList<List<VideoInfo>>();
-            ExecutorService executor = Executors.newFixedThreadPool(3);
+            ExecutorService executor = Executors.newFixedThreadPool(5);
             for (int i = 0; i < channels.size() && i < SHORTS_CHANNELS; i++) {
                 final Channel channel = channels.get(i);
                 final List<VideoInfo> bucket = Collections.synchronizedList(new ArrayList<VideoInfo>());
@@ -177,8 +195,17 @@ public class Feeds {
                 });
             }
             executor.shutdown();
-            executor.awaitTermination(2, TimeUnit.MINUTES);
-            result = interleave(buckets, new HashSet<String>(), 200);
+            // Show whatever arrived within a few seconds instead of waiting for slow instances
+            executor.awaitTermination(SHORTS_WAIT_SECONDS, TimeUnit.SECONDS);
+            executor.shutdownNow();
+            List<List<VideoInfo>> snapshot = new ArrayList<List<VideoInfo>>();
+            for (int b = 0; b < buckets.size(); b++) {
+                List<VideoInfo> bucket = buckets.get(b);
+                synchronized (bucket) {
+                    snapshot.add(new ArrayList<VideoInfo>(bucket));
+                }
+            }
+            result = interleave(snapshot, new HashSet<String>(), 200);
         }
 
         if (result.isEmpty()) {

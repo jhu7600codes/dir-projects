@@ -15,8 +15,18 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import io.github.gohoski.notpipe.NotPipe;
 import io.github.gohoski.notpipe.R;
@@ -41,6 +51,12 @@ public class Manager {
     private List<PlaylistApi> playlistInstances;
     private List<AudioStream> audioInstances;
     private List<ShortsApi> shortsInstances;
+
+    private static final String[] HQ_QUALITIES = {"1080", "720", "480"};
+    private static final int RACE_WIDTH = 3;
+    private static final int HQ_RACE_WIDTH = 2; // HQ makes yt2009 mux/transcode on the server, so don't overdo it
+    private final ExecutorService racePool = Executors.newCachedThreadPool();
+    private final Map<String, Integer> scores = java.util.Collections.synchronizedMap(new HashMap<String, Integer>());
 
     private Manager() {
         random = new Random();
@@ -234,55 +250,138 @@ public class Manager {
     }
 
     public String getVideoUrl(String videoId, String quality, int timeout, VideoStream preferredInstance, VideoStream[] successfulInstance) throws IOException {
-        List<VideoStream> targetList = "360".equals(quality) ? new ArrayList<VideoStream>(videoInstances) : new ArrayList<VideoStream>(hqInstances);
-        if (targetList.isEmpty()) {
+        if (videoInstances.isEmpty() || ("360".equals(quality) ? videoInstances : hqInstances).isEmpty()) {
             reloadInstances();
             throw new IOException("No video instances left");
         }
 
-        if (preferredInstance != null && targetList.contains(preferredInstance)) {
-            targetList.remove(preferredInstance);
-            targetList.add(0, preferredInstance);
-            if (targetList.size() > 1) {
-                List<VideoStream> rest = targetList.subList(1, targetList.size());
-                java.util.Collections.shuffle(rest, random);
+        // Requested quality first, then step down instead of failing (1080 → 720 → 480).
+        // A FileNotFoundException at the end makes the caller fall back to 360p like before.
+        List<String> qualities = new ArrayList<String>();
+        qualities.add(quality);
+        if (!"360".equals(quality)) {
+            for (int i = 0; i < HQ_QUALITIES.length; i++) {
+                if (Integer.parseInt(HQ_QUALITIES[i]) < Integer.parseInt(quality)) qualities.add(HQ_QUALITIES[i]);
             }
-        } else {
-            java.util.Collections.shuffle(targetList, random);
         }
 
         Throwable lastError = null;
-
-        for (int i = 0; i < targetList.size(); i++) {
-            VideoStream currentInstance = targetList.get(i);
+        boolean notFound = false;
+        for (int q = 0; q < qualities.size(); q++) {
+            String currentQuality = qualities.get(q);
+            List<VideoStream> targetList = orderByScore("360".equals(currentQuality)
+                    ? new ArrayList<VideoStream>(videoInstances) : new ArrayList<VideoStream>(hqInstances), preferredInstance);
             try {
-                String url = currentInstance.getVideoUrl(videoId, quality, timeout);
-                if (successfulInstance != null && successfulInstance.length > 0) {
-                    successfulInstance[0] = currentInstance;
-                }
-                return url;
+                return raceVideoUrl(videoId, currentQuality, timeout, targetList, successfulInstance);
             } catch (ContentUnavailableException e) {
-                e.printStackTrace();
                 throw e;
             } catch (FileNotFoundException e) {
-                throw e;
-            } catch (Exception e) {
-                if (isDeadInstanceError(e)) {
-                    removeDeadInstance(currentInstance);
-                }
+                notFound = true;
+            } catch (IOException e) {
                 lastError = e;
             }
         }
 
-        if (lastError != null) {
-            if (videoInstances.isEmpty() || hqInstances.isEmpty()) {
-                reloadInstances();
-                showConnectionErrorToast();
-            }
-            if (lastError instanceof IOException) throw (IOException) lastError;
-            throw new IOException(lastError.getMessage());
+        if (videoInstances.isEmpty() || hqInstances.isEmpty()) {
+            reloadInstances();
+            showConnectionErrorToast();
         }
+        if (!"360".equals(quality)) throw new FileNotFoundException("Video quality not available");
+        if (notFound && lastError == null) throw new FileNotFoundException("Video not available");
+        if (lastError instanceof IOException) throw (IOException) lastError;
         throw new IOException("All instances failed");
+    }
+
+    /**
+     * Instances that answered fast and reliably before go first; the rest are shuffled to spread the load.
+     */
+    private List<VideoStream> orderByScore(List<VideoStream> list, VideoStream preferred) {
+        java.util.Collections.shuffle(list, random);
+        java.util.Collections.sort(list, new java.util.Comparator<VideoStream>() {
+            @Override
+            public int compare(VideoStream a, VideoStream b) {
+                return score(b.getHost()) - score(a.getHost());
+            }
+        });
+        if (preferred != null && list.remove(preferred)) list.add(0, preferred);
+        return list;
+    }
+
+    private int score(String host) {
+        Integer s = scores.get(host);
+        return s == null ? 0 : s;
+    }
+
+    private void addScore(String host, int delta) {
+        scores.put(host, Math.max(-5, Math.min(10, score(host) + delta)));
+    }
+
+    /**
+     * Asks a few instances at once and returns the first working URL, so one slow or dead instance
+     * doesn't hold up playback. The losers finish in the background and only update the scores.
+     */
+    private String raceVideoUrl(final String videoId, final String quality, final int timeout,
+                                List<VideoStream> candidates, VideoStream[] successfulInstance) throws IOException {
+        CompletionService<Object[]> race = new ExecutorCompletionService<Object[]>(racePool);
+        int width = "360".equals(quality) ? RACE_WIDTH : HQ_RACE_WIDTH;
+        int next = 0, running = 0;
+        while (next < candidates.size() && running < width) {
+            submit(race, candidates.get(next++), videoId, quality, timeout);
+            running++;
+        }
+        Throwable lastError = null;
+        boolean notFound = false;
+        while (running > 0) {
+            Future<Object[]> done;
+            try {
+                done = race.poll(timeout + 5000L, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                throw new IOException("Interrupted");
+            }
+            if (done == null) break;
+            running--;
+            try {
+                Object[] result = done.get();
+                if (successfulInstance != null && successfulInstance.length > 0) {
+                    successfulInstance[0] = (VideoStream) result[0];
+                }
+                return (String) result[1];
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof ContentUnavailableException) throw (ContentUnavailableException) cause;
+                if (cause instanceof FileNotFoundException) notFound = true; else lastError = cause;
+            } catch (InterruptedException e) {
+                throw new IOException("Interrupted");
+            }
+            if (next < candidates.size()) {
+                submit(race, candidates.get(next++), videoId, quality, timeout);
+                running++;
+            }
+        }
+        if (notFound && lastError == null) throw new FileNotFoundException("Video quality not available");
+        if (lastError instanceof IOException) throw (IOException) lastError;
+        throw new IOException(lastError != null ? lastError.getMessage() : "All instances failed");
+    }
+
+    private void submit(CompletionService<Object[]> race, final VideoStream instance, final String videoId,
+                        final String quality, final int timeout) {
+        race.submit(new Callable<Object[]>() {
+            @Override
+            public Object[] call() throws Exception {
+                long start = System.currentTimeMillis();
+                try {
+                    String url = instance.getVideoUrl(videoId, quality, timeout);
+                    addScore(instance.getHost(), System.currentTimeMillis() - start < 8000 ? 2 : 1);
+                    return new Object[]{instance, url};
+                } catch (FileNotFoundException e) {
+                    throw e;
+                } catch (Exception e) {
+                    addScore(instance.getHost(), -2);
+                    if (isDeadInstanceError(e)) removeDeadInstance(instance);
+                    throw e;
+                }
+            }
+        });
     }
 
     public String getConvUrl(String videoId, String quality, int codec) throws IOException {

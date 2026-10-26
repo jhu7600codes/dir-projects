@@ -88,6 +88,37 @@ public class VideoActions {
     }
 
     /**
+     * Like: always saved to the local "Liked videos" playlist, and sent to YouTube too when signed in.
+     * Dislike only exists on YouTube, so it needs the account.
+     */
+    public static void like(final Activity activity, final VideoInfo video, final boolean like) {
+        boolean signedIn = Yt2009Account.getInstance().isSignedIn();
+        if (like) {
+            LocalLibrary.getInstance().addToPlaylist(activity.getString(R.string.liked_videos), video);
+            if (!signedIn) {
+                Toast.makeText(activity, R.string.saved_to_liked, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        runAccountAction(activity, new AccountAction() {
+            public void run(Yt2009Account account) throws Exception {
+                account.rate(video.id, like);
+            }
+        }, like ? R.string.liked : R.string.disliked);
+    }
+
+    public static void share(Activity activity, VideoInfo video) {
+        try {
+            activity.startActivity(android.content.Intent.createChooser(
+                    new android.content.Intent(android.content.Intent.ACTION_SEND)
+                            .setType("text/plain")
+                            .putExtra(android.content.Intent.EXTRA_TEXT, "https://youtu.be/" + video.id)
+                            .putExtra(android.content.Intent.EXTRA_SUBJECT, video.title),
+                    activity.getString(R.string.share)));
+        } catch (Exception ignored) {}
+    }
+
+    /**
      * Runs an account action in the background and toasts the result.
      */
     public static void runAccountAction(final Activity activity, final AccountAction action, final int successText) {

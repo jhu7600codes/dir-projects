@@ -1392,12 +1392,8 @@ public class VideoActivity extends Activity {
         View.OnClickListener rateListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final boolean like = view.getId() == R.id.like;
-                VideoActions.runAccountAction(VideoActivity.this, new VideoActions.AccountAction() {
-                    public void run(Yt2009Account account) throws Exception {
-                        account.rate(videoId, like);
-                    }
-                }, like ? R.string.liked : R.string.disliked);
+                if (video == null) return;
+                VideoActions.like(VideoActivity.this, video, view.getId() == R.id.like);
             }
         };
         findViewById(R.id.like).setOnClickListener(rateListener);
