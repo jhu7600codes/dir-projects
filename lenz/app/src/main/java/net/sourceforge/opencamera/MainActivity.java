@@ -98,6 +98,7 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
@@ -143,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
     private ModeController modeController;
     private LenzUI lenzUI;
     private static final int LENZ_SETTINGS_CODE = 4242;
+    private java.util.Map<String, ?> lenz_settings_before; // settings when Lenz's settings screen was opened
     private boolean screen_is_locked; // whether screen is "locked" - this is Open Camera's own lock to guard against accidental presses, not the standard Android lock
     private final Map<Integer, Bitmap> preloaded_bitmap_resources = new Hashtable<>();
     private ValueAnimator gallery_save_anim;
@@ -2651,6 +2653,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
 
         // Lenz has its own settings screen
         if( !is_test ) {
+            lenz_settings_before = new java.util.HashMap<>(PreferenceManager.getDefaultSharedPreferences(this).getAll());
             startActivityForResult(new Intent(this, LenzSettingsActivity.class), LENZ_SETTINGS_CODE);
             return;
         }
@@ -4314,7 +4317,7 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
 
         this.runOnUiThread(new Runnable() {
             public void run() {
-                final ImageButton galleryButton = findViewById(R.id.gallery);
+                final ImageView galleryButton = findViewById(R.id.lenz_thumbnail); // Lenz: animate the visible thumbnail
                 if( started ) {
                     //galleryButton.setColorFilter(0x80ffffff, PorterDuff.Mode.MULTIPLY);
                     if( gallery_save_anim == null ) {
@@ -4473,6 +4476,11 @@ public class MainActivity extends AppCompatActivity implements PreferenceFragmen
 
         if( requestCode == LENZ_SETTINGS_CODE ) {
             LenzPerformance.update(this);
+            java.util.Map<String, ?> after = PreferenceManager.getDefaultSharedPreferences(this).getAll();
+            boolean changed = lenz_settings_before == null || !lenz_settings_before.equals(after);
+            lenz_settings_before = null;
+            if( !changed )
+                return; // nothing to apply, don't reopen the camera
             // apply the new settings once the camera has reopened
             new Handler().postDelayed(() -> {
                 if( !app_is_paused ) {

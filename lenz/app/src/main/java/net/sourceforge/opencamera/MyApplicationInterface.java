@@ -2572,12 +2572,13 @@ public class MyApplicationInterface extends BasicApplicationInterface {
                 }
             }
             if( thumbnail != null ) {
-                ImageButton galleryButton = main_activity.findViewById(R.id.gallery);
+                // Lenz: size it for Lenz's thumbnail (the old gallery button is hidden, so its width is 0)
+                View galleryButton = main_activity.findViewById(R.id.lenz_thumbnail);
                 int width = thumbnail.getWidth();
                 int height = thumbnail.getHeight();
                 if( MyDebug.LOG )
                     Log.d(TAG, "    video thumbnail size " + width + " x " + height);
-                if( width > galleryButton.getWidth() ) {
+                if( galleryButton.getWidth() > 0 && width > galleryButton.getWidth() ) {
                     float scale = (float) galleryButton.getWidth() / width;
                     int new_width = Math.round(scale * width);
                     int new_height = Math.round(scale * height);

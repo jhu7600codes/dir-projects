@@ -2706,13 +2706,18 @@ public class DrawPreview {
                 thumbnail_anim_src_rect.top = 0;
                 thumbnail_anim_src_rect.right = last_thumbnail.getWidth();
                 thumbnail_anim_src_rect.bottom = last_thumbnail.getHeight();
-                View galleryButton = main_activity.findViewById(R.id.gallery);
+                // Lenz: fly to Lenz's thumbnail, in the preview's coordinates
+                View galleryButton = main_activity.findViewById(R.id.lenz_thumbnail);
                 float alpha = ((float)time)/(float)duration;
 
                 int st_x = canvas.getWidth()/2;
                 int st_y = canvas.getHeight()/2;
-                int nd_x = galleryButton.getLeft() + galleryButton.getWidth()/2;
-                int nd_y = galleryButton.getTop() + galleryButton.getHeight()/2;
+                int [] thumb_loc = new int[2];
+                int [] preview_loc = new int[2];
+                galleryButton.getLocationOnScreen(thumb_loc);
+                main_activity.getPreview().getView().getLocationOnScreen(preview_loc);
+                int nd_x = thumb_loc[0] - preview_loc[0] + galleryButton.getWidth()/2;
+                int nd_y = thumb_loc[1] - preview_loc[1] + galleryButton.getHeight()/2;
                 int thumbnail_x = (int)( (1.0f-alpha)*st_x + alpha*nd_x );
                 int thumbnail_y = (int)( (1.0f-alpha)*st_y + alpha*nd_y );
 
