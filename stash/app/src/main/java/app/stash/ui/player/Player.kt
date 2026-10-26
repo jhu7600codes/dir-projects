@@ -73,6 +73,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -619,7 +620,15 @@ private fun LyricsView(state: PlayerUiState, bg: Color, onClose: () -> Unit) {
                             Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small)
                                 .clickable { actions.player.seekTo(at) }.padding(vertical = 8.dp)
                         ) {
-                            Text(text.ifBlank { "♪" }, style = big, color = color)
+                            // the line being sung lights up letter by letter (apple music style):
+                            // musixmatch's word timing when it has it, else spread over the line
+                            if (i == current && text.isNotBlank()) {
+                                val end = lines.getOrNull(i + 1)?.first ?: (at + 6000)
+                                val pieces = remember(lyrics, i) {
+                                    lyrics?.words?.getOrNull(i)?.takeIf { it.isNotEmpty() } ?: estimateWords(text, at, end)
+                                }
+                                KaraokeLine(pieces, end, big, sung, coming) { actions.player.positionMs }
+                            } else Text(text.ifBlank { "♪" }, style = big, color = color)
                             translated?.getOrNull(i)?.let { tr ->
                                 Text(tr, style = MaterialTheme.typography.titleMedium, color = color.copy(alpha = color.alpha * 0.75f))
                             }
@@ -730,5 +739,44 @@ private fun SeekBar(fraction: Float, buffered: Float, color: Color, onScrub: (Fl
             drawLine(color, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width * fraction, y), h, cap)
             drawCircle(color, radius = size.height / 2, center = androidx.compose.ui.geometry.Offset(size.width * fraction, y))
         }
+    }
+}
+
+/**
+ * the sung line, lit up as it goes: every letter fades from dim to bright at its own moment
+ * (a word's letters spread across the word's time), read off the player every frame so the
+ * sweep is smooth. [pieces] are (start ms, text), spaces included.
+ */
+@Composable
+private fun KaraokeLine(
+    pieces: List<Pair<Long, String>>, lineEnd: Long, style: androidx.compose.ui.text.TextStyle,
+    sung: Color, coming: Color, position: () -> Long,
+) {
+    var pos by remember { mutableLongStateOf(position()) }
+    LaunchedEffect(Unit) { while (true) androidx.compose.runtime.withFrameMillis { pos = position() } }
+    val text = androidx.compose.ui.text.buildAnnotatedString {
+        pieces.forEachIndexed { w, (start, piece) ->
+            val end = pieces.getOrNull(w + 1)?.first ?: lineEnd
+            val perChar = ((end - start).coerceAtLeast(1) / piece.length.coerceAtLeast(1)).coerceAtLeast(1)
+            piece.forEachIndexed { k, ch ->
+                val t0 = start + perChar * k
+                // each letter takes a little longer than its own slice to brighten, so it glows in
+                val p = ((pos - t0).toFloat() / (perChar * 2.5f).coerceIn(80f, 400f)).coerceIn(0f, 1f)
+                withStyle(androidx.compose.ui.text.SpanStyle(color = androidx.compose.ui.graphics.lerp(coming, sung, p))) { append(ch) }
+            }
+        }
+    }
+    Text(text, style = style)
+}
+
+/** no word timing (lrclib): spread the words over the line, longer words taking longer */
+private fun estimateWords(text: String, start: Long, end: Long): List<Pair<Long, String>> {
+    // sung a bit faster than the gap to the next line, which often holds a pause
+    val span = ((end - start) * 0.85).toLong().coerceIn(600, 8000)
+    val pieces = Regex("""\S+\s*""").findAll(text).map { it.value }.toList().ifEmpty { listOf(text) }
+    val total = pieces.sumOf { it.trim().length.coerceAtLeast(1) }.toDouble()
+    var t = start.toDouble()
+    return pieces.map { w ->
+        (t.toLong() to w).also { t += span * w.trim().length.coerceAtLeast(1) / total }
     }
 }

@@ -30,6 +30,8 @@ data class SongLyrics(
     /** a translation that came with the lyrics (musixmatch), line for line, into [translatedTo] */
     val translated: List<String?>? = null,
     val translatedTo: String? = null,
+    /** word timing per line (musixmatch richsync): (start ms, text) pieces; null = only line timing */
+    val words: List<List<Pair<Long, String>>>? = null,
 ) {
     val synced get() = lines.isNotEmpty()
 }

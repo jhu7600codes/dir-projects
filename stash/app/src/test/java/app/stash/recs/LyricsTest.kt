@@ -17,4 +17,14 @@ class LyricsTest {
         org.junit.Assert.assertEquals(tok, Musixmatch.parseToken("  $tok \n"))
         org.junit.Assert.assertNull(Musixmatch.parseToken("hello"))
     }
+
+    @Test
+    fun `richsync words get absolute start times`() {
+        val body = """[{"ts":1.38,"te":1.56,"l":[{"c":"hello","o":0},{"c":" ","o":0.03},{"c":"world","o":0.05}],"x":"hello world"}]"""
+        val lines = Musixmatch.parseRichsync(body)
+        org.junit.Assert.assertEquals(1, lines.size)
+        org.junit.Assert.assertEquals(1380L, lines[0].startMs)
+        org.junit.Assert.assertEquals("hello world", lines[0].text)
+        org.junit.Assert.assertEquals(listOf(1380L to "hello", 1410L to " ", 1430L to "world"), lines[0].words)
+    }
 }

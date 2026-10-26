@@ -166,6 +166,10 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 - The player covers the whole screen; back or a drag down closes it.
 - Rescans (Create → Find missing songs) end with a looser pass over the same results that ignores length, and "UTG" in a playlist name counts as "untitled tag game" in an upload (any 3-5 letter abbreviation, both ways).
 
+## Karaoke lyrics (1.24)
+
+The line being sung lights up letter by letter, like Apple Music. Musixmatch's richsync (asked for in the same `macro.subtitles.get`, `optional_calls=track.richsync`) gives every word's start time; for other synced lyrics (LRCLIB) the words are spread over the line by length. Each letter fades from dim to bright at its moment, read off the player every frame. Translations are matched to richsync lines by their original text.
+
 ## Musixmatch (1.23)
 
 Works like EeveeSpotify (Reborn): the iPhone app's API (`apic.musixmatch.com`, `app_id=mac-ios-v2.0`). Settings → Lyrics → Musixmatch token takes the Musixmatch app's "Copy debug info" text (`[UserToken]: …`) or a bare token; without one, an anonymous token from `token.get` is used (the desktop app's anonymous tokens now come back all zeros, which is why translations never showed). With "Show translation" on, `macro.subtitles.get` is asked with `selected_language` + `part=subtitle_translated`, so the translation arrives with the lyrics, line for line; Google's machine translation only fills in when Musixmatch has none. Musixmatch is on by default now.
