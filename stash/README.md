@@ -177,6 +177,7 @@ Works like EeveeSpotify (Reborn): the iPhone app's API (`apic.musixmatch.com`, `
 ## TV, tablets and pairing (1.22)
 
 - **Android TV / Google TV:** the same APK. On a TV (leanback feature) Stash opens its remote-friendly app (`ui/tv/TvApp.kt`): a rail on the left (Search, Home, Library, Now playing, Account), big cards, D-pad focus with a white outline, a full-screen player with big controls. It's in the TV's app row (LEANBACK_LAUNCHER, `tv_banner`). Always dark, Stash's own colors.
+- **32-bit TVs** (armeabi-v7a, most older Android TVs): `dist/stash-armv7.apk`, built with `gradle assembleRelease -Pabis=armeabi-v7a`. `dist/stash.apk` stays 64-bit (arm64 + x86_64) for phones.
 - **Pairing:** a TV (or tablet) shows a 6-character code; on a logged-in phone, Create → Pair a device → type it. The `pair` Supabase edge function (table `device_pairing`, RLS on, service role only) makes a one-time magic-link token for that account; the TV swaps it at `/auth/v1/verify` for its own session (`cloud/Pairing.kt`), then restores playlists like a normal login. Codes last 10 minutes, one use each; the phone's own login never leaves the phone.
 - **Tablets:** 600dp+ wide gets a navigation rail instead of the bottom bar; the player puts the cover on the left in landscape.
 - **Splash follows the icon:** on Android 12+ the app's night mode is pinned with `UiModeManager.setApplicationNightMode` to match the icon (black only while the dark icon is on), and the app reads the system's dark mode itself for its own colors.
