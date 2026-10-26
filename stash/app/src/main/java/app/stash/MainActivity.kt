@@ -42,11 +42,21 @@ class MainActivity : ComponentActivity() {
         // the splash (the icon's bars), then the bars grow and fade into the app
         installSplashScreen().setOnExitAnimationListener { splash ->
             val view = splash.view
-            val icon = splash.iconView
-            icon.animate().scaleX(1.6f).scaleY(1.6f).alpha(0f).setDuration(320)
-                .setInterpolator(android.view.animation.AccelerateInterpolator()).start()
+            // some tvs show the splash with no icon (iconView throws): then stash puts its own bars
+            // on it, so the grow-and-fade still happens
+            val icon = runCatching { splash.iconView }.getOrNull() ?: (view as? android.view.ViewGroup)?.let { group ->
+                val night = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                    android.content.res.Configuration.UI_MODE_NIGHT_YES
+                val size = (240 * resources.displayMetrics.density).toInt()
+                android.widget.ImageView(this).apply {
+                    setImageResource(if (night) R.drawable.ic_launcher_dark_foreground else R.drawable.ic_launcher_foreground)
+                    group.addView(this, android.widget.FrameLayout.LayoutParams(size, size, android.view.Gravity.CENTER))
+                }
+            }
+            icon?.animate()?.scaleX(1.6f)?.scaleY(1.6f)?.alpha(0f)?.setDuration(320)
+                ?.setInterpolator(android.view.animation.AccelerateInterpolator())?.start()
             view.animate().alpha(0f).setStartDelay(120).setDuration(280)
-                .withEndAction { splash.remove() }.start()
+                .withEndAction { runCatching { splash.remove() } }.start()
         }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
