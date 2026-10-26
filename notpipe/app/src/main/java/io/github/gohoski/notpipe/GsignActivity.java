@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -35,6 +36,8 @@ public class GsignActivity extends Activity {
     private Handler handler = new Handler();
     private boolean tokenFound = false;
     private boolean isDestroyedFlag = false;
+    /** Set by Google's page through the bridge once the user enters their email */
+    private volatile String accountEmail;
 
     private final Runnable cookiePoll = new Runnable() {
         @Override
@@ -65,10 +68,14 @@ public class GsignActivity extends Activity {
         web = (WebView) findViewById(R.id.gsign_web);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
+        // Google's device sign-in page only continues inside its own login screen ("MinuteMaid"),
+        // which it detects by this User-Agent suffix plus the "mm" JavaScript bridge below, like microG does
+        settings.setUserAgentString(settings.getUserAgentString() + " MinuteMaid");
         try {
             // Android 2.1+, Google's page needs it
             WebSettings.class.getMethod("setDomStorageEnabled", boolean.class).invoke(settings, true);
         } catch (Exception ignored) {}
+        web.addJavascriptInterface(new MinuteMaidBridge(), "mm");
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -100,7 +107,13 @@ public class GsignActivity extends Activity {
             String part = parts[i].trim();
             if (part.startsWith("oauth_token=") && part.length() > 12) {
                 tokenFound = true;
-                askEmail(part.substring(12));
+                String token = part.substring(12);
+                if (accountEmail != null && accountEmail.contains("@")) {
+                    web.stopLoading();
+                    new SubmitTask(accountEmail, token).execute();
+                } else {
+                    askEmail(token);
+                }
                 return;
             }
         }
@@ -129,6 +142,57 @@ public class GsignActivity extends Activity {
                         finish();
                     }
                 }).show();
+    }
+
+    /**
+     * Stand-in for the native side of Google's account login screen (same methods microG implements).
+     * Mostly harmless defaults; the important parts are learning the email and noticing when the flow ends.
+     */
+    private class MinuteMaidBridge {
+        @JavascriptInterface public void setAccountIdentifier(String id) { accountEmail = id; }
+        @JavascriptInterface public void attemptLogin(String accountName, String password) { accountEmail = accountName; }
+        @JavascriptInterface public void addAccount(String json) { pollSoon(); }
+        @JavascriptInterface public void notifyOnTermsOfServiceAccepted() { pollSoon(); }
+        @JavascriptInterface public void closeView() { pollSoon(); }
+        @JavascriptInterface public void showView() {}
+        @JavascriptInterface public void skipLogin() { pollSoon(); }
+        @JavascriptInterface public void goBack() {}
+        @JavascriptInterface public void log(String message) {}
+        @JavascriptInterface public String getAndroidId() { return "3ad1c0e5c0ffee42"; }
+        @JavascriptInterface public int getBuildVersionSdk() { return NotPipe.SDK; }
+        @JavascriptInterface public int getAuthModuleVersionCode() { return 240913000; }
+        @JavascriptInterface public int getPlayServicesVersionCode() { return 240913000; }
+        @JavascriptInterface public String getAccounts() { return "[]"; }
+        @JavascriptInterface public boolean getAllowAddAccount() { return true; }
+        @JavascriptInterface public String getPhoneNumber() { return null; }
+        @JavascriptInterface public boolean hasPhoneNumber() { return false; }
+        @JavascriptInterface public boolean hasTelephony() { return false; }
+        @JavascriptInterface public String getSimSerial() { return null; }
+        @JavascriptInterface public int getSimState() { return 0; }
+        @JavascriptInterface public boolean isUserOwner() { return true; }
+        @JavascriptInterface public String getDroidGuardResult(String request) { return null; }
+        @JavascriptInterface public String getFactoryResetChallenges() { return "[]"; }
+        @JavascriptInterface public void hideKeyboard() {}
+        @JavascriptInterface public void showKeyboard() {}
+        @JavascriptInterface public void launchEmergencyDialer() {}
+        @JavascriptInterface public void setBackButtonEnabled(boolean enabled) {}
+        @JavascriptInterface public void setNewAccountCreated() {}
+        @JavascriptInterface public void setPrimaryActionEnabled(boolean enabled) {}
+        @JavascriptInterface public void setPrimaryActionLabel(String label, int icon) {}
+        @JavascriptInterface public void setSecondaryActionEnabled(boolean enabled) {}
+        @JavascriptInterface public void setSecondaryActionLabel(String label, int icon) {}
+        @JavascriptInterface public void startAfw() {}
+        @JavascriptInterface public void clearOldLoginAttempts() {}
+        @JavascriptInterface public void backupSyncOptIn(String accountName) {}
+
+        private void pollSoon() {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    checkCookie();
+                }
+            });
+        }
     }
 
     private void setBusy(boolean busy, int status) {
