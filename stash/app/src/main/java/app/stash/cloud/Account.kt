@@ -101,6 +101,28 @@ class Account @Inject constructor(
         save(o, email)
     }
 
+    /** how many devices are logged into this account (phones, tvs…) */
+    suspend fun sessionCount(): Int? {
+        val token = accessToken() ?: return null
+        return httpIo {
+            val req = Request.Builder().url(BuildConfig.SUPABASE_URL + "/rest/v1/rpc/my_session_count")
+                .header("apikey", BuildConfig.SUPABASE_KEY).header("Authorization", "Bearer $token")
+                .post("{}".toRequestBody("application/json".toMediaType())).build()
+            http.newCall(req).execute().use { r -> if (r.isSuccessful) r.body?.string()?.trim()?.toIntOrNull() else null }
+        }
+    }
+
+    /** logs every other device out of this account (this one stays) */
+    suspend fun logOutOthers() {
+        val token = accessToken() ?: throw ProviderException("Not logged in")
+        httpIo {
+            val req = Request.Builder().url(BuildConfig.SUPABASE_URL + "/auth/v1/logout?scope=others")
+                .header("apikey", BuildConfig.SUPABASE_KEY).header("Authorization", "Bearer $token")
+                .post("".toRequestBody(null)).build()
+            http.newCall(req).execute().use { r -> if (!r.isSuccessful) throw ProviderException("Couldn't log the others out (${r.code})") }
+        }
+    }
+
     suspend fun signOut() = settings.clearSession()
 
     companion object {

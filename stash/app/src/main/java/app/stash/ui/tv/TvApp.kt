@@ -34,7 +34,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
@@ -88,6 +89,8 @@ import app.stash.data.db.LIKED_PLAYLIST_ID
 import app.stash.data.db.MixCover
 import app.stash.data.db.Track
 import app.stash.ui.AppViewModel
+import app.stash.ui.LocalActions
+import app.stash.ui.player.LyricsView
 import app.stash.ui.components.Artwork
 import app.stash.ui.components.LikedArt
 import app.stash.ui.components.formatDuration
@@ -110,22 +113,35 @@ private sealed interface TvPage {
  * reachable with the d-pad, and the focused thing always lit up. logging in is a code you type
  * on your phone (Create → Pair a device), no keyboard needed.
  */
+/** what the tv app needs from the activity (account / backup live there) */
+class TvHooks(
+    /** pull the account's playlists in; runs outside any screen so leaving a screen can't cancel it */
+    val sync: () -> Unit,
+    val logOut: suspend () -> Unit,
+    val sessions: suspend () -> Int?,
+    val logOutOthers: suspend () -> Unit,
+)
+
 @Composable
-fun TvApp(app: AppViewModel, onPaired: suspend () -> Unit, onLogOut: suspend () -> Unit) {
+fun TvApp(app: AppViewModel, hooks: TvHooks) {
     val settings by app.settings.collectAsState()
     var skipped by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(Unit) { app.messages.collect { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() } }
     val s = settings ?: return
+    // logged in but never got the account's playlists (or that got interrupted): get them now
+    LaunchedEffect(s.accountEmail, s.cloudReady) { if (s.accountEmail.isNotEmpty() && !s.cloudReady) hooks.sync() }
     // a surface, so text and icons get the theme's light color (a bare box left them black)
     androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        if (s.accountEmail.isEmpty() && !skipped) PairScreen(app.pairing, onPaired = onPaired, onSkip = { skipped = true })
-        else TvShell(app, s.accountEmail, onLogOut = { onLogOut(); skipped = false })
+        androidx.compose.runtime.CompositionLocalProvider(LocalActions provides app) {
+            if (s.accountEmail.isEmpty() && !skipped) PairScreen(app.pairing, onPaired = hooks.sync, onSkip = { skipped = true })
+            else TvShell(app, s.accountEmail, hooks, onLogOut = { hooks.logOut(); skipped = false })
+        }
     }
 }
 
 @Composable
-private fun TvShell(app: AppViewModel, email: String, onLogOut: suspend () -> Unit) {
+private fun TvShell(app: AppViewModel, email: String, hooks: TvHooks, onLogOut: suspend () -> Unit) {
     val stack = remember { mutableStateListOf<TvPage>(TvPage.Home) }
     val page = stack.last()
     val currentId by app.player.currentId.collectAsState()
@@ -151,7 +167,7 @@ private fun TvShell(app: AppViewModel, email: String, onLogOut: suspend () -> Un
             RailItem(Icons.Rounded.LibraryMusic, "Library", page == TvPage.Library) { go(TvPage.Library, top = true) }
             if (currentId != null) RailItem(Icons.Rounded.GraphicEq, "Now playing", page == TvPage.Player) { go(TvPage.Player) }
             Spacer(Modifier.weight(1f))
-            RailItem(Icons.Rounded.AccountCircle, if (email.isEmpty()) "Log in" else "Account", page == TvPage.Account) { go(TvPage.Account, top = true) }
+            RailItem(Icons.Rounded.Settings, "Settings", page == TvPage.Account) { go(TvPage.Account, top = true) }
         }
         Box(Modifier.weight(1f).fillMaxHeight()) {
             AnimatedContent(page, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tvPage") { p ->
@@ -159,7 +175,7 @@ private fun TvShell(app: AppViewModel, email: String, onLogOut: suspend () -> Un
                     TvPage.Home -> HomePage(app, open = { go(TvPage.Playlist(it)) }, play = ::playAndOpen)
                     TvPage.Search -> SearchPage(play = ::playAndOpen)
                     TvPage.Library -> LibraryPage(app, open = { go(TvPage.Playlist(it)) })
-                    TvPage.Account -> AccountPage(email, onLogOut)
+                    TvPage.Account -> SettingsPage(app, email, hooks, onLogOut)
                     TvPage.Player -> PlayerPage(app)
                     is TvPage.Playlist -> PlaylistPage(app, p.id, play = ::playAndOpen)
                 }
@@ -396,6 +412,15 @@ private fun SearchPage(play: (List<Track>, Int, Boolean) -> Unit) {
 @Composable
 private fun PlayerPage(app: AppViewModel) {
     val state by app.player.state.collectAsState()
+    var lyrics by remember { mutableStateOf(false) }
+    if (lyrics) {
+        // the phone's karaoke lyrics, full screen
+        BackHandler { lyrics = false }
+        Box(Modifier.fillMaxSize().background(Color(0xFF15121F)).padding(horizontal = 48.dp)) {
+            LyricsView(state, Color(0xFF15121F), onClose = { lyrics = false })
+        }
+        return
+    }
     val player = app.player
     var pos by remember { mutableLongStateOf(0L) }
     LaunchedEffect(Unit) { while (true) { pos = player.positionMs; delay(500) } }
@@ -434,6 +459,7 @@ private fun PlayerPage(app: AppViewModel) {
                     if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat, "Repeat", 56.dp,
                     on = state.repeatMode != Player.REPEAT_MODE_OFF,
                 ) { player.cycleRepeat() }
+                RoundButton(Icons.Rounded.Lyrics, "Lyrics", 56.dp) { lyrics = true }
                 track?.let { t ->
                     RoundButton(if (hearted) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, "Like", 56.dp, on = hearted) {
                         app.toggleHeart(t, hearted)
@@ -478,21 +504,86 @@ private fun RoundButton(
     }
 }
 
+/** settings on the tv: account (devices, log out), lyrics, playback */
 @Composable
-private fun AccountPage(email: String, onLogOut: suspend () -> Unit) {
+private fun SettingsPage(app: AppViewModel, email: String, hooks: TvHooks, onLogOut: suspend () -> Unit) {
     val scope = rememberCoroutineScope()
-    val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { delay(150); runCatching { focus.requestFocus() } }
-    Column(Modifier.padding(start = 48.dp, top = 40.dp)) {
-        Text("Account", style = MaterialTheme.typography.displaySmall)
-        Text(
-            if (email.isEmpty()) "Not logged in. Log in to get your playlists from your phone." else "Logged in as $email",
-            style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp),
-        )
-        TvButton(
-            null, if (email.isEmpty()) "Log in with a code" else "Log out",
-            Modifier.padding(top = 28.dp).focusRequester(focus), primary = true,
-        ) { scope.launch { onLogOut() } }
+    val settings by app.settings.collectAsState()
+    val s = settings ?: return
+    var sessions by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(email) { if (email.isNotEmpty()) sessions = runCatching { hooks.sessions() }.getOrNull() }
+    val first = remember { FocusRequester() }
+    LaunchedEffect(Unit) { delay(150); runCatching { first.requestFocus() } }
+    val languages = listOf("" to "Phone's language", "en" to "English", "ru" to "Russian", "ja" to "Japanese", "uk" to "Ukrainian", "de" to "German", "es" to "Spanish")
+
+    LazyColumn(contentPadding = PaddingValues(start = 48.dp, end = 48.dp, top = 40.dp, bottom = 48.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item { Text("Settings", style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(bottom = 16.dp)) }
+        item { RowTitleSmall("Account") }
+        item {
+            Text(
+                if (email.isEmpty()) "Not logged in. Log in to get your playlists from your phone." else "Logged in as $email",
+                style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            sessions?.let { n ->
+                Text(
+                    if (n <= 1) "Logged in on this device only" else "Logged in on $n devices",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
+        item {
+            Row(Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                TvButton(null, if (email.isEmpty()) "Log in with a code" else "Log out", Modifier.focusRequester(first), primary = true) {
+                    scope.launch { onLogOut() }
+                }
+                if (email.isNotEmpty()) TvButton(null, "Get my playlists again") { hooks.sync() }
+                if ((sessions ?: 0) > 1) TvButton(null, "Log out other devices") {
+                    scope.launch {
+                        runCatching { hooks.logOutOthers() }
+                            .onSuccess { sessions = 1; app.toast("Logged out every other device") }
+                            .onFailure { app.toast(it.message ?: "Couldn't") }
+                    }
+                }
+            }
+        }
+        item { RowTitleSmall("Lyrics") }
+        item { TvToggle("Musixmatch", "Synced lyrics with translations, LRCLIB when it has none", s.lyricsMusixmatch) { v -> scope.launch { app.prefs.setLyricsMusixmatch(v) } } }
+        item { TvToggle("Show translation", "A translation under every line", s.lyricsTranslate) { v -> scope.launch { app.prefs.setLyricsTranslate(v) } } }
+        item {
+            val i = languages.indexOfFirst { it.first == s.translateTo }.coerceAtLeast(0)
+            TvToggle("Translate to", languages[i].second, null) {
+                scope.launch { app.prefs.setTranslateTo(languages[(i + 1) % languages.size].first) }
+            }
+        }
+        item { RowTitleSmall("Playback") }
+        item { TvToggle("Autoplay", "Keep playing similar songs when the queue runs out", s.autoplay) { v -> scope.launch { app.prefs.setAutoplay(v) } } }
+        item {
+            val context = LocalContext.current
+            val version = remember { runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() }
+            Text("Stash $version", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 24.dp))
+        }
+    }
+}
+
+@Composable
+private fun RowTitleSmall(text: String) {
+    Text(text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 20.dp, bottom = 4.dp))
+}
+
+/** a settings row: [on] null = not a switch, just tap to change */
+@Composable
+private fun TvToggle(title: String, about: String, on: Boolean?, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(0.75f).tvFocus(RoundedCornerShape(14.dp), lift = 1.02f)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable { onChange(!(on ?: false)) }.padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(about, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (on != null) androidx.compose.material3.Switch(checked = on, onCheckedChange = null)
     }
 }
 
@@ -501,7 +592,7 @@ private fun AccountPage(email: String, onLogOut: suspend () -> Unit) {
  * every 10 minutes; checks every 3 seconds whether the phone has sent it.
  */
 @Composable
-private fun PairScreen(pairing: Pairing, onPaired: suspend () -> Unit, onSkip: () -> Unit) {
+private fun PairScreen(pairing: Pairing, onPaired: () -> Unit, onSkip: () -> Unit) {
     var code by remember { mutableStateOf<Pairing.Code?>(null) }
     var status by remember { mutableStateOf("Getting a code…") }
     val skipFocus = remember { FocusRequester() }
