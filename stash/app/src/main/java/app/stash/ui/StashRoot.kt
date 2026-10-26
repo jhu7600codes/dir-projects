@@ -1,5 +1,7 @@
 package app.stash.ui
 
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -138,6 +140,7 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
     val currentId by app.player.currentId.collectAsState()
     var showPlayer by rememberSaveable { mutableStateOf(false) }
     var creating by remember { mutableStateOf(false) }
+    val wide = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
 
     LaunchedEffect(Unit) { app.messages.collect { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(it) } }
     LaunchedEffect(Unit) { navRequests.collect { nav.navigate(it) { launchSingleTop = true } } }
@@ -187,7 +190,7 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                         val player by app.player.state.collectAsState()
                         MiniPlayer(state = player, onOpen = { showPlayer = true })
                     }
-                    NavigationBar {
+                    if (!wide) NavigationBar {
                         tabs.forEach { tab ->
                             val selected = backStack?.destination?.hierarchy?.any { it.route == tab.route } == true
                             NavigationBarItem(
@@ -214,10 +217,35 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 }
             },
         ) { padding ->
+            Row(Modifier.fillMaxSize()) {
+            // tablets: the tabs go down the side instead of along the bottom
+            if (wide) androidx.compose.material3.NavigationRail(
+                modifier = Modifier.padding(top = padding.calculateTopPadding()).statusBarsPadding(),
+            ) {
+                tabs.forEach { tab ->
+                    val selected = backStack?.destination?.hierarchy?.any { it.route == tab.route } == true
+                    androidx.compose.material3.NavigationRailItem(
+                        selected = selected,
+                        onClick = {
+                            nav.navigate(tab.route) {
+                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
+                        label = { Text(tab.label) },
+                    )
+                }
+                androidx.compose.material3.NavigationRailItem(
+                    selected = false, onClick = { creating = true },
+                    icon = { Icon(Icons.Rounded.Add, null) }, label = { Text("Create") },
+                )
+            }
             NavHost(
                 navController = nav,
                 startDestination = Routes.HOME,
-                modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+                modifier = Modifier.weight(1f).padding(padding).consumeWindowInsets(padding),
                 // pages slide in a little from the side and fade, going back slides the other way
                 enterTransition = { fadeIn(tween(260, easing = LinearOutSlowInEasing)) + slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { it / 12 } },
                 exitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 24 } },
@@ -261,6 +289,7 @@ fun StashRoot(app: AppViewModel, navRequests: Flow<String>, openPlayerRequests: 
                 ) {
                     SearchScreen(fixUnmatchedId = it.arguments!!.getLong("id"), initialQuery = it.arguments!!.getString("q")!!)
                 }
+            }
             }
         }
 

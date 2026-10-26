@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.ManageSearch
 import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -46,6 +47,7 @@ fun CreateSheet(onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     val missing by actions.missingCount.collectAsState()
     var naming by remember { mutableStateOf(false) }
+    var pairing by remember { mutableStateOf(false) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
@@ -60,9 +62,11 @@ fun CreateSheet(onDismiss: () -> Unit) {
             Option(Icons.Rounded.Image, "Get playlist covers", "Copy your Spotify playlists' covers over") {
                 onDismiss(); nav.navigate(Routes.COVER_GRAB)
             }
+            Option(Icons.Rounded.Tv, "Pair a device", "Log a TV or tablet into your account with its code") { pairing = true }
         }
     }
 
+    if (pairing) PairDeviceDialog(onDismiss = { pairing = false; onDismiss() })
     if (naming) NewPlaylistDialog(
         onDismiss = { naming = false },
         onCreate = { name ->
@@ -87,5 +91,53 @@ private fun Option(icon: ImageVector, title: String, about: String, onClick: () 
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.padding(horizontal = 8.dp).clip(MaterialTheme.shapes.medium).clickable(onClick = onClick),
+    )
+}
+
+/** type the code a tv / tablet shows; it gets logged into this account */
+@Composable
+fun PairDeviceDialog(onDismiss: () -> Unit) {
+    val actions = LocalActions.current
+    val scope = rememberCoroutineScope()
+    var code by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = { if (!busy) onDismiss() },
+        title = { Text("Pair a device") },
+        text = {
+            Column {
+                Text("Open Stash on the TV or tablet and type the code it shows. It logs into your account and gets your playlists.")
+                androidx.compose.material3.OutlinedTextField(
+                    value = code,
+                    onValueChange = { v -> code = v.uppercase().filter { it.isLetterOrDigit() }.take(6); error = null },
+                    label = { Text("Code") },
+                    singleLine = true,
+                    isError = error != null,
+                    supportingText = { error?.let { Text(it) } },
+                    textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = androidx.compose.ui.unit.TextUnit(6f, androidx.compose.ui.unit.TextUnitType.Sp)),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Characters,
+                        autoCorrectEnabled = false,
+                    ),
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(
+                enabled = code.length == 6 && !busy,
+                onClick = {
+                    busy = true
+                    scope.launch {
+                        runCatching { actions.pairing.claim(code) }
+                            .onSuccess { name -> actions.toast("Paired $name, it's logging in now"); onDismiss() }
+                            .onFailure { error = it.message ?: "Couldn't pair" }
+                        busy = false
+                    }
+                },
+            ) { Text(if (busy) "Pairing…" else "Pair") }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
     )
 }

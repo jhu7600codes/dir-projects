@@ -23,4 +23,20 @@ object AppIcon {
         pm.setComponentEnabledSetting(on, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
         pm.setComponentEnabledSetting(off, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
     }
+
+    /**
+     * android 12+ draws the splash before stash starts, in the app's night mode. stash pins that
+     * mode to match the icon, so the splash is black only while the dark icon is on (the app's
+     * own colors don't depend on it, see MainActivity). older android: the splash just follows
+     * the phone.
+     */
+    fun applySplash(context: Context, dark: Boolean) {
+        if (android.os.Build.VERSION.SDK_INT < 31) return
+        val prefs = context.getSharedPreferences("splash", Context.MODE_PRIVATE)
+        val mode = if (dark) android.app.UiModeManager.MODE_NIGHT_YES else android.app.UiModeManager.MODE_NIGHT_NO
+        // changing it restarts the screen, so only when it really changes
+        if (prefs.getInt("mode", -1) == mode) return
+        prefs.edit().putInt("mode", mode).apply()
+        context.getSystemService(android.app.UiModeManager::class.java).setApplicationNightMode(mode)
+    }
 }

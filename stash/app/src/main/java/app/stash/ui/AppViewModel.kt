@@ -40,6 +40,7 @@ class AppViewModel @Inject constructor(
     val prefs: Settings,
     val lyrics: app.stash.recs.Lyrics,
     private val resolver: app.stash.providers.Resolver,
+    val pairing: app.stash.cloud.Pairing,
 ) : ViewModel() {
 
     val settings: StateFlow<AppSettings?> = prefs.flow.stateIn(viewModelScope, SharingStarted.Eagerly, null)
