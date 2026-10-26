@@ -56,6 +56,18 @@ class MainActivity : ComponentActivity() {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
+        // a crash last time: show it first (photo / copy), then start as usual
+        CrashReport.showIfAny(this) { startUi() }
+
+        if (savedInstanceState == null) handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun startUi() {
         setContent {
             val settings by app.settings.collectAsState()
             // the launcher icon follows the app: dark icon while the app is dark (unless turned off)
@@ -93,13 +105,6 @@ class MainActivity : ComponentActivity() {
                 else StashRoot(app, navRequests.receiveAsFlow(), openPlayer.receiveAsFlow())
             }
         }
-
-        if (savedInstanceState == null) handleIntent(intent)
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleIntent(intent)
     }
 
     /** android tv / google tv: the remote-friendly app (ui/tv) instead of the phone one */

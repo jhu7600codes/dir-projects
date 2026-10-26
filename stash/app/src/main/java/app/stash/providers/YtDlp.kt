@@ -48,7 +48,9 @@ class YtDlp @Inject constructor(
                 YoutubeDL.getInstance().init(context)
                 ready.complete(Unit)
                 _status.value = "Ready"
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // Throwable, not Exception: a python that can't load on this cpu (32-bit tvs) throws an
+                // Error, and that used to take the whole app down at launch. stash plays fine without yt-dlp
                 Log.e(TAG, "yt-dlp init failed", e)
                 ready.completeExceptionally(e)
                 _status.value = "Failed to start: ${e.message}"
