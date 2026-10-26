@@ -117,7 +117,8 @@ fun TvApp(app: AppViewModel, onPaired: suspend () -> Unit, onLogOut: suspend () 
     val context = LocalContext.current
     LaunchedEffect(Unit) { app.messages.collect { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() } }
     val s = settings ?: return
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    // a surface, so text and icons get the theme's light color (a bare box left them black)
+    androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         if (s.accountEmail.isEmpty() && !skipped) PairScreen(app.pairing, onPaired = onPaired, onSkip = { skipped = true })
         else TvShell(app, s.accountEmail, onLogOut = { onLogOut(); skipped = false })
     }
