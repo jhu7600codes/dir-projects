@@ -40,14 +40,22 @@ class Musixmatch @Inject constructor(
     fun setUserToken(raw: String?): Boolean {
         if (raw.isNullOrBlank()) { prefs.edit().remove("user_token").apply(); return true }
         val token = parseToken(raw) ?: return false
-        prefs.edit().putString("user_token", token).apply()
+        prefs.edit().putString("user_token", token).putString("user_app", appIdFor(raw)).apply()
         return true
+    }
+
+    /** a token only works with the app it came from: the android app's or the iphone's */
+    private val appId: String get() = if (userToken != null) prefs.getString("user_app", null) ?: IOS else IOS
+
+    /** a refused personal token: try it as the other app's (a bare token doesn't say which) */
+    private fun switchUserApp() {
+        prefs.edit().putString("user_app", if (appId == ANDROID) IOS else ANDROID).apply()
     }
 
     private val prefs get() = context.getSharedPreferences("musixmatch", Context.MODE_PRIVATE)
 
     private fun url(method: String) = "$BASE$method".toHttpUrl().newBuilder()
-        .addQueryParameter("app_id", APP_ID)
+        .addQueryParameter("app_id", appId)
         .addQueryParameter("format", "json")
 
     private suspend fun call(url: HttpUrl): JsonObject? = httpIo {
@@ -59,7 +67,7 @@ class Musixmatch @Inject constructor(
     private suspend fun token(renew: Boolean = false): String? {
         userToken?.let { return it }
         if (!renew) prefs.getString("anon_token", null)?.let { return it }
-        val body = call(url("token.get").build())?.obj("body") ?: return null
+        val body = call(url("token.get").setQueryParameter("app_id", IOS).build())?.obj("body") ?: return null
         val token = body.str("user_token")?.takeIf { it.isNotBlank() && !it.all { c -> c == '0' } && "Upgrade" !in it } ?: return null
         prefs.edit().putString("anon_token", token).apply()
         return token
@@ -91,8 +99,11 @@ class Musixmatch @Inject constructor(
                 .addQueryParameter("usertoken", t)
                 .build()
             val msg = call(u) ?: return null
-            // 401: the token was refused (renew once)
-            if (msg.obj("header")?.num("status_code")?.toInt() == 401) continue
+            // 401: the token was refused. anonymous: get a new one; yours: try the other app's id
+            if (msg.obj("header")?.num("status_code")?.toInt() == 401) {
+                if (userToken != null) switchUserApp()
+                continue
+            }
             val calls = msg.obj("body")?.obj("macro_calls") ?: return null
             val track = calls.obj("matcher.track.get")?.obj("message")?.obj("body")?.obj("track")
             val sub = calls.obj("track.subtitles.get")?.obj("message")?.obj("body")?.get("subtitle_list")
@@ -183,7 +194,17 @@ class Musixmatch @Inject constructor(
 
         private const val BASE = "https://apic.musixmatch.com/ws/1.1/"
         // the iphone app's id: its anonymous tokens work (the desktop app's come back all zeros now)
-        private const val APP_ID = "mac-ios-v2.0"
+        private const val IOS = "mac-ios-v2.0"
+        private const val IPAD = "mac-ios-ipad-v1.0"
+        // tokens from the android app (debug info "[App]: com.musixmatch.android…") only work with this
+        private const val ANDROID = "android-player-v1.0"
+
+        /** which app the pasted debug info came from */
+        fun appIdFor(raw: String): String = when {
+            Regex("""\[App]:\s*com\.musixmatch\.android""").containsMatchIn(raw) || "[OSVersion]" in raw && "iPhone" !in raw -> ANDROID
+            Regex("""\[Device]:\s*iPad""").containsMatchIn(raw) -> IPAD
+            else -> IOS
+        }
 
         /** "[UserToken]: 2610…" from the app's debug info, or the bare 54-character token */
         fun parseToken(raw: String): String? {
