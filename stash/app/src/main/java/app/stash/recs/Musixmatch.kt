@@ -71,6 +71,9 @@ class Musixmatch @Inject constructor(
             val t = token(renew = attempt == 1) ?: return null
             val u = url("macro.subtitles.get")
                 .addQueryParameter("subtitle_format", "mxm")
+                // word-by-word timing too, when musixmatch has it (apple music style karaoke)
+                .addQueryParameter("namespace", "lyrics_richsynched")
+                .addQueryParameter("optional_calls", "track.richsync")
                 .apply {
                     if (translateTo != null) {
                         addQueryParameter("selected_language", translateTo)
@@ -95,18 +98,30 @@ class Musixmatch @Inject constructor(
             val sub = calls.obj("track.subtitles.get")?.obj("message")?.obj("body")?.get("subtitle_list")
                 .asObjectList().firstOrNull()?.obj("subtitle")
             val subtitle = sub?.str("subtitle_body")
-            // the translation comes along, one entry per line, same order (skipped when the song is
-            // already in that language)
-            val translated = sub?.obj("subtitle_translated")?.str("subtitle_body")
+            // the translation comes along, one entry per line with its original (skipped when the
+            // song is already in that language)
+            val translatedPairs = sub?.obj("subtitle_translated")?.str("subtitle_body")
                 ?.takeIf { translateTo != null && sub.str("subtitle_language") != translateTo }
                 ?.let { body ->
                     runCatching {
                         (lenientJson.parseToJsonElement(body) as JsonArray).map { el ->
-                            (el as? JsonObject)?.str("text")?.takeIf { it.isNotBlank() }
+                            val o = el as? JsonObject
+                            o?.str("original")?.trim() to o?.str("text")?.takeIf { it.isNotBlank() }
                         }
                     }.getOrNull()
                 }
-            val lines = subtitle?.let { body ->
+            var translated = translatedPairs?.map { it.second }
+            // richsync: every line with its words' start times
+            val rich = calls.obj("track.richsync.get")?.obj("message")?.obj("body")?.obj("richsync")
+                ?.takeIf { it.str("restricted") != "1" }?.str("richsync_body")
+                ?.let { body -> runCatching { parseRichsync(body) }.getOrNull() }
+                ?.takeIf { it.isNotEmpty() }
+            if (rich != null && translatedPairs != null) {
+                // richsync lines can differ from the subtitle's: match translations by the line's text
+                val byOriginal = translatedPairs.mapNotNull { (o, t) -> if (o != null && t != null) o to t else null }.toMap()
+                translated = rich.map { byOriginal[it.text.trim()] }
+            }
+            val lines = rich?.map { it.startMs to it.text } ?: subtitle?.let { body ->
                 runCatching {
                     (lenientJson.parseToJsonElement(body) as JsonArray).mapNotNull { el ->
                         val o = el as? JsonObject ?: return@mapNotNull null
@@ -120,6 +135,7 @@ class Musixmatch @Inject constructor(
             if (lines.isEmpty() && plain.isNullOrBlank()) return null
             val lyrics = SongLyrics(
                 lines, plain, source = "Musixmatch",
+                words = rich?.map { it.words },
                 translated = translated?.takeIf { it.size == lines.size && it.any { t -> t != null } },
                 translatedTo = translateTo,
             )
@@ -149,6 +165,22 @@ class Musixmatch @Inject constructor(
     }
 
     companion object {
+        /** one richsync line: [words] are (start ms, text) with spaces as their own pieces */
+        data class RichLine(val startMs: Long, val text: String, val words: List<Pair<Long, String>>)
+
+        /** [{"ts":1.38,"te":1.56,"l":[{"c":"word","o":0},{"c":" ","o":0.03}…],"x":"the line"}…] */
+        fun parseRichsync(body: String): List<RichLine> =
+            (lenientJson.parseToJsonElement(body) as JsonArray).mapNotNull { el ->
+                val o = el as? JsonObject ?: return@mapNotNull null
+                val ts = o.num("ts") ?: return@mapNotNull null
+                val words = o["l"].asObjectList().mapNotNull { w ->
+                    // raw content: str() drops blank values, and the spaces between words are pieces too
+                    val c = (w["c"] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return@mapNotNull null
+                    ((ts + (w.num("o") ?: 0.0)) * 1000).toLong() to c
+                }
+                RichLine((ts * 1000).toLong(), o.str("x") ?: words.joinToString("") { it.second }, words)
+            }
+
         private const val BASE = "https://apic.musixmatch.com/ws/1.1/"
         // the iphone app's id: its anonymous tokens work (the desktop app's come back all zeros now)
         private const val APP_ID = "mac-ios-v2.0"
