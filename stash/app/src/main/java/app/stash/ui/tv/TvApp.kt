@@ -549,13 +549,14 @@ private fun PairScreen(pairing: Pairing, onPaired: suspend () -> Unit, onSkip: (
             TvButton(null, "Skip for now", Modifier.padding(top = 48.dp).focusRequester(skipFocus), onClick = onSkip)
         }
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // the six boxes share the column's width, so all six always fit
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 (code?.code ?: "······").forEach { ch ->
                     Box(
-                        Modifier.size(width = 76.dp, height = 96.dp).clip(RoundedCornerShape(16.dp))
+                        Modifier.weight(1f).aspectRatio(0.8f).clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                         contentAlignment = Alignment.Center,
-                    ) { Text("$ch", fontSize = 52.sp, fontWeight = FontWeight.Bold) }
+                    ) { Text("$ch", fontSize = 44.sp, fontWeight = FontWeight.Bold) }
                 }
             }
             Text(status, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 24.dp))
