@@ -172,7 +172,7 @@ The line being sung lights up letter by letter, like Apple Music. Musixmatch's r
 
 ## Musixmatch (1.23)
 
-Works like EeveeSpotify (Reborn): the iPhone app's API (`apic.musixmatch.com`, `app_id=mac-ios-v2.0`). Settings → Lyrics → Musixmatch token takes the Musixmatch app's "Copy debug info" text (`[UserToken]: …`) or a bare token; without one, an anonymous token from `token.get` is used (the desktop app's anonymous tokens now come back all zeros, which is why translations never showed). With "Show translation" on, `macro.subtitles.get` is asked with `selected_language` + `part=subtitle_translated`, so the translation arrives with the lyrics, line for line; Google's machine translation only fills in when Musixmatch has none. Musixmatch is on by default now.
+Works like EeveeSpotify (Reborn): the iPhone app's API (`apic.musixmatch.com`, `app_id=mac-ios-v2.0`). Settings → Lyrics → Musixmatch token takes the Musixmatch app's "Copy debug info" text (`[UserToken]: …`) or a bare token; without one, an anonymous token from `token.get` is used (the desktop app's anonymous tokens now come back all zeros, which is why translations never showed). With "Show translation" on, `macro.subtitles.get` is asked with `selected_language` + `part=subtitle_translated`, so the translation arrives with the lyrics, line for line; Machine translation fills in when Musixmatch has none (most songs have no Russian one): Chrome's own page translator (`translate-pa.googleapis.com/v1/translateHtml`, lines sent as a list so they stay aligned), then the old `translate_a` endpoint, which now often answers with a captcha page. Musixmatch is on by default now.
 
 ## TV, tablets and pairing (1.22)
 

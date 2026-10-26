@@ -14,7 +14,9 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -133,8 +135,45 @@ class Lyrics @Inject constructor(
         return result
     }
 
-    /** google translate's free web endpoint, the whole song in one request (lines kept apart) */
-    private suspend fun machine(texts: List<String>, lang: String): List<String?>? {
+    /**
+     * machine translation, line for line: chrome's own page translator first (takes the lines as
+     * a list, so they can't get merged, and isn't behind google's bot check like the old
+     * translate_a endpoint, which now answers with a captcha page), translate_a as the fallback
+     */
+    private suspend fun machine(texts: List<String>, lang: String): List<String?>? =
+        runCatching { chromeTranslate(texts, lang) }.getOrNull() ?: runCatching { gtx(texts, lang) }.getOrNull()
+
+    private suspend fun chromeTranslate(texts: List<String>, lang: String): List<String?>? {
+        val idx = texts.indices.filter { texts[it].isNotBlank() }
+        if (idx.isEmpty()) return null
+        val body = JsonArray(listOf(
+            JsonArray(listOf(
+                JsonArray(idx.map { kotlinx.serialization.json.JsonPrimitive(texts[it]) }),
+                kotlinx.serialization.json.JsonPrimitive("auto"),
+                kotlinx.serialization.json.JsonPrimitive(lang),
+            )),
+            kotlinx.serialization.json.JsonPrimitive("wt_lib"),
+        )).toString()
+        val text = httpIo {
+            val req = okhttp3.Request.Builder().url("https://translate-pa.googleapis.com/v1/translateHtml")
+                .header("X-Goog-API-Key", CHROME_KEY)
+                .post(body.toRequestBody("application/json+protobuf".toMediaType()))
+                .build()
+            http.newCall(req).execute().use { r -> if (r.isSuccessful) r.body?.string() else null }
+        } ?: return null
+        val out = ((lenientJson.parseToJsonElement(text) as? JsonArray)?.firstOrNull() as? JsonArray)
+            ?.map { (it as? kotlinx.serialization.json.JsonPrimitive)?.content } ?: return null
+        if (out.size != idx.size) return null
+        val result = MutableList<String?>(texts.size) { null }
+        idx.forEachIndexed { k, i ->
+            val t = out[k]?.let(::unescapeHtml)?.trim()
+            result[i] = t?.takeIf { it.isNotEmpty() && !it.equals(texts[i].trim(), true) }
+        }
+        return result
+    }
+
+    /** google translate's old free endpoint, the whole song in one request (lines kept apart) */
+    private suspend fun gtx(texts: List<String>, lang: String): List<String?>? {
         val joined = texts.joinToString("\n")
         val url = "https://translate.googleapis.com/translate_a/single".toHttpUrl().newBuilder()
             .addQueryParameter("client", "gtx").addQueryParameter("sl", "auto").addQueryParameter("tl", lang)
@@ -159,6 +198,19 @@ class Lyrics @Inject constructor(
     companion object {
         private const val UA = "Stash (personal music app)"
         private const val GIVE_UP_MS = 15_000L
+        /** the public key chrome itself ships for translating pages */
+        private const val CHROME_KEY = "AIzaSyATBXajvzQLTDHEQbcpq0Ihe0vWDHmO520"
+
+        /** chrome's translator answers with html entities (&#39; &amp; …) */
+        fun unescapeHtml(s: String): String =
+            Regex("""&(#\d+|#x[0-9a-fA-F]+|amp|lt|gt|quot|apos);""").replace(s) { m ->
+                when (val e = m.groupValues[1]) {
+                    "amp" -> "&"; "lt" -> "<"; "gt" -> ">"; "quot" -> "\""; "apos" -> "'"
+                    else -> runCatching {
+                        (if (e.startsWith("#x")) e.drop(2).toInt(16) else e.drop(1).toInt()).toChar().toString()
+                    }.getOrDefault(m.value)
+                }
+            }
         private val stamp = Regex("""\[(\d+):(\d+(?:\.\d+)?)]""")
 
         /** "[01:02.50] line" (several stamps per line allowed) -> sorted (ms, text) */

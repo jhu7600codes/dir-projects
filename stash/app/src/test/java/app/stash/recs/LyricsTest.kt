@@ -27,4 +27,9 @@ class LyricsTest {
         org.junit.Assert.assertEquals("hello world", lines[0].text)
         org.junit.Assert.assertEquals(listOf(1380L to "hello", 1410L to " ", 1430L to "world"), lines[0].words)
     }
+
+    @Test
+    fun `chrome translator entities decode`() {
+        org.junit.Assert.assertEquals("it's \"me\" & you", Lyrics.unescapeHtml("it&#39;s &quot;me&quot; &amp; you"))
+    }
 }
