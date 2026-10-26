@@ -29,6 +29,13 @@ class StashApp : Application(), Configuration.Provider {
     @Inject lateinit var frontends: app.stash.providers.Frontends
     @Inject lateinit var covers: Covers
 
+    // set up before anything else (even content providers): a crash gets written down, and
+    // MainActivity shows it on the next launch so it can be photographed / copied
+    override fun attachBaseContext(base: android.content.Context) {
+        super.attachBaseContext(base)
+        CrashReport.install(base)
+    }
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
