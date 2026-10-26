@@ -21,7 +21,9 @@ android {
         // yt-dlp ships a whole python per abi, so only keep arm64 (every recent phone) and
         // x86_64 (the emulator) to stop the apk from ballooning.
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            // phones: 64-bit. older android tvs are 32-bit arm, they get their own apk:
+            // gradle assembleRelease -Pabis=armeabi-v7a (dist/stash-armv7.apk)
+            abiFilters += ((project.findProperty("abis") as String?) ?: "arm64-v8a,x86_64").split(",")
         }
 
         vectorDrawables {
