@@ -27,4 +27,17 @@ class LyricsTest {
         org.junit.Assert.assertEquals("hello world", lines[0].text)
         org.junit.Assert.assertEquals(listOf(1380L to "hello", 1410L to " ", 1430L to "world"), lines[0].words)
     }
+
+    @Test
+    fun `chrome translator entities decode`() {
+        org.junit.Assert.assertEquals("it's \"me\" & you", Lyrics.unescapeHtml("it&#39;s &quot;me&quot; &amp; you"))
+    }
+
+    @Test
+    fun `android debug info uses the android app id`() {
+        val info = "[App]: com.musixmatch.android.lyrify\n[Model]: Pixel 3a\n[OSVersion]: 35\n[UserToken]:\n261026dbcc4d19c2833c07d92886a911bb11fd57987f7804667849"
+        org.junit.Assert.assertEquals("android-player-v1.0", Musixmatch.appIdFor(info))
+        org.junit.Assert.assertEquals("261026dbcc4d19c2833c07d92886a911bb11fd57987f7804667849", Musixmatch.parseToken(info))
+        org.junit.Assert.assertEquals("mac-ios-v2.0", Musixmatch.appIdFor("[Device]: iPhone\n[UserToken]: abc"))
+    }
 }
