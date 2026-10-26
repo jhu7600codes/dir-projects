@@ -166,6 +166,10 @@ Settings → Playback → Log in to YouTube, the way PipePipe (and YouTube Class
 - The player covers the whole screen; back or a drag down closes it.
 - Rescans (Create → Find missing songs) end with a looser pass over the same results that ignores length, and "UTG" in a playlist name counts as "untitled tag game" in an upload (any 3-5 letter abbreviation, both ways).
 
+## Musixmatch (1.23)
+
+Works like EeveeSpotify (Reborn): the iPhone app's API (`apic.musixmatch.com`, `app_id=mac-ios-v2.0`). Settings → Lyrics → Musixmatch token takes the Musixmatch app's "Copy debug info" text (`[UserToken]: …`) or a bare token; without one, an anonymous token from `token.get` is used (the desktop app's anonymous tokens now come back all zeros, which is why translations never showed). With "Show translation" on, `macro.subtitles.get` is asked with `selected_language` + `part=subtitle_translated`, so the translation arrives with the lyrics, line for line; Google's machine translation only fills in when Musixmatch has none. Musixmatch is on by default now.
+
 ## TV, tablets and pairing (1.22)
 
 - **Android TV / Google TV:** the same APK. On a TV (leanback feature) Stash opens its remote-friendly app (`ui/tv/TvApp.kt`): a rail on the left (Search, Home, Library, Now playing, Account), big cards, D-pad focus with a white outline, a full-screen player with big controls. It's in the TV's app row (LEANBACK_LAUNCHER, `tv_banner`). Always dark, Stash's own colors.

@@ -297,6 +297,29 @@ fun SettingsScreen() {
                 ) { vm.set { setLyricsMusixmatch(it) } }
             }
             item {
+                // like EeveeSpotify: your own musixmatch token, else an anonymous one
+                var editing by remember { mutableStateOf(false) }
+                var hasOwn by remember { mutableStateOf(actions.lyrics.musixmatchToken != null) }
+                ListItem(
+                    headlineContent = { Text("Musixmatch token") },
+                    supportingContent = {
+                        Text(
+                            if (hasOwn) "Using your token" else "Using an anonymous one. Tap to paste yours (more songs, fewer refusals)"
+                        )
+                    },
+                    modifier = Modifier.clickable { editing = true },
+                )
+                if (editing) MusixmatchTokenDialog(
+                    hasOwn = hasOwn,
+                    onSave = { raw ->
+                        val ok = actions.lyrics.setMusixmatchToken(raw)
+                        if (ok) { hasOwn = !raw.isNullOrBlank(); editing = false; actions.toast(if (raw.isNullOrBlank()) "Back to the anonymous token" else "Musixmatch token saved") }
+                        ok
+                    },
+                    onDismiss = { editing = false },
+                )
+            }
+            item {
                 SwitchRow("Show translation", "A translation under every line: Musixmatch's when it has one, else machine translation", settings.lyricsTranslate) {
                     vm.set { setLyricsTranslate(it) }
                 }
@@ -499,4 +522,38 @@ private fun LogRow(e: app.stash.providers.Resolver.LogEntry) {
             )
         }
     }
+}
+
+/** paste the musixmatch app's debug info (or the token itself) */
+@Composable
+private fun MusixmatchTokenDialog(hasOwn: Boolean, onSave: (String?) -> Boolean, onDismiss: () -> Unit) {
+    var text by remember { mutableStateOf("") }
+    var bad by remember { mutableStateOf(false) }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Musixmatch token") },
+        text = {
+            Column {
+                Text(
+                    "In the Musixmatch app: sign in, then Settings → Get help → Copy debug info, and paste it all here. " +
+                        "A bare token works too. Without one, Stash uses an anonymous token."
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = text, onValueChange = { text = it; bad = false },
+                    placeholder = { Text("---- Debug Info ---- …") },
+                    isError = bad,
+                    supportingText = { if (bad) Text("No token in that. Copy the whole debug info") },
+                    minLines = 3, maxLines = 6,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = { if (!onSave(text)) bad = true }, enabled = text.isNotBlank()) { Text("Save") } },
+        dismissButton = {
+            Row {
+                if (hasOwn) TextButton(onClick = { onSave(null) }) { Text("Use anonymous") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        },
+    )
 }

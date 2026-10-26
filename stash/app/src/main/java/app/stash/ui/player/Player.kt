@@ -522,12 +522,15 @@ private fun LyricsView(state: PlayerUiState, bg: Color, onClose: () -> Unit) {
     var loading by remember(state.currentId) { mutableStateOf(true) }
     var translated by remember(state.currentId) { mutableStateOf<List<String?>?>(null) }
     var translating by remember(state.currentId) { mutableStateOf(false) }
-    LaunchedEffect(state.currentId, mxm) {
+    LaunchedEffect(state.currentId, mxm, translateOn, lang) {
         val id = state.currentId ?: return@LaunchedEffect
         loading = true
         val track = actions.library.tracks.get(id)
         lyrics = runCatching {
-            actions.lyrics.forSong(state.title, state.artist, track?.durationMs?.takeIf { it > 0 } ?: state.durationMs, preferMusixmatch = mxm)
+            actions.lyrics.forSong(
+                state.title, state.artist, track?.durationMs?.takeIf { it > 0 } ?: state.durationMs,
+                preferMusixmatch = mxm, translateTo = lang.takeIf { translateOn },
+            )
         }.getOrNull()
         loading = false
     }

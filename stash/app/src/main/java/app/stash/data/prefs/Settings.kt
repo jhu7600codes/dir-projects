@@ -52,7 +52,7 @@ data class AppSettings(
     /** keep playing similar songs when the queue runs out */
     val autoplay: Boolean = true,
     /** lyrics from musixmatch first (lrclib when it has none) */
-    val lyricsMusixmatch: Boolean = false,
+    val lyricsMusixmatch: Boolean = true,
     /** show a translation under each lyric line */
     val lyricsTranslate: Boolean = false,
     /** language code to translate lyrics into; empty = the phone's language */
@@ -119,7 +119,7 @@ class Settings @Inject constructor(@ApplicationContext private val context: Cont
         cloudReady = this[Keys.cloudReady] ?: false,
         locationGreetings = this[Keys.locationGreetings] ?: false,
         autoplay = this[Keys.autoplay] ?: true,
-        lyricsMusixmatch = this[Keys.mxm] ?: false,
+        lyricsMusixmatch = this[Keys.mxm] ?: true,
         lyricsTranslate = this[Keys.translate] ?: false,
         translateTo = this[Keys.translateTo] ?: "",
         recentSearches = this[Keys.recent]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),

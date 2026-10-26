@@ -27,6 +27,9 @@ data class SongLyrics(
     val source: String = "LRCLIB",
     /** musixmatch's id for the song, for its translations */
     val commontrackId: Long? = null,
+    /** a translation that came with the lyrics (musixmatch), line for line, into [translatedTo] */
+    val translated: List<String?>? = null,
+    val translatedTo: String? = null,
 ) {
     val synced get() = lines.isNotEmpty()
 }
@@ -41,6 +44,12 @@ class Lyrics @Inject constructor(
     private val musixmatch: Musixmatch,
 ) {
     private val cache = ConcurrentHashMap<String, SongLyrics>()
+
+    /** your musixmatch token (settings), null = the anonymous one */
+    val musixmatchToken: String? get() = musixmatch.userToken
+
+    /** debug info or a bare token; null / blank goes back to anonymous. false if there's no token in it */
+    fun setMusixmatchToken(raw: String?): Boolean = musixmatch.setUserToken(raw).also { if (it) cache.clear() }
     private val translations = ConcurrentHashMap<String, List<String?>>()
 
     /**
@@ -48,12 +57,14 @@ class Lyrics @Inject constructor(
      * after [GIVE_UP_MS] it's "no lyrics" instead of a spinner that never ends (a blocked site
      * can hang a request for minutes).
      */
-    suspend fun forSong(title: String, artist: String, durationMs: Long, preferMusixmatch: Boolean = false): SongLyrics? {
-        val key = "$artist|$title|$preferMusixmatch"
+    suspend fun forSong(
+        title: String, artist: String, durationMs: Long, preferMusixmatch: Boolean = false, translateTo: String? = null,
+    ): SongLyrics? {
+        val key = "$artist|$title|$preferMusixmatch|$translateTo"
         cache[key]?.let { return it }
         val lrc = racer { lrclib(title, artist, durationMs) }
         val mxm = if (preferMusixmatch) racer {
-            musixmatch.lyrics(title, artist, durationMs)?.let { f -> f.lyrics.copy(commontrackId = f.commontrackId) }
+            musixmatch.lyrics(title, artist, durationMs, translateTo)?.let { f -> f.lyrics.copy(commontrackId = f.commontrackId) }
         } else null
         val found = try {
             withTimeoutOrNull(GIVE_UP_MS) { mxm?.await() ?: lrc.await() }
@@ -107,6 +118,8 @@ class Lyrics @Inject constructor(
      * translation when the song came from there and has one, else google's machine translation
      */
     suspend fun translate(lyrics: SongLyrics, lang: String): List<String?>? {
+        // musixmatch already sent its translation along with the lyrics
+        if (lyrics.translatedTo == lang && lyrics.translated != null) return lyrics.translated
         val texts = if (lyrics.synced) lyrics.lines.map { it.second } else lyrics.plain.orEmpty().lines()
         val key = "${texts.hashCode()}|$lang"
         translations[key]?.let { return it }
