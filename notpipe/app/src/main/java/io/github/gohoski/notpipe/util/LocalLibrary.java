@@ -85,6 +85,46 @@ public class LocalLibrary {
         return added;
     }
 
+    /**
+     * Imports subscriptions from a Google Takeout "subscriptions.csv" (Channel Id,Channel Url,Channel Title)
+     * or a NewPipe export ({"subscriptions":[{"url":"…/channel/UC…","name":"…"}]}).
+     * @return number of newly added channels, -1 if the format wasn't recognized
+     */
+    public int importSubscriptionsFile(String content) {
+        List<Channel> channels = new ArrayList<Channel>();
+        String trimmed = content.trim();
+        if (trimmed.startsWith("{")) {
+            try {
+                JSONArray arr = JSON.getObject(trimmed).getArray("subscriptions");
+                for (int i = 0; i < arr.size(); i++) {
+                    JSONObject j = arr.getObject(i);
+                    String url = j.getString("url", "");
+                    int at = url.indexOf("/channel/");
+                    if (at < 0) continue;
+                    String id = url.substring(at + 9).split("[/?]")[0];
+                    channels.add(new Channel(id, j.getString("name", id), "", "", "", -1, null));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return -1;
+            }
+        } else {
+            String[] lines = trimmed.split("\r?\n");
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i].trim();
+                if (!line.startsWith("UC")) continue; // skips the header
+                String[] cols = line.split(",", 3);
+                String title = cols.length > 2 ? cols[2].trim() : cols[0];
+                if (title.startsWith("\"") && title.endsWith("\"") && title.length() > 1) {
+                    title = title.substring(1, title.length() - 1).replace("\"\"", "\"");
+                }
+                channels.add(new Channel(cols[0].trim(), title, "", "", "", -1, null));
+            }
+        }
+        if (channels.isEmpty()) return -1;
+        return importSubscriptions(channels);
+    }
+
     public synchronized List<Channel> getSubscriptions() {
         List<Channel> result = new ArrayList<Channel>();
         for (int i = 0; i < subscriptions.size(); i++) {

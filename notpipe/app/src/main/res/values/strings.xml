@@ -264,4 +264,7 @@
     <string name="more">More</string>
     <string name="liked_videos">Liked videos</string>
     <string name="saved_to_liked">Saved to Liked videos</string>
+    <string name="import_file">Import from file</string>
+    <string name="import_file_">Google Takeout subscriptions.csv or a NewPipe export</string>
+    <string name="import_file_bad">This file isn\'t a subscriptions export</string>
 </resources>

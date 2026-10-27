@@ -37,7 +37,8 @@ public class LibraryActivity extends Activity {
     private static final int NOW_PLAYING = 0, FEED = 1, CHANNELS = 2, PLAYLIST = 3, NEW_PLAYLIST = 4,
             OPEN_PLAYLIST = 5, DOWNLOADS = 6, SIGN_IN = 7, WATCH_LATER = 9,
             ACCOUNT_SUBS = 10, ACCOUNT_PLAYLISTS = 11, SIGN_OUT = 12, HEADER = 13, HISTORY = 14, FOR_YOU = 15,
-            SHORTS = 16, UPLOADS = 17, UPLOAD = 18;
+            SHORTS = 16, UPLOADS = 17, UPLOAD = 18, IMPORT_FILE = 19;
+    private static final int PICK_SUBSCRIPTIONS_FILE = 1;
 
     private Context context;
     private final List<Row> rows = new ArrayList<Row>();
@@ -101,6 +102,28 @@ public class LibraryActivity extends Activity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != PICK_SUBSCRIPTIONS_FILE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        int added;
+        try {
+            java.io.InputStream in = getContentResolver().openInputStream(data.getData());
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int n;
+            while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+            in.close();
+            added = LocalLibrary.getInstance().importSubscriptionsFile(new String(out.toByteArray(), "UTF-8"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            added = -1;
+        }
+        Toast.makeText(this, added < 0 ? getString(R.string.import_file_bad)
+                : getString(R.string.subscriptions_imported, added), Toast.LENGTH_LONG).show();
+        buildRows();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         isDestroyedFlag = true;
@@ -126,6 +149,7 @@ public class LibraryActivity extends Activity {
         int subs = library.getSubscriptions().size();
         rows.add(new Row(FEED, getString(R.string.subscriptions_feed), getResources().getQuantityString(R.plurals.channels_count, subs, subs), null));
         rows.add(new Row(CHANNELS, getString(R.string.channels), null, null));
+        rows.add(new Row(IMPORT_FILE, getString(R.string.import_file), getString(R.string.import_file_), null));
 
         rows.add(new Row(HEADER, getString(R.string.playlists), null, null));
         List<String> names = library.getPlaylistNames();
@@ -160,6 +184,15 @@ public class LibraryActivity extends Activity {
                 break;
             case FEED:
                 VideoListActivity.open(this, VideoListActivity.SOURCE_FEED, null, getString(R.string.subscriptions_feed));
+                break;
+            case IMPORT_FILE:
+                Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                pick.setType("*/*");
+                try {
+                    startActivityForResult(Intent.createChooser(pick, getString(R.string.import_file)), PICK_SUBSCRIPTIONS_FILE);
+                } catch (Exception e) {
+                    Toast.makeText(this, R.string.no_picker, Toast.LENGTH_SHORT).show();
+                }
                 break;
             case CHANNELS:
                 showChannels();

@@ -283,4 +283,7 @@
     <string name="more">Ещё</string>
     <string name="liked_videos">Понравившиеся</string>
     <string name="saved_to_liked">Добавлено в «Понравившиеся»</string>
+    <string name="import_file">Импорт из файла</string>
+    <string name="import_file_">subscriptions.csv из Google Takeout или экспорт NewPipe</string>
+    <string name="import_file_bad">Это не файл с подписками</string>
 </resources>

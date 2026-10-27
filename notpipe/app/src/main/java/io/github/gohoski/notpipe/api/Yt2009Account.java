@@ -183,7 +183,24 @@ public class Yt2009Account {
                 HttpClient.executeToString(authorized("/feeds/api/users/default/watch_later"), HttpClient.VIDEO_TIMEOUT));
     }
 
+    /**
+     * All subscriptions. The GData feed is capped at 25 channels by yt2009, so its pchelper endpoint (no cap) is tried first.
+     */
     public List<Channel> getSubscriptions() throws IOException {
+        try {
+            String json = HttpClient.executeToString(authorized("/pchelper_subs?format=localstorage"), HttpClient.VIDEO_TIMEOUT);
+            cc.nnproject.json.JSONArray arr = cc.nnproject.json.JSON.getArray(json);
+            List<Channel> channels = new java.util.ArrayList<Channel>();
+            for (int i = 0; i < arr.size(); i++) {
+                cc.nnproject.json.JSONObject j = arr.getObject(i);
+                String url = j.getString("url", "");
+                String id = url.substring(url.lastIndexOf('/') + 1);
+                if (id.startsWith("UC")) channels.add(new Channel(id, j.getString("creator", id), "", "", "", -1, null));
+            }
+            if (!channels.isEmpty()) return channels;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return GdataParser.parseSubscriptions(getInstanceUrl(),
                 HttpClient.executeToString(authorized("/feeds/api/users/default/subscriptions"), HttpClient.VIDEO_TIMEOUT));
     }
