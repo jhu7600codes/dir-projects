@@ -42,7 +42,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="right|bottom"
-        android:layout_marginBottom="96dp"
+        android:layout_marginBottom="8dp"
         android:orientation="vertical">
         <LinearLayout
             android:id="@+id/short_like"
@@ -50,14 +50,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/tv_focus">
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/ic_like"/>
             <TextView
                 android:id="@+id/short_like_label"
@@ -75,14 +75,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/tv_focus">
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/ic_dislike"/>
             <TextView
                 android:id="@+id/short_dislike_label"
@@ -100,14 +100,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/tv_focus">
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/ic_comment"/>
             <TextView
                 android:id="@+id/short_comments_label"
@@ -125,14 +125,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/tv_focus">
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/ic_share"/>
             <TextView
                 android:id="@+id/short_share_label"
@@ -150,14 +150,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/tv_focus">
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@android:drawable/ic_menu_save"/>
             <TextView
                 android:id="@+id/short_download_label"
@@ -175,14 +175,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/tv_focus">
             <ImageView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@android:drawable/ic_menu_more"/>
             <TextView
                 android:id="@+id/short_more_label"
