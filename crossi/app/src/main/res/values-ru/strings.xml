@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tagline">кроссворды, но веселее</string>
+
+    <string name="continue_game">Продолжить</string>
+    <string name="levels">Уровни</string>
+    <string name="free_roam">Свободная игра</string>
+    <string name="daily">Ежедневное испытание</string>
+    <string name="power_ups">Бонусы</string>
+    <string name="settings">Настройки</string>
+    <string name="how_to_play">Как играть</string>
+    <string name="back">Назад</string>
+    <string name="coming_soon">Скоро будет</string>
+
+    <string name="streak_days">Серия: %1$d дн.</string>
+
+    <string name="difficulty_easy">Легко</string>
+    <string name="difficulty_normal">Нормально</string>
+    <string name="difficulty_hard">Сложно</string>
+
+    <string name="power_reveal_letter">Открыть букву</string>
+    <string name="power_reveal_word">Открыть слово</string>
+    <string name="power_extra_check">Доп. проверка</string>
+    <string name="power_skip_clue">Пропустить</string>
+</resources>

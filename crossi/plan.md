@@ -7,7 +7,7 @@ english + russian.
 
 package: `dev.jhu.crossi`
 
-status: **draft v2, waiting for approval. no code until approved.**
+status: **approved (v2), building.**
 
 ---
 
@@ -204,6 +204,8 @@ trick clues get a small "trick" tag in the clue bar.
 ## 5. modes
 
 ### levels
+- no difficulty picker. a fixed set that just gets harder the further you go
+  (bigger grids, harder clues, bosses)
 - 100 levels per language, frozen in `levels.json` (grid + answers + clues),
   made by `tools/` with picked seeds and hand checked, so a dictionary update
   never breaks a level
@@ -212,7 +214,8 @@ trick clues get a small "trick" tag in the clue bar.
 - pickups on some levels, a boss every 10 levels
 
 ### free roam
-- infinite generated puzzles, pick easy / normal / hard
+- the only mode with a difficulty picker: easy / normal / hard
+- every puzzle generated on the spot, infinite
 - score per puzzle, run continues while you keep clearing them
 - high score table per difficulty, big scores award power ups
 
@@ -430,9 +433,6 @@ each milestone = its own commit(s), tests green before moving on.
 - boss every 10 levels
 - 0 checks: keep fixing, finish needs an extra check, give up = reveal + fail
 - no mega puzzles, long words max 15 letters
-- nyt style grids, easy 5x5 / normal 7x7 / hard 15x15
-
-## 15. still open
-
-1. daily x3 (easy/normal/hard) with streak on any one, ok? or just one daily?
-2. levels ramp through 9/11/13 between normal and hard, ok? or only 5 / 7 / 15?
+- nyt style grids, easy 5x5 / normal 7x7 / hard 15x15 (free roam + daily)
+- levels: fixed set, no difficulty picker, ramp 5 → 7 → 9 → 11 → 13 → 15
+- 3 dailies (easy / normal / hard), streak on any one, bonus for all three

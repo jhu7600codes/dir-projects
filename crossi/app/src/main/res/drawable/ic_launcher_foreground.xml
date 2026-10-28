@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 3x3 mini crossword: white cells, two symmetric blocks, one highlighted cell -->
+    <path android:fillColor="@color/ic_fg" android:pathData="M33,33h13v13h-13z" />
+    <path android:fillColor="@color/ic_fg" android:pathData="M48,33h13v13h-13z" />
+    <path android:fillColor="@color/ic_accent" android:pathData="M48,48h13v13h-13z" />
+    <path android:fillColor="@color/ic_fg" android:pathData="M63,48h13v13h-13z" />
+    <path android:fillColor="@color/ic_fg" android:pathData="M33,48h13v13h-13z" />
+    <path android:fillColor="@color/ic_fg" android:pathData="M48,63h13v13h-13z" />
+    <path android:fillColor="@color/ic_fg" android:pathData="M63,63h13v13h-13z" />
+</vector>
