@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -84,6 +86,9 @@ public class CheatActivity extends Activity {
             list.addView(button);
         }
 
+        list.addView(numberRow("multiplier", "multiplier (1-30)", "set multiplier"));
+        list.addView(numberRow("highscore", "high score", "set high score"));
+
         Button play = new Button(this);
         play.setText("back to the game");
         play.setAllCaps(false);
@@ -107,6 +112,34 @@ public class CheatActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         scroll.addView(list);
         setContentView(scroll);
+    }
+
+    // a number box with a button next to it, queues "<action>:<number>"
+    private View numberRow(final String action, String hint, final String label) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        final EditText input = new EditText(this);
+        input.setHint(hint);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setSingleLine(true);
+        row.addView(input, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        Button button = new Button(this);
+        button.setText(label);
+        button.setAllCaps(false);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String number = input.getText().toString().trim();
+                if (number.length() == 0 || number.length() > 9) {
+                    Toast.makeText(CheatActivity.this, "type a number first", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                write(ACTIONS, action + ":" + number + "\n", true);
+                Toast.makeText(CheatActivity.this, label + " to " + number + ": queued", Toast.LENGTH_SHORT).show();
+            }
+        });
+        row.addView(button);
+        return row;
     }
 
     // unity 3.5 picks external or internal storage for persistentDataPath, so write both

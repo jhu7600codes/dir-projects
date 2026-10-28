@@ -10,6 +10,7 @@ Patches for jhu's Subway Surfers 1.0 build (`com.kiloo.subwaysurf.og`, the one f
   - unlock all characters, max all upgrades
   - +10 hoverboards, +5 of each headstart, +5 mystery boxes
   - finish the current missions, finish today's daily challenge
+  - set multiplier and set high score (to bring your old ones back after reinstalling)
 
   Changes kick in when you go back to the game.
 

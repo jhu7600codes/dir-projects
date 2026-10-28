@@ -93,6 +93,22 @@ public static class SsogCheats
 		try
 		{
 			PlayerInfo player = PlayerInfo.Instance;
+			// "multiplier:23", "highscore:150000", typed in the menu
+			string[] kv = action.Split(':');
+			if (kv.Length == 2)
+			{
+				int value = int.Parse(kv[1]);
+				if (kv[0] == "multiplier" && value >= 1)
+				{
+					// the multiplier is just mission set + 1, the setter clamps it to the last set
+					Missions.Instance.currentMissionSet = value - 1;
+				}
+				else if (kv[0] == "highscore")
+				{
+					player.highestScore = value;
+				}
+				return;
+			}
 			switch (action)
 			{
 			case "gold":

@@ -25,3 +25,8 @@
 /tmp/tmp.fMJcPnzI7H/patcher/Patcher.runtimeconfig.json
 /tmp/tmp.fMJcPnzI7H/patcher/Patcher.dll
 /tmp/tmp.fMJcPnzI7H/patcher/Patcher.pdb
+/tmp/tmp.9EW9k5HgPr/patcher/Patcher
+/tmp/tmp.9EW9k5HgPr/patcher/Patcher.deps.json
+/tmp/tmp.9EW9k5HgPr/patcher/Patcher.runtimeconfig.json
+/tmp/tmp.9EW9k5HgPr/patcher/Patcher.dll
+/tmp/tmp.9EW9k5HgPr/patcher/Patcher.pdb
