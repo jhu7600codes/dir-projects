@@ -1361,10 +1361,30 @@ public class VideoActivity extends Activity {
         play = (ImageView) findViewById(R.id.play);
         relatedList = findViewById(R.id.related_list);
         commentsList = findViewById(R.id.comments_list);
+        addCommentComposer();
         relatedLoading = (ProgressBar) findViewById(R.id.related_loading);
         commentsLoading = (ProgressBar) findViewById(R.id.comments_loading);
         scrollView = (ScrollView) findViewById(R.id.scroll_view);
         tabsScrollView = findViewById(R.id.tabs_scroll_view);
+    }
+
+    /** "Add a comment" box at the top of the Comments tab, like on Shorts */
+    private void addCommentComposer() {
+        if (commentsList == null || !(commentsList.getParent() instanceof ViewGroup)) return;
+        ViewGroup parent = (ViewGroup) commentsList.getParent();
+        View composer = io.github.gohoski.notpipe.ui.CommentsDialog.composer(this, videoId,
+                new io.github.gohoski.notpipe.ui.CommentsDialog.OnPosted() {
+                    public void onPosted(Comment comment) {
+                        comments.add(0, comment);
+                        if (commentsAdapter != null) commentsAdapter.notifyDataSetChanged();
+                        View noComments = findViewById(R.id.no_comments);
+                        if (noComments != null) noComments.setVisibility(View.GONE);
+                        triggerLayoutFix(commentsList);
+                    }
+                });
+        float density = getResources().getDisplayMetrics().density;
+        composer.setPadding((int) (15 * density), (int) (8 * density), (int) (8 * density), (int) (4 * density));
+        parent.addView(composer, parent.indexOfChild(commentsList));
     }
 
     private void setupAdapters() {
