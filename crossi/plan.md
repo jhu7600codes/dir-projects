@@ -268,14 +268,14 @@ proposed twist set, one twist at the first bosses, combos later:
 | **scrambled clues** | clue text is fine but numbers are hidden and the list is shuffled, you figure out which clue goes where |
 | **limited mistakes** | 3 hearts. every finish that finds wrong letters costs a heart instead of (or on top of) a check |
 | **fog**          | cells are hidden except those next to letters you've already placed (starts from the first word revealed) |
-| **phonetic only**| every clue is a phonetic trick                                              |
+| **trick fest**   | way more letter-trick entries (up to 6) and their clues get extra dumb       |
 | **scrambled keyboard** | keyboard keys are shuffled (re-shuffles each finish)                  |
 | **one shot**     | only 1 check, no extra check power up allowed                                |
 
 schedule:
 - L10 timer, L20 locked cells, L30 scrambled clues, L40 limited mistakes,
-  L50 fog, L60 phonetic only, L70 timer + locked, L80 scrambled clues + limited
-  mistakes, L90 fog + scrambled keyboard, L100 one shot + timer + phonetic
+  L50 fog, L60 trick fest, L70 timer + locked, L80 scrambled clues + limited
+  mistakes, L90 fog + scrambled keyboard, L100 one shot + timer + trick fest
 - bosses give a guaranteed power up bundle on clear
 - boss rule is a `BossTwist` sealed class in `game/`, each one hooks into
   `GameSession` events (`onTick`, `onFinish`, `onInput`, `isCellLocked`, ...)
