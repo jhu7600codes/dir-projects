@@ -42,7 +42,7 @@ public class NavBar {
             final int tab = i;
             TextView item = (TextView) bar.findViewById(IDS[i]);
             // Icons are white; tint them like the text so the current tab stands out
-            int color = i == selected ? 0xFF33B5E5 : 0xFF9A9A9A;
+            int color = i == selected ? 0xFFFFFFFF : 0xFFAAAAAA;
             item.setTextColor(color);
             if (i == selected) item.setTypeface(null, Typeface.BOLD);
             android.graphics.drawable.Drawable icon = item.getCompoundDrawables()[1];

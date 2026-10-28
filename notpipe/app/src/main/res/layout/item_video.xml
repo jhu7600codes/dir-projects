@@ -62,7 +62,8 @@
                 android:id="@+id/video_title"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#FFF1F1F1"
                 android:maxLines="2"
                 android:ellipsize="end"
                 tools:text="Exampletitle" />
@@ -71,6 +72,8 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
+                android:textColor="#FFAAAAAA"
+                android:paddingTop="2dp"
                 tools:text="Goida · 12M views" />
         </LinearLayout>
     </LinearLayout>
