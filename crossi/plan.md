@@ -60,7 +60,7 @@ data class GenConfig(
   val minLen: Int = 3,
   val difficulty: IntRange,              // dictionary difficulty band
   val allowLongWords: Boolean,
-  val phoneticChance: Double,            // share of clues turned into phonetic jokes
+  val phoneticCount: Int,               // how many letter-trick entries to mix in (0..3)
   val seed: Long,
 )
 ```
@@ -118,16 +118,36 @@ on.
 ### 2.5 clues
 
 - each dictionary word has 1–3 normal clues, one picked by rng
-- **phonetic jokes**: a share of short words (3–6 letters) get a clue built by
-  spelling each letter how it sounds:
+- **phonetic jokes**: dumb trick clues where the **answer is a single letter
+  spelled how it sounds**, and the clue points at that letter in some stupid
+  way. they get mixed into normal puzzles as extra entries.
 
+  answer spellings (`phonetic.tsv`):
   ```
-  A aigh   B bee   C see   D dee   E ee    F ef    G jee   H aitch  I eye
-  J jay    K kay   L el    M em    N en    O oh    P pee   Q cue    R ar
-  S ess    T tee   U you   V vee   W double-you  X ex  Y why  Z zed
+  A aigh   B bee   C see   D dee   E eee   F eff   G gee   H aitch  I eye
+  J jay    K kay   L ell   M emm   N enn   O owe   P pee   Q cue    R arr
+  S ess    T tee   U you   V vee   W doubleyou   X ecks   Y why   Z zed
   ```
-  e.g. `JAM` → *"jay + aigh + em (a spread, spelled out)"*,
-  `TEA` → *"tee + ee + aigh"*. a little "sounds like" icon marks them.
+  (3+ letters each, so they fit the normal min word length)
+
+  clue templates, filled in by the generator for the chosen letter:
+  - *"the letter thAts cApitAl in this hint"* → AIGH
+  - *"the first letter of this Clue"*, *"the last letter of this cluE"*
+  - *"the only letter that shows up 4 times in this clue"* (generator builds a
+    sentence where it's true)
+  - *"the letter missing from 'th_s cl_e'"*
+  - *"the letter this whole clue is written without"* (lipogram)
+  plus hand-written dumb ones per letter:
+  - *"what a pirate says, but also a letter"* → ARR
+  - *"the grade nobody wants"* → EFF
+  - *"a question, but make it a letter"* → WHY
+  - *"the shape of a horseshoe magnet"* → YOU
+  - *"what you do to a debt, also a vowel"* → OWE
+  - *"the letter you see in 'sea'... wait"* → SEE
+
+  a generated clue is always double checked by code (the capital letter really
+  is the only capital, the letter really appears n times, etc), and they get a
+  little 🤡-free "trick" tag in the clue bar.
 - plus a small hand-written list of pun clues per word where they exist
   (`clueKind = PUN`)
 - `ClueKind { NORMAL, PHONETIC, PUN }`
@@ -248,7 +268,7 @@ proposed twist set, one twist at the first bosses, combos later:
 | **scrambled clues** | clue text is fine but numbers are hidden and the list is shuffled, you figure out which clue goes where |
 | **limited mistakes** | 3 hearts. every finish that finds wrong letters costs a heart instead of (or on top of) a check |
 | **fog**          | cells are hidden except those next to letters you've already placed (starts from the first word revealed) |
-| **phonetic only**| every clue is a phonetic joke                                                |
+| **phonetic only**| every clue is a phonetic trick                                              |
 | **scrambled keyboard** | keyboard keys are shuffled (re-shuffles each finish)                  |
 | **one shot**     | only 1 check, no extra check power up allowed                                |
 
