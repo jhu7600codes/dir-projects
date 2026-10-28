@@ -3,15 +3,21 @@ package dev.jhu.crossi.ui.nav
 import android.net.Uri
 import android.os.Bundle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import dev.jhu.crossi.R
 import dev.jhu.crossi.game.GameMode
-import dev.jhu.crossi.ui.common.PlaceholderScreen
+import dev.jhu.crossi.ui.daily.DailyScreen
+import dev.jhu.crossi.ui.freeroam.FreeRoamScreen
+import dev.jhu.crossi.ui.game.GameScreen
 import dev.jhu.crossi.ui.home.HomeScreen
+import dev.jhu.crossi.ui.howto.HowToPlayScreen
+import dev.jhu.crossi.ui.levels.LevelsScreen
+import dev.jhu.crossi.ui.powerups.PowerUpsScreen
+import dev.jhu.crossi.ui.settings.SettingsScreen
 import kotlin.reflect.typeOf
 import kotlinx.serialization.json.Json
 
@@ -26,13 +32,17 @@ private val GameModeNavType = object : NavType<GameMode>(isNullableAllowed = fal
 }
 
 @Composable
-fun CrossiNavHost() {
+fun CrossiNavHost(showHowToPlay: Boolean) {
     val nav = rememberNavController()
     val back: () -> Unit = { nav.popBackStack() }
+    val play: (GameMode) -> Unit = { nav.navigate(GameRoute(it)) }
+
+    LaunchedEffect(Unit) { if (showHowToPlay) nav.navigate(HowToPlayRoute) }
 
     NavHost(navController = nav, startDestination = HomeRoute) {
         composable<HomeRoute> {
             HomeScreen(
+                onContinue = play,
                 onLevels = { nav.navigate(LevelsRoute) },
                 onFreeRoam = { nav.navigate(FreeRoamRoute) },
                 onDaily = { nav.navigate(DailyRoute) },
@@ -41,15 +51,21 @@ fun CrossiNavHost() {
                 onHowToPlay = { nav.navigate(HowToPlayRoute) },
             )
         }
-        composable<LevelsRoute> { PlaceholderScreen(R.string.levels, back) }
-        composable<FreeRoamRoute> { PlaceholderScreen(R.string.free_roam, back) }
-        composable<DailyRoute> { PlaceholderScreen(R.string.daily, back) }
-        composable<PowerUpsRoute> { PlaceholderScreen(R.string.power_ups, back) }
-        composable<SettingsRoute> { PlaceholderScreen(R.string.settings, back) }
-        composable<HowToPlayRoute> { PlaceholderScreen(R.string.how_to_play, back) }
+        composable<LevelsRoute> { LevelsScreen(onBack = back, onPlay = play) }
+        composable<FreeRoamRoute> { FreeRoamScreen(onBack = back, onPlay = play) }
+        composable<DailyRoute> { DailyScreen(onBack = back, onPlay = play) }
+        composable<PowerUpsRoute> { PowerUpsScreen(onBack = back) }
+        composable<SettingsRoute> { SettingsScreen(onBack = back) }
+        composable<HowToPlayRoute> { HowToPlayScreen(onDone = back) }
         composable<GameRoute>(typeMap = mapOf(typeOf<GameMode>() to GameModeNavType)) { entry ->
-            entry.toRoute<GameRoute>()
-            PlaceholderScreen(R.string.app_name, back)
+            val route = entry.toRoute<GameRoute>()
+            GameScreen(
+                mode = route.mode,
+                onBack = back,
+                onPlayNext = { next ->
+                    nav.navigate(GameRoute(next)) { popUpTo<GameRoute> { inclusive = true } }
+                },
+            )
         }
     }
 }

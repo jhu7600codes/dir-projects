@@ -14,6 +14,8 @@ data class Entry(
     val answer: String,
     val clue: String,
     val clueKind: ClueKind = ClueKind.NORMAL,
+    /** Other clues for the same answer, the skip clue power up swaps one in. */
+    val altClues: List<String> = emptyList(),
 ) {
     val length: Int get() = answer.length
 

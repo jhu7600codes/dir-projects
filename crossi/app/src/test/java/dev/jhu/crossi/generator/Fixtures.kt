@@ -1,25 +1,18 @@
 package dev.jhu.crossi.generator
 
-/**
- * Test-only english word list (SCOWL sizes 10-35, see SCOWL-COPYRIGHT.txt), no clues.
- * The real dictionaries with clues land in m2.
- */
+import java.io.File
+
+/** The real bundled dictionaries, read straight from the assets folder (tests run from the app module dir). */
 object Fixtures {
-    val longWords = listOf(
-        "onomatopoeia", "serendipity", "flibbertigibbet", "sesquipedalian", "kaleidoscope",
-        "procrastinate", "extraordinary", "hippopotamus", "bamboozled", "gobbledygook",
-        "shenanigans", "brouhaha", "lollygagging", "discombobulate", "cattywampus",
-    ).map { DictWord(it, commonness = 3, hardness = 1, clues = emptyList()) }
+    private fun load(code: String, alphabet: Alphabet) = Dictionary(
+        alphabet = alphabet,
+        words = DictionaryParser.parse(File("src/main/assets/$code/words.tsv").readText()),
+        longWords = DictionaryParser.parse(File("src/main/assets/$code/longwords.tsv").readText()),
+    )
 
-    val englishWords: List<DictWord> by lazy {
-        val stream = Fixtures::class.java.classLoader!!.getResourceAsStream("fixture_words_en.txt")
-        stream.bufferedReader().readLines().map { line ->
-            val (word, commonness) = line.split(' ')
-            DictWord(word, commonness.toInt(), hardness = 1, clues = listOf("clue for $word"))
-        }
-    }
+    val english: Dictionary by lazy { load("en", Alphabet.EN) }
+    val russian: Dictionary by lazy { load("ru", Alphabet.RU) }
 
-    val english: Dictionary by lazy { Dictionary(Alphabet.EN, englishWords, longWords) }
-
-    val generator: PuzzleGenerator by lazy { PuzzleGenerator(english) }
+    val englishGenerator: PuzzleGenerator by lazy { PuzzleGenerator(english) }
+    val russianGenerator: PuzzleGenerator by lazy { PuzzleGenerator(russian) }
 }

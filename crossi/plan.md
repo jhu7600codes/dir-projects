@@ -7,7 +7,12 @@ english + russian.
 
 package: `dev.jhu.crossi`
 
-status: **approved (v2), building.**
+status: **approved (v2), built.** changes made while building:
+- skip clue swaps in a different clue for the word (otherwise it was the same as reveal word)
+- word hardness is a soft preference in the generator, a hard cutoff starved big grids
+- big grids (11+) use max word length 6 and more blocks so common-word dictionaries can fill them
+- english clues come from open english wordnet, russian from hand-written + russian wiktionary
+- trick templates: capital letter, first letter of a word, missing letter, letter before/after
 
 ---
 

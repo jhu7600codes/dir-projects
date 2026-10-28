@@ -21,8 +21,12 @@ class Dictionary(
     words: List<DictWord>,
     longWords: List<DictWord> = emptyList(),
     val version: Int = 1,
+    val tricks: TrickSet? = TrickSet.forAlphabet(alphabet),
 ) {
-    val words: List<DictWord> = normalized(words)
+    /** Fill words, including the letter-trick answers (AIGH, ELL, ...) that aren't real words. */
+    val words: List<DictWord> = normalized(
+        words + tricks?.answers.orEmpty().map { DictWord(it, commonness = 3, hardness = 1, clues = emptyList()) },
+    )
     val longWords: List<DictWord> = normalized(longWords)
 
     private val byWord: Map<String, DictWord> = (this.words + this.longWords).associateBy { it.word }
@@ -43,4 +47,21 @@ class Dictionary(
         const val MIN_WORD = 3
         const val MAX_WORD = 15
     }
+}
+
+/** Reads the words.tsv / longwords.tsv format: WORD \t commonness \t hardness \t clue|clue|clue */
+object DictionaryParser {
+    fun parse(text: String): List<DictWord> = text.lineSequence()
+        .filter { it.isNotBlank() && !it.startsWith("#") }
+        .mapNotNull { line ->
+            val parts = line.split('\t')
+            if (parts.size < 4) return@mapNotNull null
+            DictWord(
+                word = parts[0].trim(),
+                commonness = parts[1].trim().toIntOrNull() ?: 3,
+                hardness = parts[2].trim().toIntOrNull() ?: 2,
+                clues = parts[3].split('|').map { it.trim() }.filter { it.isNotEmpty() },
+            )
+        }
+        .toList()
 }

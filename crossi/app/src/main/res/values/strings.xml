@@ -11,16 +11,130 @@
     <string name="settings">Settings</string>
     <string name="how_to_play">How to play</string>
     <string name="back">Back</string>
-    <string name="coming_soon">Coming soon</string>
+    <string name="loading">Building your crossword…</string>
+    <string name="load_failed">Couldn\'t build this one. Try again.</string>
+    <string name="retry">Retry</string>
 
     <string name="streak_days">%1$d day streak</string>
+    <string name="best_streak">Best: %1$d</string>
+    <string name="next_milestone">Next reward at %1$d days</string>
 
     <string name="difficulty_easy">Easy</string>
     <string name="difficulty_normal">Normal</string>
     <string name="difficulty_hard">Hard</string>
+    <string name="grid_size">%1$dx%1$d</string>
 
     <string name="power_reveal_letter">Reveal letter</string>
     <string name="power_reveal_word">Reveal word</string>
     <string name="power_extra_check">Extra check</string>
     <string name="power_skip_clue">Skip clue</string>
+    <string name="power_reveal_letter_desc">Fills the selected cell with the right letter.</string>
+    <string name="power_reveal_word_desc">Fills the whole active word.</string>
+    <string name="power_extra_check_desc">One more check for this crossword.</string>
+    <string name="power_skip_clue_desc">Swaps the clue for a different one.</string>
+    <string name="earn_title">How to earn them</string>
+    <string name="earn_streak">Daily streaks: rewards at 3, 7, 14 and every 30 days</string>
+    <string name="earn_all_dailies">Clear all three dailies in a day: bonus extra check</string>
+    <string name="earn_pickups">Pickups in levels: solve the marked word yourself</string>
+    <string name="earn_bosses">Beat a boss level: a bundle of power ups</string>
+    <string name="earn_free_roam">Free roam: big run scores and beating your best</string>
+    <string name="you_have">You have</string>
+
+    <string name="level_n">Level %1$d</string>
+    <string name="boss">Boss</string>
+    <string name="boss_level_n">Boss · level %1$d</string>
+    <string name="locked">Locked</string>
+
+    <string name="across">Across</string>
+    <string name="down">Down</string>
+    <string name="clues">Clues</string>
+    <string name="finish">Finish</string>
+    <string name="give_up">Give up</string>
+    <string name="pencil">Pencil</string>
+    <string name="checks_left">Checks: %1$d</string>
+    <string name="trick">trick</string>
+    <string name="pick_a_clue">Scrambled! Pick a clue from the list</string>
+    <string name="toggle_direction">Switch direction</string>
+    <string name="backspace">Backspace</string>
+    <string name="prev_clue">Previous clue</string>
+    <string name="next_clue">Next clue</string>
+    <string name="more">More</string>
+    <string name="no_checks_left">No checks left. Use an extra check or give up.</string>
+    <string name="check_result">%1$d wrong, %2$d empty</string>
+    <string name="give_up_title">Give up?</string>
+    <string name="give_up_text">The answers get revealed and this one counts as a fail.</string>
+    <string name="cancel">Cancel</string>
+    <string name="none_left">You don\'t have any of those</string>
+    <string name="cant_use_here">Can\'t use that here</string>
+
+    <string name="twist_timer">Timer</string>
+    <string name="twist_locked">Locked cells</string>
+    <string name="twist_scrambled_clues">Scrambled clues</string>
+    <string name="twist_limited_mistakes">Limited mistakes</string>
+    <string name="twist_fog">Fog</string>
+    <string name="twist_trick_fest">Trick fest</string>
+    <string name="twist_scrambled_keyboard">Scrambled keyboard</string>
+    <string name="twist_one_shot">One shot</string>
+    <string name="twist_timer_desc">Beat the clock or start over.</string>
+    <string name="twist_locked_desc">Padlocked cells open when the rest of a word through them is right.</string>
+    <string name="twist_scrambled_clues_desc">No numbers, shuffled clues. Figure out what goes where.</string>
+    <string name="twist_limited_mistakes_desc">3 hearts. Every finish that finds a mistake costs one.</string>
+    <string name="twist_fog_desc">You only see cells next to letters you\'ve placed.</string>
+    <string name="twist_trick_fest_desc">Loads of dumb letter tricks.</string>
+    <string name="twist_scrambled_keyboard_desc">The keys are shuffled, and reshuffle on every finish.</string>
+    <string name="twist_one_shot_desc">One check. No extra checks allowed.</string>
+    <string name="lets_go">Let\'s go</string>
+
+    <string name="solved">Solved!</string>
+    <string name="failed">Not this time</string>
+    <string name="fail_gave_up">You gave up.</string>
+    <string name="fail_time_up">Time\'s up!</string>
+    <string name="fail_hearts">Out of hearts!</string>
+    <string name="time">Time</string>
+    <string name="checks_used">Checks used</string>
+    <string name="score">Score</string>
+    <string name="run_score">Run score</string>
+    <string name="new_best">New best!</string>
+    <string name="rewards">You got</string>
+    <string name="next_level">Next level</string>
+    <string name="next_puzzle">Next puzzle</string>
+    <string name="try_again">Try again</string>
+    <string name="home">Home</string>
+    <string name="see_answers">See answers</string>
+
+    <string name="today">Today</string>
+    <string name="cleared">Cleared</string>
+    <string name="play">Play</string>
+    <string name="free_roam_run">Current run: %1$d pts · %2$d cleared</string>
+    <string name="high_scores">High scores</string>
+    <string name="no_scores">No scores yet</string>
+    <string name="end_run">End run</string>
+    <string name="puzzles_count">%1$d puzzles</string>
+
+    <string name="language">Language</string>
+    <string name="theme">Theme</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_system">System</string>
+    <string name="dynamic_color">Material You colors</string>
+    <string name="auto_advance">Auto-advance</string>
+    <string name="skip_filled">Skip filled cells</string>
+    <string name="jump_next_clue">Jump to next clue at word end</string>
+    <string name="haptics">Haptics</string>
+    <string name="show_timer">Show timer</string>
+    <string name="highlight_crossing">Highlight crossing word</string>
+    <string name="section_game">Game</string>
+    <string name="section_look">Look</string>
+    <string name="credits">Word lists: SCOWL (Kevin Atkinson). Clues partly from Open English WordNet (CC BY 4.0).</string>
+
+    <string name="howto_1_title">Fill the grid</string>
+    <string name="howto_1_text">Tap a cell, type with the keyboard. Tap the same cell again to switch across and down.</string>
+    <string name="howto_2_title">Finish = check</string>
+    <string name="howto_2_text">You get 5 checks per crossword. Finish checks the whole board: wrong letters turn red, fix them and finish again.</string>
+    <string name="howto_3_title">Dumb tricks</string>
+    <string name="howto_3_text">Some clues are letter riddles. The answer is a letter spelled how it sounds, like AIGH for A or ARR for R.</string>
+    <string name="howto_4_title">Power ups</string>
+    <string name="howto_4_text">No coins here. Earn power ups from streaks, pickups in levels, bosses and big free roam scores.</string>
+    <string name="next">Next</string>
+    <string name="done">Done</string>
 </resources>

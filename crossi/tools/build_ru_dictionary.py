@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""
+Builds app/src/main/assets/ru/words.tsv from:
+  - tools/ru_words_src.txt   hand-written nouns + clues (these win)
+  - Russian Wiktionary nouns via kaikki.org (CC BY-SA 4.0), glosses become clues
+  - hermitdave/FrequencyWords ru_50k (CC BY-SA 4.0), keeps only common words
+
+usage: build_ru_dictionary.py [<kaikki ru jsonl> <ru_300k.txt (top 300k of hermitdave ru_full)>]
+Russian crosswords traditionally use nouns in the nominative singular, so that's all we take.
+"""
+import json
+import re
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).parent
+OUT = HERE.parent / "app/src/main/assets/ru/words.tsv"
+ALPHABET = set("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
+SKIP_LABELS = re.compile(r"^(устар|истор|диал|жарг|груб|бран|вульг|обсц|прост|арго|сниж|неодобр|презр|уничиж|пренебр|рег|спец|книжн|поэт|церк|офиц|проф)\.?", re.I)
+BAD_GLOSS = re.compile(r"форма |падеж|по значению|то же, что|то же что|уменьш\.|ласк\.|увеличит\.|мн\. ч\.|женск\. к|к сущ\.|субстантив", re.I)
+OFFENSIVE = re.compile(r"половой|половые|интим|секс|наркот|проститу|экскремент|кал\b|моча|оскорб|бранн|ругатель|непристойн|похаб|детородн|соитие|убий|казн|пытк", re.I)
+ABBREV = re.compile(r"^((?:[а-яё]{1,8}\.)[,\s]*)+", re.I)
+
+
+def hand_written():
+    rows = {}
+    bad = []
+    for n, line in enumerate((HERE / "ru_words_src.txt").read_text(encoding="utf-8").splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if " — " not in line:
+            bad.append(f"{n}: no dash: {line}")
+            continue
+        word, clues = line.split(" — ", 1)
+        hard = word.endswith("*")
+        word = word.rstrip("*").strip().upper().replace("Ё", "Е")
+        if not (3 <= len(word) <= 15) or not set(word) <= ALPHABET:
+            bad.append(f"{n}: bad word: {word}")
+            continue
+        clue_list = [c.strip() for c in clues.split(" / ") if c.strip()]
+        if len(word) >= 4 and any(word.lower()[:4] in c.lower().replace("ё", "е") for c in clue_list):
+            bad.append(f"{n}: clue contains the answer: {line}")
+        rows.setdefault(word, (4, 2 if hard else 1, clue_list))
+    return rows, bad
+
+
+def clean_gloss(gloss, word):
+    g = gloss.strip()
+    if SKIP_LABELS.match(g) or BAD_GLOSS.search(g) or OFFENSIVE.search(g):
+        return None
+    g = ABBREV.sub("", g).strip()
+    g = re.sub(r"\([^)]*\)", "", g)
+    g = re.split(r"[;:]", g)[0].strip(" ,.—-")
+    g = re.sub(r"\s+", " ", g)
+    if len(g) < 4 or len(g) > 80:
+        return None
+    low = g.lower().replace("ё", "е")
+    stem = word.lower()[: max(3, min(5, len(word) - 1))]
+    if stem in low:
+        return None
+    return g[0].upper() + g[1:]
+
+
+def wiktionary(jsonl_path, freq_path):
+    rank = {}
+    for i, line in enumerate(Path(freq_path).read_text(encoding="utf-8").splitlines()):
+        w = line.split(" ")[0].upper().replace("Ё", "Е")
+        rank.setdefault(w, i)
+    rows = {}
+    with open(jsonl_path, encoding="utf-8") as f:
+        for line in f:
+            if '"pos": "noun"' not in line[:200]:
+                continue
+            d = json.loads(line)
+            raw = d.get("word", "")
+            if not raw.islower() or " " in raw or "-" in raw:
+                continue
+            word = raw.upper().replace("Ё", "Е")
+            if not (3 <= len(word) <= 15) or not set(word) <= ALPHABET or word not in rank:
+                continue
+            # short words are where the junk hides (abbreviations, word forms), so they must be really common
+            if rank[word] > {3: 150000, 4: 200000}.get(len(word), 300000):
+                continue
+            tags = set(d.get("tags", []))
+            if tags & {"plural", "plural-only", "abbreviation", "proper-noun"}:
+                continue
+            clues = []
+            for sense in d.get("senses", []):
+                stags = set(sense.get("tags", []))
+                if stags & {"obsolete", "dialectal", "vulgar", "offensive", "slang", "archaic", "rare", "derogatory"}:
+                    continue
+                for g in sense.get("glosses", [])[:1]:
+                    c = clean_gloss(g, word)
+                    if c and c not in clues:
+                        clues.append(c)
+                if len(clues) >= 2:
+                    break
+            if not clues:
+                continue
+            r = rank[word]
+            commonness = 5 if r < 5000 else 4 if r < 15000 else 3 if r < 40000 else 2 if r < 100000 else 1
+            hardness = 1 if r < 12000 else 2 if r < 40000 else 3
+            if word not in rows or rows[word][0] < commonness:
+                rows[word] = (commonness, hardness, clues)
+    return rows
+
+
+def main():
+    hand, bad = hand_written()
+    rows = {}
+    if len(sys.argv) >= 3:
+        rows.update(wiktionary(sys.argv[1], sys.argv[2]))
+    blocklist = {l.strip().upper() for l in (HERE / "ru_blocklist.txt").read_text(encoding="utf-8").splitlines()
+                 if l.strip() and not l.startswith("#")}
+    rows.update(hand)
+    lines = [f"{w}\t{c}\t{h}\t{'|'.join(cl)}" for w, (c, h, cl) in sorted(rows.items()) if w not in blocklist]
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"{len(lines)} words ({len(hand)} hand-written)")
+    for b in bad:
+        print("WARN", b)
+
+
+if __name__ == "__main__":
+    main()

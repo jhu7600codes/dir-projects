@@ -7,11 +7,12 @@ data class PatternSpec(val size: Int, val blocks: IntRange, val maxRun: Int) {
 
         fun forSize(size: Int): PatternSpec = when (size) {
             5 -> PatternSpec(5, 0..4, 5)
-            7 -> PatternSpec(7, 4..10, 7)
-            9 -> PatternSpec(9, 10..16, 7)
-            11 -> PatternSpec(11, 20..28, 7)
-            13 -> PatternSpec(13, 28..36, 7)
-            15 -> PatternSpec(15, 38..48, 7)
+            7 -> PatternSpec(7, 8..12, 7)
+            9 -> PatternSpec(9, 14..20, 7)
+            // big grids: short max runs, common-word dictionaries can't fill long stacks
+            11 -> PatternSpec(11, 26..34, 6)
+            13 -> PatternSpec(13, 36..46, 6)
+            15 -> PatternSpec(15, 46..58, 6)
             else -> throw IllegalArgumentException("unsupported grid size $size")
         }
     }
@@ -31,7 +32,7 @@ class PatternGenerator(private val spec: PatternSpec, private val rng: Rng) {
     private val n = spec.size
 
     /** Up to [tries] fresh layouts; random block placement sometimes paints itself into a corner. */
-    fun generate(seeds: List<SeedPlacement> = emptyList(), tries: Int = 30): Shape? {
+    fun generate(seeds: List<SeedPlacement> = emptyList(), tries: Int = 60): Shape? {
         repeat(tries) { tryOnce(seeds)?.let { return it } }
         return null
     }

@@ -10,16 +10,130 @@
     <string name="settings">Настройки</string>
     <string name="how_to_play">Как играть</string>
     <string name="back">Назад</string>
-    <string name="coming_soon">Скоро будет</string>
+    <string name="loading">Собираем кроссворд…</string>
+    <string name="load_failed">Не получилось собрать. Попробуй ещё раз.</string>
+    <string name="retry">Ещё раз</string>
 
     <string name="streak_days">Серия: %1$d дн.</string>
+    <string name="best_streak">Рекорд: %1$d</string>
+    <string name="next_milestone">Следующая награда на %1$d дн.</string>
 
     <string name="difficulty_easy">Легко</string>
     <string name="difficulty_normal">Нормально</string>
     <string name="difficulty_hard">Сложно</string>
+    <string name="grid_size">%1$dx%1$d</string>
 
     <string name="power_reveal_letter">Открыть букву</string>
     <string name="power_reveal_word">Открыть слово</string>
     <string name="power_extra_check">Доп. проверка</string>
-    <string name="power_skip_clue">Пропустить</string>
+    <string name="power_skip_clue">Другая подсказка</string>
+    <string name="power_reveal_letter_desc">Ставит верную букву в выбранную клетку.</string>
+    <string name="power_reveal_word_desc">Открывает всё слово целиком.</string>
+    <string name="power_extra_check_desc">Ещё одна проверка в этом кроссворде.</string>
+    <string name="power_skip_clue_desc">Меняет подсказку на другую.</string>
+    <string name="earn_title">Как получить</string>
+    <string name="earn_streak">Серия ежедневных: награды на 3, 7, 14 и каждые 30 дней</string>
+    <string name="earn_all_dailies">Пройди все три ежедневных за день: бонусная проверка</string>
+    <string name="earn_pickups">Находки в уровнях: отгадай отмеченное слово сам</string>
+    <string name="earn_bosses">Победи босса: набор бонусов</string>
+    <string name="earn_free_roam">Свободная игра: большие очки за серию и новый рекорд</string>
+    <string name="you_have">У тебя</string>
+
+    <string name="level_n">Уровень %1$d</string>
+    <string name="boss">Босс</string>
+    <string name="boss_level_n">Босс · уровень %1$d</string>
+    <string name="locked">Закрыто</string>
+
+    <string name="across">По горизонтали</string>
+    <string name="down">По вертикали</string>
+    <string name="clues">Подсказки</string>
+    <string name="finish">Готово</string>
+    <string name="give_up">Сдаться</string>
+    <string name="pencil">Карандаш</string>
+    <string name="checks_left">Проверки: %1$d</string>
+    <string name="trick">прикол</string>
+    <string name="pick_a_clue">Всё перемешано! Выбери подсказку из списка</string>
+    <string name="toggle_direction">Сменить направление</string>
+    <string name="backspace">Стереть</string>
+    <string name="prev_clue">Предыдущая подсказка</string>
+    <string name="next_clue">Следующая подсказка</string>
+    <string name="more">Ещё</string>
+    <string name="no_checks_left">Проверки кончились. Возьми доп. проверку или сдайся.</string>
+    <string name="check_result">Ошибок: %1$d, пустых: %2$d</string>
+    <string name="give_up_title">Сдаёшься?</string>
+    <string name="give_up_text">Ответы откроются, а этот кроссворд не засчитается.</string>
+    <string name="cancel">Отмена</string>
+    <string name="none_left">Таких бонусов нет</string>
+    <string name="cant_use_here">Здесь это не сработает</string>
+
+    <string name="twist_timer">Таймер</string>
+    <string name="twist_locked">Замки</string>
+    <string name="twist_scrambled_clues">Перемешанные подсказки</string>
+    <string name="twist_limited_mistakes">Три жизни</string>
+    <string name="twist_fog">Туман</string>
+    <string name="twist_trick_fest">Фестиваль приколов</string>
+    <string name="twist_scrambled_keyboard">Перемешанная клавиатура</string>
+    <string name="twist_one_shot">Одна попытка</string>
+    <string name="twist_timer_desc">Успей до конца времени, иначе заново.</string>
+    <string name="twist_locked_desc">Замок открывается, когда остальная часть слова через него верна.</string>
+    <string name="twist_scrambled_clues_desc">Номеров нет, подсказки перемешаны. Разберись, что куда.</string>
+    <string name="twist_limited_mistakes_desc">3 жизни. Каждая проверка с ошибкой отнимает одну.</string>
+    <string name="twist_fog_desc">Видно только клетки рядом с твоими буквами.</string>
+    <string name="twist_trick_fest_desc">Куча дурацких буквенных приколов.</string>
+    <string name="twist_scrambled_keyboard_desc">Клавиши перемешаны и мешаются заново после каждой проверки.</string>
+    <string name="twist_one_shot_desc">Одна проверка. Доп. проверки нельзя.</string>
+    <string name="lets_go">Погнали</string>
+
+    <string name="solved">Решено!</string>
+    <string name="failed">В этот раз нет</string>
+    <string name="fail_gave_up">Ты сдался.</string>
+    <string name="fail_time_up">Время вышло!</string>
+    <string name="fail_hearts">Жизни кончились!</string>
+    <string name="time">Время</string>
+    <string name="checks_used">Проверок</string>
+    <string name="score">Очки</string>
+    <string name="run_score">Очки серии</string>
+    <string name="new_best">Новый рекорд!</string>
+    <string name="rewards">Ты получил</string>
+    <string name="next_level">Следующий уровень</string>
+    <string name="next_puzzle">Следующий кроссворд</string>
+    <string name="try_again">Ещё раз</string>
+    <string name="home">Домой</string>
+    <string name="see_answers">Посмотреть ответы</string>
+
+    <string name="today">Сегодня</string>
+    <string name="cleared">Пройдено</string>
+    <string name="play">Играть</string>
+    <string name="free_roam_run">Текущая серия: %1$d очк. · пройдено %2$d</string>
+    <string name="high_scores">Рекорды</string>
+    <string name="no_scores">Пока рекордов нет</string>
+    <string name="end_run">Закончить серию</string>
+    <string name="puzzles_count">Кроссвордов: %1$d</string>
+
+    <string name="language">Язык</string>
+    <string name="theme">Тема</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_system">Как в системе</string>
+    <string name="dynamic_color">Цвета Material You</string>
+    <string name="auto_advance">Автопереход</string>
+    <string name="skip_filled">Пропускать заполненные клетки</string>
+    <string name="jump_next_clue">Переходить к следующей подсказке</string>
+    <string name="haptics">Вибрация</string>
+    <string name="show_timer">Показывать таймер</string>
+    <string name="highlight_crossing">Подсвечивать пересекающееся слово</string>
+    <string name="section_game">Игра</string>
+    <string name="section_look">Внешний вид</string>
+    <string name="credits">Списки слов: SCOWL (Kevin Atkinson). Часть подсказок из Open English WordNet (CC BY 4.0).</string>
+
+    <string name="howto_1_title">Заполняй сетку</string>
+    <string name="howto_1_text">Нажми на клетку и печатай. Нажми на ту же клетку ещё раз, чтобы сменить направление.</string>
+    <string name="howto_2_title">Готово = проверка</string>
+    <string name="howto_2_text">В каждом кроссворде 5 проверок. «Готово» проверяет всё поле: ошибки краснеют, исправь и жми снова.</string>
+    <string name="howto_3_title">Дурацкие приколы</string>
+    <string name="howto_3_text">Некоторые подсказки — загадки про буквы. Ответ — название буквы, например ЭЛЬ или ИКС.</string>
+    <string name="howto_4_title">Бонусы</string>
+    <string name="howto_4_text">Монет нет. Бонусы дают за серии, находки в уровнях, боссов и большие очки в свободной игре.</string>
+    <string name="next">Дальше</string>
+    <string name="done">Готово</string>
 </resources>
