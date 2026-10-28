@@ -12,8 +12,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#FF151515"
-        android:paddingTop="2dp">
+        android:background="#FF151515">
         <TextView android:id="@+id/nav_home" style="@style/NavItem"
             android:drawableTop="@drawable/nav_home" android:text="@string/home"/>
         <TextView android:id="@+id/nav_shorts" style="@style/NavItem"

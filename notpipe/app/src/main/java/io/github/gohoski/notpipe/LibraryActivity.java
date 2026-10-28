@@ -662,8 +662,16 @@ public class LibraryActivity extends Activity {
                 header.setText(row.text);
                 return header;
             }
-            View item = convertView != null ? convertView
-                    : getLayoutInflater().inflate(android.R.layout.simple_list_item_2, parent, false);
+            View item = convertView;
+            if (item == null) {
+                item = getLayoutInflater().inflate(android.R.layout.simple_list_item_2, parent, false);
+                float density = getResources().getDisplayMetrics().density;
+                item.setPadding((int) (16 * density), (int) (12 * density), (int) (16 * density), (int) (12 * density));
+                ((TextView) item.findViewById(android.R.id.text1)).setTextSize(17);
+                TextView subtitle = (TextView) item.findViewById(android.R.id.text2);
+                subtitle.setTextSize(13);
+                subtitle.setTextColor(0xFF9A9A9A);
+            }
             ((TextView) item.findViewById(android.R.id.text1)).setText(row.text);
             TextView sub = (TextView) item.findViewById(android.R.id.text2);
             sub.setText(row.subtext);

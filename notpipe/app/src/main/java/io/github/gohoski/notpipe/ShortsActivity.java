@@ -298,6 +298,7 @@ public class ShortsActivity extends Activity {
         try {
             videoView.stopPlayback();
         } catch (Exception ignored) {}
+        videoView.setVisibility(View.INVISIBLE);
         ((TextView) findViewById(R.id.short_title)).setText(video.title);
         showChannel(video);
         findViewById(R.id.short_loading).setVisibility(View.VISIBLE);
@@ -328,6 +329,7 @@ public class ShortsActivity extends Activity {
                             move(1);
                             return;
                         }
+                        videoView.setVisibility(View.VISIBLE);
                         videoView.setVideoURI(Uri.parse(resolved));
                     }
                 });

@@ -46,7 +46,12 @@ public class NavBar {
             item.setTextColor(color);
             if (i == selected) item.setTypeface(null, Typeface.BOLD);
             android.graphics.drawable.Drawable icon = item.getCompoundDrawables()[1];
-            if (icon != null) icon.mutate().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            if (icon != null) {
+                icon.mutate().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                int size = (int) (22 * activity.getResources().getDisplayMetrics().density);
+                icon.setBounds(0, 0, size, size);
+                item.setCompoundDrawables(null, icon, null, null);
+            }
             item.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

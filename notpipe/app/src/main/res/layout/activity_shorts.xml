@@ -16,7 +16,8 @@
         android:id="@+id/short_thumbnail"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:scaleType="fitCenter"/>
+        android:background="#FF000000"
+        android:scaleType="centerCrop"/>
 
     <ProgressBar
         android:id="@+id/short_loading"
@@ -211,9 +212,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:background="#88000000"
+        android:background="@drawable/shorts_info_gradient"
         android:paddingLeft="12dp"
-        android:paddingTop="12dp"
+        android:paddingTop="40dp"
         android:paddingBottom="12dp"
         android:paddingRight="76dp">
         <TextView
@@ -223,6 +224,8 @@
             android:textColor="#FFFFFFFF"
             android:textStyle="bold"
             android:textSize="16sp"
+            android:shadowColor="#FF000000"
+            android:shadowRadius="3"
             android:maxLines="2"
             android:ellipsize="end"
             tools:text="How People Treat You Based on Subscribers"/>
@@ -237,12 +240,13 @@
                 android:id="@+id/short_avatar"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
+                android:background="#FF444444"
                 android:scaleType="centerCrop"/>
             <TextView
                 android:id="@+id/short_channel"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:maxWidth="170dp"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
                 android:singleLine="true"

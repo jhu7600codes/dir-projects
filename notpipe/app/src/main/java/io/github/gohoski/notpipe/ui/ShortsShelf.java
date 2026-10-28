@@ -76,7 +76,7 @@ public class ShortsShelf {
         row = new LinearLayout(activity);
         row.setPadding(dp(8), 0, dp(8), 0);
         scroll.addView(row);
-        root.addView(scroll);
+        root.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, dp(230)));
     }
 
     public View getView() {
@@ -86,7 +86,10 @@ public class ShortsShelf {
     /** Shows the shelf, loading it the first time */
     public void show() {
         if (loaded) {
-            if (row.getChildCount() > 0) setShown(true);
+            if (row.getChildCount() > 0) {
+                setShown(true);
+                relayoutList();
+            }
             return;
         }
         loaded = true;
@@ -106,11 +109,26 @@ public class ShortsShelf {
                 if (activity.isFinishing() || shorts == null || shorts.isEmpty()) return;
                 for (int i = 0; i < shorts.size() && i < MAX_ITEMS; i++) row.addView(card(shorts.get(i)));
                 setShown(true);
+                relayoutList();
             }
         }.execute();
     }
 
-    public void hide() {
+    /** ListView doesn't always re-measure a header that changed size, so the shelf would stay empty until scrolled */
+    private void relayoutList() {
+        root.post(new Runnable() {
+            @Override
+            public void run() {
+                android.view.ViewParent parent = root.getParent();
+                if (parent instanceof android.widget.AbsListView) {
+                    ((android.widget.AbsListView) parent).invalidateViews();
+                }
+                root.requestLayout();
+            }
+        });
+    }
+
+        public void hide() {
         setShown(false);
     }
 
