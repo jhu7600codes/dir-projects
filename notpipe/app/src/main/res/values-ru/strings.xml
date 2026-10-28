@@ -341,4 +341,8 @@
     <string name="send">Отправить</string>
     <string name="comment_posted">Комментарий отправлен</string>
     <string name="you">Вы</string>
+    <string name="save_to_watch_later">Добавить в «Смотреть позже»</string>
+    <string name="saved_to_watch_later">Добавлено в «Смотреть позже»</string>
+    <string name="not_interested">Не интересует</string>
+    <string name="video_hidden">Видео скрыто с главной</string>
 </resources>

@@ -155,7 +155,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 if (listView instanceof ListView) position -= ((ListView) listView).getHeaderViewsCount();
                 if (videos == null || position < 0 || position >= videos.size()) return false;
-                VideoActions.showItemMenu(MainActivity.this, videos, position);
+                VideoActions.showItemMenu(MainActivity.this, videos, position, adapter);
                 return true;
             }
         });
@@ -613,7 +613,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                 if (noPopularView != null) noPopularView.setVisibility(View.VISIBLE);
             } else {
                 if (noPopularView != null) noPopularView.setVisibility(View.GONE);
-                videos = result.videos;
+                videos = LocalLibrary.getInstance().withoutHidden(result.videos);
                 adapter = new VideoAdapter(context, R.layout.item_video, videos);
                 adapter.enableChannelIconFallback();
                 if (listView != null) {

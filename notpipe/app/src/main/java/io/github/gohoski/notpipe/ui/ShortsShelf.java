@@ -62,6 +62,12 @@ public class ShortsShelf {
         title.setCompoundDrawables(icon, null, null, null);
         title.setCompoundDrawablePadding(dp(8));
         title.setGravity(Gravity.CENTER_VERTICAL);
+        title.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activity.startActivity(new Intent(activity, ShortsActivity.class));
+            }
+        });
         this.title = title;
         root.addView(title);
 

@@ -112,19 +112,50 @@ public class VideoActions {
      * Long-press menu for a video in any list.
      */
     public static void showItemMenu(final Activity activity, final List<VideoInfo> list, final int position) {
+        showItemMenu(activity, list, position, null);
+    }
+
+    /**
+     * Long-press menu for a video in any list.
+     * @param adapter if not null, "Not interested" is offered and removes the video from the list
+     */
+    public static void showItemMenu(final Activity activity, final List<VideoInfo> list, final int position,
+                                    final android.widget.BaseAdapter adapter) {
         final VideoInfo video = list.get(position);
         if (video.id.contains(":")) return;
         final boolean hasChannel = video.channelId != null && video.channelId.length() > 0;
-        String[] items = hasChannel
-                ? new String[]{activity.getString(R.string.play_audio_from_here), activity.getString(R.string.download),
-                activity.getString(R.string.add_to_playlist), activity.getString(R.string.share), activity.getString(R.string.channel)}
-                : new String[]{activity.getString(R.string.play_audio_from_here), activity.getString(R.string.download),
-                activity.getString(R.string.add_to_playlist), activity.getString(R.string.share)};
+        List<String> labels = new java.util.ArrayList<String>();
+        labels.add(activity.getString(R.string.play_audio_from_here));
+        labels.add(activity.getString(R.string.download));
+        labels.add(activity.getString(R.string.add_to_playlist));
+        labels.add(activity.getString(R.string.share));
+        labels.add(activity.getString(R.string.channel));
+        labels.add(activity.getString(R.string.save_to_watch_later));
+        labels.add(activity.getString(R.string.not_interested));
+        if (!hasChannel) labels.set(4, null);
+        if (adapter == null) labels.set(6, null);
+        final List<Integer> actions = new java.util.ArrayList<Integer>();
+        List<String> shown = new java.util.ArrayList<String>();
+        for (int i = 0; i < labels.size(); i++) {
+            if (labels.get(i) == null) continue;
+            actions.add(Integer.valueOf(i));
+            shown.add(labels.get(i));
+        }
+        String[] items = shown.toArray(new String[shown.size()]);
         new AlertDialog.Builder(activity).setTitle(video.title)
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0) {
+                        which = actions.get(which).intValue();
+                        if (which == 5) {
+                            LocalLibrary.getInstance().addToPlaylist(activity.getString(R.string.watch_later), video);
+                            Toast.makeText(activity, R.string.saved_to_watch_later, Toast.LENGTH_SHORT).show();
+                        } else if (which == 6) {
+                            LocalLibrary.getInstance().hideVideo(video.id);
+                            list.remove(video);
+                            adapter.notifyDataSetChanged();
+                            Toast.makeText(activity, R.string.video_hidden, Toast.LENGTH_SHORT).show();
+                        } else if (which == 0) {
                             io.github.gohoski.notpipe.MusicService.play(activity, list, position);
                             Toast.makeText(activity, R.string.playing_in_background, Toast.LENGTH_SHORT).show();
                         } else if (which == 1) {

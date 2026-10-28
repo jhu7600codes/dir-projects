@@ -244,6 +244,34 @@ public class LocalLibrary {
         return result;
     }
 
+    /* ---------- Not interested ---------- */
+
+    private static final int MAX_HIDDEN = 300;
+
+    /** Hides the video from the home feed */
+    public synchronized void hideVideo(String videoId) {
+        JSONArray hidden = load("hidden");
+        JSONArray updated = new JSONArray();
+        updated.add(videoId);
+        for (int i = 0; i < hidden.size() && updated.size() < MAX_HIDDEN; i++) {
+            if (!videoId.equals(hidden.getString(i, ""))) updated.add(hidden.getString(i, ""));
+        }
+        save("hidden", updated);
+    }
+
+    /** Removes the videos marked "not interested" from the list */
+    public synchronized List<VideoInfo> withoutHidden(List<VideoInfo> videos) {
+        JSONArray hidden = load("hidden");
+        if (hidden.size() == 0 || videos == null) return videos;
+        java.util.Set<String> ids = new java.util.HashSet<String>();
+        for (int i = 0; i < hidden.size(); i++) ids.add(hidden.getString(i, ""));
+        List<VideoInfo> result = new ArrayList<VideoInfo>();
+        for (int i = 0; i < videos.size(); i++) {
+            if (!ids.contains(videos.get(i).id)) result.add(videos.get(i));
+        }
+        return result;
+    }
+
     /* ---------- Watch history ---------- */
 
     /** Moves the video to the top of the history (newest first) */

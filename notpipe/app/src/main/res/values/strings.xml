@@ -318,4 +318,8 @@
     <string name="send">Send</string>
     <string name="comment_posted">Comment posted</string>
     <string name="you">You</string>
+    <string name="save_to_watch_later">Save to Watch later</string>
+    <string name="saved_to_watch_later">Saved to Watch later</string>
+    <string name="not_interested">Not interested</string>
+    <string name="video_hidden">Video hidden from home</string>
 </resources>
