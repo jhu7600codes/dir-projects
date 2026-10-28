@@ -178,8 +178,8 @@ J jay    K kay   L ell   M emm   N enn   O owe   P pee   Q cue    R arr
 S ess    T tee   U you   V vee   W doubleyou   X ecks   Y why   Z zed
 ```
 
-ru: letter names that are 3+ letters (ЭЛЬ, ЭМЭ-style spellings where they read
-naturally, ША, ЩА are too short, so the set is smaller). final list in m2.
+ru: only letter names that are 3+ letters long (like ЭЛЬ), most russian letter
+names are 2 letters (БЭ, ЭМ, ША) so the ru set is smaller. final list in m2.
 
 templates the generator fills in (and code double checks they're true):
 - *"the letter thAts cApitAl in this hint"* → AIGH
