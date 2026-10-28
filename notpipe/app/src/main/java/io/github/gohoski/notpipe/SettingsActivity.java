@@ -64,6 +64,18 @@ public class SettingsActivity extends Activity implements InstancesUpdater.OnIns
         asyncUriChk = (CheckBox) findViewById(R.id.async_uri_chk);
         fullscreenRotateChk = (CheckBox) findViewById(R.id.fullscreen_rotate_chk);
 
+        CheckBox basicModeChk = (CheckBox) findViewById(R.id.basic_mode_chk);
+        basicModeChk.setChecked(io.github.gohoski.notpipe.util.PlayerExtras.isBasicMode());
+        applyBasicMode(basicModeChk.isChecked());
+        basicModeChk.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                io.github.gohoski.notpipe.util.PlayerExtras.setEnabled(
+                        io.github.gohoski.notpipe.util.PlayerExtras.KEY_BASIC_MODE, isChecked);
+                applyBasicMode(isChecked);
+            }
+        });
+
         updateInstancesChk.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -198,5 +210,16 @@ public class SettingsActivity extends Activity implements InstancesUpdater.OnIns
         yt2009Section.setInstances(config.getYt2009Instances());
         pipedSection.setInstances(config.getPipedInstances());
         Toast.makeText(this, R.string.ins_upd, Toast.LENGTH_SHORT).show();
+    }
+
+    /** Basic mode hides the instance lists and other technical options */
+    private void applyBasicMode(boolean basic) {
+        int visibility = basic ? View.GONE : View.VISIBLE;
+        findViewById(R.id.instances_title).setVisibility(visibility);
+        findViewById(R.id.update_chk).setVisibility(visibility);
+        findViewById(R.id.apiInstancesContainer).setVisibility(visibility);
+        findViewById(R.id.async_uri_chk).setVisibility(visibility);
+        findViewById(R.id.async_uri_desc).setVisibility(visibility);
+        findViewById(R.id.update_instances).setVisibility(basic || !updateInstancesChk.isChecked() ? View.GONE : View.VISIBLE);
     }
 }

@@ -35,6 +35,7 @@ public class PlayerExtras {
     public static final String KEY_RESUME = "resume";
     public static final String KEY_SPEED = "speed";
     public static final String KEY_AUTO_PIP = "auto_pip";
+    public static final String KEY_BASIC_MODE = "basic_mode";
 
     private PlayerExtras() {}
 
@@ -49,6 +50,11 @@ public class PlayerExtras {
 
     public static void setEnabled(String key, boolean enabled) {
         prefs().edit().putBoolean(key, enabled).commit();
+    }
+
+    /** Basic mode (on by default) hides technical details like instance names */
+    public static boolean isBasicMode() {
+        return isEnabled(KEY_BASIC_MODE);
     }
 
     public static String getShortsQuality() {

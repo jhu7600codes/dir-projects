@@ -618,7 +618,7 @@ public class Manager {
             public void run() {
                 try {
                     Context context = NotPipe.getAppContext();
-                    if (context != null) {
+                    if (context != null && !io.github.gohoski.notpipe.util.PlayerExtras.isBasicMode()) {
                         Toast.makeText(context,
                                 context.getString(R.string.dead_instance, name),
                                 Toast.LENGTH_SHORT).show();

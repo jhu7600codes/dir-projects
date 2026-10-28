@@ -142,6 +142,11 @@ public class VideoActivity extends Activity {
         }
     };
     private int watchtimeTicks = 0;
+    /** 400 ms ticks without progress before a stalled stream is reopened (12 s) */
+    private static final int STALL_TICKS = 30;
+    private int stallTicks = 0;
+    private int stallPosition = -1;
+    private int stallRecoveries = 0;
     private Yt2009Account.WatchSession watchSession;
     private static final String DIR_VIDEOS = "notPipe/videos";
 
@@ -1424,6 +1429,7 @@ public class VideoActivity extends Activity {
 
         TextView playbackInfo = (TextView) findViewById(R.id.playback_info);
         playbackInfo.setText(getString(R.string.playback_via, getString(R.string.loading_)));
+        if (PlayerExtras.isBasicMode()) playbackInfo.setVisibility(View.GONE);
         playbackInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -2159,6 +2165,29 @@ public class VideoActivity extends Activity {
         handler.postDelayed(extrasTicker, 400);
     }
 
+    /**
+     * The stream stopped delivering data while "playing": reopen it at the same spot,
+     * and after a few tries ask for a fresh stream (often another instance).
+     */
+    private void recoverFromStall(int position) {
+        if (videoUrl == null || videoUrl.startsWith("file://") || videoUrl.startsWith("/")) return;
+        String url = videoUrl;
+        videoPosition = position;
+        stallRecoveries++;
+        resetVideo();
+        showVideoLoadingUI();
+        if (stallRecoveries <= 2) {
+            videoUrl = url;
+            videoPlaying = true;
+            loadVideoUri(url);
+        } else {
+            stallRecoveries = 0;
+            VideoCache.clearAll();
+            resolveStreamTask = new ResolveStreamTask(null);
+            resolveStreamTask.execute(videoId);
+        }
+    }
+
     private void tickExtras() {
         if (videoView == null || !videoPrepared) return;
         if (SleepTimer.consumeVideoPause()) {
@@ -2169,9 +2198,20 @@ public class VideoActivity extends Activity {
         }
         int position;
         try {
-            if (!videoView.isPlaying()) return;
+            if (!videoView.isPlaying()) {
+                stallTicks = 0;
+                return;
+            }
             position = videoView.getCurrentPosition();
         } catch (Exception e) {
+            return;
+        }
+        if (position != stallPosition) {
+            stallPosition = position;
+            stallTicks = 0;
+        } else if (++stallTicks >= STALL_TICKS) {
+            stallTicks = 0;
+            recoverFromStall(position);
             return;
         }
         for (int i = 0; i < sponsorSegments.size(); i++) {
@@ -2970,9 +3010,16 @@ public class VideoActivity extends Activity {
         protected List<Comment> doInBackground(String... params) {
             try {
                 if (isCancelled()) return null;
-                return api.getComments(params[0]);
+                final String id = params[0];
+                return Manager.getInstance().raceMetadata(new Manager.MetadataTask<List<Comment>>() {
+                    public List<Comment> run(Metadata m) throws Exception {
+                        List<Comment> result = m.getComments(id);
+                        if (result == null || result.isEmpty()) throw new IOException("No comments");
+                        return result;
+                    }
+                }, null);
             } catch (Exception e) {
-                return null;
+                return new ArrayList<Comment>();
             }
         }
 

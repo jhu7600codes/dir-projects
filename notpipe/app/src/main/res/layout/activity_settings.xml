@@ -19,7 +19,20 @@
             android:layout_height="wrap_content"
             android:padding="16dp">
 
+            <CheckBox
+                android:id="@+id/basic_mode_chk"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/basic_mode"/>
+
             <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="16dp"
+                android:text="@string/basic_mode_desc"/>
+
+            <TextView
+                android:id="@+id/instances_title"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/instances"
@@ -138,6 +151,7 @@
                 android:text="@string/async_uri"/>
 
             <TextView
+                android:id="@+id/async_uri_desc"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/async_uri_"/>

@@ -323,4 +323,6 @@
     <string name="not_interested">Not interested</string>
     <string name="video_hidden">Video hidden from home</string>
     <string name="search_youtube">Search YouTube</string>
+    <string name="basic_mode">Basic mode</string>
+    <string name="basic_mode_desc">Hides technical stuff like instance lists, server names and "dead instance" popups</string>
 </resources>

@@ -346,4 +346,6 @@
     <string name="not_interested">Не интересует</string>
     <string name="video_hidden">Видео скрыто с главной</string>
     <string name="search_youtube">Поиск на YouTube</string>
+    <string name="basic_mode">Простой режим</string>
+    <string name="basic_mode_desc">Скрывает технические детали: списки инстансов, адреса серверов и уведомления о мёртвых инстансах</string>
 </resources>
