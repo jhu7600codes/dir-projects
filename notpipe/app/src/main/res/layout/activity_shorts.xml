@@ -37,6 +37,84 @@
         android:visibility="gone"/>
 
 
+
+    <!-- Thin YouTube-style progress line along the bottom of the Short -->
+    <ProgressBar
+        android:id="@+id/short_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="3dp"
+        android:layout_gravity="bottom"
+        android:max="1000"
+        android:progressDrawable="@drawable/short_progress"/>
+
+    <LinearLayout
+        android:id="@+id/short_info"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:background="@drawable/shorts_info_gradient"
+        android:paddingLeft="12dp"
+        android:paddingTop="40dp"
+        android:paddingBottom="12dp"
+        android:paddingRight="76dp">
+        <TextView
+            android:id="@+id/short_title"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFFFF"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:shadowColor="#FF000000"
+            android:shadowRadius="3"
+            android:maxLines="2"
+            android:ellipsize="end"
+            tools:text="How People Treat You Based on Subscribers"/>
+        <LinearLayout
+            android:id="@+id/short_channel_row"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp">
+            <ImageView
+                android:id="@+id/short_avatar"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="#FF444444"
+                android:scaleType="centerCrop"/>
+            <TextView
+                android:id="@+id/short_channel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="140dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textColor="#FFFFFFFF"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                tools:text="MrBeast"/>
+            <TextView
+                android:id="@+id/short_subscribe"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/subscribe_button"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:textColor="#FFFFFFFF"
+                android:textStyle="bold"
+                android:textSize="13sp"
+                android:clickable="true"
+                android:singleLine="true"
+                android:text="@string/subscribe"/>
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- YouTube-style action column -->
     <LinearLayout
         android:layout_width="wrap_content"
@@ -193,82 +271,6 @@
                 android:shadowColor="#FF000000"
                 android:shadowRadius="3"
                 android:text="@string/more"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- Thin YouTube-style progress line along the bottom of the Short -->
-    <ProgressBar
-        android:id="@+id/short_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="3dp"
-        android:layout_gravity="bottom"
-        android:max="1000"
-        android:progressDrawable="@drawable/short_progress"/>
-
-    <LinearLayout
-        android:id="@+id/short_info"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:orientation="vertical"
-        android:background="@drawable/shorts_info_gradient"
-        android:paddingLeft="12dp"
-        android:paddingTop="40dp"
-        android:paddingBottom="12dp"
-        android:paddingRight="76dp">
-        <TextView
-            android:id="@+id/short_title"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#FFFFFFFF"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:shadowColor="#FF000000"
-            android:shadowRadius="3"
-            android:maxLines="2"
-            android:ellipsize="end"
-            tools:text="How People Treat You Based on Subscribers"/>
-        <LinearLayout
-            android:id="@+id/short_channel_row"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingTop="8dp">
-            <ImageView
-                android:id="@+id/short_avatar"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:background="#FF444444"
-                android:scaleType="centerCrop"/>
-            <TextView
-                android:id="@+id/short_channel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxWidth="170dp"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:singleLine="true"
-                android:ellipsize="end"
-                android:textColor="#FFFFFFFF"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                tools:text="MrBeast"/>
-            <TextView
-                android:id="@+id/short_subscribe"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/subscribe_button"
-                android:paddingLeft="12dp"
-                android:paddingRight="12dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp"
-                android:textColor="#FFFFFFFF"
-                android:textStyle="bold"
-                android:textSize="13sp"
-                android:clickable="true"
-                android:text="@string/subscribe"/>
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
