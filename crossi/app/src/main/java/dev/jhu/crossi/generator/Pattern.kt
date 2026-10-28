@@ -7,7 +7,7 @@ data class PatternSpec(val size: Int, val blocks: IntRange, val maxRun: Int) {
 
         fun forSize(size: Int): PatternSpec = when (size) {
             5 -> PatternSpec(5, 0..4, 5)
-            7 -> PatternSpec(7, 8..12, 7)
+            7 -> PatternSpec(7, 8..14, 6)
             9 -> PatternSpec(9, 14..20, 7)
             // big grids: short max runs, common-word dictionaries can't fill long stacks
             11 -> PatternSpec(11, 26..34, 6)
@@ -58,7 +58,9 @@ class PatternGenerator(private val spec: PatternSpec, private val rng: Rng) {
             }
             if (long.isNotEmpty()) {
                 val slot = rng.pick(long)
-                val offsets = (MIN_RUN until slot.length - MIN_RUN).toMutableList()
+                // split it in the middle; small grids may also trim an end, they can't fit a middle split
+                val ends = if (n <= 7) listOf(0, slot.length - 1) else emptyList()
+                val offsets = ((MIN_RUN until slot.length - MIN_RUN) + ends).toMutableList()
                 rng.shuffle(offsets)
                 offsets.firstOrNull { place(blocks, locked, slot.cells[it]) }
             } else if (blocks.count { it } < target) {

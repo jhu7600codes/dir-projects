@@ -57,6 +57,8 @@ internal class Filler(
             } ?: return null
             for (i in seed.word.indices) letters[slot.cells[i]] = index.alphabet.code(seed.word[i])
             assigned[slot.id] = true
+            // a long word can also be a normal dictionary word, don't let the fill use it twice
+            buckets[slot.id]?.indexOf(seed.word)?.takeIf { it >= 0 }?.let { Bits.set(used.getValue(slot.length), it) }
         }
         // A slot without any word of its length can never be filled.
         if (slots.indices.any { !assigned[it] && buckets[it] == null }) return null

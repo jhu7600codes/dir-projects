@@ -41,7 +41,8 @@ def hand_written():
         clue_list = [c.strip() for c in clues.split(" / ") if c.strip()]
         if len(word) >= 4 and any(word.lower()[:4] in c.lower().replace("ё", "е") for c in clue_list):
             bad.append(f"{n}: clue contains the answer: {line}")
-        rows.setdefault(word, (4, 2 if hard else 1, clue_list))
+        # commonness 6: the filler prefers hand-written words, their clues are the good ones
+        rows.setdefault(word, (6, 2 if hard else 1, clue_list))
     return rows, bad
 
 
@@ -53,7 +54,10 @@ def clean_gloss(gloss, word):
     g = re.sub(r"\([^)]*\)", "", g)
     g = re.split(r"[;:]", g)[0].strip(" ,.—-")
     g = re.sub(r"\s+", " ", g)
-    if len(g) < 4 or len(g) > 80:
+    # crossword clues are short: cut long definitions at the first comma when that still says something
+    if len(g) > 45 and "," in g and len(g.split(",")[0]) >= 12:
+        g = g.split(",")[0]
+    if len(g) < 4 or len(g) > 60:
         return None
     low = g.lower().replace("ё", "е")
     stem = word.lower()[: max(3, min(5, len(word) - 1))]
@@ -79,7 +83,7 @@ def wiktionary(jsonl_path, freq_path):
             word = raw.upper().replace("Ё", "Е")
             if not (3 <= len(word) <= 15) or not set(word) <= ALPHABET or word not in rank:
                 continue
-            # short words are where the junk hides (abbreviations, word forms), so they must be really common
+            # short words are where the junk hides (names, word forms), so they must be fairly common
             if rank[word] > {3: 150000, 4: 200000}.get(len(word), 300000):
                 continue
             tags = set(d.get("tags", []))
@@ -106,6 +110,16 @@ def wiktionary(jsonl_path, freq_path):
     return rows
 
 
+# мат, грубости, наркотики, смерть: слова с таким началом не попадают в сетку
+BAD_PREFIXES = ("ХУЙ", "ХУЕ", "ПИЗД", "ЕБ", "БЛЯ", "СУКА", "СУКИ", "СУЧ", "МУДА", "МУДО", "ЖОП", "СРАК", "ДЕРЬМ",
+                "ГОВН", "ПЕДИК", "ПИДОР", "ШЛЮХ", "ПРОСТИТУ", "МРАЗ", "ГАНДОН", "ЗАЛУП", "ДРОЧ", "ЧЛЕН", "СЕКС",
+                "ПОРН", "НАРКО", "УБИЙ", "ТРУП")
+
+
+def is_bad(word):
+    return word.startswith(BAD_PREFIXES)
+
+
 def main():
     hand, bad = hand_written()
     rows = {}
@@ -114,7 +128,7 @@ def main():
     blocklist = {l.strip().upper() for l in (HERE / "ru_blocklist.txt").read_text(encoding="utf-8").splitlines()
                  if l.strip() and not l.startswith("#")}
     rows.update(hand)
-    lines = [f"{w}\t{c}\t{h}\t{'|'.join(cl)}" for w, (c, h, cl) in sorted(rows.items()) if w not in blocklist]
+    lines = [f"{w}\t{c}\t{h}\t{'|'.join(cl)}" for w, (c, h, cl) in sorted(rows.items()) if w not in blocklist and not is_bad(w)]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{len(lines)} words ({len(hand)} hand-written)")

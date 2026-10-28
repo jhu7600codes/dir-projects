@@ -14,13 +14,16 @@ import java.io.File
  * Not a real test: regenerates assets/<lang>/levels.json. Levels are frozen so a
  * dictionary change never changes a level someone already played.
  *
- *   CROSSI_FREEZE=1 ./gradlew :app:testDebugUnitTest --tests '*LevelFreezer*'
+ *   CROSSI_FREEZE=1 ./gradlew :app:testDebugUnitTest --tests '*LevelFreezer*'   (or =en / =ru)
  */
 class LevelFreezer {
     @Test
     fun freeze() {
-        assumeTrue(System.getenv("CROSSI_FREEZE") == "1")
-        for ((language, dictionary) in listOf(Language.EN to Fixtures.english, Language.RU to Fixtures.russian)) {
+        // CROSSI_FREEZE=1 does both languages, CROSSI_FREEZE=en or =ru just one
+        val which = System.getenv("CROSSI_FREEZE")
+        assumeTrue(which != null)
+        val all = listOf(Language.EN to Fixtures.english, Language.RU to Fixtures.russian)
+        for ((language, dictionary) in all.filter { which == "1" || it.first.code == which }) {
             val generator = PuzzleGenerator(dictionary)
             val levels = (1..LevelCatalog.COUNT).map { n ->
                 val spec = LevelCatalog.spec(n)

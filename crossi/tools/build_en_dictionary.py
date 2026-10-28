@@ -101,6 +101,7 @@ def inflect(base, kind, wordset):
 
 
 wordset_level = {}
+HAND_WRITTEN_SCORE = 6
 POS_FOR_KIND = {"plural": {"n"}, "past": {"v"}, "ing": {"v"}, "er": {"a", "s"}, "est": {"a", "s"}}
 TAG = {"plural": " (pl.)", "past": " (past)", "ing": " (-ing)", "er": " (more so)", "est": " (most so)"}
 
@@ -125,7 +126,7 @@ def clues_for(word, senses, synsets, irregular, wordset):
     syn_clues, def_clues = [], []
     for kind, base in lemmatize(word, senses, irregular):
         kind_pos = POS_FOR_KIND.get(kind)
-        for pos, sid in senses[base][:3]:
+        for sense_no, (pos, sid) in enumerate(senses[base][:3]):
             if kind_pos and pos not in kind_pos:
                 continue
             spos, definition, members = synsets[sid]
@@ -136,7 +137,8 @@ def clues_for(word, senses, synsets, irregular, wordset):
                 # irregular forms (ate, mice, ...) can't have synonyms inflected the same way
                 tag = " (past)" if pos == "v" else " (pl.)" if pos == "n" else ""
             else:
-                for m in members:
+                # synonyms only from the main sense, other senses give nonsense like SODS = "Cats"
+                for m in (members if sense_no == 0 else []):
                     if m == base or " " in m or "-" in m or not m.islower():
                         continue
                     s = inflect(m, kind, wordset)
@@ -148,12 +150,33 @@ def clues_for(word, senses, synsets, irregular, wordset):
                 def_clues.append(c + tag)
         if syn_clues or def_clues:
             break
-    # first clue = plainest (first sense definition), easy puzzles use it
+    # synonyms read like real crossword clues, short definitions next, long ones last
+    short_defs = [c for c in def_clues if len(c) <= 45]
+    long_defs = [c for c in def_clues if len(c) > 45]
     picked = []
-    for c in def_clues[:1] + syn_clues[:2] + def_clues[1:2]:
+    for c in syn_clues[:2] + short_defs[:2] + long_defs[:1]:
         if c not in picked:
             picked.append(c)
     return picked[:3]
+
+
+# anything starting with these never goes in (covers every inflection)
+BAD_PREFIXES = ("fuck", "shit", "cunt", "twat", "wank", "nigg", "fagg", "fagot", "slut", "whore", "gook", "kike",
+                "spick", "dyke", "tranny", "retard", "porn", "rape", "rapist", "dildo", "jizz", "boob", "bollock",
+                "bugger", "prick", "puss", "cock", "titt", "titty", "asshole", "bitch", "bastard", "damn", "piss",
+                "crap", "sex", "horny", "nude", "nudi", "naked", "orgasm", "orgy", "orgies", "erotic", "penis", "vagin",
+                "semen", "sperm", "scrot", "testic", "clitor", "condom", "masturb", "molest", "pedoph", "incest",
+                "nazi", "hitler", "cocaine", "suicid", "murder", "genocid", "chink", "negro",
+                "homosex", "lesbian", "queer", "pervert", "lewd", "kinky", "stripper", "brothel")
+# fine as part of longer words (hello, title, cumin) but not on their own
+BAD_EXACT = {"ass", "asses", "arse", "arses", "tit", "tits", "cum", "anal", "anus", "gay", "gays", "homo", "homos",
+             "fag", "fags", "hoe", "hoes", "kill", "kills", "killed", "killer", "killers", "killing", "dope", "drug",
+             "drugs", "weed", "booze", "hell", "hells", "hellish", "lust", "lusts", "lusty", "lustful", "pimp", "pimps",
+             "heroin", "beer", "beers", "wine", "wines", "vodka", "rum", "gin", "lager", "ale", "ales"}
+
+
+def is_bad(word):
+    return word in BAD_EXACT or word.startswith(BAD_PREFIXES)
 
 
 def main():
@@ -173,19 +196,21 @@ def main():
 
     rows, skipped = [], 0
     for word in sorted(levels):
-        if word in blocklist:
+        if word in blocklist or is_bad(word):
             continue
         lv = levels[word]
         commonness, hardness = LEVELS[lv]
         clues = hand.get(word) or clues_for(word, senses, synsets, irregular, wordset)
+        if word in hand:
+            commonness = HAND_WRITTEN_SCORE  # the filler prefers words with good clues
         if not clues:
             skipped += 1
             continue
         clues = [c.replace("\t", " ").replace("|", "/") for c in clues]
         rows.append(f"{word.upper()}\t{commonness}\t{hardness}\t{'|'.join(clues)}")
     for word, clues in hand.items():  # hand-written words not in scowl still get in
-        if word not in levels and word not in blocklist and re.fullmatch(r"[a-z]{3,15}", word):
-            rows.append(f"{word.upper()}\t3\t1\t{'|'.join(clues)}")
+        if word not in levels and word not in blocklist and not is_bad(word) and re.fullmatch(r"[a-z]{3,15}", word):
+            rows.append(f"{word.upper()}\t{HAND_WRITTEN_SCORE}\t1\t{'|'.join(clues)}")
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     Path(out_path).write_text("\n".join(sorted(rows)) + "\n", encoding="utf-8")
     print(f"{len(rows)} words written, {skipped} skipped (no clue)")
