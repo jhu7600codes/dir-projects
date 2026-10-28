@@ -68,7 +68,12 @@ public class AutoCompleteAdapter extends BaseAdapter implements Filterable {
                                 public void run() {
                                     if (!searchActive) {
                                         suggestions.clear();
-                                        suggestions.addAll(results);
+                                        // Your own recent searches first (marked with a clock), then the instance's suggestions
+                                        List<String> recent = io.github.gohoski.notpipe.util.LocalLibrary.getInstance().findSearches(query);
+                                        for (int i = 0; i < recent.size() && i < 3; i++) suggestions.add(recent.get(i));
+                                        for (int i = 0; i < results.size(); i++) {
+                                            if (!suggestions.contains(results.get(i))) suggestions.add(results.get(i));
+                                        }
                                         notifyDataSetChanged();
                                         if (listener != null && !results.isEmpty()) {
                                             listener.onSuggestionsLoaded();

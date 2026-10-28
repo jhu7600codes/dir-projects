@@ -181,6 +181,9 @@ public class VideoActions {
             Toast.makeText(activity, R.string.sign_in_required, Toast.LENGTH_LONG).show();
             return;
         }
+        // Optimistic: confirm right away (the request goes through yt2009 to YouTube and takes a moment),
+        // and only speak up again if it failed
+        Toast.makeText(activity, successText, Toast.LENGTH_SHORT).show();
         new AsyncTask<Void, Void, Exception>() {
             @Override
             protected Exception doInBackground(Void... params) {
@@ -195,8 +198,9 @@ public class VideoActions {
 
             @Override
             protected void onPostExecute(Exception e) {
-                Toast.makeText(activity, e == null ? activity.getString(successText)
-                        : activity.getString(R.string.action_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
+                if (e != null) {
+                    Toast.makeText(activity, activity.getString(R.string.action_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+                }
             }
         }.execute();
     }

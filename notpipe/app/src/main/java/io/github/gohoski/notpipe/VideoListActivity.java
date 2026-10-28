@@ -114,7 +114,10 @@ public class VideoListActivity extends Activity {
         NavBar.attach(this, SOURCE_FEED.equals(source) ? NavBar.SUBSCRIPTIONS : NavBar.NONE);
 
         listView = (ListView) findViewById(R.id.list);
-        adapter = new VideoAdapter(this, R.layout.item_video_compact, videos);
+        boolean bigCards = !SOURCE_CHANNEL_PLAYLISTS.equals(source);
+        adapter = new VideoAdapter(this, bigCards ? R.layout.item_video : R.layout.item_video_compact, videos);
+        adapter.enableChannelIconFallback();
+        if (bigCards) listView.setDivider(null);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

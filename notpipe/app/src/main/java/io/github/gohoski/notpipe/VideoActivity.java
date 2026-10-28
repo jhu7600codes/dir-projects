@@ -1404,43 +1404,7 @@ public class VideoActivity extends Activity {
 
     /** Opens a comment's replies (Invidious only, other APIs don't give a reply token) */
     private void showReplies(final Comment comment) {
-        if (comment.repliesToken == null) return;
-        Toast.makeText(context, R.string.loading_replies, Toast.LENGTH_SHORT).show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                List<Comment> loaded = null;
-                try {
-                    loaded = Manager.getInstance().getCommentReplies(videoId, comment.repliesToken);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                final List<Comment> replies = loaded;
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isFinishing()) return;
-                        if (replies == null || replies.isEmpty()) {
-                            Toast.makeText(context, R.string.load_failed, Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = 0; i < replies.size(); i++) {
-                            Comment r = replies.get(i);
-                            if (i > 0) sb.append("\n\n");
-                            sb.append(r.channel).append(": ").append(r.content);
-                        }
-                        TextView text = new TextView(context);
-                        text.setText(sb.toString());
-                        text.setPadding(15, 15, 15, 15);
-                        ScrollView scroll = new ScrollView(context);
-                        scroll.addView(text);
-                        new AlertDialog.Builder(context).setTitle(comment.channel).setView(scroll)
-                                .setPositiveButton(android.R.string.ok, null).show();
-                    }
-                });
-            }
-        }).start();
+        io.github.gohoski.notpipe.ui.CommentsDialog.showReplies(this, videoId, comment);
     }
 
     private void setupClickListeners() {
@@ -2091,6 +2055,17 @@ public class VideoActivity extends Activity {
         } else if (itemId == R.id.action_player_settings) {
             showPlayerSettings();
             return true;
+        } else if (itemId == R.id.action_add_comment) {
+            final View composer = io.github.gohoski.notpipe.ui.CommentsDialog.composer(this, videoId,
+                    new io.github.gohoski.notpipe.ui.CommentsDialog.OnPosted() {
+                        public void onPosted(Comment comment) {
+                            comments.add(0, comment);
+                            commentsAdapter.notifyDataSetChanged();
+                        }
+                    });
+            new AlertDialog.Builder(this).setTitle(R.string.add_comment).setView(composer)
+                    .setPositiveButton(android.R.string.cancel, null).show();
+            return true;
         } else if (itemId == R.id.action_chapters) {
             showChapters();
             return true;
@@ -2147,6 +2122,7 @@ public class VideoActivity extends Activity {
                 public void onPip() { enterPip(); }
                 public void onMore() { openOptionsMenu(); }
                 public void onNext() { playNext(true); }
+                public void onPrevious() { playPrevious(); }
                 public boolean isFullscreen() { return isFullscreenMode; }
             });
         }
@@ -2365,6 +2341,22 @@ public class VideoActivity extends Activity {
     }
 
     /** Autoplay: opens the first related video that isn't in the watch history yet */
+    /** Videos left by next/autoplay in this session, so "previous" can go back to them */
+    private static final List<String> SESSION_HISTORY = new ArrayList<String>();
+
+    /** Back to the video before next/autoplay; restarts the current one if there's none (like YouTube) */
+    private void playPrevious() {
+        if (SESSION_HISTORY.isEmpty()) {
+            if (videoPrepared) videoView.seekTo(0);
+            return;
+        }
+        String previous = SESSION_HISTORY.remove(SESSION_HISTORY.size() - 1);
+        Intent intent = new Intent(this, VideoActivity.class);
+        intent.putExtra("ID", previous);
+        startActivity(intent);
+        finish();
+    }
+
     private void playNextIfAutoplay() {
         playNext(false);
     }
@@ -2382,6 +2374,8 @@ public class VideoActivity extends Activity {
             if (!watched) { next = relatedVideos.get(i); break; }
         }
         Toast.makeText(context, getString(R.string.up_next, next.title), Toast.LENGTH_SHORT).show();
+        SESSION_HISTORY.add(videoId);
+        if (SESSION_HISTORY.size() > 50) SESSION_HISTORY.remove(0);
         Intent intent = new Intent(this, VideoActivity.class);
         intent.putExtra("ID", next.id);
         startActivity(intent);

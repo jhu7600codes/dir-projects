@@ -25,7 +25,7 @@ import io.github.gohoski.notpipe.R;
 /**
  * Created by Claude on 28.10.2026.
  * YouTube-style controls drawn over the video instead of the stock MediaController:
- * big play/pause with ±10 s and next, a seek bar with times, quick buttons (speed, subtitles, quality, PiP, more)
+ * previous / play-pause / next in the middle (±10 s on double-tap), a seek bar with times, quick buttons (speed, subtitles, quality, PiP, more)
  * and gestures: tap shows/hides, double-tap seeks, vertical swipes change brightness (left) and volume (right).
  */
 
@@ -38,6 +38,7 @@ public class PlayerControls {
         void onPip();
         void onMore();
         void onNext();
+        void onPrevious();
         boolean isFullscreen();
     }
 
@@ -95,8 +96,8 @@ public class PlayerControls {
         // Center: previous 10 s, play/pause, next 10 s
         LinearLayout center = new LinearLayout(activity);
         center.setGravity(Gravity.CENTER);
-        center.addView(icon(R.drawable.pl_rew, 40, new View.OnClickListener() {
-            public void onClick(View v) { seekBy(-SEEK_STEP); }
+        center.addView(icon(R.drawable.pl_prev, 40, new View.OnClickListener() {
+            public void onClick(View v) { host().onPrevious(); }
         }));
         playPause = icon(R.drawable.pl_pause, 64, new View.OnClickListener() {
             public void onClick(View v) { togglePlay(); }
@@ -104,8 +105,8 @@ public class PlayerControls {
         LinearLayout.LayoutParams bigParams = new LinearLayout.LayoutParams(dp(64), dp(64));
         bigParams.leftMargin = bigParams.rightMargin = dp(36);
         center.addView(playPause, bigParams);
-        center.addView(icon(R.drawable.pl_ff, 40, new View.OnClickListener() {
-            public void onClick(View v) { seekBy(SEEK_STEP); }
+        center.addView(icon(R.drawable.pl_next, 40, new View.OnClickListener() {
+            public void onClick(View v) { host().onNext(); }
         }));
         overlay.addView(center, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT));
@@ -162,9 +163,6 @@ public class PlayerControls {
         bottom.addView(seekBar, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         duration = timeText();
         bottom.addView(duration);
-        bottom.addView(icon(R.drawable.pl_next, 30, new View.OnClickListener() {
-            public void onClick(View v) { host().onNext(); }
-        }));
         bottom.addView(icon(R.drawable.pl_fullscreen, 30, new View.OnClickListener() {
             public void onClick(View v) { host().onToggleFullscreen(); scheduleHide(); }
         }));

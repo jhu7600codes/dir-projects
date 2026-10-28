@@ -41,12 +41,14 @@ import io.github.gohoski.notpipe.config.ConfigManager;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.ui.AutoCompleteAdapter;
 import io.github.gohoski.notpipe.ui.NavBar;
+import io.github.gohoski.notpipe.ui.ShortsShelf;
 import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.Compat;
 import io.github.gohoski.notpipe.util.Feeds;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.InstancesUpdater;
+import io.github.gohoski.notpipe.util.LocalLibrary;
 
 public class MainActivity extends Activity implements InstancesUpdater.OnInstancesUpdatedListener {
     private static final String STATE_SEARCH_QUERY = "search_query";
@@ -63,6 +65,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
     private AutoCompleteAdapter autoCompleteAdapter;
     private Config config = ConfigManager.getInstance().getConfig();
     private boolean isSearchMode = false;
+    private ShortsShelf shortsShelf;
     private boolean isDestroyedFlag = false;
     /** 0 = videos, 1 = channels, 2 = playlists */
     private int searchType = 0;
@@ -104,6 +107,11 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
         NavBar.attach(this, NavBar.HOME);
 
         listView = (AbsListView) findViewById(R.id.videos);
+        if (listView instanceof ListView) {
+            // Header views have to be added before the adapter on old Android
+            shortsShelf = new ShortsShelf(this);
+            ((ListView) listView).addHeaderView(shortsShelf.getView(), null, false);
+        }
         searchQuery = (AutoCompleteTextView) findViewById(R.id.search_query);
         final ImageButton searchBtn = (ImageButton) findViewById(R.id.search_btn);
         final ProgressBar loading = (ProgressBar) findViewById(R.id.loading);
@@ -145,7 +153,8 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if (videos == null || position >= videos.size()) return false;
+                if (listView instanceof ListView) position -= ((ListView) listView).getHeaderViewsCount();
+                if (videos == null || position < 0 || position >= videos.size()) return false;
                 VideoActions.showItemMenu(MainActivity.this, videos, position);
                 return true;
             }
@@ -225,6 +234,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                     }
                     searchQuery.dismissDropDown();
                     autoCompleteAdapter.setSearchActive(true);
+                    LocalLibrary.getInstance().addSearch(query);
                     isSearchMode = true;
                     noPopular.setVisibility(View.GONE);
                     loading.setVisibility(View.VISIBLE);
@@ -257,11 +267,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             noPopular.setVisibility(View.GONE);
 
             int layout;
-            if (listView instanceof GridView || isSearchMode) {
-                layout = R.layout.item_video;
-            } else {
-                layout = R.layout.item_video_compact;
-            }
+            layout = R.layout.item_video;
 
             adapter = new VideoAdapter(this, layout, videos);
             setAdapterForView(listView, adapter);
@@ -514,6 +520,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
 
         @Override
         protected void onPostExecute(SearchResult result) {
+            if (shortsShelf != null) shortsShelf.hide();
             if (isDestroyedFlag) return;
             View loadingView = findViewById(R.id.loading);
             if (loadingView != null) loadingView.setVisibility(View.GONE);
@@ -524,6 +531,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             } else if (result.videos != null) {
                 videos = result.videos;
                 adapter = new VideoAdapter(MainActivity.this, searchType == 0 ? R.layout.item_video : R.layout.item_video_compact, videos);
+                adapter.enableChannelIconFallback();
                 if (listView != null) {
                     setAdapterForView(listView, adapter);
                 }
@@ -591,6 +599,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
 
         @Override
         protected void onPostExecute(PopularResult result) {
+            if (!isDestroyedFlag && shortsShelf != null) shortsShelf.show();
             if (isDestroyedFlag) return;
             View loadingView = findViewById(R.id.loading);
             if (loadingView != null) loadingView.setVisibility(View.GONE);
@@ -605,9 +614,8 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             } else {
                 if (noPopularView != null) noPopularView.setVisibility(View.GONE);
                 videos = result.videos;
-                String channelThumbnail = result.videos.get(0).channelThumbnail;
-                int layout = channelThumbnail != null && channelThumbnail.length() > 0 ? R.layout.item_video : R.layout.item_video_compact;
-                adapter = new VideoAdapter(context, layout, videos);
+                adapter = new VideoAdapter(context, R.layout.item_video, videos);
+                adapter.enableChannelIconFallback();
                 if (listView != null) {
                     setAdapterForView(listView, adapter);
                 }

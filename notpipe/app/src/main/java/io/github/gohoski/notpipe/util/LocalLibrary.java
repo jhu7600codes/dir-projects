@@ -217,6 +217,33 @@ public class LocalLibrary {
         return p == null ? new ArrayList<VideoInfo>() : toVideos(p.getArray("videos"));
     }
 
+    /* ---------- Search history ---------- */
+
+    private static final int MAX_SEARCHES = 50;
+
+    public synchronized void addSearch(String query) {
+        JSONArray searches = load("searches");
+        JSONArray updated = new JSONArray();
+        updated.add(query);
+        for (int i = 0; i < searches.size() && updated.size() < MAX_SEARCHES; i++) {
+            String s = searches.getString(i, "");
+            if (!s.equalsIgnoreCase(query)) updated.add(s);
+        }
+        save("searches", updated);
+    }
+
+    /** Recent searches starting with the typed text, newest first */
+    public synchronized List<String> findSearches(String prefix) {
+        List<String> result = new ArrayList<String>();
+        JSONArray searches = load("searches");
+        String lower = prefix.toLowerCase();
+        for (int i = 0; i < searches.size(); i++) {
+            String s = searches.getString(i, "");
+            if (s.toLowerCase().startsWith(lower) && !s.equalsIgnoreCase(prefix)) result.add(s);
+        }
+        return result;
+    }
+
     /* ---------- Watch history ---------- */
 
     /** Moves the video to the top of the history (newest first) */

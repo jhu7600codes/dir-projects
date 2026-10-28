@@ -47,6 +47,12 @@ import io.github.gohoski.notpipe.util.PlayerExtras;
 
 public class ShortsActivity extends Activity {
     public static final String EXTRA_CHANNEL = "channel";
+    /** Start at this Short (opened from the home feed's Shorts shelf) */
+    public static final String EXTRA_START_ID = "start_id";
+    public static final String EXTRA_START_TITLE = "start_title";
+    public static final String EXTRA_START_THUMBNAIL = "start_thumbnail";
+    public static final String EXTRA_START_CHANNEL = "start_channel";
+    public static final String EXTRA_START_CHANNEL_ID = "start_channel_id";
     private static final int MIN_FLING_DISTANCE = 80;
     private static final int MAX_RETRIES = 2;
 
@@ -165,6 +171,8 @@ public class ShortsActivity extends Activity {
                     VideoActions.like(ShortsActivity.this, video, true);
                 } else if (id == R.id.short_dislike) {
                     VideoActions.like(ShortsActivity.this, video, false);
+                } else if (id == R.id.short_comments) {
+                    io.github.gohoski.notpipe.ui.CommentsDialog.show(ShortsActivity.this, video.id);
                 } else if (id == R.id.short_share) {
                     VideoActions.share(ShortsActivity.this, video);
                 } else if (id == R.id.short_download) {
@@ -194,6 +202,7 @@ public class ShortsActivity extends Activity {
         findViewById(R.id.short_like).setOnClickListener(actions);
         findViewById(R.id.short_dislike).setOnClickListener(actions);
         findViewById(R.id.short_share).setOnClickListener(actions);
+        findViewById(R.id.short_comments).setOnClickListener(actions);
         findViewById(R.id.short_download).setOnClickListener(actions);
         findViewById(R.id.short_more).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -491,6 +500,19 @@ public class ShortsActivity extends Activity {
             }
             shorts.addAll(result);
             index = 0;
+            String startId = getIntent().getStringExtra(EXTRA_START_ID);
+            if (startId != null) {
+                VideoInfo start = null;
+                for (int i = 0; i < shorts.size(); i++) {
+                    if (startId.equals(shorts.get(i).id)) start = shorts.remove(i);
+                }
+                if (start == null) {
+                    Intent in = getIntent();
+                    start = new VideoInfo(startId, in.getStringExtra(EXTRA_START_TITLE), in.getStringExtra(EXTRA_START_THUMBNAIL),
+                            in.getStringExtra(EXTRA_START_CHANNEL), "", in.getStringExtra(EXTRA_START_CHANNEL_ID), "", -1, null);
+                }
+                shorts.add(0, start);
+            }
             playCurrent();
         }
     }

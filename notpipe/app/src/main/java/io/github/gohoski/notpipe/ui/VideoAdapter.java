@@ -49,6 +49,29 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
         this.iconListener = listener;
     }
 
+    /**
+     * Looks up missing channel icons through ChannelIconResolver (lists that only know the channel ID).
+     */
+    public void enableChannelIconFallback() {
+        iconListener = new ChannelIconListener() {
+            @Override
+            public String getResolvedIcon(String channelId) {
+                return io.github.gohoski.notpipe.util.ChannelIconResolver.getResolved(channelId);
+            }
+
+            @Override
+            public void onRequestFallbackIcon(String channelId) {
+                io.github.gohoski.notpipe.util.ChannelIconResolver.requestFallback(channelId,
+                        new io.github.gohoski.notpipe.util.ChannelIconResolver.OnIconResolvedListener() {
+                            @Override
+                            public void onIconResolved(String channelId, String url) {
+                                if (url != null && url.length() > 0) notifyDataSetChanged();
+                            }
+                        });
+            }
+        };
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
@@ -65,6 +88,7 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
             holder.videoThumb = (ImageView) row.findViewById(R.id.video_thumbnail);
             holder.channelThumb = (ImageView) row.findViewById(R.id.channel_thumbnail);
             holder.duration = (TextView) row.findViewById(R.id.duration);
+            holder.watchProgress = (android.widget.ProgressBar) row.findViewById(R.id.watch_progress);
             row.setTag(holder);
         } else {
             holder = (ViewHolder) row.getTag();
@@ -108,6 +132,18 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
                 holder.duration.setVisibility(View.VISIBLE);
             } else {
                 holder.duration.setVisibility(View.GONE);
+            }
+        }
+
+        // Red "already watched" bar along the thumbnail, from the saved resume position
+        if (holder.watchProgress != null) {
+            int resume = io.github.gohoski.notpipe.util.PlayerExtras.getResumePosition(video.id);
+            int seconds = io.github.gohoski.notpipe.util.Feeds.parseDuration(video.duration);
+            if (resume > 0 && seconds > 0) {
+                holder.watchProgress.setProgress((int) Math.min(1000, resume / (long) seconds));
+                holder.watchProgress.setVisibility(View.VISIBLE);
+            } else {
+                holder.watchProgress.setVisibility(View.GONE);
             }
         }
 
@@ -205,6 +241,7 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
         TextView videoTitle;
         TextView channelTitle;
         TextView duration;
+        android.widget.ProgressBar watchProgress;
         ImageView videoThumb;
         ImageView channelThumb;
         VideoInfo video;

@@ -313,4 +313,9 @@
     <string name="sleep_cancelled">Sleep timer off</string>
     <string name="subscribed_short">Subscribed</string>
     <string name="shorts_quality">Shorts quality</string>
+    <string name="sign_in_to_comment">Sign in via yt2009 in the Library to comment</string>
+    <string name="add_comment">Add a comment…</string>
+    <string name="send">Send</string>
+    <string name="comment_posted">Comment posted</string>
+    <string name="you">You</string>
 </resources>

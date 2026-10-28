@@ -94,6 +94,31 @@
                 android:text="@string/dislike"/>
         </LinearLayout>
         <LinearLayout
+            android:id="@+id/short_comments"
+            android:layout_width="64dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="@drawable/tv_focus">
+            <ImageView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_comment"/>
+            <TextView
+                android:id="@+id/short_comments_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFFFF"
+                android:textSize="12sp"
+                android:shadowColor="#FF000000"
+                android:shadowRadius="3"
+                android:text="@string/comments"/>
+        </LinearLayout>
+        <LinearLayout
             android:id="@+id/short_share"
             android:layout_width="64dp"
             android:layout_height="wrap_content"

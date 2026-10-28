@@ -61,6 +61,10 @@ public class CommentAdapter extends ArrayAdapter<Comment> {
 
         // Reset thumbnail to prevent recycled view artifacts
         holder.channelThumb.setImageBitmap(null);
+        if (!(parent instanceof AdapterLinearLayout) && comment.channelThumbnail != null && comment.channelThumbnail.length() > 0) {
+            ImageLoader.loadImage(comment.channelThumbnail, holder.channelThumb);
+            holder.imagesLoaded = true;
+        }
 
         return row;
     }

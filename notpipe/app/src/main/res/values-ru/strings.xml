@@ -336,4 +336,9 @@
     <string name="sleep_cancelled">Таймер сна выключен</string>
     <string name="subscribed_short">Вы подписаны</string>
     <string name="shorts_quality">Качество Shorts</string>
+    <string name="sign_in_to_comment">Войдите через yt2009 в Библиотеке, чтобы комментировать</string>
+    <string name="add_comment">Оставить комментарий…</string>
+    <string name="send">Отправить</string>
+    <string name="comment_posted">Комментарий отправлен</string>
+    <string name="you">Вы</string>
 </resources>

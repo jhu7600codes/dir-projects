@@ -247,6 +247,12 @@ public class Yt2009Account {
                 + (isPrivate ? "<yt:private/>" : "") + "</entry>", ATOM);
     }
 
+    /** Posts a comment as the signed-in channel */
+    public void postComment(String videoId, String text) throws IOException {
+        String escaped = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        post("/feeds/api/videos/" + videoId + "/comments", "<entry><content>" + escaped + "</content></entry>", ATOM);
+    }
+
     /** @param like true = like, false = dislike */
     public void rate(String videoId, boolean like) throws IOException {
         post("/feeds/api/videos/" + videoId + "/ratings",
@@ -378,7 +384,7 @@ public class Yt2009Account {
     private HttpURLConnection open(String endpoint, String method, int timeout) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(getInstanceUrl() + endpoint).openConnection();
         connection.setRequestMethod(method);
-        connection.setConnectTimeout(9999);
+        connection.setConnectTimeout(HttpClient.CONNECT_TIMEOUT);
         connection.setReadTimeout(timeout);
         connection.setInstanceFollowRedirects(false);
         connection.setRequestProperty("User-Agent", HttpClient.USER_AGENT);

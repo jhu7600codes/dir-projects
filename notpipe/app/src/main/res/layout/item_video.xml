@@ -27,14 +27,26 @@
             android:visibility="gone"
             tools:visibility="visible"
             tools:text="00:00"/>
+        <ProgressBar
+            android:id="@+id/watch_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="3dp"
+            android:layout_gravity="bottom"
+            android:max="1000"
+            android:progressDrawable="@drawable/short_progress"
+            android:visibility="gone"/>
     </FrameLayout>
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="5dip"
-        android:gravity="center_vertical">
+        android:paddingLeft="12dip"
+        android:paddingRight="12dip"
+        android:paddingTop="10dip"
+        android:paddingBottom="18dip"
+        android:gravity="top">
         <ImageView
             android:id="@+id/channel_thumbnail"
             android:layout_width="40dip"
