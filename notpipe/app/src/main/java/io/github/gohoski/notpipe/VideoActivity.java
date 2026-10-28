@@ -2129,6 +2129,8 @@ public class VideoActivity extends Activity {
                 public void onNext() { playNext(true); }
                 public void onPrevious() { playPrevious(); }
                 public boolean isFullscreen() { return isFullscreenMode; }
+                public List<VideoInfo> getRelatedVideos() { return relatedVideos; }
+                public void onOpenRelated(VideoInfo item) { openFromPlayer(item); }
             });
         }
         if (videoFrame != null) {
@@ -2398,6 +2400,16 @@ public class VideoActivity extends Activity {
 
     private void playNextIfAutoplay() {
         playNext(false);
+    }
+
+    /** Opens a video picked in the player's "More videos" row, keeping it in the session history */
+    private void openFromPlayer(VideoInfo item) {
+        SESSION_HISTORY.add(videoId);
+        if (SESSION_HISTORY.size() > 50) SESSION_HISTORY.remove(0);
+        Intent intent = new Intent(this, VideoActivity.class);
+        intent.putExtra("ID", item.id);
+        startActivity(intent);
+        finish();
     }
 
     /** @param force true when the user pressed "next", false for autoplay */

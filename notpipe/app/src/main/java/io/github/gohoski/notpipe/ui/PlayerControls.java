@@ -14,13 +14,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import java.util.List;
+
 import io.github.gohoski.notpipe.R;
+import io.github.gohoski.notpipe.data.VideoInfo;
+import io.github.gohoski.notpipe.util.ImageLoader;
 
 /**
  * Created by Claude on 28.10.2026.
@@ -40,6 +45,9 @@ public class PlayerControls {
         void onNext();
         void onPrevious();
         boolean isFullscreen();
+        /** @return related videos for the "More videos" row */
+        List<VideoInfo> getRelatedVideos();
+        void onOpenRelated(VideoInfo video);
     }
 
     private static final int HIDE_DELAY = 3500;
@@ -53,6 +61,8 @@ public class PlayerControls {
     private final SeekBar seekBar;
     private final TextView position, duration, speedButton, qualityButton, gestureLabel;
     private final Handler handler = new Handler();
+    private final TextView moreVideosButton;
+    private final LinearLayout moreVideos, moreRow;
     private final GestureDetector gestures;
     private final AudioManager audio;
     private boolean enabled = false;
@@ -163,6 +173,12 @@ public class PlayerControls {
         bottom.addView(seekBar, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         duration = timeText();
         bottom.addView(duration);
+        moreVideosButton = textButton(activity.getString(R.string.more_videos), new View.OnClickListener() {
+            public void onClick(View v) { showMoreVideos(); }
+        });
+        moreVideosButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.pl_more_videos, 0, 0, 0);
+        moreVideosButton.setCompoundDrawablePadding(dp(6));
+        bottom.addView(moreVideosButton);
         bottom.addView(icon(R.drawable.pl_fullscreen, 30, new View.OnClickListener() {
             public void onClick(View v) { host().onToggleFullscreen(); scheduleHide(); }
         }));
@@ -171,6 +187,29 @@ public class PlayerControls {
 
         frame.addView(overlay, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT));
+
+        // "More videos": related videos in a horizontal row over the bottom of the player
+        moreVideos = new LinearLayout(activity);
+        moreVideos.setOrientation(LinearLayout.VERTICAL);
+        moreVideos.setBackgroundColor(0xDD000000);
+        moreVideos.setPadding(0, dp(8), 0, dp(12));
+        moreVideos.setVisibility(View.GONE);
+        moreVideos.setClickable(true);
+        TextView moreTitle = new TextView(activity);
+        moreTitle.setText(R.string.more_videos);
+        moreTitle.setTextColor(Color.WHITE);
+        moreTitle.setTextSize(16);
+        moreTitle.setTypeface(null, Typeface.BOLD);
+        moreTitle.setPadding(dp(16), 0, dp(16), dp(8));
+        moreVideos.addView(moreTitle);
+        HorizontalScrollView moreScroll = new HorizontalScrollView(activity);
+        moreScroll.setHorizontalScrollBarEnabled(false);
+        moreRow = new LinearLayout(activity);
+        moreRow.setPadding(dp(12), 0, dp(12), 0);
+        moreScroll.addView(moreRow);
+        moreVideos.addView(moreScroll);
+        frame.addView(moreVideos, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
 
         // Feedback for gestures ("+10s", "Brightness 60%", …), shown even when the controls are hidden
         gestureLabel = new TextView(activity);
@@ -192,6 +231,10 @@ public class PlayerControls {
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
+                if (moreVideos.getVisibility() == View.VISIBLE) {
+                    moreVideos.setVisibility(View.GONE);
+                    return true;
+                }
                 if (overlay.getVisibility() == View.VISIBLE) hide(); else show();
                 return true;
             }
@@ -262,10 +305,58 @@ public class PlayerControls {
     public void show() {
         if (!enabled) return;
         updatePlayIcon();
+        moreVideosButton.setVisibility(host().isFullscreen() && !host().getRelatedVideos().isEmpty()
+                ? View.VISIBLE : View.GONE);
         overlay.setVisibility(View.VISIBLE);
         handler.removeCallbacks(progressRunnable);
         handler.post(progressRunnable);
         scheduleHide();
+    }
+
+    /** Fills and shows the "More videos" row; the controls hide so the video stays visible above it */
+    private void showMoreVideos() {
+        List<VideoInfo> related = host().getRelatedVideos();
+        moreRow.removeAllViews();
+        for (int i = 0; i < related.size() && i < 20; i++) moreRow.addView(moreVideosCard(related.get(i)));
+        hide();
+        moreVideos.setVisibility(View.VISIBLE);
+    }
+
+    private View moreVideosCard(final VideoInfo item) {
+        LinearLayout card = new LinearLayout(activity);
+        card.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(176), ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = params.rightMargin = dp(4);
+        card.setLayoutParams(params);
+        ImageView thumb = new ImageView(activity);
+        thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        thumb.setBackgroundColor(0xFF222222);
+        card.addView(thumb, new LinearLayout.LayoutParams(dp(176), dp(99)));
+        ImageLoader.loadImage(item.thumbnail, thumb, false);
+        TextView title = new TextView(activity);
+        title.setText(item.title);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(13);
+        title.setMaxLines(2);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        title.setPadding(0, dp(4), 0, 0);
+        card.addView(title);
+        card.setClickable(true);
+        card.setBackgroundResource(R.drawable.tv_focus);
+        card.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                moreVideos.setVisibility(View.GONE);
+                host().onOpenRelated(item);
+            }
+        });
+        return card;
+    }
+
+    /** @return true if the "More videos" row was open and is now closed */
+    public boolean closeMoreVideos() {
+        if (moreVideos.getVisibility() != View.VISIBLE) return false;
+        moreVideos.setVisibility(View.GONE);
+        return true;
     }
 
     public void hide() {
