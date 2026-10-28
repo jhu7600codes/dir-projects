@@ -392,6 +392,14 @@ public class Manager {
         return list;
     }
 
+    /**
+     * Lowers an instance that answered but then streamed too slowly to play,
+     * so the next stream request tries the others first.
+     */
+    public void reportSlowInstance(String host) {
+        if (host != null) addScore(host, -3);
+    }
+
     private int score(String host) {
         Integer s = scores.get(host);
         return s == null ? 0 : s;

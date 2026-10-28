@@ -142,8 +142,8 @@ public class VideoActivity extends Activity {
         }
     };
     private int watchtimeTicks = 0;
-    /** 400 ms ticks without progress before a stalled stream is reopened (12 s) */
-    private static final int STALL_TICKS = 30;
+    /** 400 ms ticks without progress before a stalled stream is reopened (6 s) */
+    private static final int STALL_TICKS = 15;
     private int stallTicks = 0;
     private int stallPosition = -1;
     private int stallRecoveries = 0;
@@ -2178,12 +2178,24 @@ public class VideoActivity extends Activity {
         stallRecoveries++;
         resetVideo();
         showVideoLoadingUI();
-        if (stallRecoveries <= 2) {
+        if (stallRecoveries <= 1) {
             videoUrl = url;
             videoPlaying = true;
             loadVideoUri(url);
         } else {
+            // Reopening didn't help: the instance itself is slow, so switch to another one
             stallRecoveries = 0;
+            String slowHost = videoStream != null ? videoStream.getHost() : null;
+            Manager.getInstance().reportSlowInstance(slowHost);
+            String quality = resolvedQuality != null ? resolvedQuality : config.getPreferredQuality();
+            videoStream = null;
+            for (int i = 0; i < 5 && slowHost != null; i++) {
+                VideoStream candidate = selectVideoStream(quality == null ? "360" : quality);
+                if (candidate == null || !slowHost.equals(candidate.getHost())) {
+                    videoStream = candidate;
+                    break;
+                }
+            }
             VideoCache.clearAll();
             resolveStreamTask = new ResolveStreamTask(null);
             resolveStreamTask.execute(videoId);
