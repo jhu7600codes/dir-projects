@@ -322,4 +322,5 @@
     <string name="saved_to_watch_later">Saved to Watch later</string>
     <string name="not_interested">Not interested</string>
     <string name="video_hidden">Video hidden from home</string>
+    <string name="search_youtube">Search YouTube</string>
 </resources>

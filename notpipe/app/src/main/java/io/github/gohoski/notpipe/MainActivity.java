@@ -114,6 +114,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
         }
         searchQuery = (AutoCompleteTextView) findViewById(R.id.search_query);
         final ImageButton searchBtn = (ImageButton) findViewById(R.id.search_btn);
+        ((View) searchQuery.getParent()).setVisibility(View.GONE);
         final ProgressBar loading = (ProgressBar) findViewById(R.id.loading);
         final LinearLayout noPopular = (LinearLayout) findViewById(R.id.no_popular);
         context = this;
@@ -236,6 +237,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                     autoCompleteAdapter.setSearchActive(true);
                     LocalLibrary.getInstance().addSearch(query);
                     isSearchMode = true;
+                    setTitle(query);
                     noPopular.setVisibility(View.GONE);
                     loading.setVisibility(View.VISIBLE);
                     View emptyView = findViewById(R.id.empty_videos);
@@ -272,6 +274,32 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             adapter = new VideoAdapter(this, layout, videos);
             setAdapterForView(listView, adapter);
         }
+        if (isSearchMode && searchQuery.getText().toString().trim().length() > 0) {
+            setTitle(searchQuery.getText().toString().trim());
+        }
+        handleSearchIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleSearchIntent(intent);
+    }
+
+    /** Runs the query sent back by the search page */
+    private void handleSearchIntent(Intent intent) {
+        String query = intent == null ? null : intent.getStringExtra(SearchActivity.EXTRA_QUERY);
+        if (query == null || query.length() == 0) return;
+        intent.removeExtra(SearchActivity.EXTRA_QUERY);
+        searchQuery.setText(query);
+        searchQuery.dismissDropDown();
+        findViewById(R.id.search_btn).performClick();
+    }
+
+    @Override
+    public boolean onSearchRequested() {
+        SearchActivity.open(this, isSearchMode ? searchQuery.getText().toString() : null);
+        return true;
     }
 
     private String extractYouTubeId(String query) {
@@ -322,6 +350,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             if (isSearchMode) {
                 isSearchMode = false;
                 searchQuery.setText("");
+                setTitle(R.string.app_name);
                 findViewById(R.id.no_popular).setVisibility(View.GONE);
                 findViewById(R.id.loading).setVisibility(View.VISIBLE);
                 View emptyView = findViewById(R.id.empty_videos);
@@ -409,7 +438,10 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menu_search_filter) {
+        if (item.getItemId() == R.id.menu_search) {
+            onSearchRequested();
+            return true;
+        } else if (item.getItemId() == R.id.menu_search_filter) {
             new android.app.AlertDialog.Builder(this).setTitle(R.string.search_filter)
                     .setSingleChoiceItems(new String[]{getString(R.string.videos), getString(R.string.channels), getString(R.string.playlists)},
                             searchType, new android.content.DialogInterface.OnClickListener() {

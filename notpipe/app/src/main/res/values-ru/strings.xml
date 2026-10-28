@@ -345,4 +345,5 @@
     <string name="saved_to_watch_later">Добавлено в «Смотреть позже»</string>
     <string name="not_interested">Не интересует</string>
     <string name="video_hidden">Видео скрыто с главной</string>
+    <string name="search_youtube">Поиск на YouTube</string>
 </resources>
