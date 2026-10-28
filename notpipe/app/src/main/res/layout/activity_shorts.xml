@@ -170,6 +170,16 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- Thin YouTube-style progress line along the bottom of the Short -->
+    <ProgressBar
+        android:id="@+id/short_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="3dp"
+        android:layout_gravity="bottom"
+        android:max="1000"
+        android:progressDrawable="@drawable/short_progress"/>
+
     <LinearLayout
         android:id="@+id/short_info"
         android:layout_width="fill_parent"

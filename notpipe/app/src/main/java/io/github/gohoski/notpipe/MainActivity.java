@@ -142,6 +142,14 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                 VideoActions.openItem(MainActivity.this, (VideoInfo) parent.getItemAtPosition(position));
             }
         });
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if (videos == null || position >= videos.size()) return false;
+                VideoActions.showItemMenu(MainActivity.this, videos, position);
+                return true;
+            }
+        });
 
         autoCompleteAdapter = new AutoCompleteAdapter(this);
         autoCompleteAdapter.setOnSuggestionsLoadedListener(new AutoCompleteAdapter.OnSuggestionsLoadedListener() {

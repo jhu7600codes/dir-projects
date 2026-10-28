@@ -51,6 +51,14 @@ public class PlayerExtras {
         prefs().edit().putBoolean(key, enabled).commit();
     }
 
+    public static String getShortsQuality() {
+        return prefs().getString("shorts_quality", "360");
+    }
+
+    public static void setShortsQuality(String quality) {
+        prefs().edit().putString("shorts_quality", quality).commit();
+    }
+
     public static float getSpeed() {
         return prefs().getFloat(KEY_SPEED, 1f);
     }

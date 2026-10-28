@@ -335,4 +335,5 @@
     <string name="sleep_set">Воспроизведение остановится через %d мин</string>
     <string name="sleep_cancelled">Таймер сна выключен</string>
     <string name="subscribed_short">Вы подписаны</string>
+    <string name="shorts_quality">Качество Shorts</string>
 </resources>

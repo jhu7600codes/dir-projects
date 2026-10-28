@@ -312,4 +312,5 @@
     <string name="sleep_set">Stopping playback in %d min</string>
     <string name="sleep_cancelled">Sleep timer off</string>
     <string name="subscribed_short">Subscribed</string>
+    <string name="shorts_quality">Shorts quality</string>
 </resources>

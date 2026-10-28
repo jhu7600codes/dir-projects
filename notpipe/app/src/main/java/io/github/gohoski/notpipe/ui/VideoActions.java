@@ -109,6 +109,40 @@ public class VideoActions {
     }
 
     /**
+     * Long-press menu for a video in any list.
+     */
+    public static void showItemMenu(final Activity activity, final List<VideoInfo> list, final int position) {
+        final VideoInfo video = list.get(position);
+        if (video.id.contains(":")) return;
+        final boolean hasChannel = video.channelId != null && video.channelId.length() > 0;
+        String[] items = hasChannel
+                ? new String[]{activity.getString(R.string.play_audio_from_here), activity.getString(R.string.download),
+                activity.getString(R.string.add_to_playlist), activity.getString(R.string.share), activity.getString(R.string.channel)}
+                : new String[]{activity.getString(R.string.play_audio_from_here), activity.getString(R.string.download),
+                activity.getString(R.string.add_to_playlist), activity.getString(R.string.share)};
+        new AlertDialog.Builder(activity).setTitle(video.title)
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            io.github.gohoski.notpipe.MusicService.play(activity, list, position);
+                            Toast.makeText(activity, R.string.playing_in_background, Toast.LENGTH_SHORT).show();
+                        } else if (which == 1) {
+                            showDownloadDialog(activity, video);
+                        } else if (which == 2) {
+                            showAddToPlaylistDialog(activity, video);
+                        } else if (which == 3) {
+                            share(activity, video);
+                        } else {
+                            android.content.Intent intent = new android.content.Intent(activity, io.github.gohoski.notpipe.ChannelActivity.class);
+                            intent.putExtra("ID", video.channelId);
+                            activity.startActivity(intent);
+                        }
+                    }
+                }).show();
+    }
+
+    /**
      * Like: always saved to the local "Liked videos" playlist, and sent to YouTube too when signed in.
      * Dislike only exists on YouTube, so it needs the account.
      */

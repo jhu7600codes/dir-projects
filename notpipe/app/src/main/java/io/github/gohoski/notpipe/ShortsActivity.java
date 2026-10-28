@@ -37,6 +37,7 @@ import io.github.gohoski.notpipe.util.ChannelIconResolver;
 import io.github.gohoski.notpipe.util.Feeds;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.LocalLibrary;
+import io.github.gohoski.notpipe.util.PlayerExtras;
 
 /**
  * Created by Claude on 25.10.2026.
@@ -61,6 +62,20 @@ public class ShortsActivity extends Activity {
     private boolean isDestroyedFlag = false;
     private int requestToken = 0;
     private int retries = 0;
+    private final Runnable progressTicker = new Runnable() {
+        @Override
+        public void run() {
+            if (isDestroyedFlag || !prepared) return;
+            try {
+                int duration = videoView.getDuration();
+                if (duration > 0) {
+                    ((android.widget.ProgressBar) findViewById(R.id.short_progress))
+                            .setProgress((int) (1000L * videoView.getCurrentPosition() / duration));
+                }
+            } catch (Exception ignored) {}
+            handler.postDelayed(this, 250);
+        }
+    };
     private final java.util.Map<String, String> prefetched =
             java.util.Collections.synchronizedMap(new java.util.HashMap<String, String>());
 
@@ -82,6 +97,8 @@ public class ShortsActivity extends Activity {
             public void onPrepared(MediaPlayer mp) {
                 prepared = true;
                 fitVideo(mp.getVideoWidth(), mp.getVideoHeight());
+                handler.removeCallbacks(progressTicker);
+                handler.post(progressTicker);
                 mp.setLooping(true);
                 findViewById(R.id.short_loading).setVisibility(View.GONE);
                 thumbnail.setVisibility(View.GONE);
@@ -111,8 +128,15 @@ public class ShortsActivity extends Activity {
             }
 
             @Override
-            public boolean onSingleTapUp(MotionEvent e) {
+            public boolean onSingleTapConfirmed(MotionEvent e) {
                 togglePause();
+                return true;
+            }
+
+            /** Double-tap likes, like on YouTube */
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                if (!shorts.isEmpty()) VideoActions.like(ShortsActivity.this, shorts.get(index), true);
                 return true;
             }
 
@@ -336,6 +360,15 @@ public class ShortsActivity extends Activity {
             }
             return Uri.fromFile(file).toString();
         }
+        String quality = PlayerExtras.getShortsQuality();
+        if (!"360".equals(quality)) {
+            // HD needs the server to prepare it; the next Short is resolved while this one plays, which hides most of it
+            try {
+                return manager.getVideoUrl(id, quality, HttpClient.CONVERSION_TIMEOUT);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return manager.getVideoUrl(id, "360", HttpClient.VIDEO_TIMEOUT);
     }
 
@@ -380,6 +413,23 @@ public class ShortsActivity extends Activity {
             Toast.makeText(this, R.string.playing_in_background, Toast.LENGTH_SHORT).show();
         } else if (id == R.id.action_download) {
             VideoActions.showDownloadDialog(this, video);
+        } else if (id == R.id.action_shorts_quality) {
+            final String[] values = {"360", "480", "720", "1080"};
+            String current = PlayerExtras.getShortsQuality();
+            int checked = 0;
+            for (int i = 0; i < values.length; i++) if (values[i].equals(current)) checked = i;
+            new android.app.AlertDialog.Builder(this).setTitle(R.string.shorts_quality)
+                    .setSingleChoiceItems(getResources().getStringArray(R.array.qualities), checked,
+                            new android.content.DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(android.content.DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                    PlayerExtras.setShortsQuality(values[which]);
+                                    prefetched.clear();
+                                    retries = 0;
+                                    playCurrent();
+                                }
+                            }).show();
         } else if (id == R.id.action_add_playlist) {
             VideoActions.showAddToPlaylistDialog(this, video);
         } else {

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/action_shorts_quality"
+        android:title="@string/shorts_quality"
+        android:icon="@android:drawable/ic_menu_preferences"/>
+    <item
         android:id="@+id/action_open_video"
         android:title="@string/open_video"
         android:icon="@android:drawable/ic_menu_view"/>

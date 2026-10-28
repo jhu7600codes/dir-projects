@@ -122,6 +122,10 @@ public class VideoActivity extends Activity {
 
     private int videoBufferTimeout = 60000;
     private boolean watchStarted = false;
+    private volatile String hqUrl;
+    private VideoStream hqInstance;
+    private boolean hqResolving = false;
+    private boolean waitingForHq = false;
     private MediaPlayer mediaPlayer;
     private List<int[]> sponsorSegments = new ArrayList<int[]>();
     private List<PlayerExtras.Caption> captions;
@@ -502,6 +506,20 @@ public class VideoActivity extends Activity {
             public void run() {
                 final String runQuality = resolvedQuality != null ? resolvedQuality : "360";
                 updateProgressMessage(runQuality);
+                if (canPrefetchHq() && !VideoCache.hasValidStream(videoId, runQuality)) {
+                    if (hqUrl != null) {
+                        videoStream = hqInstance;
+                        isUsingMetadataUrl = false;
+                        videoUrl = hqUrl;
+                        proceedPlay(hqUrl);
+                        return;
+                    }
+                    if (hqResolving) {
+                        // The HD request started when the page opened; wait for it instead of starting a second one
+                        waitingForHq = true;
+                        return;
+                    }
+                }
                 if (VideoCache.hasValidStream(videoId, runQuality)) {
                     videoUrl = VideoCache.getStreamUrl();
                     videoStream = VideoCache.getVideoStreamInstance();
@@ -1975,7 +1993,63 @@ public class VideoActivity extends Activity {
         }
 
         loadRelatedVideos();
+        startHqPrefetch();
     }
+
+    /* ---------- Fast HD: yt2009/YtAPILegacy prepare 480p+ on the server, so that starts as soon as the page opens ---------- */
+
+    private boolean canPrefetchHq() {
+        return resolvedQuality != null && !"360".equals(resolvedQuality) && !config.isConvertVideos()
+                && config.isStreamPlayback() && !config.isUseExternalPlayer();
+    }
+
+    private void startHqPrefetch() {
+        if (!canPrefetchHq() || hqResolving || hqUrl != null || VideoCache.hasValidStream(videoId, resolvedQuality)) return;
+        hqResolving = true;
+        final String id = videoId, quality = resolvedQuality;
+        final int timeout = videoBufferTimeout;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String url = null;
+                final VideoStream[] winner = new VideoStream[1];
+                try {
+                    url = Manager.getInstance().getVideoUrl(id, quality, timeout, null, winner);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                final String resolved = url;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        hqResolving = false;
+                        if (isFinishing() || !id.equals(videoId)) return;
+                        boolean play = waitingForHq;
+                        waitingForHq = false;
+                        if (resolved == null) {
+                            // Let the normal path handle it (it falls back to 360p with its usual message)
+                            if (play) {
+                                isUsingMetadataUrl = false;
+                                resolveStreamTask = new ResolveStreamTask(null, quality);
+                                resolveStreamTask.execute(id, quality);
+                            }
+                            return;
+                        }
+                        hqUrl = resolved;
+                        hqInstance = winner[0];
+                        VideoCache.putStream(id, resolved, quality, winner[0]);
+                        if (play) {
+                            videoStream = hqInstance;
+                            isUsingMetadataUrl = false;
+                            videoUrl = resolved;
+                            proceedPlay(resolved);
+                        }
+                    }
+                });
+            }
+        }).start();
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
