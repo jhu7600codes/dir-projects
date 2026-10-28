@@ -132,7 +132,11 @@ public class CommentsDialog {
                     }
                 }, R.string.comment_posted);
                 if (listener != null) {
-                    listener.onPosted(new Comment(activity.getString(R.string.you), "", text, new Date(), ""));
+                    listener.onPosted(new Comment(io.github.gohoski.notpipe.api.Yt2009Account.getInstance().getProfileName() != null
+                            && io.github.gohoski.notpipe.api.Yt2009Account.getInstance().getProfileName().length() > 0
+                            ? io.github.gohoski.notpipe.api.Yt2009Account.getInstance().getProfileName()
+                            : activity.getString(R.string.you),
+                            io.github.gohoski.notpipe.api.Yt2009Account.getInstance().getProfileAvatar(), text, new Date(), ""));
                 }
             }
         });

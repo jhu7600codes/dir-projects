@@ -326,4 +326,7 @@
     <string name="basic_mode">Basic mode</string>
     <string name="basic_mode_desc">Hides technical stuff like instance lists, server names and "dead instance" popups</string>
     <string name="more_videos">More videos</string>
+    <string name="not_signed_in">Not signed in</string>
+    <string name="tap_to_sign_in">Tap to sign in with yt2009</string>
+    <string name="view_all">View all</string>
 </resources>

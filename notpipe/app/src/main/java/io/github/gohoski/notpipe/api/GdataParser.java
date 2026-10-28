@@ -73,10 +73,23 @@ final class GdataParser {
             String id = find(PLAYLIST_ID, entry);
             if (id == null) continue;
             String count = find(COUNT_HINT, entry);
-            playlists.add(new Playlist(id, unescape(find(TITLE, entry)), "", "",
+            String thumb = find(MEDIA_THUMB, entry);
+            if (thumb != null && thumb.startsWith("/")) thumb = baseUrl + thumb;
+            playlists.add(new Playlist(id, unescape(find(TITLE, entry)), "", thumb == null ? "" : thumb.replace("&amp;", "&"),
                     count == null ? -1 : Integer.parseInt(count), null));
         }
         return playlists;
+    }
+
+    private static final Pattern MEDIA_THUMB = Pattern.compile("<media:thumbnail[^>]*url=['\"]([^'\"]+)['\"]");
+    private static final Pattern AUTHOR_NAME = Pattern.compile("<author>\\s*<name>([^<]*)</name>");
+
+    /** @return {name, avatar url} of a user entry */
+    static String[] parseProfile(String baseUrl, String xml) {
+        String name = find(AUTHOR_NAME, xml);
+        String avatar = find(MEDIA_THUMB, xml);
+        if (avatar != null && avatar.startsWith("/")) avatar = baseUrl + avatar;
+        return new String[]{name == null ? "" : unescape(name).trim(), avatar == null ? "" : avatar.replace("&amp;", "&")};
     }
 
     static List<Channel> parseSubscriptions(String baseUrl, String xml) {

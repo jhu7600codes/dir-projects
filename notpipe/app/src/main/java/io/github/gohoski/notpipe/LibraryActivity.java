@@ -44,6 +44,7 @@ public class LibraryActivity extends Activity {
     private Context context;
     private final List<Row> rows = new ArrayList<Row>();
     private RowAdapter adapter;
+    private io.github.gohoski.notpipe.ui.LibraryShelves shelves;
     private boolean isDestroyedFlag = false;
 
     private static class Row {
@@ -68,31 +69,20 @@ public class LibraryActivity extends Activity {
         context = this;
 
         ListView list = (ListView) findViewById(R.id.list);
+        shelves = new io.github.gohoski.notpipe.ui.LibraryShelves(this, new io.github.gohoski.notpipe.ui.LibraryShelves.Listener() {
+            public void onSignIn() { showSignIn(); }
+            public void onNewPlaylist() { onRowClick(new Row(NEW_PLAYLIST, null, null, null)); }
+            public void onChanged() { buildRows(); }
+        });
+        // Header views have to be added before the adapter on old Android
+        list.addHeaderView(shelves.getView(), null, false);
         adapter = new RowAdapter();
         list.setAdapter(adapter);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                onRowClick(rows.get(position));
-            }
-        });
-        list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                final Row row = rows.get(position);
-                if (row.kind != PLAYLIST) return false;
-                new AlertDialog.Builder(context)
-                        .setTitle(row.data)
-                        .setMessage(R.string.delete_playlist_confirm)
-                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                LocalLibrary.getInstance().deletePlaylist(row.data);
-                                buildRows();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.cancel, null).show();
-                return true;
+                Object item = parent.getItemAtPosition(position);
+                if (item instanceof Row) onRowClick((Row) item);
             }
         });
     }
@@ -132,6 +122,7 @@ public class LibraryActivity extends Activity {
     }
 
     private void buildRows() {
+        shelves.refresh();
         rows.clear();
         LocalLibrary library = LocalLibrary.getInstance();
 
@@ -153,22 +144,12 @@ public class LibraryActivity extends Activity {
         rows.add(new Row(CHANNELS, getString(R.string.channels), null, null));
         rows.add(new Row(IMPORT_FILE, getString(R.string.import_file), getString(R.string.import_file_), null));
 
-        rows.add(new Row(HEADER, getString(R.string.playlists), null, null));
-        List<String> names = library.getPlaylistNames();
-        for (int i = 0; i < names.size(); i++) {
-            rows.add(new Row(PLAYLIST, names.get(i), getResources().getQuantityString(R.plurals.video_count_short, library.getPlaylistSize(names.get(i)), library.getPlaylistSize(names.get(i))), names.get(i)));
-        }
-        rows.add(new Row(NEW_PLAYLIST, getString(R.string.new_playlist), null, null));
-        rows.add(new Row(OPEN_PLAYLIST, getString(R.string.open_playlist), getString(R.string.open_playlist_), null));
-
         rows.add(new Row(HEADER, getString(R.string.on_this_device), null, null));
-        rows.add(new Row(HISTORY, getString(R.string.history), null, null));
         rows.add(new Row(DOWNLOADS, getString(R.string.downloads), null, null));
+        rows.add(new Row(OPEN_PLAYLIST, getString(R.string.open_playlist), getString(R.string.open_playlist_), null));
 
         rows.add(new Row(HEADER, getString(R.string.youtube_account), null, null));
         if (account.isSignedIn()) {
-            rows.add(new Row(WATCH_LATER, getString(R.string.watch_later), null, null));
-            rows.add(new Row(ACCOUNT_PLAYLISTS, getString(R.string.your_playlists), null, null));
             rows.add(new Row(UPLOADS, getString(R.string.your_videos), null, null));
             rows.add(new Row(UPLOAD, getString(R.string.upload_video), getString(R.string.upload_video_), null));
             rows.add(new Row(ACCOUNT_SUBS, getString(R.string.import_subscriptions), getString(R.string.import_subscriptions_), null));

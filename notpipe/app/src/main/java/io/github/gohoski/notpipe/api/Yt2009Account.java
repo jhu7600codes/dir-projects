@@ -39,6 +39,9 @@ public class Yt2009Account {
     private static final String KEY_DEVICE = "device";
     private static final String KEY_LINKED = "linked";
     private static final String KEY_TOKEN = "token";
+    private static final String KEY_CACHED_PLAYLISTS = "cached_playlists";
+    private static final String KEY_PROFILE_NAME = "profile_name";
+    private static final String KEY_PROFILE_AVATAR = "profile_avatar";
     private static final Pattern FLOW_TOKEN = Pattern.compile("name=\"flow-token\" value=\"([a-z]{24})\"");
     private static final Pattern UPLOADED_ID = Pattern.compile("(?:watch\\?v=|/vi/|video_id=)([a-zA-Z0-9_-]{11})");
     private static final String DEVICE_CHARS = "qwertyuiopasdfghjklzxcvbnm1234567890";
@@ -170,7 +173,7 @@ public class Yt2009Account {
 
     public List<VideoInfo> getRecommendations() throws IOException {
         List<VideoInfo> videos = GdataParser.parseVideos(getInstanceUrl(),
-                HttpClient.executeToString(authorized("/feeds/api/users/default/recommendations"), HttpClient.VIDEO_TIMEOUT));
+                get("/feeds/api/users/default/recommendations"));
         // yt2009 puts a fake "complete your sign in" entry here when the device isn't linked
         for (int i = videos.size() - 1; i >= 0; i--) {
             if ("12345678911".equals(videos.get(i).id)) videos.remove(i);
@@ -180,7 +183,7 @@ public class Yt2009Account {
 
     public List<VideoInfo> getWatchLater() throws IOException {
         return GdataParser.parseVideos(getInstanceUrl(),
-                HttpClient.executeToString(authorized("/feeds/api/users/default/watch_later"), HttpClient.VIDEO_TIMEOUT));
+                get("/feeds/api/users/default/watch_later"));
     }
 
     /**
@@ -188,7 +191,7 @@ public class Yt2009Account {
      */
     public List<Channel> getSubscriptions() throws IOException {
         try {
-            String json = HttpClient.executeToString(authorized("/pchelper_subs?format=localstorage"), HttpClient.VIDEO_TIMEOUT);
+            String json = get("/pchelper_subs?format=localstorage");
             cc.nnproject.json.JSONArray arr = cc.nnproject.json.JSON.getArray(json);
             List<Channel> channels = new java.util.ArrayList<Channel>();
             for (int i = 0; i < arr.size(); i++) {
@@ -202,17 +205,46 @@ public class Yt2009Account {
             e.printStackTrace();
         }
         return GdataParser.parseSubscriptions(getInstanceUrl(),
-                HttpClient.executeToString(authorized("/feeds/api/users/default/subscriptions"), HttpClient.VIDEO_TIMEOUT));
+                get("/feeds/api/users/default/subscriptions"));
     }
 
     public List<Playlist> getPlaylists() throws IOException {
-        return GdataParser.parsePlaylists(getInstanceUrl(),
-                HttpClient.executeToString(authorized("/feeds/api/users/default/playlists"), HttpClient.VIDEO_TIMEOUT));
+        String xml = get("/feeds/api/users/default/playlists");
+        prefs.edit().putString(KEY_CACHED_PLAYLISTS, xml).commit();
+        return GdataParser.parsePlaylists(getInstanceUrl(), xml);
+    }
+
+    /** Playlists from the last successful load, so the library can show them right away; empty if none */
+    public List<Playlist> getCachedPlaylists() {
+        String xml = prefs.getString(KEY_CACHED_PLAYLISTS, null);
+        if (xml == null || getInstanceUrl() == null) return new java.util.ArrayList<Playlist>();
+        return GdataParser.parsePlaylists(getInstanceUrl(), xml);
+    }
+
+    /**
+     * Loads the account's name and avatar and remembers them.
+     * @return {name, avatar url}
+     */
+    public String[] loadProfile() throws IOException {
+        String xml = get("/feeds/api/users/default");
+        String[] profile = GdataParser.parseProfile(getInstanceUrl(), xml);
+        prefs.edit().putString(KEY_PROFILE_NAME, profile[0]).putString(KEY_PROFILE_AVATAR, profile[1]).commit();
+        return profile;
+    }
+
+    /** @return the remembered account name, or null before the profile was loaded */
+    public String getProfileName() {
+        return prefs.getString(KEY_PROFILE_NAME, null);
+    }
+
+    /** @return the remembered avatar url, or "" */
+    public String getProfileAvatar() {
+        return prefs.getString(KEY_PROFILE_AVATAR, "");
     }
 
     /** Works for private playlists too since it's requested as the signed-in user */
     public Playlist getPlaylist(String id, String title) throws IOException {
-        String xml = HttpClient.executeToString(authorized("/feeds/api/users/you/playlists/" + id), HttpClient.VIDEO_TIMEOUT);
+        String xml = get("/feeds/api/users/you/playlists/" + id);
         List<VideoInfo> videos = GdataParser.parseVideos(getInstanceUrl(), xml);
         return new Playlist(id, title, "", videos.isEmpty() ? "" : videos.get(0).thumbnail, videos.size(), videos);
     }
@@ -220,7 +252,7 @@ public class Yt2009Account {
     /** Your own uploaded videos */
     public List<VideoInfo> getUploads() throws IOException {
         return GdataParser.parseVideos(getInstanceUrl(),
-                HttpClient.executeToString(authorized("/feeds/api/users/default/uploads"), HttpClient.VIDEO_TIMEOUT));
+                get("/feeds/api/users/default/uploads"));
     }
 
     /* ---------- Write actions (GData POSTs the old YouTube apps used) ---------- */
@@ -382,7 +414,11 @@ public class Yt2009Account {
     }
 
     private HttpURLConnection open(String endpoint, String method, int timeout) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(getInstanceUrl() + endpoint).openConnection();
+        return openUrl(getInstanceUrl() + endpoint, method, timeout);
+    }
+
+    private HttpURLConnection openUrl(String url, String method, int timeout) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestMethod(method);
         connection.setConnectTimeout(HttpClient.CONNECT_TIMEOUT);
         connection.setReadTimeout(timeout);
@@ -440,6 +476,31 @@ public class Yt2009Account {
         out.write(bytes);
         out.close();
         readResponse(connection);
+    }
+
+    /**
+     * Reads an account feed the way the write actions talk to yt2009: device header plus the
+     * pchelper/auth cookie on every request, following redirects by hand so neither gets dropped.
+     */
+    private String get(String endpoint) throws IOException {
+        if (getInstanceUrl() == null) throw new IOException("Not signed in");
+        String url = getInstanceUrl() + endpoint;
+        for (int i = 0; i < 4; i++) {
+            HttpURLConnection connection = openUrl(url, "GET", HttpClient.VIDEO_TIMEOUT);
+            connection.setRequestProperty("X-GData-Device", "device-id=\"" + getDeviceCode() + "\"");
+            int status = connection.getResponseCode();
+            if (status >= 300 && status < 400) {
+                String location = connection.getHeaderField("Location");
+                connection.disconnect();
+                if (location == null) throw new IOException("Redirect without location");
+                if (location.contains("unauth")) throw new TokenRequiredException();
+                if (location.contains("mh_pc_intro")) throw new IOException("Not signed in");
+                url = location.startsWith("/") ? getInstanceUrl() + location : location;
+                continue;
+            }
+            return readResponse(connection);
+        }
+        throw new IOException("Too many redirects");
     }
 
     private HttpRequest authorized(String endpoint) {

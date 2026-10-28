@@ -349,4 +349,7 @@
     <string name="basic_mode">Простой режим</string>
     <string name="basic_mode_desc">Скрывает технические детали: списки инстансов, адреса серверов и уведомления о мёртвых инстансах</string>
     <string name="more_videos">Другие видео</string>
+    <string name="not_signed_in">Вход не выполнен</string>
+    <string name="tap_to_sign_in">Нажмите, чтобы войти через yt2009</string>
+    <string name="view_all">Все</string>
 </resources>
