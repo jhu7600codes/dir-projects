@@ -132,6 +132,7 @@ public class SettingsActivity extends Activity implements InstancesUpdater.OnIns
         codecSpinner.setSelection(config.getConvertCodec());
         asyncUriChk.setChecked(config.isAsyncSetVideoUri());
         fullscreenRotateChk.setChecked(config.isFullscreenRotateLandscape());
+        applyBasicMode(io.github.gohoski.notpipe.util.PlayerExtras.isBasicMode());
 
         if (config.isConvertVideos()) {
             qualitySpinner.setEnabled(false);
