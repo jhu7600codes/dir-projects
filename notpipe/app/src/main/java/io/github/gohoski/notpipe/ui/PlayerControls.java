@@ -62,6 +62,7 @@ public class PlayerControls {
     private final TextView position, duration, speedButton, qualityButton, gestureLabel;
     private final Handler handler = new Handler();
     private final TextView moreVideosButton;
+    private final android.widget.ProgressBar buffering;
     private final LinearLayout moreVideos, moreRow;
     private final GestureDetector gestures;
     private final AudioManager audio;
@@ -211,6 +212,11 @@ public class PlayerControls {
         frame.addView(moreVideos, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
 
+        // Spinner while the stream is buffering, shown even when the controls are hidden
+        buffering = new android.widget.ProgressBar(activity);
+        buffering.setVisibility(View.GONE);
+        frame.addView(buffering, new FrameLayout.LayoutParams(dp(48), dp(48), Gravity.CENTER));
+
         // Feedback for gestures ("+10s", "Brightness 60%", …), shown even when the controls are hidden
         gestureLabel = new TextView(activity);
         gestureLabel.setTextColor(Color.WHITE);
@@ -285,7 +291,10 @@ public class PlayerControls {
     /** Call when the video is prepared; until then taps do nothing */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        if (!enabled) hide();
+        if (!enabled) {
+            hide();
+            setBuffering(false);
+        }
     }
 
     public void setSpeed(float speed) {
@@ -350,6 +359,14 @@ public class PlayerControls {
             }
         });
         return card;
+    }
+
+    /** Shows or hides the buffering spinner; the play button makes room for it */
+    public void setBuffering(boolean isBuffering) {
+        int visibility = isBuffering ? View.VISIBLE : View.GONE;
+        if (buffering.getVisibility() == visibility) return;
+        buffering.setVisibility(visibility);
+        playPause.setVisibility(isBuffering ? View.INVISIBLE : View.VISIBLE);
     }
 
     /** @return true if the "More videos" row was open and is now closed */

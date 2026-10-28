@@ -2173,6 +2173,7 @@ public class VideoActivity extends Activity {
     private void recoverFromStall(int position) {
         if (videoUrl == null || videoUrl.startsWith("file://") || videoUrl.startsWith("/")) return;
         String url = videoUrl;
+        if (controls != null) controls.setBuffering(false);
         videoPosition = position;
         stallRecoveries++;
         resetVideo();
@@ -2201,6 +2202,7 @@ public class VideoActivity extends Activity {
         try {
             if (!videoView.isPlaying()) {
                 stallTicks = 0;
+                if (controls != null) controls.setBuffering(false);
                 return;
             }
             position = videoView.getCurrentPosition();
@@ -2210,7 +2212,10 @@ public class VideoActivity extends Activity {
         if (position != stallPosition) {
             stallPosition = position;
             stallTicks = 0;
-        } else if (++stallTicks >= STALL_TICKS) {
+            if (controls != null) controls.setBuffering(false);
+        } else if (++stallTicks == 2 && controls != null) {
+            controls.setBuffering(true);
+        } else if (stallTicks >= STALL_TICKS) {
             stallTicks = 0;
             recoverFromStall(position);
             return;
