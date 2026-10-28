@@ -1610,9 +1610,8 @@ public class VideoActivity extends Activity {
                 public boolean onTouch(View v, android.view.MotionEvent event) {
                     boolean used = controls != null && videoPrepared && controls.onTouch(event);
                     if (isFullscreenMode && event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
-                        showSystemUI();
                         systemUiHandler.removeCallbacks(hideSystemUiRunnable);
-                        systemUiHandler.postDelayed(hideSystemUiRunnable, 5000);
+                        hideSystemUI();
                     }
                     return used;
                 }
