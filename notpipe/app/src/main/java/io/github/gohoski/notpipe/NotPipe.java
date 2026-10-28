@@ -28,6 +28,7 @@ public class NotPipe extends Application {
         Manager.init();
         SSLDisabler.disableSSLCertificateChecking();
         Compat.allowFileUris();
+        NewVideosService.schedule(this);
 //        System.setProperty("http.keepAlive", "false");
     }
 

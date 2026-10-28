@@ -17,6 +17,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -66,6 +67,7 @@ import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.ChannelIconResolver;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.LocalLibrary;
+import io.github.gohoski.notpipe.util.PlayerExtras;
 
 public class VideoActivity extends Activity {
     String videoId;
@@ -119,6 +121,19 @@ public class VideoActivity extends Activity {
 
     private int videoBufferTimeout = 60000;
     private boolean watchStarted = false;
+    private MediaPlayer mediaPlayer;
+    private List<int[]> sponsorSegments = new ArrayList<int[]>();
+    private List<PlayerExtras.Caption> captions;
+    private TextView captionView;
+    private GestureDetector seekGestures;
+    private final Handler handler = new Handler();
+    private final Runnable extrasTicker = new Runnable() {
+        @Override
+        public void run() {
+            tickExtras();
+            handler.postDelayed(this, 400);
+        }
+    };
     private int watchtimeTicks = 0;
     private Yt2009Account.WatchSession watchSession;
     private static final String DIR_VIDEOS = "notPipe/videos";
@@ -199,6 +214,7 @@ public class VideoActivity extends Activity {
         applyOpenCoreLayoutFix();
         setupClickListeners();
         setupScrollHandler();
+        setupPlayerExtras();
 
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE && !isTablet()) {
             enterFullscreenMode();
@@ -623,9 +639,16 @@ public class VideoActivity extends Activity {
                         play.setVisibility(View.GONE);
 
                         videoPrepared = true;
+                        mediaPlayer = mp;
+                        if (videoPosition <= 0) {
+                            videoPosition = PlayerExtras.getResumePosition(videoId);
+                            if (videoPosition > 0) Toast.makeText(context, R.string.resumed, Toast.LENGTH_SHORT).show();
+                        }
                         if (videoPosition > 0) {
                             videoView.seekTo(videoPosition);
                         }
+                        if (PlayerExtras.getSpeed() != 1f) applySpeed(PlayerExtras.getSpeed());
+                        startExtrasTicker();
 
                         AspectRatioVideoView arvv = (AspectRatioVideoView) videoView;
                         arvv.setVideoDimensions(mp.getVideoWidth(), mp.getVideoHeight());
@@ -666,6 +689,9 @@ public class VideoActivity extends Activity {
                 cancelVideoTimeout();
                 videoPlaying = false;
                 videoPosition = 0;
+                PlayerExtras.saveResumePosition(videoId, 0, 0);
+                reportYoutubeWatchtime(true);
+                playNextIfAutoplay();
             }
         });
 
@@ -868,6 +894,7 @@ public class VideoActivity extends Activity {
         }
         cancelVideoTimeout();
         stopPositionTracking();
+        handler.removeCallbacks(extrasTicker);
         ImageLoader.clearCache();
 
         // Cancel all running AsyncTasks to stop background operations
@@ -924,6 +951,12 @@ public class VideoActivity extends Activity {
     @Override
     protected void onPause() {
         reportYoutubeWatchtime(isFinishing());
+        handler.removeCallbacks(extrasTicker);
+        if (videoView != null && videoPrepared) {
+            try {
+                PlayerExtras.saveResumePosition(videoId, videoView.getCurrentPosition(), videoView.getDuration());
+            } catch (Exception ignored) {}
+        }
         super.onPause();
         stopPositionTracking();
         if (videoView != null) {
@@ -965,6 +998,7 @@ public class VideoActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (videoPrepared) startExtrasTicker();
         if (videoUrl != null && !config.isUseExternalPlayer()) {
             if (config.isStreamPlayback() || videoUrl.startsWith(Environment.getExternalStorageDirectory().getPath()) || videoUrl.startsWith("file://")) {
                 if (isVideoViewNeedsReload) {
@@ -1273,9 +1307,62 @@ public class VideoActivity extends Activity {
 
         if (commentsList instanceof android.widget.ListView) {
             ((android.widget.ListView) commentsList).setAdapter(commentsAdapter);
+            ((android.widget.ListView) commentsList).setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                    showReplies(comments.get(position));
+                }
+            });
         } else if (commentsList instanceof AdapterLinearLayout) {
             ((AdapterLinearLayout) commentsList).setAdapter(commentsAdapter);
+            ((AdapterLinearLayout) commentsList).setOnItemClickListener(new AdapterLinearLayout.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterLinearLayout parent, View view, int position, long id) {
+                    showReplies(comments.get(position));
+                }
+            });
         }
+    }
+
+    /** Opens a comment's replies (Invidious only, other APIs don't give a reply token) */
+    private void showReplies(final Comment comment) {
+        if (comment.repliesToken == null) return;
+        Toast.makeText(context, R.string.loading_replies, Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<Comment> loaded = null;
+                try {
+                    loaded = Manager.getInstance().getCommentReplies(videoId, comment.repliesToken);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                final List<Comment> replies = loaded;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isFinishing()) return;
+                        if (replies == null || replies.isEmpty()) {
+                            Toast.makeText(context, R.string.load_failed, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < replies.size(); i++) {
+                            Comment r = replies.get(i);
+                            if (i > 0) sb.append("\n\n");
+                            sb.append(r.channel).append(": ").append(r.content);
+                        }
+                        TextView text = new TextView(context);
+                        text.setText(sb.toString());
+                        text.setPadding(15, 15, 15, 15);
+                        ScrollView scroll = new ScrollView(context);
+                        scroll.addView(text);
+                        new AlertDialog.Builder(context).setTitle(comment.channel).setView(scroll)
+                                .setPositiveButton(android.R.string.ok, null).show();
+                    }
+                });
+            }
+        }).start();
     }
 
     private void setupClickListeners() {
@@ -1396,6 +1483,18 @@ public class VideoActivity extends Activity {
                 VideoActions.like(VideoActivity.this, video, view.getId() == R.id.like);
             }
         };
+        findViewById(R.id.save_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (video != null) VideoActions.showAddToPlaylistDialog(VideoActivity.this, video);
+            }
+        });
+        findViewById(R.id.download_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (video != null) VideoActions.showDownloadDialog(VideoActivity.this, video);
+            }
+        });
         findViewById(R.id.like).setOnClickListener(rateListener);
         findViewById(R.id.dislike).setOnClickListener(rateListener);
 
@@ -1461,6 +1560,7 @@ public class VideoActivity extends Activity {
             videoFrame.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, android.view.MotionEvent event) {
+                    if (seekGestures != null && videoPrepared) seekGestures.onTouchEvent(event);
                     if (isFullscreenMode && event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
                         showSystemUI();
                         systemUiHandler.removeCallbacks(hideSystemUiRunnable);
@@ -1848,6 +1948,15 @@ public class VideoActivity extends Activity {
         } else if (itemId == R.id.action_full_screen) {
             enterFullscreenByConfig();
             return true;
+        } else if (itemId == R.id.action_speed) {
+            showSpeedDialog();
+            return true;
+        } else if (itemId == R.id.action_captions) {
+            showCaptionsDialog();
+            return true;
+        } else if (itemId == R.id.action_player_settings) {
+            showPlayerSettings();
+            return true;
         } else if (itemId == R.id.action_listen_background || itemId == R.id.action_download
                 || itemId == R.id.action_add_playlist) {
             if (video == null) {
@@ -1869,6 +1978,213 @@ public class VideoActivity extends Activity {
     /**
      * Music mode: stops the video player and continues with audio only in MusicService.
      */
+    /* ---------- Player extras: SponsorBlock, captions, speed, autoplay, double-tap seek ---------- */
+
+    private void setupPlayerExtras() {
+        seekGestures = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(android.view.MotionEvent e) {
+                if (!videoPrepared || videoFrame == null) return false;
+                boolean forward = e.getX() > videoFrame.getWidth() / 2;
+                int target = videoView.getCurrentPosition() + (forward ? 10000 : -10000);
+                videoView.seekTo(Math.max(0, Math.min(target, videoView.getDuration() - 1000)));
+                Toast.makeText(context, forward ? "+10s" : "-10s", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+        if (videoFrame != null) {
+            captionView = new TextView(this);
+            captionView.setTextColor(Color.WHITE);
+            captionView.setBackgroundColor(0xAA000000);
+            captionView.setTextSize(15);
+            captionView.setGravity(android.view.Gravity.CENTER);
+            captionView.setPadding(8, 4, 8, 4);
+            captionView.setVisibility(View.GONE);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
+            params.bottomMargin = 24;
+            videoFrame.addView(captionView, params);
+        }
+        final String id = videoId;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final List<int[]> segments = PlayerExtras.loadSponsorSegments(id);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        sponsorSegments = segments;
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void startExtrasTicker() {
+        handler.removeCallbacks(extrasTicker);
+        handler.postDelayed(extrasTicker, 400);
+    }
+
+    private void tickExtras() {
+        if (videoView == null || !videoPrepared) return;
+        int position;
+        try {
+            if (!videoView.isPlaying()) return;
+            position = videoView.getCurrentPosition();
+        } catch (Exception e) {
+            return;
+        }
+        for (int i = 0; i < sponsorSegments.size(); i++) {
+            int[] seg = sponsorSegments.get(i);
+            if (position >= seg[0] && position < seg[1] - 500) {
+                videoView.seekTo(seg[1]);
+                Toast.makeText(context, R.string.sponsor_skipped, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        if (captionView != null) {
+            String text = PlayerExtras.captionAt(captions, position);
+            if (text == null) {
+                captionView.setVisibility(View.GONE);
+            } else {
+                captionView.setText(text);
+                captionView.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    /** PlaybackParams exist on Android 6.0+ only, so it's done through reflection */
+    private void applySpeed(float speed) {
+        if (mediaPlayer == null || NotPipe.SDK < 23) return;
+        try {
+            Class<?> paramsClass = Class.forName("android.media.PlaybackParams");
+            Object params = paramsClass.newInstance();
+            params = paramsClass.getMethod("setSpeed", float.class).invoke(params, speed);
+            MediaPlayer.class.getMethod("setPlaybackParams", paramsClass).invoke(mediaPlayer, params);
+            if (!videoView.isPlaying() && speed != 1f) videoView.pause();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showSpeedDialog() {
+        if (NotPipe.SDK < 23) {
+            Toast.makeText(context, R.string.speed_unsupported, Toast.LENGTH_LONG).show();
+            return;
+        }
+        final float[] speeds = {0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f};
+        String[] labels = new String[speeds.length];
+        int checked = 2;
+        for (int i = 0; i < speeds.length; i++) {
+            labels[i] = speeds[i] + "x";
+            if (speeds[i] == PlayerExtras.getSpeed()) checked = i;
+        }
+        new AlertDialog.Builder(context).setTitle(R.string.playback_speed)
+                .setSingleChoiceItems(labels, checked, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        PlayerExtras.setSpeed(speeds[which]);
+                        applySpeed(speeds[which]);
+                    }
+                }).show();
+    }
+
+    private void showCaptionsDialog() {
+        Toast.makeText(context, R.string.loading_captions, Toast.LENGTH_SHORT).show();
+        final String id = videoId;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final List<PlayerExtras.Track> tracks = PlayerExtras.loadTracks(id);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isFinishing()) return;
+                        if (tracks.isEmpty()) {
+                            Toast.makeText(context, R.string.no_captions, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        String[] labels = new String[tracks.size() + 1];
+                        labels[0] = getString(R.string.captions_off);
+                        for (int i = 0; i < tracks.size(); i++) labels[i + 1] = tracks.get(i).label;
+                        new AlertDialog.Builder(context).setTitle(R.string.captions)
+                                .setItems(labels, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        if (which == 0) {
+                                            captions = null;
+                                            if (captionView != null) captionView.setVisibility(View.GONE);
+                                        } else {
+                                            loadCaptionTrack(tracks.get(which - 1).url);
+                                        }
+                                    }
+                                }).show();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void loadCaptionTrack(final String url) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<PlayerExtras.Caption> loaded = null;
+                try {
+                    loaded = PlayerExtras.loadCaptions(url);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                final List<PlayerExtras.Caption> result = loaded;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (result == null || result.isEmpty()) {
+                            Toast.makeText(context, R.string.no_captions, Toast.LENGTH_SHORT).show();
+                        } else {
+                            captions = result;
+                        }
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void showPlayerSettings() {
+        final String[] keys = {PlayerExtras.KEY_AUTOPLAY, PlayerExtras.KEY_SPONSORBLOCK, PlayerExtras.KEY_RESUME};
+        String[] labels = {getString(R.string.autoplay), getString(R.string.sponsorblock), getString(R.string.resume_playback)};
+        boolean[] checked = new boolean[keys.length];
+        for (int i = 0; i < keys.length; i++) checked[i] = PlayerExtras.isEnabled(keys[i]);
+        new AlertDialog.Builder(context).setTitle(R.string.player_settings)
+                .setMultiChoiceItems(labels, checked, new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        PlayerExtras.setEnabled(keys[which], isChecked);
+                    }
+                })
+                .setPositiveButton(android.R.string.ok, null).show();
+    }
+
+    /** Autoplay: opens the first related video that isn't in the watch history yet */
+    private void playNextIfAutoplay() {
+        if (!PlayerExtras.isEnabled(PlayerExtras.KEY_AUTOPLAY) || relatedVideos.isEmpty() || isFinishing()) return;
+        List<VideoInfo> history = LocalLibrary.getInstance().getHistory();
+        VideoInfo next = relatedVideos.get(0);
+        for (int i = 0; i < relatedVideos.size(); i++) {
+            boolean watched = false;
+            for (int j = 0; j < history.size() && j < 50; j++) {
+                if (history.get(j).id.equals(relatedVideos.get(i).id)) { watched = true; break; }
+            }
+            if (!watched) { next = relatedVideos.get(i); break; }
+        }
+        Toast.makeText(context, getString(R.string.up_next, next.title), Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, VideoActivity.class);
+        intent.putExtra("ID", next.id);
+        startActivity(intent);
+        finish();
+    }
+
     private void listenInBackground() {
         if (videoView != null && videoPlaying) {
             try {

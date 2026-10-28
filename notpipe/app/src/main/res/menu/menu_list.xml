@@ -25,6 +25,10 @@
         android:title="@string/clear_history"
         android:icon="@android:drawable/ic_menu_delete"/>
     <item
+        android:id="@+id/action_notify_uploads"
+        android:title="@string/notifications_on"
+        android:icon="@android:drawable/ic_popup_reminder"/>
+    <item
         android:id="@+id/action_refresh"
         android:title="@string/refresh"
         android:icon="@android:drawable/ic_menu_rotate"/>

@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- TV: no touchscreen needed, shown in the Android TV launcher -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -90,6 +91,12 @@
             android:label="@string/upload_video"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout" />
         <service android:name=".MusicService" />
+        <service android:name=".NewVideosService" />
+        <receiver android:name=".NewVideosService$BootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <service android:name=".DownloadService" />
     </application>
 </manifest>

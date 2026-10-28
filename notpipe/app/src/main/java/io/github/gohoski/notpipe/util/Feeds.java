@@ -27,6 +27,7 @@ public class Feeds {
     private static final int HISTORY_SEEDS = 6;
     private static final int MAX_RECOMMENDATIONS = 60;
     private static final int SHORTS_CHANNELS = 10;
+    private static final int RECOMMENDATIONS_WAIT_SECONDS = 15;
     private static final int SHORTS_WAIT_SECONDS = 20;
     private static final long SHORTS_CACHE_MS = 20 * 60 * 1000L;
     private static List<VideoInfo> cachedShorts;
@@ -64,7 +65,7 @@ public class Feeds {
         for (int i = 0; i < history.size(); i++) watched.add(history.get(i).id);
         int seeds = Math.min(HISTORY_SEEDS, history.size());
         final List<List<VideoInfo>> related = new ArrayList<List<VideoInfo>>();
-        ExecutorService executor = Executors.newFixedThreadPool(3);
+        ExecutorService executor = Executors.newFixedThreadPool(seeds > 0 ? seeds : 1);
         for (int i = 0; i < seeds; i++) {
             final String id = history.get(i).id;
             final List<VideoInfo> bucket = Collections.synchronizedList(new ArrayList<VideoInfo>());
@@ -81,8 +82,17 @@ public class Feeds {
             });
         }
         executor.shutdown();
-        executor.awaitTermination(2, TimeUnit.MINUTES);
-        return interleave(related, watched, MAX_RECOMMENDATIONS);
+        // Like Shorts: show what arrived quickly instead of waiting on dead instances
+        executor.awaitTermination(RECOMMENDATIONS_WAIT_SECONDS, TimeUnit.SECONDS);
+        executor.shutdownNow();
+        List<List<VideoInfo>> snapshot = new ArrayList<List<VideoInfo>>();
+        for (int b = 0; b < related.size(); b++) {
+            List<VideoInfo> bucket = related.get(b);
+            synchronized (bucket) {
+                snapshot.add(new ArrayList<VideoInfo>(bucket));
+            }
+        }
+        return interleave(snapshot, watched, MAX_RECOMMENDATIONS);
     }
 
     /**

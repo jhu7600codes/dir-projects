@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import java.util.List;
 
+import io.github.gohoski.notpipe.api.Discovery;
 import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.api.Metadata;
 import io.github.gohoski.notpipe.api.Yt2009Account;
@@ -38,6 +39,8 @@ import io.github.gohoski.notpipe.config.Config;
 import io.github.gohoski.notpipe.config.ConfigManager;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.ui.AutoCompleteAdapter;
+import io.github.gohoski.notpipe.ui.NavBar;
+import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.Compat;
 import io.github.gohoski.notpipe.util.Feeds;
@@ -60,6 +63,8 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
     private Config config = ConfigManager.getInstance().getConfig();
     private boolean isSearchMode = false;
     private boolean isDestroyedFlag = false;
+    /** 0 = videos, 1 = channels, 2 = playlists */
+    private int searchType = 0;
 
     private static class RetainedState {
         List<VideoInfo> videos;
@@ -95,6 +100,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
             return;
         }
         setContentView(R.layout.activity_main);
+        NavBar.attach(this, NavBar.HOME);
 
         listView = (AbsListView) findViewById(R.id.videos);
         searchQuery = (AutoCompleteTextView) findViewById(R.id.search_query);
@@ -132,11 +138,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ImageLoader.clearCache();
-                System.gc();
-                Intent intent = new Intent(MainActivity.this, VideoActivity.class);
-                intent.putExtra("ID", ((VideoInfo) parent.getItemAtPosition(position)).id);
-                startActivity(intent);
+                VideoActions.openItem(MainActivity.this, (VideoInfo) parent.getItemAtPosition(position));
             }
         });
 
@@ -392,11 +394,19 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menu_library) {
-            startActivity(new Intent(this, LibraryActivity.class));
-            return true;
-        } else if (item.getItemId() == R.id.menu_shorts) {
-            startActivity(new Intent(this, ShortsActivity.class));
+        if (item.getItemId() == R.id.menu_search_filter) {
+            new android.app.AlertDialog.Builder(this).setTitle(R.string.search_filter)
+                    .setSingleChoiceItems(new String[]{getString(R.string.videos), getString(R.string.channels), getString(R.string.playlists)},
+                            searchType, new android.content.DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(android.content.DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                    searchType = which;
+                                    if (isSearchMode && searchQuery.getText().toString().trim().length() > 0) {
+                                        findViewById(R.id.search_btn).performClick();
+                                    }
+                                }
+                            }).show();
             return true;
         } else if (item.getItemId() == R.id.menu_home_feed) {
             boolean recommended = !isHomeRecommended();
@@ -473,7 +483,11 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
         protected SearchResult doInBackground(String... params) {
             SearchResult result = new SearchResult();
             try {
-                if (metadata != null) {
+                if (searchType == 1) {
+                    result.videos = Discovery.searchChannels(params[0]);
+                } else if (searchType == 2) {
+                    result.videos = Discovery.searchPlaylists(params[0]);
+                } else if (metadata != null) {
                     result.videos = metadata.search(params[0]);
                 } else {
                     result.error = new Exception("Metadata client not initialized.");
@@ -495,7 +509,7 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                 if (emptyView != null) emptyView.setVisibility(View.GONE);
             } else if (result.videos != null) {
                 videos = result.videos;
-                adapter = new VideoAdapter(MainActivity.this, R.layout.item_video, videos);
+                adapter = new VideoAdapter(MainActivity.this, searchType == 0 ? R.layout.item_video : R.layout.item_video_compact, videos);
                 if (listView != null) {
                     setAdapterForView(listView, adapter);
                 }

@@ -292,6 +292,11 @@ public class ChannelActivity extends Activity {
             Compat.invalidateOptionsMenu(this);
             return true;
         }
+        if (item.getItemId() == R.id.action_channel_playlists) {
+            VideoListActivity.open(this, VideoListActivity.SOURCE_CHANNEL_PLAYLISTS,
+                    channel != null ? channel.id : channelId, getString(R.string.playlists));
+            return true;
+        }
         if (item.getItemId() == R.id.action_shorts) {
             Intent intent = new Intent(this, ShortsActivity.class);
             intent.putExtra(ShortsActivity.EXTRA_CHANNEL, channel != null ? channel.id : channelId);

@@ -22,6 +22,8 @@ import io.github.gohoski.notpipe.Utils;
 public class HttpClient {
     public static final String USER_AGENT = "notPipe/" + BuildConfig.VERSION_NAME + " (https://github.com/gohoski/notPipe)";
     private static final int TIMEOUT = 20000;
+    /** Most public instances that don't accept a connection within a few seconds are dead; don't wait 10 s for each */
+    public static final int CONNECT_TIMEOUT = 6000;
     public static final int VIDEO_TIMEOUT = 60000;
     public static final int CONVERSION_TIMEOUT = 300000;
 
@@ -55,7 +57,7 @@ public class HttpClient {
             String urlStr = url.toString().toLowerCase();
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(request.getMethod());
-            connection.setConnectTimeout(9999);
+            connection.setConnectTimeout(CONNECT_TIMEOUT);
             connection.setReadTimeout(timeout);
 
             connection.setRequestProperty("User-Agent", USER_AGENT);

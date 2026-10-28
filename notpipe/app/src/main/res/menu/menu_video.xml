@@ -20,4 +20,13 @@
         android:id="@+id/action_add_playlist"
         android:title="@string/add_to_playlist"
         android:icon="@android:drawable/ic_menu_add" />
+    <item
+        android:id="@+id/action_speed"
+        android:title="@string/playback_speed" />
+    <item
+        android:id="@+id/action_captions"
+        android:title="@string/captions" />
+    <item
+        android:id="@+id/action_player_settings"
+        android:title="@string/player_settings" />
 </menu>

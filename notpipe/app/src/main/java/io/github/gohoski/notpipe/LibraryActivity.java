@@ -25,6 +25,7 @@ import io.github.gohoski.notpipe.api.Yt2009Account;
 import io.github.gohoski.notpipe.config.ConfigManager;
 import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.Playlist;
+import io.github.gohoski.notpipe.ui.NavBar;
 import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.util.LocalLibrary;
 
@@ -62,6 +63,7 @@ public class LibraryActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
+        NavBar.attach(this, NavBar.LIBRARY);
         setTitle(R.string.library);
         context = this;
 

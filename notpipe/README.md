@@ -42,6 +42,10 @@ List of supported APIs:
 * **Local subscriptions** (NewPipe-like): subscribe from a channel's menu, then *Library → What's new* shows the latest videos of all your channels
 * **Watch history** kept on the device
 * **Recommended for you** using YouTube's own algorithm: your account's YouTube home feed when signed in (videos you watch in notPipe are reported to YouTube's watch history, so it keeps learning), otherwise YouTube's "up next" picks for what you watched. Signed in, it's the home screen by default (menu → Home: popular/recommended)
+* **Player**: resume where you left off, double-tap to seek ±10 s, playback speed (Android 6+), subtitles, SponsorBlock, autoplay next
+* **Comments**: tap a comment to read its replies
+* **Search filters** for channels and playlists, channel playlists, new upload notifications for your subscriptions
+* **Bottom navigation**: Home / Shorts / Subscriptions / Library
 * **TV app**: shows up in the Android TV launcher, with a side menu and a big card grid made for the remote
 * **Shorts**: a full-screen vertical player with swipe / D-pad navigation, from your subscriptions (or #shorts search), plus a channel's Shorts from its menu. Needs an Invidious instance
 * **YouTube account via yt2009**: recommendations, watch later, your playlists and videos, importing subscriptions, plus saving to your playlists / watch later, creating playlists, like / dislike, subscribing and **uploading videos**. See [Signing in](#signing-in-with-yt2009)

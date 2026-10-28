@@ -49,7 +49,11 @@ public class CommentAdapter extends ArrayAdapter<Comment> {
         Comment comment = getItem(position);
         holder.channelTitle.setText(comment.channel);
         holder.content.setText(comment.content);
-        holder.date.setText(Utils.formatTimeAgo(context, comment.publishedAt));
+        String date = Utils.formatTimeAgo(context, comment.publishedAt);
+        if (comment.replyCount > 0) {
+            date += " · " + context.getResources().getQuantityString(R.plurals.replies, comment.replyCount, comment.replyCount);
+        }
+        holder.date.setText(date);
 
         // Prepare holder for lazy loading
         holder.comment = comment;

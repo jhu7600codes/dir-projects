@@ -267,4 +267,32 @@
     <string name="import_file">Import from file</string>
     <string name="import_file_">Google Takeout subscriptions.csv or a NewPipe export</string>
     <string name="import_file_bad">This file isn\'t a subscriptions export</string>
+    <string name="resumed">Resuming where you left off</string>
+    <string name="sponsor_skipped">Skipped sponsor segment (SponsorBlock)</string>
+    <string name="playback_speed">Playback speed</string>
+    <string name="speed_unsupported">Playback speed needs Android 6.0 or newer</string>
+    <string name="captions">Subtitles</string>
+    <string name="captions_off">Off</string>
+    <string name="loading_captions">Loading subtitles…</string>
+    <string name="no_captions">No subtitles found</string>
+    <string name="player_settings">Player settings</string>
+    <string name="autoplay">Autoplay next video</string>
+    <string name="sponsorblock">Skip sponsors (SponsorBlock)</string>
+    <string name="resume_playback">Resume where you left off</string>
+    <string name="up_next">Up next: %s</string>
+    <string name="home">Home</string>
+    <string name="loading_replies">Loading replies…</string>
+    <plurals name="replies">
+        <item quantity="one">%d reply</item>
+        <item quantity="other">%d replies</item>
+    </plurals>
+    <string name="search_filter">Search filter</string>
+    <string name="notifications_on">Notify about new videos</string>
+    <string name="notifications_off">Stop new video notifications</string>
+    <string name="notifications_enabled">You\'ll get a notification when your channels upload</string>
+    <string name="notifications_disabled">New video notifications are off</string>
+    <plurals name="new_videos">
+        <item quantity="one">%d new video</item>
+        <item quantity="other">%d new videos</item>
+    </plurals>
 </resources>

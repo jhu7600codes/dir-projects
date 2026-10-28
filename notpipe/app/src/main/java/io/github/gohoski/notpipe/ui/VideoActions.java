@@ -88,6 +88,27 @@ public class VideoActions {
     }
 
     /**
+     * Opens a list item: a video, or a channel/playlist row from {@link io.github.gohoski.notpipe.api.Discovery}.
+     */
+    public static void openItem(Activity activity, VideoInfo item) {
+        android.content.Intent intent;
+        if (item.id.startsWith(io.github.gohoski.notpipe.api.Discovery.CHANNEL_PREFIX)) {
+            intent = new android.content.Intent(activity, io.github.gohoski.notpipe.ChannelActivity.class);
+            intent.putExtra("ID", item.id.substring(io.github.gohoski.notpipe.api.Discovery.CHANNEL_PREFIX.length()));
+        } else if (item.id.startsWith(io.github.gohoski.notpipe.api.Discovery.PLAYLIST_PREFIX)) {
+            io.github.gohoski.notpipe.VideoListActivity.open(activity, io.github.gohoski.notpipe.VideoListActivity.SOURCE_PLAYLIST,
+                    item.id.substring(io.github.gohoski.notpipe.api.Discovery.PLAYLIST_PREFIX.length()), item.title);
+            return;
+        } else {
+            io.github.gohoski.notpipe.util.ImageLoader.clearCache();
+            System.gc();
+            intent = new android.content.Intent(activity, io.github.gohoski.notpipe.VideoActivity.class);
+            intent.putExtra("ID", item.id);
+        }
+        activity.startActivity(intent);
+    }
+
+    /**
      * Like: always saved to the local "Liked videos" playlist, and sent to YouTube too when signed in.
      * Dislike only exists on YouTube, so it needs the account.
      */

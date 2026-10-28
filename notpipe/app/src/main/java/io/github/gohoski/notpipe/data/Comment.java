@@ -9,6 +9,9 @@ import java.util.Date;
 public class Comment {
     public final String channel, channelThumbnail, content, channelId;
     public final Date publishedAt;
+    /** Set by APIs that support replies (Invidious) */
+    public int replyCount = 0;
+    public String repliesToken;
 
     public Comment(String channel, String channelThumbnail, String content, Date publishedAt, String channelId) {
         this.channel = channel;

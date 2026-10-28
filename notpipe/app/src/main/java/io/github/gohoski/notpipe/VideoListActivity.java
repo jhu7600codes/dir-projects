@@ -25,8 +25,10 @@ import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.api.Yt2009Account;
 import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.VideoInfo;
+import io.github.gohoski.notpipe.ui.NavBar;
 import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
+import io.github.gohoski.notpipe.util.Compat;
 import io.github.gohoski.notpipe.util.Feeds;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.LocalLibrary;
@@ -51,6 +53,7 @@ public class VideoListActivity extends Activity {
     public static final String SOURCE_HISTORY = "history";
     public static final String SOURCE_FOR_YOU = "for_you";
     public static final String SOURCE_UPLOADS = "uploads";
+    public static final String SOURCE_CHANNEL_PLAYLISTS = "channel_playlists";
 
 
     private String source, arg, title;
@@ -108,6 +111,7 @@ public class VideoListActivity extends Activity {
             return;
         }
         if (title != null) setTitle(title);
+        if (SOURCE_FEED.equals(source)) NavBar.attach(this, NavBar.SUBSCRIPTIONS);
 
         listView = (ListView) findViewById(R.id.list);
         adapter = new VideoAdapter(this, R.layout.item_video_compact, videos);
@@ -115,16 +119,13 @@ public class VideoListActivity extends Activity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ImageLoader.clearCache();
-                System.gc();
-                Intent intent = new Intent(VideoListActivity.this, VideoActivity.class);
-                intent.putExtra("ID", videos.get(position).id);
-                startActivity(intent);
+                VideoActions.openItem(VideoListActivity.this, videos.get(position));
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if (videos.get(position).id.contains(":")) return false;
                 showItemDialog(position);
                 return true;
             }
@@ -196,10 +197,17 @@ public class VideoListActivity extends Activity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         boolean remote = !SOURCE_LOCAL.equals(source) && !SOURCE_FEED.equals(source) && !SOURCE_HISTORY.equals(source)
-                && !SOURCE_FOR_YOU.equals(source);
+                && !SOURCE_FOR_YOU.equals(source) && !SOURCE_CHANNEL_PLAYLISTS.equals(source);
         menu.findItem(R.id.action_save_playlist).setVisible(remote);
         menu.findItem(R.id.action_delete_playlist).setVisible(SOURCE_LOCAL.equals(source));
         menu.findItem(R.id.action_clear_history).setVisible(SOURCE_HISTORY.equals(source));
+        boolean playable = !SOURCE_CHANNEL_PLAYLISTS.equals(source);
+        menu.findItem(R.id.action_play_all).setVisible(playable);
+        menu.findItem(R.id.action_shuffle).setVisible(playable);
+        menu.findItem(R.id.action_download_all).setVisible(playable);
+        MenuItem notify = menu.findItem(R.id.action_notify_uploads);
+        notify.setVisible(SOURCE_FEED.equals(source));
+        notify.setTitle(NewVideosService.isEnabled(this) ? R.string.notifications_off : R.string.notifications_on);
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -210,7 +218,8 @@ public class VideoListActivity extends Activity {
             load();
             return true;
         }
-        if (videos.isEmpty() && id != R.id.action_delete_playlist && id != R.id.action_clear_history) {
+        if (videos.isEmpty() && id != R.id.action_delete_playlist && id != R.id.action_clear_history
+                && id != R.id.action_notify_uploads) {
             Toast.makeText(this, R.string.no_videos, Toast.LENGTH_SHORT).show();
             return true;
         }
@@ -229,6 +238,12 @@ public class VideoListActivity extends Activity {
             return true;
         } else if (id == R.id.action_save_playlist) {
             savePlaylistLocally();
+            return true;
+        } else if (id == R.id.action_notify_uploads) {
+            boolean enable = !NewVideosService.isEnabled(this);
+            NewVideosService.setEnabled(this, enable);
+            Toast.makeText(this, enable ? R.string.notifications_enabled : R.string.notifications_disabled, Toast.LENGTH_SHORT).show();
+            Compat.invalidateOptionsMenu(this);
             return true;
         } else if (id == R.id.action_clear_history) {
             LocalLibrary.getInstance().clearHistory();
@@ -313,6 +328,8 @@ public class VideoListActivity extends Activity {
                     return LocalLibrary.getInstance().getHistory();
                 } else if (SOURCE_FOR_YOU.equals(source)) {
                     return Feeds.loadRecommendations();
+                } else if (SOURCE_CHANNEL_PLAYLISTS.equals(source)) {
+                    return io.github.gohoski.notpipe.api.Discovery.channelPlaylists(arg);
                 } else if (SOURCE_UPLOADS.equals(source)) {
                     return Yt2009Account.getInstance().getUploads();
                 } else if (SOURCE_RECOMMENDATIONS.equals(source)) {

@@ -201,6 +201,11 @@ public class Manager {
         return createStatefulFallbackProxy(PlaylistApi.class, playlistInstances);
     }
 
+    /** Replies to a comment (token from Comment.repliesToken), through Invidious */
+    public List<io.github.gohoski.notpipe.data.Comment> getCommentReplies(String videoId, String token) throws IOException {
+        return Invidious.getReplies(videoId, token);
+    }
+
     /**
      * @return null if no instance supports channel Shorts (only Invidious does)
      */

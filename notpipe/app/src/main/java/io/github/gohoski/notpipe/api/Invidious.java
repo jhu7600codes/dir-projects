@@ -130,6 +130,25 @@ class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream, Shor
         return Utils.parseUrl(baseUrl, json.getArray("formatStreams").getObject(0).getString("url"));
     }
 
+    /**
+     * Replies of a comment, from the "continuation" token Invidious gives with each comment.
+     */
+    public static List<Comment> getReplies(String videoId, String token) throws IOException {
+        String endpoint = new HttpRequest.Builder("", "/api/v1/comments/" + videoId).addParam("continuation", token).build().getEndpoint();
+        try {
+            JSONArray arr = JSON.getObject(Discovery.fetchFromInvidious(endpoint)[1]).getArray("comments");
+            List<Comment> replies = new ArrayList<Comment>();
+            for (int j = 0; j < arr.size(); j++) {
+                JSONObject c = arr.getObject(j);
+                replies.add(new Comment(c.getString("author"), "", c.getString("content"),
+                        new Date(c.getLong("published", 0) * 1000L), c.getString("authorId", "")));
+            }
+            return replies;
+        } catch (JSONException e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
     @Override public List<Comment> getComments(String id) throws IOException {
         try {
             HttpRequest req = new HttpRequest(baseUrl, "/api/v1/comments/"+id);
@@ -137,8 +156,14 @@ class Invidious implements Metadata, VideoStream, PlaylistApi, AudioStream, Shor
             List<Comment> comments = new ArrayList<Comment>();
             for (int i = 0; i < arr.size(); i++) {
                 JSONObject j = arr.getObject(i);
-                comments.add(new Comment(j.getString("author"), Utils.parseUrl(baseUrl + "/ggpht", j.getArray("authorThumbnails").getObject(0).getString("url")),
-                        j.getString("content"), new Date(j.getLong("published") * 1000L), j.getString("authorId")));
+                Comment comment = new Comment(j.getString("author"), Utils.parseUrl(baseUrl + "/ggpht", j.getArray("authorThumbnails").getObject(0).getString("url")),
+                        j.getString("content"), new Date(j.getLong("published") * 1000L), j.getString("authorId"));
+                JSONObject replies = j.getObject("replies", null);
+                if (replies != null) {
+                    comment.replyCount = replies.getInt("replyCount", 0);
+                    comment.repliesToken = replies.getString("continuation", null);
+                }
+                comments.add(comment);
             }
             return comments;
         } catch (Exception e) {

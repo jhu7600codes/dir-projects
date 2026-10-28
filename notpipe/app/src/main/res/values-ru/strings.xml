@@ -286,4 +286,36 @@
     <string name="import_file">Импорт из файла</string>
     <string name="import_file_">subscriptions.csv из Google Takeout или экспорт NewPipe</string>
     <string name="import_file_bad">Это не файл с подписками</string>
+    <string name="resumed">Продолжаем с места остановки</string>
+    <string name="sponsor_skipped">Пропущен спонсорский фрагмент (SponsorBlock)</string>
+    <string name="playback_speed">Скорость воспроизведения</string>
+    <string name="speed_unsupported">Для смены скорости нужен Android 6.0 или новее</string>
+    <string name="captions">Субтитры</string>
+    <string name="captions_off">Выкл.</string>
+    <string name="loading_captions">Загрузка субтитров…</string>
+    <string name="no_captions">Субтитры не найдены</string>
+    <string name="player_settings">Настройки плеера</string>
+    <string name="autoplay">Автовоспроизведение следующего</string>
+    <string name="sponsorblock">Пропускать спонсоров (SponsorBlock)</string>
+    <string name="resume_playback">Продолжать с места остановки</string>
+    <string name="up_next">Далее: %s</string>
+    <string name="home">Главная</string>
+    <string name="loading_replies">Загрузка ответов…</string>
+    <plurals name="replies">
+        <item quantity="one">%d ответ</item>
+        <item quantity="few">%d ответа</item>
+        <item quantity="many">%d ответов</item>
+        <item quantity="other">%d ответа</item>
+    </plurals>
+    <string name="search_filter">Фильтр поиска</string>
+    <string name="notifications_on">Уведомлять о новых видео</string>
+    <string name="notifications_off">Не уведомлять о новых видео</string>
+    <string name="notifications_enabled">Вы получите уведомление, когда ваши каналы выложат видео</string>
+    <string name="notifications_disabled">Уведомления о новых видео выключены</string>
+    <plurals name="new_videos">
+        <item quantity="one">%d новое видео</item>
+        <item quantity="few">%d новых видео</item>
+        <item quantity="many">%d новых видео</item>
+        <item quantity="other">%d новых видео</item>
+    </plurals>
 </resources>

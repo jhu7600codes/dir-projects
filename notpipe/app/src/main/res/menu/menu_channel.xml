@@ -5,6 +5,10 @@
         android:title="@string/subscribe"
         android:icon="@android:drawable/ic_menu_add" />
     <item
+        android:id="@+id/action_channel_playlists"
+        android:title="@string/playlists"
+        android:icon="@android:drawable/ic_menu_agenda" />
+    <item
         android:id="@+id/action_shorts"
         android:title="@string/shorts"
         android:icon="@android:drawable/ic_media_play" />
