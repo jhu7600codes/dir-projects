@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@android:style/Theme">
-        <item name="android:windowBackground">@color/yt_background</item>
     </style>
     <style name="NotificationTitle" parent="@android:style/TextAppearance.Medium">
         <item name="android:textColor">#FF000000</item>

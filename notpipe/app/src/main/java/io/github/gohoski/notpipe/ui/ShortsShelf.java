@@ -53,13 +53,12 @@ public class ShortsShelf {
 
         TextView title = new TextView(activity);
         title.setText(R.string.shorts);
-        title.setTextSize(20);
-        title.setTextColor(Color.WHITE);
+        title.setTextSize(18);
         title.setTypeface(null, Typeface.BOLD);
-        title.setPadding(dp(12), dp(4), dp(12), dp(12));
+        title.setPadding(dp(12), 0, dp(12), dp(8));
         android.graphics.drawable.Drawable icon = activity.getResources().getDrawable(R.drawable.nav_shorts).mutate();
         icon.setColorFilter(0xFFFF0000, android.graphics.PorterDuff.Mode.SRC_IN);
-        icon.setBounds(0, 0, dp(28), dp(28));
+        icon.setBounds(0, 0, dp(24), dp(24));
         title.setCompoundDrawables(icon, null, null, null);
         title.setCompoundDrawablePadding(dp(8));
         title.setGravity(Gravity.CENTER_VERTICAL);
@@ -77,7 +76,7 @@ public class ShortsShelf {
         row = new LinearLayout(activity);
         row.setPadding(dp(8), 0, dp(8), 0);
         scroll.addView(row);
-        root.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, cardHeight()));
+        root.addView(scroll, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, dp(230)));
     }
 
     public View getView() {
@@ -135,7 +134,7 @@ public class ShortsShelf {
 
     private View card(final VideoInfo video) {
         FrameLayout card = new FrameLayout(activity);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(cardWidth(), cardHeight());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(130), dp(230));
         params.leftMargin = params.rightMargin = dp(4);
         card.setLayoutParams(params);
         card.setBackgroundColor(0xFF222222);
@@ -148,12 +147,11 @@ public class ShortsShelf {
         TextView title = new TextView(activity);
         title.setText(video.title);
         title.setTextColor(Color.WHITE);
-        title.setTextSize(14);
+        title.setTextSize(12);
         title.setTypeface(null, Typeface.BOLD);
-        title.setMaxLines(2);
-        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        title.setMaxLines(3);
         title.setShadowLayer(4, 0, 0, Color.BLACK);
-        title.setPadding(dp(8), dp(8), dp(8), dp(10));
+        title.setPadding(dp(6), dp(6), dp(6), dp(6));
         card.addView(title, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.FILL_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
 
@@ -172,16 +170,6 @@ public class ShortsShelf {
             }
         });
         return card;
-    }
-
-    /** Two cards fill the screen width, like YouTube's shelf (capped on tablets) */
-    private int cardWidth() {
-        int screen = activity.getResources().getDisplayMetrics().widthPixels;
-        return Math.min((screen - dp(16) - dp(8)) / 2, dp(200));
-    }
-
-    private int cardHeight() {
-        return cardWidth() * 10 / 7;
     }
 
     private int dp(float value) {
