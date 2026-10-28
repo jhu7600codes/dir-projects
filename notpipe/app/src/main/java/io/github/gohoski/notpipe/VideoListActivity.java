@@ -111,7 +111,7 @@ public class VideoListActivity extends Activity {
             return;
         }
         if (title != null) setTitle(title);
-        if (SOURCE_FEED.equals(source)) NavBar.attach(this, NavBar.SUBSCRIPTIONS);
+        NavBar.attach(this, SOURCE_FEED.equals(source) ? NavBar.SUBSCRIPTIONS : NavBar.NONE);
 
         listView = (ListView) findViewById(R.id.list);
         adapter = new VideoAdapter(this, R.layout.item_video_compact, videos);

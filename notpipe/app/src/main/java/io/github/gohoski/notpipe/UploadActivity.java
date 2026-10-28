@@ -45,6 +45,7 @@ public class UploadActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_upload);
+        io.github.gohoski.notpipe.ui.NavBar.attach(this, io.github.gohoski.notpipe.ui.NavBar.NONE);
         setTitle(R.string.upload_video);
         context = this;
 

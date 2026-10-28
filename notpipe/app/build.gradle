@@ -8,8 +8,8 @@ android {
         minSdkVersion 3
         //noinspection OldTargetApi
         targetSdkVersion 25
-        versionCode 11
-        versionName "0.5.3"
+        versionCode 12
+        versionName "0.5.4"
         setProperty("archivesBaseName", "notPipe-$versionName") //e.g. notPipe-0.1.0-release.apk
     }
     buildTypes {

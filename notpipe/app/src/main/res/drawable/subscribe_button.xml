@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Square-cornered red Subscribe button; grey once subscribed (state_selected) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true"><shape><solid android:color="#FF990000"/></shape></item>
+    <item android:state_selected="true"><shape><solid android:color="#FF555555"/></shape></item>
+    <item><shape><solid android:color="#FFCC0000"/></shape></item>
+</selector>

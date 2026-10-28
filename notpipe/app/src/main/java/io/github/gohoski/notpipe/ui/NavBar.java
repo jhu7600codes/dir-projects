@@ -21,7 +21,7 @@ import io.github.gohoski.notpipe.VideoListActivity;
  */
 
 public class NavBar {
-    public static final int HOME = 0, SHORTS = 1, SUBSCRIPTIONS = 2, LIBRARY = 3;
+    public static final int NONE = -1, HOME = 0, SHORTS = 1, SUBSCRIPTIONS = 2, LIBRARY = 3;
     private static final int[] IDS = {R.id.nav_home, R.id.nav_shorts, R.id.nav_subs, R.id.nav_library};
 
     private NavBar() {}
@@ -56,6 +56,13 @@ public class NavBar {
         }
     }
 
+    private static boolean isTab(Activity activity) {
+        if (activity instanceof MainActivity) return false;
+        if (activity instanceof ShortsActivity || activity instanceof LibraryActivity) return true;
+        return activity instanceof VideoListActivity
+                && VideoListActivity.SOURCE_FEED.equals(activity.getIntent().getStringExtra(VideoListActivity.EXTRA_SOURCE));
+    }
+
     private static void open(Activity activity, int tab) {
         Intent intent;
         switch (tab) {
@@ -63,8 +70,9 @@ public class NavBar {
                 intent = new Intent(activity, MainActivity.class);
                 break;
             case SHORTS:
-                activity.startActivity(new Intent(activity, ShortsActivity.class));
-                return;
+                if (activity instanceof ShortsActivity) return;
+                intent = new Intent(activity, ShortsActivity.class);
+                break;
             case SUBSCRIPTIONS:
                 intent = new Intent(activity, VideoListActivity.class);
                 intent.putExtra(VideoListActivity.EXTRA_SOURCE, VideoListActivity.SOURCE_FEED);
@@ -78,6 +86,7 @@ public class NavBar {
         // Tabs replace each other instead of piling up on the back stack
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         activity.startActivity(intent);
-        if (!(activity instanceof MainActivity)) activity.finish();
+        // Tab screens replace each other; detail screens (channel, playlist…) stay so Back returns to them
+        if (isTab(activity)) activity.finish();
     }
 }

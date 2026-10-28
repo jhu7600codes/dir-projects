@@ -38,6 +38,7 @@ public class DownloadsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
+        io.github.gohoski.notpipe.ui.NavBar.attach(this, io.github.gohoski.notpipe.ui.NavBar.NONE);
         setTitle(R.string.downloads);
         context = this;
         Compat.ensureStoragePermission(this);

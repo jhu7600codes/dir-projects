@@ -31,7 +31,9 @@ import io.github.gohoski.notpipe.config.Config;
 import io.github.gohoski.notpipe.config.ConfigManager;
 import io.github.gohoski.notpipe.data.VideoInfo;
 import io.github.gohoski.notpipe.http.HttpClient;
+import io.github.gohoski.notpipe.ui.NavBar;
 import io.github.gohoski.notpipe.ui.VideoActions;
+import io.github.gohoski.notpipe.util.ChannelIconResolver;
 import io.github.gohoski.notpipe.util.Feeds;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.LocalLibrary;
@@ -69,6 +71,7 @@ public class ShortsActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_shorts);
+        NavBar.attach(this, NavBar.SHORTS);
         context = this;
         config = ConfigManager.getInstance().getConfig();
 
@@ -78,6 +81,7 @@ public class ShortsActivity extends Activity {
             @Override
             public void onPrepared(MediaPlayer mp) {
                 prepared = true;
+                fitVideo(mp.getVideoWidth(), mp.getVideoHeight());
                 mp.setLooping(true);
                 findViewById(R.id.short_loading).setVisibility(View.GONE);
                 thumbnail.setVisibility(View.GONE);
@@ -144,6 +148,25 @@ public class ShortsActivity extends Activity {
                 }
             }
         };
+        findViewById(R.id.short_subscribe).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toggleSubscribe();
+            }
+        });
+        View.OnClickListener openChannel = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (shorts.isEmpty()) return;
+                VideoInfo video = shorts.get(index);
+                if (video.channelId == null || video.channelId.length() == 0) return;
+                Intent intent = new Intent(context, ChannelActivity.class);
+                intent.putExtra("ID", video.channelId);
+                startActivity(intent);
+            }
+        };
+        findViewById(R.id.short_avatar).setOnClickListener(openChannel);
+        findViewById(R.id.short_channel).setOnClickListener(openChannel);
         findViewById(R.id.short_like).setOnClickListener(actions);
         findViewById(R.id.short_dislike).setOnClickListener(actions);
         findViewById(R.id.short_share).setOnClickListener(actions);
@@ -160,6 +183,66 @@ public class ShortsActivity extends Activity {
             MusicService.sendAction(this, MusicService.ACTION_TOGGLE);
         }
         new LoadShortsTask().execute(getIntent().getStringExtra(EXTRA_CHANNEL));
+    }
+
+    /** Scales the video up to fill the screen (keeping its shape) instead of showing it at its pixel size */
+    private void fitVideo(int videoWidth, int videoHeight) {
+        View root = findViewById(R.id.shorts_root);
+        int w = root.getWidth(), h = root.getHeight();
+        if (videoWidth <= 0 || videoHeight <= 0 || w <= 0 || h <= 0) return;
+        float scale = Math.min(w / (float) videoWidth, h / (float) videoHeight);
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                Math.round(videoWidth * scale), Math.round(videoHeight * scale), android.view.Gravity.CENTER);
+        videoView.setLayoutParams(params);
+        videoView.getHolder().setFixedSize(params.width, params.height);
+    }
+
+    private void showChannel(final VideoInfo video) {
+        ((TextView) findViewById(R.id.short_channel)).setText(video.channel);
+        final ImageView avatar = (ImageView) findViewById(R.id.short_avatar);
+        avatar.setImageBitmap(null);
+        String icon = video.channelThumbnail;
+        if ((icon == null || icon.length() == 0) && video.channelId != null && video.channelId.length() > 0) {
+            icon = ChannelIconResolver.getResolved(video.channelId);
+            if (icon == null) {
+                ChannelIconResolver.requestFallback(video.channelId, new ChannelIconResolver.OnIconResolvedListener() {
+                    @Override
+                    public void onIconResolved(String channelId, String url) {
+                        if (!isDestroyedFlag && url != null && url.length() > 0 && !shorts.isEmpty()
+                                && channelId.equals(shorts.get(index).channelId)) {
+                            ImageLoader.loadImage(url, avatar, false);
+                        }
+                    }
+                });
+            }
+        }
+        if (icon != null && icon.length() > 0 && !ChannelIconResolver.FAILED.equals(icon)) {
+            ImageLoader.loadImage(icon, avatar, false);
+        }
+        updateSubscribeButton(video);
+    }
+
+    private void updateSubscribeButton(VideoInfo video) {
+        TextView button = (TextView) findViewById(R.id.short_subscribe);
+        boolean hasChannel = video.channelId != null && video.channelId.startsWith("UC");
+        button.setVisibility(hasChannel ? View.VISIBLE : View.GONE);
+        boolean subscribed = hasChannel && LocalLibrary.getInstance().isSubscribed(video.channelId);
+        button.setSelected(subscribed);
+        button.setText(subscribed ? R.string.subscribed_short : R.string.subscribe);
+    }
+
+    private void toggleSubscribe() {
+        if (shorts.isEmpty()) return;
+        VideoInfo video = shorts.get(index);
+        if (video.channelId == null || !video.channelId.startsWith("UC")) return;
+        LocalLibrary library = LocalLibrary.getInstance();
+        if (library.isSubscribed(video.channelId)) {
+            library.unsubscribe(video.channelId);
+        } else {
+            library.subscribe(video.channelId, video.channel, video.channelThumbnail);
+            Toast.makeText(context, getString(R.string.subscribed, video.channel), Toast.LENGTH_SHORT).show();
+        }
+        updateSubscribeButton(video);
     }
 
     private void togglePause() {
@@ -183,7 +266,7 @@ public class ShortsActivity extends Activity {
             videoView.stopPlayback();
         } catch (Exception ignored) {}
         ((TextView) findViewById(R.id.short_title)).setText(video.title);
-        ((TextView) findViewById(R.id.short_channel)).setText(video.channel);
+        showChannel(video);
         findViewById(R.id.short_loading).setVisibility(View.VISIBLE);
         thumbnail.setVisibility(View.VISIBLE);
         ImageLoader.loadImage(video.thumbnail, thumbnail, false);

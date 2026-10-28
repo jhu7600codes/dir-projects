@@ -82,6 +82,7 @@ public class ChannelActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_channel);
+        io.github.gohoski.notpipe.ui.NavBar.attach(this, io.github.gohoski.notpipe.ui.NavBar.NONE);
 
         channelId = getIntent().getStringExtra("ID");
         channelLayout = (LinearLayout) findViewById(R.id.channel);

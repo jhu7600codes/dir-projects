@@ -44,6 +44,7 @@ public class SettingsActivity extends Activity implements InstancesUpdater.OnIns
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        io.github.gohoski.notpipe.ui.NavBar.attach(this, io.github.gohoski.notpipe.ui.NavBar.NONE);
 
         context = this;
         configManager = ConfigManager.getInstance();
