@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="cheats"
+        android:enabled="true"
+        android:icon="@drawable/app_icon"
+        android:shortcutShortLabel="@string/ssog_cheats"
+        android:shortcutLongLabel="@string/ssog_cheats">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.kiloo.subwaysurf.og"
+            android:targetClass="ssog.CheatActivity" />
+    </shortcut>
+</shortcuts>

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "XsKHYAkMnTw=",
+  "success": true,
+  "projectFilePath": "/home/user/dir-projects/ssog/patcher/Patcher.csproj",
+  "expectedPackageFiles": [
+    "/root/.nuget/packages/mono.cecil/0.11.6/mono.cecil.0.11.6.nupkg.sha512"
+  ],
+  "logs": []
+}
