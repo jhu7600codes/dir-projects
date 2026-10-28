@@ -42,7 +42,7 @@ List of supported APIs:
 * **Local subscriptions** (NewPipe-like): subscribe from a channel's menu, then *Library → What's new* shows the latest videos of all your channels
 * **Watch history** kept on the device
 * **Recommended for you** using YouTube's own algorithm: your account's YouTube home feed when signed in (videos you watch in notPipe are reported to YouTube's watch history, so it keeps learning), otherwise YouTube's "up next" picks for what you watched. Signed in, it's the home screen by default (menu → Home: popular/recommended)
-* **Player**: resume where you left off, double-tap to seek ±10 s, playback speed (Android 6+), subtitles, SponsorBlock, autoplay next
+* **Player**: custom YouTube-style controls (seek bar, ±10 s, next, quick speed/subtitles/quality buttons), double-tap to seek, brightness/volume swipes in full screen, picture-in-picture (Android 8+), chapters, loop, sleep timer, resume where you left off, playback speed (Android 6+), subtitles, SponsorBlock, autoplay next
 * **Comments**: tap a comment to read its replies
 * **Search filters** for channels and playlists, channel playlists, new upload notifications for your subscriptions
 * **Bottom navigation**: Home / Shorts / Subscriptions / Library

@@ -295,4 +295,20 @@
         <item quantity="one">%d new video</item>
         <item quantity="other">%d new videos</item>
     </plurals>
+    <string name="brightness">Brightness</string>
+    <string name="volume">Volume</string>
+    <string name="pip">Picture-in-picture</string>
+    <string name="pip_unsupported">Picture-in-picture needs Android 8.0 or newer</string>
+    <string name="auto_pip">Picture-in-picture when leaving the app</string>
+    <string name="chapters">Chapters</string>
+    <string name="no_chapters">This video has no chapters</string>
+    <string name="loop">Loop</string>
+    <string name="loop_on">Loop on</string>
+    <string name="loop_off">Loop off</string>
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="sleep_off">Off</string>
+    <string name="sleep_minutes">%d min</string>
+    <string name="sleep_left">%d min left</string>
+    <string name="sleep_set">Stopping playback in %d min</string>
+    <string name="sleep_cancelled">Sleep timer off</string>
 </resources>

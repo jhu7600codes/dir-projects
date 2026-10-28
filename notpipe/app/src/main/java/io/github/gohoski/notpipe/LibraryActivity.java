@@ -267,7 +267,7 @@ public class LibraryActivity extends Activity {
         String[] items = new String[]{
                 getString(MusicService.isPaused() ? R.string.resume : R.string.pause),
                 getString(R.string.previous), getString(R.string.next), getString(R.string.stop),
-                getString(R.string.open_video)
+                getString(R.string.open_video), getString(R.string.sleep_timer)
         };
         new AlertDialog.Builder(this)
                 .setTitle(MusicService.getCurrentTitle())
@@ -278,6 +278,7 @@ public class LibraryActivity extends Activity {
                         else if (which == 1) MusicService.sendAction(context, MusicService.ACTION_PREVIOUS);
                         else if (which == 2) MusicService.sendAction(context, MusicService.ACTION_NEXT);
                         else if (which == 3) MusicService.sendAction(context, MusicService.ACTION_STOP);
+                        else if (which == 5) io.github.gohoski.notpipe.util.SleepTimer.showDialog(LibraryActivity.this);
                         else {
                             String id = MusicService.getCurrentId();
                             if (id != null) {

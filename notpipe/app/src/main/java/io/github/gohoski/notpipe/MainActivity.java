@@ -29,6 +29,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.List;
 
 import io.github.gohoski.notpipe.api.Discovery;
@@ -488,7 +489,12 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                 } else if (searchType == 2) {
                     result.videos = Discovery.searchPlaylists(params[0]);
                 } else if (metadata != null) {
-                    result.videos = metadata.search(params[0]);
+                    final String query = params[0];
+                    result.videos = Manager.getInstance().raceMetadata(new Manager.MetadataTask<List<VideoInfo>>() {
+                        public List<VideoInfo> run(Metadata m) throws Exception {
+                            return m.search(query);
+                        }
+                    }, null);
                 } else {
                     result.error = new Exception("Metadata client not initialized.");
                 }
@@ -558,7 +564,13 @@ public class MainActivity extends Activity implements InstancesUpdater.OnInstanc
                     }
                 }
                 if (metadata != null) {
-                    result.videos = metadata.getPopularVideos();
+                    result.videos = Manager.getInstance().raceMetadata(new Manager.MetadataTask<List<VideoInfo>>() {
+                        public List<VideoInfo> run(Metadata m) throws Exception {
+                            List<VideoInfo> videos = m.getPopularVideos();
+                            if (videos.isEmpty()) throw new IOException("Empty");
+                            return videos;
+                        }
+                    }, null);
                 } else {
                     result.error = new Exception("Popular unavailable");
                 }

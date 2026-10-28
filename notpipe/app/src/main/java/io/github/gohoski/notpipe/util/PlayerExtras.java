@@ -34,6 +34,7 @@ public class PlayerExtras {
     public static final String KEY_SPONSORBLOCK = "sponsorblock";
     public static final String KEY_RESUME = "resume";
     public static final String KEY_SPEED = "speed";
+    public static final String KEY_AUTO_PIP = "auto_pip";
 
     private PlayerExtras() {}
 

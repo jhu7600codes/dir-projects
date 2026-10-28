@@ -41,10 +41,12 @@ public class NavBar {
         for (int i = 0; i < IDS.length; i++) {
             final int tab = i;
             TextView item = (TextView) bar.findViewById(IDS[i]);
-            if (i == selected) {
-                item.setTextColor(0xFF33B5E5);
-                item.setTypeface(null, Typeface.BOLD);
-            }
+            // Icons are white; tint them like the text so the current tab stands out
+            int color = i == selected ? 0xFF33B5E5 : 0xFF9A9A9A;
+            item.setTextColor(color);
+            if (i == selected) item.setTypeface(null, Typeface.BOLD);
+            android.graphics.drawable.Drawable icon = item.getCompoundDrawables()[1];
+            if (icon != null) icon.mutate().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
             item.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

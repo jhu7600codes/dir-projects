@@ -146,6 +146,86 @@ public class Manager {
         }
     }
 
+    public interface MetadataTask<R> {
+        R run(Metadata metadata) throws Exception;
+    }
+
+    /**
+     * Runs the task on a few Metadata instances at once and returns the first result, like the video URL race.
+     * A ContentUnavailableException from the first finished instance is passed on as before.
+     * @param winner if not null, receives a fallback proxy that sticks to the winning instance
+     */
+    public <R> R raceMetadata(final MetadataTask<R> task, Metadata[] winner) throws IOException {
+        List<Metadata> candidates = new ArrayList<Metadata>(metadataInstances);
+        if (candidates.isEmpty()) throw new IOException("No Metadata instances");
+        java.util.Collections.shuffle(candidates, random);
+        java.util.Collections.sort(candidates, new java.util.Comparator<Metadata>() {
+            @Override
+            public int compare(Metadata a, Metadata b) {
+                return score(b.getHost()) - score(a.getHost());
+            }
+        });
+        CompletionService<Object[]> race = new ExecutorCompletionService<Object[]>(racePool);
+        int next = 0, running = 0;
+        while (next < candidates.size() && running < RACE_WIDTH) {
+            submitMetadata(race, candidates.get(next++), task);
+            running++;
+        }
+        Throwable last = null;
+        while (running > 0) {
+            Future<Object[]> done;
+            try {
+                done = race.poll(60000L, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                throw new IOException("Interrupted");
+            }
+            if (done == null) break;
+            running--;
+            try {
+                Object[] result = done.get();
+                if (winner != null && winner.length > 0) {
+                    winner[0] = createStatefulFallbackProxy(Metadata.class, metadataInstances, (Metadata) result[0]);
+                }
+                @SuppressWarnings("unchecked") R value = (R) result[1];
+                return value;
+            } catch (ExecutionException e) {
+                last = e.getCause();
+                if (last instanceof ContentUnavailableException) throw (ContentUnavailableException) last;
+            } catch (InterruptedException e) {
+                throw new IOException("Interrupted");
+            }
+            if (next < candidates.size()) {
+                submitMetadata(race, candidates.get(next++), task);
+                running++;
+            }
+        }
+        if (metadataInstances.isEmpty()) {
+            reloadInstances();
+            showConnectionErrorToast();
+        }
+        if (last instanceof IOException) throw (IOException) last;
+        throw new IOException(last != null ? last.getMessage() : "All instances failed");
+    }
+
+    private <R> void submitMetadata(CompletionService<Object[]> race, final Metadata instance, final MetadataTask<R> task) {
+        race.submit(new Callable<Object[]>() {
+            @Override
+            public Object[] call() throws Exception {
+                try {
+                    Object value = task.run(instance);
+                    addScore(instance.getHost(), 1);
+                    return new Object[]{instance, value};
+                } catch (ContentUnavailableException e) {
+                    throw e;
+                } catch (Exception e) {
+                    addScore(instance.getHost(), -2);
+                    if (isDeadInstanceError(e)) removeDeadInstance(instance);
+                    throw e;
+                }
+            }
+        });
+    }
+
     public Metadata getMetadata() {
         if (metadataInstances.isEmpty()) throw new IllegalStateException("No Metadata instances");
         return createStatefulFallbackProxy(Metadata.class, metadataInstances);
@@ -444,11 +524,16 @@ public class Manager {
      */
     @SuppressWarnings("unchecked")
     private <T> T createStatefulFallbackProxy(final Class<T> interfaceClass, final List<T> pool) {
+        return createStatefulFallbackProxy(interfaceClass, pool, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T createStatefulFallbackProxy(final Class<T> interfaceClass, final List<T> pool, final T initial) {
         return (T) Proxy.newProxyInstance(
                 interfaceClass.getClassLoader(),
                 new Class<?>[]{ interfaceClass },
                 new InvocationHandler() {
-                    private T currentInstance = null;
+                    private T currentInstance = initial;
                     private void pickNewInstance() {
                         if (!pool.isEmpty()) {
                             currentInstance = pool.get(random.nextInt(pool.size()));

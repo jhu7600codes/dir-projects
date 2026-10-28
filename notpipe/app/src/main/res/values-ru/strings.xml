@@ -318,4 +318,20 @@
         <item quantity="many">%d новых видео</item>
         <item quantity="other">%d новых видео</item>
     </plurals>
+    <string name="brightness">Яркость</string>
+    <string name="volume">Громкость</string>
+    <string name="pip">Картинка в картинке</string>
+    <string name="pip_unsupported">Картинка в картинке работает на Android 8.0 и новее</string>
+    <string name="auto_pip">Картинка в картинке при выходе из приложения</string>
+    <string name="chapters">Главы</string>
+    <string name="no_chapters">В этом видео нет глав</string>
+    <string name="loop">Повтор</string>
+    <string name="loop_on">Повтор включён</string>
+    <string name="loop_off">Повтор выключен</string>
+    <string name="sleep_timer">Таймер сна</string>
+    <string name="sleep_off">Выкл.</string>
+    <string name="sleep_minutes">%d мин</string>
+    <string name="sleep_left">осталось %d мин</string>
+    <string name="sleep_set">Воспроизведение остановится через %d мин</string>
+    <string name="sleep_cancelled">Таймер сна выключен</string>
 </resources>

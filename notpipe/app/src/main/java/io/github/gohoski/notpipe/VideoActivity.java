@@ -17,7 +17,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -62,12 +61,14 @@ import io.github.gohoski.notpipe.http.HttpClient;
 import io.github.gohoski.notpipe.ui.AdapterLinearLayout;
 import io.github.gohoski.notpipe.ui.AspectRatioVideoView;
 import io.github.gohoski.notpipe.ui.CommentAdapter;
+import io.github.gohoski.notpipe.ui.PlayerControls;
 import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.ChannelIconResolver;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.LocalLibrary;
 import io.github.gohoski.notpipe.util.PlayerExtras;
+import io.github.gohoski.notpipe.util.SleepTimer;
 
 public class VideoActivity extends Activity {
     String videoId;
@@ -125,7 +126,9 @@ public class VideoActivity extends Activity {
     private List<int[]> sponsorSegments = new ArrayList<int[]>();
     private List<PlayerExtras.Caption> captions;
     private TextView captionView;
-    private GestureDetector seekGestures;
+    private PlayerControls controls;
+    private boolean looping = false;
+    private boolean enteredFullscreenForPip = false;
     private final Handler handler = new Handler();
     private final Runnable extrasTicker = new Runnable() {
         @Override
@@ -442,6 +445,7 @@ public class VideoActivity extends Activity {
             videoView.setVideoURI(null);
             videoView.setMediaController(null);
         }
+        if (controls != null) controls.setEnabled(false);
         videoPlaying = false;
         videoPrepared = false;
         videoUrl = null;
@@ -653,9 +657,12 @@ public class VideoActivity extends Activity {
                         AspectRatioVideoView arvv = (AspectRatioVideoView) videoView;
                         arvv.setVideoDimensions(mp.getVideoWidth(), mp.getVideoHeight());
 
-                        MediaController mc = new MediaController(context);
-                        mc.setAnchorView(videoFrame);
-                        videoView.setMediaController(mc);
+                        if (controls != null) {
+                            controls.setEnabled(true);
+                            controls.setSpeed(PlayerExtras.getSpeed());
+                            if (resolvedQuality != null) controls.setQuality(resolvedQuality);
+                        }
+                        if (looping) mp.setLooping(true);
 
                         if (isOpencore) {
                             videoView.postDelayed(new Runnable() {
@@ -861,24 +868,71 @@ public class VideoActivity extends Activity {
         }
     }
 
+    private void leaveFullscreen() {
+        if (isTablet()) {
+            exitFullscreenMode();
+        } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        } else {
+            exitFullscreenMode();
+        }
+    }
+
+    /* ---------- Picture-in-picture (Android 8.0+; reflection since the SDK level is older) ---------- */
+
+    private boolean isInPip() {
+        if (NotPipe.SDK < 24) return false;
+        try {
+            return (Boolean) Activity.class.getMethod("isInPictureInPictureMode").invoke(this);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void enterPip() {
+        if (NotPipe.SDK < 26) {
+            Toast.makeText(context, R.string.pip_unsupported, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!videoPrepared) return;
+        if (controls != null) controls.hide();
+        if (!isFullscreenMode) {
+            enteredFullscreenForPip = true;
+            enterFullscreenMode();
+        }
+        try {
+            Activity.class.getMethod("enterPictureInPictureMode").invoke(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(context, R.string.pip_unsupported, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Leaving the app while a video plays drops it into a PiP window, like YouTube */
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        try {
+            if (NotPipe.SDK >= 26 && videoPrepared && videoView.isPlaying() && PlayerExtras.isEnabled(PlayerExtras.KEY_AUTO_PIP)) {
+                enterPip();
+            }
+        } catch (Exception ignored) {}
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+        if (!isInPictureInPictureMode && enteredFullscreenForPip) {
+            enteredFullscreenForPip = false;
+            exitFullscreenMode();
+        }
+    }
+
     @Override
     public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
         if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
             if (isFullscreenMode) {
-                if (isTablet()) {
-                    exitFullscreenMode();
-                    return true;
-                } else {
-                    // Phone logic
-                    int currentOrientation = getResources().getConfiguration().orientation;
-                    if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                        return true;
-                    } else {
-                        exitFullscreenMode();
-                        return true;
-                    }
-                }
+                leaveFullscreen();
+                return true;
             }
         }
         return super.onKeyDown(keyCode, event);
@@ -895,6 +949,7 @@ public class VideoActivity extends Activity {
         cancelVideoTimeout();
         stopPositionTracking();
         handler.removeCallbacks(extrasTicker);
+        if (controls != null) controls.release();
         ImageLoader.clearCache();
 
         // Cancel all running AsyncTasks to stop background operations
@@ -950,6 +1005,11 @@ public class VideoActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (isInPip()) {
+            // Keep playing in the PiP window
+            super.onPause();
+            return;
+        }
         reportYoutubeWatchtime(isFinishing());
         handler.removeCallbacks(extrasTicker);
         if (videoView != null && videoPrepared) {
@@ -1560,13 +1620,13 @@ public class VideoActivity extends Activity {
             videoFrame.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, android.view.MotionEvent event) {
-                    if (seekGestures != null && videoPrepared) seekGestures.onTouchEvent(event);
+                    boolean used = controls != null && videoPrepared && controls.onTouch(event);
                     if (isFullscreenMode && event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
                         showSystemUI();
                         systemUiHandler.removeCallbacks(hideSystemUiRunnable);
                         systemUiHandler.postDelayed(hideSystemUiRunnable, 5000);
                     }
-                    return false;
+                    return used;
                 }
             });
         }
@@ -1957,6 +2017,24 @@ public class VideoActivity extends Activity {
         } else if (itemId == R.id.action_player_settings) {
             showPlayerSettings();
             return true;
+        } else if (itemId == R.id.action_chapters) {
+            showChapters();
+            return true;
+        } else if (itemId == R.id.action_loop) {
+            looping = !looping;
+            if (mediaPlayer != null) {
+                try {
+                    mediaPlayer.setLooping(looping);
+                } catch (Exception ignored) {}
+            }
+            Toast.makeText(context, looping ? R.string.loop_on : R.string.loop_off, Toast.LENGTH_SHORT).show();
+            return true;
+        } else if (itemId == R.id.action_sleep_timer) {
+            SleepTimer.showDialog(this);
+            return true;
+        } else if (itemId == R.id.action_pip) {
+            enterPip();
+            return true;
         } else if (itemId == R.id.action_listen_background || itemId == R.id.action_download
                 || itemId == R.id.action_add_playlist) {
             if (video == null) {
@@ -1981,17 +2059,23 @@ public class VideoActivity extends Activity {
     /* ---------- Player extras: SponsorBlock, captions, speed, autoplay, double-tap seek ---------- */
 
     private void setupPlayerExtras() {
-        seekGestures = new GestureDetector(new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onDoubleTap(android.view.MotionEvent e) {
-                if (!videoPrepared || videoFrame == null) return false;
-                boolean forward = e.getX() > videoFrame.getWidth() / 2;
-                int target = videoView.getCurrentPosition() + (forward ? 10000 : -10000);
-                videoView.seekTo(Math.max(0, Math.min(target, videoView.getDuration() - 1000)));
-                Toast.makeText(context, forward ? "+10s" : "-10s", Toast.LENGTH_SHORT).show();
-                return true;
-            }
-        });
+        if (videoFrame != null) {
+            controls = new PlayerControls(this, videoFrame, videoView, new PlayerControls.Host() {
+                public void onToggleFullscreen() {
+                    if (isFullscreenMode) leaveFullscreen(); else enterFullscreenByConfig();
+                }
+                public void onSpeed() { showSpeedDialog(); }
+                public void onCaptions() { showCaptionsDialog(); }
+                public void onQuality() {
+                    if (config.isConvertVideos()) return;
+                    showQualityDialog();
+                }
+                public void onPip() { enterPip(); }
+                public void onMore() { openOptionsMenu(); }
+                public void onNext() { playNext(true); }
+                public boolean isFullscreen() { return isFullscreenMode; }
+            });
+        }
         if (videoFrame != null) {
             captionView = new TextView(this);
             captionView.setTextColor(Color.WHITE);
@@ -2027,6 +2111,12 @@ public class VideoActivity extends Activity {
 
     private void tickExtras() {
         if (videoView == null || !videoPrepared) return;
+        if (SleepTimer.consumeVideoPause()) {
+            try {
+                videoView.pause();
+            } catch (Exception ignored) {}
+            return;
+        }
         int position;
         try {
             if (!videoView.isPlaying()) return;
@@ -2086,6 +2176,7 @@ public class VideoActivity extends Activity {
                         dialog.dismiss();
                         PlayerExtras.setSpeed(speeds[which]);
                         applySpeed(speeds[which]);
+                        if (controls != null) controls.setSpeed(speeds[which]);
                     }
                 }).show();
     }
@@ -2152,8 +2243,10 @@ public class VideoActivity extends Activity {
     }
 
     private void showPlayerSettings() {
-        final String[] keys = {PlayerExtras.KEY_AUTOPLAY, PlayerExtras.KEY_SPONSORBLOCK, PlayerExtras.KEY_RESUME};
-        String[] labels = {getString(R.string.autoplay), getString(R.string.sponsorblock), getString(R.string.resume_playback)};
+        final String[] keys = {PlayerExtras.KEY_AUTOPLAY, PlayerExtras.KEY_SPONSORBLOCK, PlayerExtras.KEY_RESUME,
+                PlayerExtras.KEY_AUTO_PIP};
+        String[] labels = {getString(R.string.autoplay), getString(R.string.sponsorblock), getString(R.string.resume_playback),
+                getString(R.string.auto_pip)};
         boolean[] checked = new boolean[keys.length];
         for (int i = 0; i < keys.length; i++) checked[i] = PlayerExtras.isEnabled(keys[i]);
         new AlertDialog.Builder(context).setTitle(R.string.player_settings)
@@ -2166,9 +2259,45 @@ public class VideoActivity extends Activity {
                 .setPositiveButton(android.R.string.ok, null).show();
     }
 
+    /** Chapters are the timestamps ("1:23 Title") in the description, like YouTube does it */
+    private void showChapters() {
+        if (video == null || video.description == null) return;
+        final List<Integer> times = new ArrayList<Integer>();
+        final List<String> titles = new ArrayList<String>();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?m)^\\s*[\\[(]?((?:\\d{1,2}:)?\\d{1,2}:\\d{2})[\\])]?\\s*[-–—:|]?\\s*(.*)$")
+                .matcher(video.description);
+        while (m.find()) {
+            int seconds = io.github.gohoski.notpipe.util.Feeds.parseDuration(m.group(1));
+            if (seconds < 0) continue;
+            times.add(seconds * 1000);
+            titles.add(m.group(1) + "  " + m.group(2).trim());
+        }
+        if (times.isEmpty()) {
+            Toast.makeText(context, R.string.no_chapters, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(context).setTitle(R.string.chapters)
+                .setItems(titles.toArray(new String[titles.size()]), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (videoPrepared) {
+                            videoView.seekTo(times.get(which));
+                        } else {
+                            videoPosition = times.get(which);
+                            playVideo();
+                        }
+                    }
+                }).show();
+    }
+
     /** Autoplay: opens the first related video that isn't in the watch history yet */
     private void playNextIfAutoplay() {
-        if (!PlayerExtras.isEnabled(PlayerExtras.KEY_AUTOPLAY) || relatedVideos.isEmpty() || isFinishing()) return;
+        playNext(false);
+    }
+
+    /** @param force true when the user pressed "next", false for autoplay */
+    private void playNext(boolean force) {
+        if ((!force && !PlayerExtras.isEnabled(PlayerExtras.KEY_AUTOPLAY)) || relatedVideos.isEmpty() || isFinishing()) return;
         List<VideoInfo> history = LocalLibrary.getInstance().getHistory();
         VideoInfo next = relatedVideos.get(0);
         for (int i = 0; i < relatedVideos.size(); i++) {
@@ -2347,7 +2476,16 @@ public class VideoActivity extends Activity {
         protected Video doInBackground(String... params) {
             try {
                 if (isCancelled()) return null;
-                return api.getVideo(params[0]);
+                final String id = params[0];
+                Metadata[] winner = new Metadata[1];
+                Video result = Manager.getInstance().raceMetadata(new Manager.MetadataTask<Video>() {
+                    public Video run(Metadata metadata) throws Exception {
+                        return metadata.getVideo(id);
+                    }
+                }, winner);
+                // Related videos and comments then use the instance that answered first
+                if (winner[0] != null) api = winner[0];
+                return result;
             } catch (ContentUnavailableException e) {
                 contentUnavailable = true;
                 e.printStackTrace();

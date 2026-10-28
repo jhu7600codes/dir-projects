@@ -12,14 +12,15 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#FF1A1A1A">
+        android:background="#FF151515"
+        android:paddingTop="2dp">
         <TextView android:id="@+id/nav_home" style="@style/NavItem"
-            android:drawableTop="@android:drawable/ic_menu_view" android:text="@string/home"/>
+            android:drawableTop="@drawable/nav_home" android:text="@string/home"/>
         <TextView android:id="@+id/nav_shorts" style="@style/NavItem"
-            android:drawableTop="@android:drawable/ic_media_play" android:text="@string/shorts"/>
+            android:drawableTop="@drawable/nav_shorts" android:text="@string/shorts"/>
         <TextView android:id="@+id/nav_subs" style="@style/NavItem"
-            android:drawableTop="@android:drawable/ic_menu_agenda" android:text="@string/subscriptions"/>
+            android:drawableTop="@drawable/nav_subs" android:text="@string/subscriptions"/>
         <TextView android:id="@+id/nav_library" style="@style/NavItem"
-            android:drawableTop="@android:drawable/ic_menu_gallery" android:text="@string/library"/>
+            android:drawableTop="@drawable/nav_library" android:text="@string/library"/>
     </LinearLayout>
 </LinearLayout>

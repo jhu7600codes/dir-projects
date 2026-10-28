@@ -27,6 +27,18 @@
         android:id="@+id/action_captions"
         android:title="@string/captions" />
     <item
+        android:id="@+id/action_chapters"
+        android:title="@string/chapters" />
+    <item
+        android:id="@+id/action_loop"
+        android:title="@string/loop" />
+    <item
+        android:id="@+id/action_pip"
+        android:title="@string/pip" />
+    <item
+        android:id="@+id/action_sleep_timer"
+        android:title="@string/sleep_timer" />
+    <item
         android:id="@+id/action_player_settings"
         android:title="@string/player_settings" />
 </menu>
