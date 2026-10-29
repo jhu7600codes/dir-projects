@@ -57,28 +57,48 @@ stress goes on the **second-to-last syllable**, and one-syllable words carry the
 
 one glyph per sound, not per english letter. 22 consonants + 6 vowels = 28 letters, written left to right. there are no capital letters.
 
-the shapes are built only from straight strokes on a small grid: consonants are 4 wide and 6 tall, vowels are 4 wide and 4 tall, so you can tell vowels apart at a glance because they are shorter.
+### the look
 
-### the voicing roof
+- every stroke is either **flat** or **slanted at about 63°** (slope 2 on the grid). there are no vertical strokes at all, which gives the script its leaning, crystal-like look
+- every letter sits under a **headline** at the top. inside a word the headlines run together into one unbroken line; a break in the line is the word boundary
+- **consonants hang** from the headline (their strokes touch it)
+- **vowels float** under it in the lower half and never touch it, so vowels and consonants are easy to tell apart
 
-voiced consonants are their voiceless partner plus a flat **roof** stroke on top:
+### consonants are built from parts
 
-| voiceless | voiced (+ roof) |
-|-----------|-----------------|
-| p | b |
-| t | d |
-| k | g |
-| f | v |
-| s | z |
+each consonant is a **leg** (where in the mouth) plus a **mark** (how the sound is made):
 
-learn 5 shapes, get 10 letters. the other consonants have no roof, so a top bar always means "voiced".
+| leg | shape | letters |
+|-----|-------|---------|
+| lips | long `\` | p b f v (m, w) |
+| ridge | long `/` | t d th s z (n, r, l, y) |
+| back | `\` bent back at the bottom (`>`) | k g kh (ng) |
+| palate | `/` bent back at the bottom (`<`) | sh ch |
 
-### family resemblances
+| mark | meaning |
+|------|---------|
+| foot (flat stroke at the bottom) | stop: p t k, and ch |
+| bar through the middle | fricative: f s sh kh |
+| bar + foot | th (the "hard s") |
+| small spark above the headline | **voiced**: p→b, t→d, k→g, f→v, s→z |
 
-- `s` is a `<`, `sh` is `s` with a middle tongue stroke, `z` is `s` with the roof
-- `k` is a `V`, `kh` is `k` with a stem inside it, `g` is `k` with the roof
-- `n` is a diamond, `ng` is the diamond split by a stem
-- `m` is a closed triangle. closed shapes are always nasals or `o`
+learn 4 legs and 3 marks, and you can read 14 letters. the rest:
+
+- **nasals** make a closed triangle with the headline: `m` (with a lips tail), `n` (ridge tail), `ng` (both tails). closed shapes are always nasals, `o`, or the ask mark
+- **liquids** are a short ridge leg with a flag: `r` flags right, `l` flags left
+- **glides** are two short parallel legs: `y` leans like the ridge `/`, `w` like the lips `\`
+- `h` is two little splayed ticks under the headline, like a breath
+
+### vowels
+
+| vowel | shape |
+|-------|-------|
+| a | `Λ` |
+| e | `=` (two bars) |
+| i | a single slash |
+| o | a hexagon |
+| u | `V` |
+| ë | one short bar, half of `e` |
 
 ### letter names
 
@@ -86,16 +106,16 @@ consonants are named with an `a`: pa, ba, ta, ..., wa. vowels are named by their
 
 ### stroke order
 
-the order of strokes in `alphabet.json` is the stroke order, and each stroke is drawn from its first point to its last. general habits: stems before branches, top to bottom, left to right, the roof last.
+the headline comes first, then the strokes in the order of `alphabet.json`, each drawn from its first point to its last. general habits: leg before mark, top to bottom, the voicing spark last.
 
 ### digits
 
-numbers are base ten, written biggest place first, left to right, just like 0-9. every digit is a stem with ticks:
+numbers are base ten, written biggest place first, left to right. digits have **no headline**, so numbers stand out inside text. every digit is a slanted stem with flat ticks:
 
-- `0` is the stem with a top and bottom bar (an I-beam)
-- `1` to `4`: the stem with 1 to 4 ticks hanging off the right
-- `5` is the stem with a left foot
-- `6` to `9`: the left foot plus 1 to 4 ticks
+- `0` is the stem with a cap at the top and a foot at the bottom
+- `1` to `4`: the stem with 1 to 4 ticks off the top right
+- `5` is the stem with a foot
+- `6` to `9`: the foot plus 1 to 4 ticks
 
 so a digit is `foot (5) + number of ticks`.
 
@@ -103,22 +123,24 @@ number words: `zen` 0, `ek` 1, `dor` 2, `tis` 3, `kav` 4, `pam` 5, `shel` 6, `si
 
 ### punctuation
 
+punctuation has no headline either, so it also breaks the line.
+
 | mark | name | used for |
 |------|------|----------|
-| short slash | word mark | between every two words (this is how a space is written) |
-| double bar | full stop | end of a sentence |
-| angled hook | pause | where english uses a comma |
+| gap in the headline | word gap | between every two words (this is how a space is written) |
+| two slashes | full stop | end of a sentence |
+| one slash | pause | where english uses a comma |
 | small closed triangle | ask mark | end of a question (optional after `ka`) |
-| tall T | shout mark | end of an exclamation |
+| slash over a dash | shout mark | end of an exclamation |
 
 ## 3. spelling rules
 
 1. **spell sounds, not letters.** english `phone` → `fown`, `cat` → `kat`
 2. **diphthongs** are written vowel + glide: `ay` = `a` + `y`
-3. **schwa fusion (ligature).** a consonant followed by `ë` fuses into one glyph: the consonant with a bar under the baseline. `kitë` is written with 3 glyphs: `k`, `i`, `t+ë`. the `ë` glyph on its own only appears at the start of a word or after a vowel
-4. **doubling (ligature).** two of the same consonant in a row fuse into one glyph with two small ticks above it: `dekkav` → `d`, `e`, `kk`, `a`, `v`. doubled consonants are said a little longer
+3. **schwa fusion (ligature).** a consonant followed by `ë` fuses into one glyph: the consonant with a short bar under the baseline. `kitë` is written with 3 glyphs: `k`, `i`, `t+ë`. the `ë` glyph on its own only appears at the start of a word or after a vowel
+4. **doubling (ligature).** two of the same consonant in a row fuse into one glyph with a second short headline above it: `dekkav` → `d`, `e`, `kk`, `a`, `v`. doubled consonants are said a little longer
 5. if both apply (`kkë`), doubling first, then the schwa bar is added to the doubled glyph
-6. the **word mark** separates words. sentence marks replace the word mark at the end of a sentence
+6. the **word gap** (a break in the headline) separates words. sentence marks also break the headline
 7. no capitals, no silent letters, ever
 
 the ligatures are font features (opentype `liga`), so the text itself still stores one character per sound.
@@ -213,7 +235,7 @@ venderian letters live in the unicode private use area. the font maps:
 | U+E000 – U+E015 | the 22 consonants, in the order of `alphabet.json` |
 | U+E020 – U+E025 | the 6 vowels a e i o u ë |
 | ASCII `0`–`9` | venderian digits |
-| ASCII space | word mark |
+| ASCII space | word gap |
 | ASCII `. , ? !` | full stop, pause, ask mark, shout mark |
 
 ligatures (`C + ë`, `C + C`) are composed by the font, so stored text is always one codepoint per sound. outside the app (without the font) the text shows as empty boxes, so the app's copy button also offers the romanized version.

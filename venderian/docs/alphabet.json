@@ -1,59 +1,376 @@
 {
-  "about": "stroke-level source for every venderian glyph. coordinates are on a grid, y goes up, baseline is y=0. consonants are 4 wide x 6 tall, vowels 4 x 4. each stroke is a polyline drawn in order (that order is also the stroke order taught in the app).",
+  "about": "stroke-level source for every venderian glyph. grid units, y up, baseline y=0, headline y=6. strokes are only horizontal or slope +-2 (about 63 degrees), never vertical. letters with headline=true also get the headline mark across their full width. each stroke is a polyline drawn in order, which is the stroke order taught in the app.",
   "strokeWidth": 0.7,
   "consonants": [
-    {"id": "p",  "roman": "p",  "ipa": "p", "name": "pa",  "cp": "E000", "hint": "p as in 'spin'",          "strokes": [[[0,0],[0,6]], [[0,3],[4,6]]]},
-    {"id": "b",  "roman": "b",  "ipa": "b", "name": "ba",  "cp": "E001", "hint": "b as in 'bat'",           "strokes": [[[0,0],[0,6]], [[0,3],[4,6]], [[0,6],[4,6]]]},
-    {"id": "t",  "roman": "t",  "ipa": "t", "name": "ta",  "cp": "E002", "hint": "t as in 'stop'",          "strokes": [[[2,0],[2,6]], [[0,4],[4,4]]]},
-    {"id": "d",  "roman": "d",  "ipa": "d", "name": "da",  "cp": "E003", "hint": "d as in 'dog'",           "strokes": [[[2,0],[2,6]], [[0,4],[4,4]], [[0,6],[4,6]]]},
-    {"id": "k",  "roman": "k",  "ipa": "k", "name": "ka",  "cp": "E004", "hint": "k as in 'skin'",          "strokes": [[[0,6],[2,0],[4,6]]]},
-    {"id": "g",  "roman": "g",  "ipa": "ɡ", "name": "ga",  "cp": "E005", "hint": "g as in 'go'",            "strokes": [[[0,6],[2,0],[4,6]], [[0,6],[4,6]]]},
-    {"id": "f",  "roman": "f",  "ipa": "f", "name": "fa",  "cp": "E006", "hint": "f as in 'fun'",           "strokes": [[[0,6],[4,4],[0,2],[4,0]]]},
-    {"id": "v",  "roman": "v",  "ipa": "v", "name": "va",  "cp": "E007", "hint": "v as in 'very'",          "strokes": [[[0,6],[4,4],[0,2],[4,0]], [[0,6],[4,6]]]},
-    {"id": "th", "roman": "th", "ipa": "θ", "name": "tha", "cp": "E008", "hint": "th as in 'thin'",         "strokes": [[[2,0],[2,6]], [[0,0],[4,0]], [[0,3],[4,3]]]},
-    {"id": "s",  "roman": "s",  "ipa": "s", "name": "sa",  "cp": "E009", "hint": "s as in 'sun'",           "strokes": [[[4,6],[0,3],[4,0]]]},
-    {"id": "z",  "roman": "z",  "ipa": "z", "name": "za",  "cp": "E00A", "hint": "z as in 'zoo'",           "strokes": [[[4,6],[0,3],[4,0]], [[0,6],[4,6]]]},
-    {"id": "sh", "roman": "sh", "ipa": "ʃ", "name": "sha", "cp": "E00B", "hint": "sh as in 'ship'",         "strokes": [[[4,6],[0,3],[4,0]], [[0,3],[4,3]]]},
-    {"id": "kh", "roman": "kh", "ipa": "x", "name": "kha", "cp": "E00C", "hint": "like scottish 'loch', russian х", "strokes": [[[0,6],[2,0],[4,6]], [[2,0],[2,4]]]},
-    {"id": "ch", "roman": "ch", "ipa": "tʃ","name": "cha", "cp": "E00D", "hint": "ch as in 'chat'",         "strokes": [[[0,0],[4,6]], [[0,6],[4,0]]]},
-    {"id": "h",  "roman": "h",  "ipa": "h", "name": "ha",  "cp": "E00E", "hint": "h as in 'hat'",           "strokes": [[[0,6],[0,0],[4,0],[4,3]]]},
-    {"id": "m",  "roman": "m",  "ipa": "m", "name": "ma",  "cp": "E00F", "hint": "m as in 'moon'",          "strokes": [[[0,0],[2,6],[4,0],[0,0]]]},
-    {"id": "n",  "roman": "n",  "ipa": "n", "name": "na",  "cp": "E010", "hint": "n as in 'no'",            "strokes": [[[2,6],[4,3],[2,0],[0,3],[2,6]]]},
-    {"id": "ng", "roman": "ng", "ipa": "ŋ", "name": "nga", "cp": "E011", "hint": "ng as in 'sing'",         "strokes": [[[2,6],[4,3],[2,0],[0,3],[2,6]], [[2,0],[2,6]]]},
-    {"id": "r",  "roman": "r",  "ipa": "r", "name": "ra",  "cp": "E012", "hint": "a tapped r, like spanish 'pero'", "strokes": [[[0,0],[0,6],[4,4]]]},
-    {"id": "l",  "roman": "l",  "ipa": "l", "name": "la",  "cp": "E013", "hint": "l as in 'leaf'",          "strokes": [[[4,6],[0,0],[4,0]]]},
-    {"id": "y",  "roman": "y",  "ipa": "j", "name": "ya",  "cp": "E014", "hint": "y as in 'yes'",           "strokes": [[[0,6],[4,6],[0,0]]]},
-    {"id": "w",  "roman": "w",  "ipa": "w", "name": "wa",  "cp": "E015", "hint": "w as in 'wet'",           "strokes": [[[0,0],[4,6],[4,0]]]}
+    {
+      "id": "p",
+      "roman": "p",
+      "ipa": "p",
+      "name": "pa",
+      "cp": "E000",
+      "hint": "p as in 'spin'",
+      "strokes": [[[1,6], [4,0]], [[2,0], [4,0]]],
+      "headline": true
+    },
+    {
+      "id": "b",
+      "roman": "b",
+      "ipa": "b",
+      "name": "ba",
+      "cp": "E001",
+      "hint": "b as in 'bat'",
+      "strokes": [[[1,6], [4,0]], [[2,0], [4,0]], [[0,6], [0.5,7], [1,6]]],
+      "headline": true
+    },
+    {
+      "id": "t",
+      "roman": "t",
+      "ipa": "t",
+      "name": "ta",
+      "cp": "E002",
+      "hint": "t as in 'stop'",
+      "strokes": [[[3,6], [0,0]], [[0,0], [2,0]]],
+      "headline": true
+    },
+    {
+      "id": "d",
+      "roman": "d",
+      "ipa": "d",
+      "name": "da",
+      "cp": "E003",
+      "hint": "d as in 'dog'",
+      "strokes": [[[3,6], [0,0]], [[0,0], [2,0]], [[0,6], [0.5,7], [1,6]]],
+      "headline": true
+    },
+    {
+      "id": "k",
+      "roman": "k",
+      "ipa": "k",
+      "name": "ka",
+      "cp": "E004",
+      "hint": "k as in 'skin'",
+      "strokes": [[[1,6], [3,2], [2,0]], [[2,0], [4,0]]],
+      "headline": true
+    },
+    {
+      "id": "g",
+      "roman": "g",
+      "ipa": "ɡ",
+      "name": "ga",
+      "cp": "E005",
+      "hint": "g as in 'go'",
+      "strokes": [[[1,6], [3,2], [2,0]], [[2,0], [4,0]], [[0,6], [0.5,7], [1,6]]],
+      "headline": true
+    },
+    {
+      "id": "f",
+      "roman": "f",
+      "ipa": "f",
+      "name": "fa",
+      "cp": "E006",
+      "hint": "f as in 'fun'",
+      "strokes": [[[1,6], [4,0]], [[1,3], [4,3]]],
+      "headline": true
+    },
+    {
+      "id": "v",
+      "roman": "v",
+      "ipa": "v",
+      "name": "va",
+      "cp": "E007",
+      "hint": "v as in 'very'",
+      "strokes": [[[1,6], [4,0]], [[1,3], [4,3]], [[0,6], [0.5,7], [1,6]]],
+      "headline": true
+    },
+    {
+      "id": "th",
+      "roman": "th",
+      "ipa": "θ",
+      "name": "tha",
+      "cp": "E008",
+      "hint": "th as in 'thin'",
+      "strokes": [[[3,6], [0,0]], [[0,3], [3,3]], [[0,0], [2,0]]],
+      "headline": true
+    },
+    {
+      "id": "s",
+      "roman": "s",
+      "ipa": "s",
+      "name": "sa",
+      "cp": "E009",
+      "hint": "s as in 'sun'",
+      "strokes": [[[3,6], [0,0]], [[0,3], [3,3]]],
+      "headline": true
+    },
+    {
+      "id": "z",
+      "roman": "z",
+      "ipa": "z",
+      "name": "za",
+      "cp": "E00A",
+      "hint": "z as in 'zoo'",
+      "strokes": [[[3,6], [0,0]], [[0,3], [3,3]], [[0,6], [0.5,7], [1,6]]],
+      "headline": true
+    },
+    {
+      "id": "sh",
+      "roman": "sh",
+      "ipa": "ʃ",
+      "name": "sha",
+      "cp": "E00B",
+      "hint": "sh as in 'ship'",
+      "strokes": [[[3,6], [1,2], [2,0]], [[0,3], [2.5,3]]],
+      "headline": true
+    },
+    {
+      "id": "kh",
+      "roman": "kh",
+      "ipa": "x",
+      "name": "kha",
+      "cp": "E00C",
+      "hint": "like scottish 'loch', russian х",
+      "strokes": [[[1,6], [3,2], [2,0]], [[1.5,3], [4,3]]],
+      "headline": true
+    },
+    {
+      "id": "ch",
+      "roman": "ch",
+      "ipa": "tʃ",
+      "name": "cha",
+      "cp": "E00D",
+      "hint": "ch as in 'chat'",
+      "strokes": [[[3,6], [1,2], [2,0]], [[0,0], [2,0]]],
+      "headline": true
+    },
+    {
+      "id": "h",
+      "roman": "h",
+      "ipa": "h",
+      "name": "ha",
+      "cp": "E00E",
+      "hint": "h as in 'hat'",
+      "strokes": [[[1,6], [0,4]], [[3,6], [4,4]]],
+      "headline": true
+    },
+    {
+      "id": "m",
+      "roman": "m",
+      "ipa": "m",
+      "name": "ma",
+      "cp": "E00F",
+      "hint": "m as in 'moon'",
+      "strokes": [[[1,6], [2.5,3], [4,6]], [[2.5,3], [4,0]]],
+      "headline": true
+    },
+    {
+      "id": "n",
+      "roman": "n",
+      "ipa": "n",
+      "name": "na",
+      "cp": "E010",
+      "hint": "n as in 'no'",
+      "strokes": [[[0,6], [1.5,3], [3,6]], [[1.5,3], [0,0]]],
+      "headline": true
+    },
+    {
+      "id": "ng",
+      "roman": "ng",
+      "ipa": "ŋ",
+      "name": "nga",
+      "cp": "E011",
+      "hint": "ng as in 'sing'",
+      "strokes": [[[0.5,6], [2,3], [3.5,6]], [[2,3], [0.5,0]], [[2,3], [3.5,0]]],
+      "headline": true
+    },
+    {
+      "id": "r",
+      "roman": "r",
+      "ipa": "r",
+      "name": "ra",
+      "cp": "E012",
+      "hint": "a tapped r, like spanish 'pero'",
+      "strokes": [[[3,6], [1.5,3], [3.5,3]]],
+      "headline": true
+    },
+    {
+      "id": "l",
+      "roman": "l",
+      "ipa": "l",
+      "name": "la",
+      "cp": "E013",
+      "hint": "l as in 'leaf'",
+      "strokes": [[[3,6], [1.5,3], [0,3]]],
+      "headline": true
+    },
+    {
+      "id": "y",
+      "roman": "y",
+      "ipa": "j",
+      "name": "ya",
+      "cp": "E014",
+      "hint": "y as in 'yes'",
+      "strokes": [[[2,6], [0.5,3]], [[4,6], [2.5,3]]],
+      "headline": true
+    },
+    {
+      "id": "w",
+      "roman": "w",
+      "ipa": "w",
+      "name": "wa",
+      "cp": "E015",
+      "hint": "w as in 'wet'",
+      "strokes": [[[0,6], [1.5,3]], [[2,6], [3.5,3]]],
+      "headline": true
+    }
   ],
   "vowels": [
-    {"id": "a",  "roman": "a",  "ipa": "a", "name": "a",   "cp": "E020", "hint": "a as in 'father'",        "strokes": [[[0,0],[2,4],[4,0]]]},
-    {"id": "e",  "roman": "e",  "ipa": "e", "name": "e",   "cp": "E021", "hint": "e as in 'bed'",           "strokes": [[[0,4],[4,4],[0,0],[4,0]]]},
-    {"id": "i",  "roman": "i",  "ipa": "i", "name": "i",   "cp": "E022", "hint": "i as in 'machine'",       "strokes": [[[2,0],[2,4]], [[0,4],[2,2]]]},
-    {"id": "o",  "roman": "o",  "ipa": "o", "name": "o",   "cp": "E023", "hint": "o as in 'more'",          "strokes": [[[0,0],[0,4],[4,4],[4,0],[0,0]]]},
-    {"id": "u",  "roman": "u",  "ipa": "u", "name": "u",   "cp": "E024", "hint": "u as in 'rule'",          "strokes": [[[0,4],[4,4],[4,0]]]},
-    {"id": "ë",  "roman": "ë",  "ipa": "ə", "name": "ë",   "cp": "E025", "hint": "the 'uh' in 'sofa'",      "strokes": [[[0,2],[4,2]]]}
+    {
+      "id": "a",
+      "roman": "a",
+      "ipa": "a",
+      "name": "a",
+      "cp": "E020",
+      "hint": "a as in 'father'",
+      "strokes": [[[0.5,0], [2,3], [3.5,0]]],
+      "headline": true
+    },
+    {
+      "id": "e",
+      "roman": "e",
+      "ipa": "e",
+      "name": "e",
+      "cp": "E021",
+      "hint": "e as in 'bed'",
+      "strokes": [[[0.5,3], [3.5,3]], [[0.5,1], [3.5,1]]],
+      "headline": true
+    },
+    {
+      "id": "i",
+      "roman": "i",
+      "ipa": "i",
+      "name": "i",
+      "cp": "E022",
+      "hint": "i as in 'machine'",
+      "strokes": [[[1,0], [2.5,3]]],
+      "headline": true
+    },
+    {
+      "id": "o",
+      "roman": "o",
+      "ipa": "o",
+      "name": "o",
+      "cp": "E023",
+      "hint": "o as in 'more'",
+      "strokes": [[[1,0], [2.5,0], [3.25,1.5], [2.5,3], [1,3], [0.25,1.5], [1,0]]],
+      "headline": true
+    },
+    {
+      "id": "u",
+      "roman": "u",
+      "ipa": "u",
+      "name": "u",
+      "cp": "E024",
+      "hint": "u as in 'rule'",
+      "strokes": [[[0.5,3], [2,0], [3.5,3]]],
+      "headline": true
+    },
+    {
+      "id": "ë",
+      "roman": "ë",
+      "ipa": "ə",
+      "name": "ë",
+      "cp": "E025",
+      "hint": "the 'uh' in 'sofa'",
+      "strokes": [[[1,1.5], [3,1.5]]],
+      "headline": true
+    }
   ],
   "digits": [
-    {"id": "0", "strokes": [[[2, 0], [2, 6]], [[1, 6], [3, 6]], [[1, 0], [3, 0]]]},
-    {"id": "1", "strokes": [[[2, 0], [2, 6]], [[2, 6], [4, 5]]]},
-    {"id": "2", "strokes": [[[2, 0], [2, 6]], [[2, 6], [4, 5]], [[2, 4.5], [4, 3.5]]]},
-    {"id": "3", "strokes": [[[2, 0], [2, 6]], [[2, 6], [4, 5]], [[2, 4.5], [4, 3.5]], [[2, 3], [4, 2]]]},
-    {"id": "4", "strokes": [[[2, 0], [2, 6]], [[2, 6], [4, 5]], [[2, 4.5], [4, 3.5]], [[2, 3], [4, 2]], [[2, 1.5], [4, 0.5]]]},
-    {"id": "5", "strokes": [[[2, 0], [2, 6]], [[2, 2.5], [0, 0]]]},
-    {"id": "6", "strokes": [[[2, 0], [2, 6]], [[2, 2.5], [0, 0]], [[2, 6], [4, 5]]]},
-    {"id": "7", "strokes": [[[2, 0], [2, 6]], [[2, 2.5], [0, 0]], [[2, 6], [4, 5]], [[2, 4.5], [4, 3.5]]]},
-    {"id": "8", "strokes": [[[2, 0], [2, 6]], [[2, 2.5], [0, 0]], [[2, 6], [4, 5]], [[2, 4.5], [4, 3.5]], [[2, 3], [4, 2]]]},
-    {"id": "9", "strokes": [[[2, 0], [2, 6]], [[2, 2.5], [0, 0]], [[2, 6], [4, 5]], [[2, 4.5], [4, 3.5]], [[2, 3], [4, 2]], [[2, 1.5], [4, 0.5]]]}
+    {
+      "id": "0",
+      "strokes": [[[0.5,0], [3,5]], [[3,5], [4.4,5]], [[-0.9,0], [0.5,0]]]
+    },
+    {
+      "id": "1",
+      "strokes": [[[0.5,0], [3,5]], [[3.0,5], [4.4,5]]]
+    },
+    {
+      "id": "2",
+      "strokes": [[[0.5,0], [3,5]], [[3.0,5], [4.4,5]], [[2.5,4], [3.9,4]]]
+    },
+    {
+      "id": "3",
+      "strokes": [[[0.5,0], [3,5]], [[3.0,5], [4.4,5]], [[2.5,4], [3.9,4]], [[2.0,3], [3.4,3]]]
+    },
+    {
+      "id": "4",
+      "strokes": [[[0.5,0], [3,5]], [[3.0,5], [4.4,5]], [[2.5,4], [3.9,4]], [[2.0,3], [3.4,3]], [[1.5,2], [2.9,2]]]
+    },
+    {
+      "id": "5",
+      "strokes": [[[0.5,0], [3,5]], [[-0.5,0], [1.5,0]]]
+    },
+    {
+      "id": "6",
+      "strokes": [[[0.5,0], [3,5]], [[-0.5,0], [1.5,0]], [[3.0,5], [4.4,5]]]
+    },
+    {
+      "id": "7",
+      "strokes": [[[0.5,0], [3,5]], [[-0.5,0], [1.5,0]], [[3.0,5], [4.4,5]], [[2.5,4], [3.9,4]]]
+    },
+    {
+      "id": "8",
+      "strokes": [[[0.5,0], [3,5]], [[-0.5,0], [1.5,0]], [[3.0,5], [4.4,5]], [[2.5,4], [3.9,4]], [[2.0,3], [3.4,3]]]
+    },
+    {
+      "id": "9",
+      "strokes": [[[0.5,0], [3,5]], [[-0.5,0], [1.5,0]], [[3.0,5], [4.4,5]], [[2.5,4], [3.9,4]], [[2.0,3], [3.4,3]], [[1.5,2], [2.9,2]]]
+    }
   ],
   "punctuation": [
-    {"id": "space", "char": " ", "name": "word mark",    "strokes": [[[0,1],[1,3]]]},
-    {"id": "period","char": ".", "name": "full stop",    "strokes": [[[0,0],[0,4]], [[1.5,0],[1.5,4]]]},
-    {"id": "comma", "char": ",", "name": "pause",        "strokes": [[[0,3],[1,1],[0,-1]]]},
-    {"id": "question","char": "?", "name": "ask mark",   "strokes": [[[0,4],[2,4],[1,0],[0,4]]]},
-    {"id": "exclaim", "char": "!", "name": "shout mark", "strokes": [[[1,0],[1,6]], [[0,6],[2,6]]]}
+    {
+      "id": "space",
+      "char": " ",
+      "name": "word gap",
+      "strokes": []
+    },
+    {
+      "id": "period",
+      "char": ".",
+      "name": "full stop",
+      "strokes": [[[0,0], [1,2]], [[1,0], [2,2]]]
+    },
+    {
+      "id": "comma",
+      "char": ",",
+      "name": "pause",
+      "strokes": [[[0,0], [1,2]]]
+    },
+    {
+      "id": "question",
+      "char": "?",
+      "name": "ask mark",
+      "strokes": [[[0,0], [2,0], [1,2], [0,0]]]
+    },
+    {
+      "id": "exclaim",
+      "char": "!",
+      "name": "shout mark",
+      "strokes": [[[0.5,1.5], [2.5,5.5]], [[0,0], [1,0]]]
+    }
   ],
   "marks": {
-    "schwa_bar":  {"about": "added under a consonant when the ligature C + ë fuses", "strokes": [[[0,-1.5],[4,-1.5]]]},
-    "double_ticks": {"about": "added above a consonant when a doubled consonant fuses", "strokes": [[[1,7],[1,8.5]], [[3,7],[3,8.5]]]}
+    "headline": {
+      "about": "drawn across the full width of every letter, so it joins up inside a word and breaks at the word gap",
+      "strokes": [[[0,6], [4,6]]]
+    },
+    "schwa_bar": {
+      "about": "added under a consonant when C + ë fuses",
+      "strokes": [[[1,-1.5], [3,-1.5]]]
+    },
+    "double_line": {
+      "about": "a second headline above a consonant when a doubled consonant fuses",
+      "strokes": [[[0,7.8], [4,7.8]]]
+    }
   }
 }
