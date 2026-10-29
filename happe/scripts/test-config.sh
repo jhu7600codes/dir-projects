@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 OBJC
-clang -fobjc-arc -Wall -Werror -I"$ROOT/common" "$ROOT/common/HPSubscription.m" "$T/subtest.m" -framework Foundation -o "$T/subtest"
+clang -fobjc-arc -Wall -Werror -I"$ROOT/common" "$ROOT/common/HPSubscription.m" "$T/subtest.m" -framework Foundation -framework CFNetwork -o "$T/subtest"
 { printf '%s\n' "${links[@]:0:4}"; echo "vmess://eyJhZGQiOiJleGFtcGxlLmNvbSJ9"; echo "trojan://pw@example.com:443#t"; } > "$T/list.txt"
 "$T/subtest" "$T/list.txt"
 # happ links: happ://add/<url> (plain or percent-encoded) adds a subscription,
@@ -103,6 +103,6 @@ int main(void) {
 }
 OBJC
 clang -fobjc-arc -Wall -Werror -I"$ROOT/common" -I"$ROOT/app" "$ROOT/common/HPSubscription.m" "$ROOT/common/VLESSConfig.m" \
-  "$ROOT/app/HPStore.m" "$T/happtest.m" -framework Foundation -o "$T/happtest"
+  "$ROOT/app/HPStore.m" "$T/happtest.m" -framework Foundation -framework CFNetwork -o "$T/happtest"
 "$T/happtest"
 rm -rf "$T"
