@@ -102,8 +102,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp dist/*.deb dist/happe.deb
+          # versioned name too: safari/zebra cache a file called happe.deb
+          cp dist/*.deb "dist/happe_$VERSION.deb"
           gh release delete happe-latest --yes --cleanup-tag 2>/dev/null || true
           gh release create happe-latest --prerelease --target "$GITHUB_SHA" \
             --title "Happe (ios 10) $VERSION" \
-            --notes "on the phone: open happe.deb in safari, tap Open in Filza, install, respring. built from $GITHUB_SHA." \
-            dist/happe.deb dist/Happe.ipa dist/xray-build-report.md
+            --notes "on the phone: open happe_$VERSION.deb in safari, tap Open in Filza, install, respring. built from $GITHUB_SHA." \
+            dist/happe.deb "dist/happe_$VERSION.deb" dist/Happe.ipa dist/xray-build-report.md
