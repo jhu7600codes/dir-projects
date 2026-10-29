@@ -70,6 +70,11 @@ public class StreamProxy {
 
     private void ensureServer() throws IOException {
         if (server != null && !server.isClosed()) return;
+        // Leftovers from a previous run that ended without releasing
+        File[] old = NotPipe.getAppContext().getCacheDir().listFiles();
+        for (int i = 0; old != null && i < old.length; i++) {
+            if (old[i].getName().startsWith("stream_")) old[i].delete();
+        }
         server = new ServerSocket(0, 8, InetAddress.getByName("127.0.0.1"));
         Thread accept = new Thread(new Runnable() {
             public void run() {
