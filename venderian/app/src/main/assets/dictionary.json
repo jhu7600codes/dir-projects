@@ -1,0 +1,892 @@
+[
+ {
+  "word": "mi",
+  "meaning": "I, me",
+  "pos": "pronoun"
+ },
+ {
+  "word": "tu",
+  "meaning": "you",
+  "pos": "pronoun"
+ },
+ {
+  "word": "sa",
+  "meaning": "he, she, it",
+  "pos": "pronoun"
+ },
+ {
+  "word": "min",
+  "meaning": "we, us",
+  "pos": "pronoun"
+ },
+ {
+  "word": "tun",
+  "meaning": "you (plural)",
+  "pos": "pronoun"
+ },
+ {
+  "word": "san",
+  "meaning": "they, them",
+  "pos": "pronoun"
+ },
+ {
+  "word": "ve",
+  "meaning": "this",
+  "pos": "pronoun"
+ },
+ {
+  "word": "vo",
+  "meaning": "that",
+  "pos": "pronoun"
+ },
+ {
+  "word": "kwo",
+  "meaning": "what",
+  "pos": "pronoun"
+ },
+ {
+  "word": "kwi",
+  "meaning": "who",
+  "pos": "pronoun"
+ },
+ {
+  "word": "kwe",
+  "meaning": "where",
+  "pos": "adverb"
+ },
+ {
+  "word": "kwan",
+  "meaning": "when",
+  "pos": "adverb"
+ },
+ {
+  "word": "kwu",
+  "meaning": "how",
+  "pos": "adverb"
+ },
+ {
+  "word": "kwa",
+  "meaning": "why",
+  "pos": "adverb"
+ },
+ {
+  "word": "ka",
+  "meaning": "question marker (ends a yes/no question)",
+  "pos": "particle"
+ },
+ {
+  "word": "ne",
+  "meaning": "not (before the verb)",
+  "pos": "particle"
+ },
+ {
+  "word": "da",
+  "meaning": "of, belonging to",
+  "pos": "particle"
+ },
+ {
+  "word": "-ta",
+  "meaning": "past tense (verb suffix)",
+  "pos": "suffix"
+ },
+ {
+  "word": "-va",
+  "meaning": "future tense (verb suffix)",
+  "pos": "suffix"
+ },
+ {
+  "word": "-an",
+  "meaning": "plural after a consonant (noun suffix)",
+  "pos": "suffix"
+ },
+ {
+  "word": "-n",
+  "meaning": "plural after a vowel (noun suffix)",
+  "pos": "suffix"
+ },
+ {
+  "word": "i",
+  "meaning": "and",
+  "pos": "conjunction"
+ },
+ {
+  "word": "o",
+  "meaning": "or",
+  "pos": "conjunction"
+ },
+ {
+  "word": "shom",
+  "meaning": "but",
+  "pos": "conjunction"
+ },
+ {
+  "word": "kel",
+  "meaning": "with",
+  "pos": "preposition"
+ },
+ {
+  "word": "un",
+  "meaning": "in, inside",
+  "pos": "preposition"
+ },
+ {
+  "word": "ra",
+  "meaning": "to, toward",
+  "pos": "preposition"
+ },
+ {
+  "word": "dos",
+  "meaning": "from",
+  "pos": "preposition"
+ },
+ {
+  "word": "sur",
+  "meaning": "on, on top of",
+  "pos": "preposition"
+ },
+ {
+  "word": "vela",
+  "meaning": "hello",
+  "pos": "interjection"
+ },
+ {
+  "word": "dano",
+  "meaning": "goodbye",
+  "pos": "interjection"
+ },
+ {
+  "word": "shevan",
+  "meaning": "thank you",
+  "pos": "interjection"
+ },
+ {
+  "word": "kiro",
+  "meaning": "please",
+  "pos": "interjection"
+ },
+ {
+  "word": "ya",
+  "meaning": "yes",
+  "pos": "interjection"
+ },
+ {
+  "word": "nay",
+  "meaning": "no",
+  "pos": "interjection"
+ },
+ {
+  "word": "zen",
+  "meaning": "zero",
+  "pos": "number"
+ },
+ {
+  "word": "ek",
+  "meaning": "one",
+  "pos": "number"
+ },
+ {
+  "word": "dor",
+  "meaning": "two",
+  "pos": "number"
+ },
+ {
+  "word": "tis",
+  "meaning": "three",
+  "pos": "number"
+ },
+ {
+  "word": "kav",
+  "meaning": "four",
+  "pos": "number"
+ },
+ {
+  "word": "pam",
+  "meaning": "five",
+  "pos": "number"
+ },
+ {
+  "word": "shel",
+  "meaning": "six",
+  "pos": "number"
+ },
+ {
+  "word": "sib",
+  "meaning": "seven",
+  "pos": "number"
+ },
+ {
+  "word": "okh",
+  "meaning": "eight",
+  "pos": "number"
+ },
+ {
+  "word": "nir",
+  "meaning": "nine",
+  "pos": "number"
+ },
+ {
+  "word": "dek",
+  "meaning": "ten",
+  "pos": "number"
+ },
+ {
+  "word": "kar",
+  "meaning": "house, home",
+  "pos": "noun"
+ },
+ {
+  "word": "nami",
+  "meaning": "water",
+  "pos": "noun"
+ },
+ {
+  "word": "fos",
+  "meaning": "fire",
+  "pos": "noun"
+ },
+ {
+  "word": "tera",
+  "meaning": "earth, ground",
+  "pos": "noun"
+ },
+ {
+  "word": "khal",
+  "meaning": "wind, air",
+  "pos": "noun"
+ },
+ {
+  "word": "sol",
+  "meaning": "sun",
+  "pos": "noun"
+ },
+ {
+  "word": "mera",
+  "meaning": "moon",
+  "pos": "noun"
+ },
+ {
+  "word": "stel",
+  "meaning": "star",
+  "pos": "noun"
+ },
+ {
+  "word": "vin",
+  "meaning": "sky",
+  "pos": "noun"
+ },
+ {
+  "word": "bor",
+  "meaning": "mountain",
+  "pos": "noun"
+ },
+ {
+  "word": "ruma",
+  "meaning": "river",
+  "pos": "noun"
+ },
+ {
+  "word": "sheva",
+  "meaning": "sea",
+  "pos": "noun"
+ },
+ {
+  "word": "tal",
+  "meaning": "tree",
+  "pos": "noun"
+ },
+ {
+  "word": "filo",
+  "meaning": "leaf",
+  "pos": "noun"
+ },
+ {
+  "word": "pira",
+  "meaning": "stone",
+  "pos": "noun"
+ },
+ {
+  "word": "gala",
+  "meaning": "flower",
+  "pos": "noun"
+ },
+ {
+  "word": "zor",
+  "meaning": "road, path",
+  "pos": "noun"
+ },
+ {
+  "word": "bren",
+  "meaning": "bread",
+  "pos": "noun"
+ },
+ {
+  "word": "mikh",
+  "meaning": "milk",
+  "pos": "noun"
+ },
+ {
+  "word": "yamë",
+  "meaning": "food",
+  "pos": "noun"
+ },
+ {
+  "word": "kitë",
+  "meaning": "book",
+  "pos": "noun"
+ },
+ {
+  "word": "thel",
+  "meaning": "word",
+  "pos": "noun"
+ },
+ {
+  "word": "thelor",
+  "meaning": "language",
+  "pos": "noun"
+ },
+ {
+  "word": "ishe",
+  "meaning": "name",
+  "pos": "noun"
+ },
+ {
+  "word": "dey",
+  "meaning": "day",
+  "pos": "noun"
+ },
+ {
+  "word": "noch",
+  "meaning": "night",
+  "pos": "noun"
+ },
+ {
+  "word": "kron",
+  "meaning": "time",
+  "pos": "noun"
+ },
+ {
+  "word": "yer",
+  "meaning": "year",
+  "pos": "noun"
+ },
+ {
+  "word": "vren",
+  "meaning": "friend",
+  "pos": "noun"
+ },
+ {
+  "word": "folka",
+  "meaning": "family",
+  "pos": "noun"
+ },
+ {
+  "word": "ama",
+  "meaning": "mother",
+  "pos": "noun"
+ },
+ {
+  "word": "aba",
+  "meaning": "father",
+  "pos": "noun"
+ },
+ {
+  "word": "kiti",
+  "meaning": "child",
+  "pos": "noun"
+ },
+ {
+  "word": "dar",
+  "meaning": "man",
+  "pos": "noun"
+ },
+ {
+  "word": "vira",
+  "meaning": "woman",
+  "pos": "noun"
+ },
+ {
+  "word": "hum",
+  "meaning": "person",
+  "pos": "noun"
+ },
+ {
+  "word": "vuf",
+  "meaning": "dog",
+  "pos": "noun"
+ },
+ {
+  "word": "mish",
+  "meaning": "cat",
+  "pos": "noun"
+ },
+ {
+  "word": "pita",
+  "meaning": "bird",
+  "pos": "noun"
+ },
+ {
+  "word": "glob",
+  "meaning": "fish",
+  "pos": "noun"
+ },
+ {
+  "word": "kor",
+  "meaning": "heart",
+  "pos": "noun"
+ },
+ {
+  "word": "kop",
+  "meaning": "head",
+  "pos": "noun"
+ },
+ {
+  "word": "khan",
+  "meaning": "hand",
+  "pos": "noun"
+ },
+ {
+  "word": "vis",
+  "meaning": "eye",
+  "pos": "noun"
+ },
+ {
+  "word": "mun",
+  "meaning": "mouth",
+  "pos": "noun"
+ },
+ {
+  "word": "urba",
+  "meaning": "city",
+  "pos": "noun"
+ },
+ {
+  "word": "skol",
+  "meaning": "school",
+  "pos": "noun"
+ },
+ {
+  "word": "dur",
+  "meaning": "door",
+  "pos": "noun"
+ },
+ {
+  "word": "vindë",
+  "meaning": "window",
+  "pos": "noun"
+ },
+ {
+  "word": "zil",
+  "meaning": "money",
+  "pos": "noun"
+ },
+ {
+  "word": "rab",
+  "meaning": "work, job",
+  "pos": "noun"
+ },
+ {
+  "word": "lum",
+  "meaning": "light",
+  "pos": "noun"
+ },
+ {
+  "word": "lir",
+  "meaning": "song",
+  "pos": "noun"
+ },
+ {
+  "word": "ludo",
+  "meaning": "game",
+  "pos": "noun"
+ },
+ {
+  "word": "shi",
+  "meaning": "thing",
+  "pos": "noun"
+ },
+ {
+  "word": "es",
+  "meaning": "to be",
+  "pos": "verb"
+ },
+ {
+  "word": "ha",
+  "meaning": "to have",
+  "pos": "verb"
+ },
+ {
+  "word": "gol",
+  "meaning": "to go",
+  "pos": "verb"
+ },
+ {
+  "word": "ven",
+  "meaning": "to come",
+  "pos": "verb"
+ },
+ {
+  "word": "sen",
+  "meaning": "to see",
+  "pos": "verb"
+ },
+ {
+  "word": "ota",
+  "meaning": "to hear",
+  "pos": "verb"
+ },
+ {
+  "word": "thela",
+  "meaning": "to speak",
+  "pos": "verb"
+ },
+ {
+  "word": "kenë",
+  "meaning": "to know",
+  "pos": "verb"
+ },
+ {
+  "word": "lerna",
+  "meaning": "to learn",
+  "pos": "verb"
+ },
+ {
+  "word": "dosha",
+  "meaning": "to teach",
+  "pos": "verb"
+ },
+ {
+  "word": "ridë",
+  "meaning": "to read",
+  "pos": "verb"
+ },
+ {
+  "word": "skri",
+  "meaning": "to write",
+  "pos": "verb"
+ },
+ {
+  "word": "yama",
+  "meaning": "to eat",
+  "pos": "verb"
+ },
+ {
+  "word": "sipa",
+  "meaning": "to drink",
+  "pos": "verb"
+ },
+ {
+  "word": "nema",
+  "meaning": "to sleep",
+  "pos": "verb"
+ },
+ {
+  "word": "do",
+  "meaning": "to give",
+  "pos": "verb"
+ },
+ {
+  "word": "pren",
+  "meaning": "to take",
+  "pos": "verb"
+ },
+ {
+  "word": "fasa",
+  "meaning": "to make, to do",
+  "pos": "verb"
+ },
+ {
+  "word": "vola",
+  "meaning": "to want",
+  "pos": "verb"
+ },
+ {
+  "word": "liva",
+  "meaning": "to love",
+  "pos": "verb"
+ },
+ {
+  "word": "goda",
+  "meaning": "to like",
+  "pos": "verb"
+ },
+ {
+  "word": "pasa",
+  "meaning": "to walk",
+  "pos": "verb"
+ },
+ {
+  "word": "kura",
+  "meaning": "to run",
+  "pos": "verb"
+ },
+ {
+  "word": "seda",
+  "meaning": "to sit",
+  "pos": "verb"
+ },
+ {
+  "word": "sta",
+  "meaning": "to stand",
+  "pos": "verb"
+ },
+ {
+  "word": "viva",
+  "meaning": "to live",
+  "pos": "verb"
+ },
+ {
+  "word": "mora",
+  "meaning": "to die",
+  "pos": "verb"
+ },
+ {
+  "word": "apra",
+  "meaning": "to open",
+  "pos": "verb"
+ },
+ {
+  "word": "klu",
+  "meaning": "to close",
+  "pos": "verb"
+ },
+ {
+  "word": "ayda",
+  "meaning": "to help",
+  "pos": "verb"
+ },
+ {
+  "word": "luda",
+  "meaning": "to play",
+  "pos": "verb"
+ },
+ {
+  "word": "lira",
+  "meaning": "to sing",
+  "pos": "verb"
+ },
+ {
+  "word": "kopa",
+  "meaning": "to buy",
+  "pos": "verb"
+ },
+ {
+  "word": "trova",
+  "meaning": "to find",
+  "pos": "verb"
+ },
+ {
+  "word": "penka",
+  "meaning": "to think",
+  "pos": "verb"
+ },
+ {
+  "word": "senta",
+  "meaning": "to feel",
+  "pos": "verb"
+ },
+ {
+  "word": "atë",
+  "meaning": "to wait",
+  "pos": "verb"
+ },
+ {
+  "word": "kweta",
+  "meaning": "to ask",
+  "pos": "verb"
+ },
+ {
+  "word": "repa",
+  "meaning": "to answer",
+  "pos": "verb"
+ },
+ {
+  "word": "rabo",
+  "meaning": "to work",
+  "pos": "verb"
+ },
+ {
+  "word": "bon",
+  "meaning": "good",
+  "pos": "adjective"
+ },
+ {
+  "word": "mal",
+  "meaning": "bad",
+  "pos": "adjective"
+ },
+ {
+  "word": "gran",
+  "meaning": "big",
+  "pos": "adjective"
+ },
+ {
+  "word": "pik",
+  "meaning": "small",
+  "pos": "adjective"
+ },
+ {
+  "word": "nov",
+  "meaning": "new",
+  "pos": "adjective"
+ },
+ {
+  "word": "vet",
+  "meaning": "old",
+  "pos": "adjective"
+ },
+ {
+  "word": "kal",
+  "meaning": "hot, warm",
+  "pos": "adjective"
+ },
+ {
+  "word": "frid",
+  "meaning": "cold",
+  "pos": "adjective"
+ },
+ {
+  "word": "rap",
+  "meaning": "fast",
+  "pos": "adjective"
+ },
+ {
+  "word": "lenë",
+  "meaning": "slow",
+  "pos": "adjective"
+ },
+ {
+  "word": "bela",
+  "meaning": "beautiful",
+  "pos": "adjective"
+ },
+ {
+  "word": "fela",
+  "meaning": "happy",
+  "pos": "adjective"
+ },
+ {
+  "word": "tris",
+  "meaning": "sad",
+  "pos": "adjective"
+ },
+ {
+  "word": "rud",
+  "meaning": "red",
+  "pos": "adjective"
+ },
+ {
+  "word": "blu",
+  "meaning": "blue",
+  "pos": "adjective"
+ },
+ {
+  "word": "verdë",
+  "meaning": "green",
+  "pos": "adjective"
+ },
+ {
+  "word": "alba",
+  "meaning": "white",
+  "pos": "adjective"
+ },
+ {
+  "word": "mog",
+  "meaning": "black, dark",
+  "pos": "adjective"
+ },
+ {
+  "word": "gel",
+  "meaning": "yellow",
+  "pos": "adjective"
+ },
+ {
+  "word": "lon",
+  "meaning": "long",
+  "pos": "adjective"
+ },
+ {
+  "word": "bresh",
+  "meaning": "short",
+  "pos": "adjective"
+ },
+ {
+  "word": "multa",
+  "meaning": "many, much",
+  "pos": "adjective"
+ },
+ {
+  "word": "pok",
+  "meaning": "few, a little",
+  "pos": "adjective"
+ },
+ {
+  "word": "tot",
+  "meaning": "all, every",
+  "pos": "adjective"
+ },
+ {
+  "word": "forë",
+  "meaning": "strong",
+  "pos": "adjective"
+ },
+ {
+  "word": "lekh",
+  "meaning": "easy",
+  "pos": "adjective"
+ },
+ {
+  "word": "khar",
+  "meaning": "hard, difficult",
+  "pos": "adjective"
+ },
+ {
+  "word": "ver",
+  "meaning": "true",
+  "pos": "adjective"
+ },
+ {
+  "word": "fal",
+  "meaning": "false",
+  "pos": "adjective"
+ },
+ {
+  "word": "ik",
+  "meaning": "here",
+  "pos": "adverb"
+ },
+ {
+  "word": "lë",
+  "meaning": "there",
+  "pos": "adverb"
+ },
+ {
+  "word": "nun",
+  "meaning": "now",
+  "pos": "adverb"
+ },
+ {
+  "word": "vedey",
+  "meaning": "today",
+  "pos": "adverb"
+ },
+ {
+  "word": "posdey",
+  "meaning": "tomorrow",
+  "pos": "adverb"
+ },
+ {
+  "word": "predey",
+  "meaning": "yesterday",
+  "pos": "adverb"
+ },
+ {
+  "word": "mol",
+  "meaning": "very",
+  "pos": "adverb"
+ },
+ {
+  "word": "tam",
+  "meaning": "also, too",
+  "pos": "adverb"
+ }
+]
