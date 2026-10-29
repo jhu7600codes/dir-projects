@@ -352,4 +352,5 @@
     <string name="not_signed_in">Вход не выполнен</string>
     <string name="tap_to_sign_in">Нажмите, чтобы войти через yt2009</string>
     <string name="view_all">Все</string>
+    <string name="session_lost">Инстанс yt2009 забыл ваш вход (скорее всего, он перезапускался). Войдите снова.</string>
 </resources>

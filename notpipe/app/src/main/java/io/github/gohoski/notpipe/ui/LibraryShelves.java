@@ -48,6 +48,7 @@ public class LibraryShelves {
     private final LinearLayout root;
     private List<Playlist> accountPlaylists;
     private boolean loadingAccount = false;
+    private boolean sessionLost = false;
     private long lastAccountLoad = 0;
     private static final long ACCOUNT_REFRESH_MS = 60000;
 
@@ -247,23 +248,49 @@ public class LibraryShelves {
         new AsyncTask<Void, Void, List<Playlist>>() {
             @Override
             protected List<Playlist> doInBackground(Void... params) {
-                Yt2009Account account = Yt2009Account.getInstance();
+                final Yt2009Account account = Yt2009Account.getInstance();
                 try {
-                    account.loadProfile();
+                    // A forgotten login makes every other request hang, so check it first; this also
+                    // marks the account as signed out so the page offers signing in again
+                    if (!account.checkLinked()) {
+                        sessionLost = true;
+                        return null;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                Thread profile = new Thread(new Runnable() {
+                    public void run() {
+                        try {
+                            account.loadProfile();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                profile.start();
+                List<Playlist> playlists = null;
+                try {
+                    playlists = account.getPlaylists();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 try {
-                    return account.getPlaylists();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
-                }
+                    profile.join(35000);
+                } catch (InterruptedException ignored) {}
+                return playlists;
             }
 
             @Override
             protected void onPostExecute(List<Playlist> playlists) {
                 if (activity.isFinishing()) return;
+                if (sessionLost) {
+                    sessionLost = false;
+                    android.widget.Toast.makeText(activity, R.string.session_lost, android.widget.Toast.LENGTH_LONG).show();
+                    loadingAccount = false;
+                    listener.onChanged();
+                    return;
+                }
                 if (playlists != null) accountPlaylists = playlists;
                 refresh();
                 loadingAccount = false;

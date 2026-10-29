@@ -40,6 +40,11 @@ public class Yt2009Account {
     private static final String KEY_LINKED = "linked";
     private static final String KEY_TOKEN = "token";
     private static final String KEY_CACHED_PLAYLISTS = "cached_playlists";
+    /**
+     * yt2009 never answers account feeds for a device it forgot (e.g. after the instance restarted),
+     * so reads give up after this instead of spinning forever.
+     */
+    private static final int FEED_TIMEOUT = 30000;
     private static final String KEY_PROFILE_NAME = "profile_name";
     private static final String KEY_PROFILE_AVATAR = "profile_avatar";
     private static final Pattern FLOW_TOKEN = Pattern.compile("name=\"flow-token\" value=\"([a-z]{24})\"");
@@ -228,6 +233,7 @@ public class Yt2009Account {
     public String[] loadProfile() throws IOException {
         String xml = get("/feeds/api/users/default");
         String[] profile = GdataParser.parseProfile(getInstanceUrl(), xml);
+        if ("default".equals(profile[0])) profile[0] = "";
         prefs.edit().putString(KEY_PROFILE_NAME, profile[0]).putString(KEY_PROFILE_AVATAR, profile[1]).commit();
         return profile;
     }
@@ -486,7 +492,7 @@ public class Yt2009Account {
         if (getInstanceUrl() == null) throw new IOException("Not signed in");
         String url = getInstanceUrl() + endpoint;
         for (int i = 0; i < 4; i++) {
-            HttpURLConnection connection = openUrl(url, "GET", HttpClient.VIDEO_TIMEOUT);
+            HttpURLConnection connection = openUrl(url, "GET", FEED_TIMEOUT);
             connection.setRequestProperty("X-GData-Device", "device-id=\"" + getDeviceCode() + "\"");
             int status = connection.getResponseCode();
             if (status >= 300 && status < 400) {
