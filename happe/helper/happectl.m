@@ -28,6 +28,8 @@
 // silently ignored. a reboot while connected starts xray again, like the
 // wifi proxy setting that also survives the reboot.
 #define PLIST_SRC   "/usr/share/happe/com.jhu.happe.plist"
+// written when launchd refused to run the job; later starts go direct
+#define LAUNCHD_BROKEN "/etc/happe/launchd-broken"
 #define XRAY        "/usr/libexec/happe/xray"
 #define USER_CONFIG "/var/mobile/Library/Happe/config.json"
 #define ROOT_DIR    "/etc/happe"
@@ -36,6 +38,7 @@
 #define LOG_PATH    "/var/log/happe.log"
 #define CACERT      "/usr/share/happe/cacert.pem"
 #define HTTP_PORT   8080
+#define SOCKS_PORT  1080
 
 // --- private apis (present on ios, headers are mac-only) ---
 
@@ -104,7 +107,9 @@ static const char *launchctlPath(void) {
     return NULL;
 }
 
-static pid_t findXray(void) {
+// first process named xray; daemonOnly = only ones reparented to launchd
+// (ours), otherwise also e.g. one started by hand in a terminal
+static pid_t findXrayProc(BOOL daemonOnly) {
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
     size_t len = 0;
     if (sysctl(mib, 3, NULL, &len, NULL, 0) != 0) return 0;
@@ -115,7 +120,7 @@ static pid_t findXray(void) {
     if (sysctl(mib, 3, procs, &len, NULL, 0) == 0) {
         size_t n = len / sizeof(struct kinfo_proc);
         for (size_t i = 0; i < n; i++) {
-            if (strncmp(procs[i].kp_proc.p_comm, "xray", MAXCOMLEN) == 0 && procs[i].kp_eproc.e_ppid == 1) {
+            if (strncmp(procs[i].kp_proc.p_comm, "xray", MAXCOMLEN) == 0 && (!daemonOnly || procs[i].kp_eproc.e_ppid == 1)) {
                 found = procs[i].kp_proc.p_pid;
                 break;
             }
@@ -123,6 +128,10 @@ static pid_t findXray(void) {
     }
     free(procs);
     return found;
+}
+
+static pid_t findXray(void) {
+    return findXrayProc(YES);
 }
 
 static BOOL portOpen(int port) {
@@ -240,14 +249,17 @@ static void removeJob(const char *lc) {
     run(unload, NULL);
 }
 
+// kills every xray, including ones started by hand, so the ports are free
 static void killXray(void) {
-    pid_t pid = findXray();
-    if (pid <= 0) return;
-    kill(pid, SIGTERM);
-    waitForXray(NO, 30);
-    pid = findXray();
-    if (pid > 0) kill(pid, SIGKILL);
-    waitForXray(NO, 10);
+    for (int round = 0; round < 3; round++) {
+        pid_t pid;
+        int n = 0;
+        while ((pid = findXrayProc(NO)) > 0 && n++ < 10) {
+            kill(pid, round == 0 ? SIGTERM : SIGKILL);
+            for (int i = 0; i < 30 && kill(pid, 0) == 0; i++) usleep(100 * 1000);
+        }
+        if (findXrayProc(NO) <= 0) return;
+    }
 }
 
 static int cmdStop(void) {
@@ -315,46 +327,62 @@ static int cmdStart(uid_t caller) {
     removeJob(lc);
     killXray();
 
-    if (!copyFile(PLIST_SRC, PLIST, 0644)) {
-        printf("error: cannot install %s from %s\n", PLIST, PLIST_SRC);
-        return 1;
+    for (int port = HTTP_PORT; port; port = port == HTTP_PORT ? SOCKS_PORT : 0) {
+        if (portOpen(port)) {
+            printf("error: port %d is already used by another app (another proxy or vpn tweak?). close it or reboot, then connect again.\n", port);
+            return 1;
+        }
     }
     // fresh log per connect so errors are easy to find
     truncate(LOG_PATH, 0);
 
-    const char *load[] = { lc, "load", PLIST, NULL };
-    rc = run(load, &out);
-    waitForXray(YES, 50);
-    if (findXray() <= 0) {
-        // loaded but not launched (RunAtLoad ignored?) - kick it by label
-        const char *kick[] = { lc, "start", LABEL, NULL };
-        run(kick, NULL);
+    pid_t pid = 0;
+    BOOL direct = access(LAUNCHD_BROKEN, F_OK) == 0;
+    NSString *launchdWhy = nil;
+    if (!direct) {
+        if (!copyFile(PLIST_SRC, PLIST, 0644)) {
+            printf("error: cannot install %s from %s\n", PLIST, PLIST_SRC);
+            return 1;
+        }
+        const char *load[] = { lc, "load", PLIST, NULL };
+        rc = run(load, &out);
         waitForXray(YES, 50);
+        if (findXray() <= 0) {
+            // loaded but not launched - kick it by label
+            const char *kick[] = { lc, "start", LABEL, NULL };
+            run(kick, NULL);
+            waitForXray(YES, 50);
+        }
+        pid = findXray();
+        if (pid <= 0) {
+            NSString *list = nil;
+            const char *ls[] = { lc, "list", LABEL, NULL };
+            run(ls, &list);
+            NSString *status = @"?";
+            NSRange r = [list rangeOfString:@"\"LastExitStatus\" = "];
+            if (r.location != NSNotFound) {
+                NSString *rest = [list substringFromIndex:NSMaxRange(r)];
+                status = [rest componentsSeparatedByString:@";"].firstObject;
+            }
+            launchdWhy = [NSString stringWithFormat:@"launchd: load exit %d, LastExitStatus %@", rc, status];
+            [[NSString stringWithFormat:@"%@\n\n%@\n\nlog:\n%@\n", launchdWhy, list, tailOf(@LOG_PATH, 15)]
+                writeToFile:@LAUNCHD_BROKEN atomically:YES encoding:NSUTF8StringEncoding error:nil];
+            removeJob(lc);
+            unlink(PLIST);
+            killXray();
+            direct = YES;
+        }
     }
-
-    pid_t pid = findXray();
-    BOOL direct = NO;
-    if (pid <= 0) {
-        NSString *list = nil;
-        const char *ls[] = { lc, "list", LABEL, NULL };
-        int lrc = run(ls, &list);
-        NSString *trim = [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        NSString *why = [NSString stringWithFormat:@"launchctl load: exit %d %@\nlaunchctl list (exit %d):\n%@\nlog:\n%@",
-                         rc, trim, lrc, list, tailOf(@LOG_PATH, 15)];
-        [why writeToFile:@"/etc/happe/launchd-failure.txt" atomically:YES encoding:NSUTF8StringEncoding error:nil];
-
-        // launchd won't run it: drop the job and run xray ourselves
-        removeJob(lc);
-        unlink(PLIST);
-        killXray();
+    if (direct) {
+        // launchd won't run the job on this phone: run xray ourselves, detached
+        truncate(LOG_PATH, 0);
         pid = spawnDirect();
         if (pid <= 0 || !portOpen(HTTP_PORT)) {
             if (pid > 0) killXray();
-            printf("error: xray did not start, not via launchd and not directly.\n%s\nlog:\n%s\n",
-                   why.UTF8String, tailOf(@LOG_PATH, 15).UTF8String);
+            printf("error: xray did not start.%s%s\n%s\n", launchdWhy ? "\n" : "", launchdWhy ? launchdWhy.UTF8String : "",
+                   tailOf(@LOG_PATH, 12).UTF8String);
             return 1;
         }
-        direct = YES;
     }
     tuneJetsam(pid);
     printf(direct ? "running %d (direct)\n" : "running %d\n", pid);
