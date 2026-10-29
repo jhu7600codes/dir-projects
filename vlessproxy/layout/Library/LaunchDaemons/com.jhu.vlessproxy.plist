@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.jhu.vlessproxy</string>
+	<!-- disabled until vlessctl start does "launchctl load -w"; "unload -w" disables it again,
+	     so it only comes back after a reboot if it was connected when you rebooted -->
+	<key>Disabled</key>
+	<true/>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/libexec/vlessproxy/xray</string>
+		<string>run</string>
+		<string>-c</string>
+		<string>/etc/vlessproxy/config.json</string>
+	</array>
+	<key>UserName</key>
+	<string>root</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>SSL_CERT_FILE</key>
+		<string>/usr/share/vlessproxy/cacert.pem</string>
+		<key>XRAY_LOCATION_ASSET</key>
+		<string>/usr/share/vlessproxy</string>
+		<key>GOMEMLIMIT</key>
+		<string>96MiB</string>
+		<key>GOGC</key>
+		<string>50</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>StandardOutPath</key>
+	<string>/var/log/vlessproxy.log</string>
+	<key>StandardErrorPath</key>
+	<string>/var/log/vlessproxy.log</string>
+	<key>POSIXSpawnType</key>
+	<string>Interactive</string>
+	<key>JetsamProperties</key>
+	<dict>
+		<key>JetsamPriority</key>
+		<integer>10</integer>
+		<key>JetsamMemoryLimit</key>
+		<integer>256</integer>
+	</dict>
+</dict>
+</plist>

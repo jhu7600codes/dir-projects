@@ -1,0 +1,96 @@
+name: vlessproxy (ios 10)
+
+on:
+  push:
+    paths:
+      - "vlessproxy/**"
+      - ".github/workflows/vlessproxy.yml"
+  workflow_dispatch:
+    inputs:
+      candidates:
+        description: "xray tags to try, newest first (latest = newest release)"
+        default: "latest v25.12.8 v25.6.8 v24.12.31"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: vlessproxy
+    env:
+      SDK10: ${{ github.workspace }}/sdks/iPhoneOS10.3.sdk
+      OUT: ${{ github.workspace }}/vlessproxy/dist
+      VERSION: 1.0.${{ github.run_number }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ios 10.3 sdk (theos/sdks)
+        working-directory: ${{ github.workspace }}
+        run: |
+          git clone -q --depth 1 --filter=blob:none --sparse https://github.com/theos/sdks sdks
+          git -C sdks sparse-checkout set iPhoneOS10.3.sdk
+          ls "$SDK10"
+          xcodebuild -version
+          xcrun --sdk iphoneos clang --version
+
+      - name: tools
+        run: |
+          brew install ldid dpkg
+          ldid 2>&1 | head -1 || true
+          dpkg-deb --version | head -1
+
+      - name: "stage 1: xray for ios 10 (tries go/xray combos)"
+        run: |
+          CANDIDATES="${{ github.event.inputs.candidates || 'latest v25.12.8 v25.6.8 v24.12.31' }}" \
+            bash scripts/build-xray.sh
+          cat dist/xray-build-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: otool / lipo on the picked xray
+        run: |
+          lipo -info dist/xray
+          otool -l dist/xray | grep -A4 -E 'LC_VERSION_MIN_IPHONEOS|LC_BUILD_VERSION'
+          otool -L dist/xray
+
+      - name: "config smoke test (parser output vs xray run -test)"
+        run: |
+          read -r TAG GOV < dist/xray.version
+          XRAY_SRC="$PWD/.xray-work/xray-$TAG" GO="$PWD/.xray-work/go-${GOV#go}-stock/go/bin/go" \
+            bash scripts/test-config.sh
+
+      - name: "stage 2 + 3: helper, vless2json, app"
+        run: |
+          curl -fsSL -o dist/cacert.pem https://curl.se/ca/cacert.pem
+          bash scripts/build-native.sh
+
+      - name: sign + package (.deb, .ipa)
+        run: bash scripts/package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vlessproxy-deb
+          path: vlessproxy/dist/*.deb
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vlessproxy-ipa
+          path: vlessproxy/dist/VLESSProxy.ipa
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stage1-xray
+          path: |
+            vlessproxy/dist/stage1/
+            vlessproxy/dist/xray-build-report.md
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xray-candidates-unsigned
+          path: vlessproxy/dist/xray-candidates/

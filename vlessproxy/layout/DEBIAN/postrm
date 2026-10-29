@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ "$1" = "purge" ]; then
+  rm -rf /etc/vlessproxy /var/mobile/Library/VLESSProxy /var/log/vlessproxy.log
+fi
+exit 0

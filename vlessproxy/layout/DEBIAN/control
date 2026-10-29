@@ -1,0 +1,10 @@
+Package: com.jhu.vlessproxy
+Name: VLESS Proxy
+Version: @VERSION@
+Architecture: iphoneos-arm
+Description: vless + reality client (xray-core) with a one-field app. runs xray as a root launchdaemon, http 127.0.0.1:8080, socks 127.0.0.1:1080.
+Maintainer: jhu
+Author: jhu
+Section: Networking
+Depends: firmware (>= 10.0)
+Installed-Size: @SIZE@
