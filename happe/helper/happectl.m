@@ -199,10 +199,34 @@ static void tuneJetsam(pid_t pid) {
 
 // --- commands ---
 
+// socks port in the installed config (1080 unless it was moved)
+static int configSocksPort(void) {
+    NSData *d = [NSData dataWithContentsOfFile:@ROOT_CONFIG];
+    NSDictionary *cfg = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:nil] : nil;
+    for (NSDictionary *in in cfg[@"inbounds"])
+        if ([in[@"tag"] isEqual:@"socks-in"]) return [in[@"port"] intValue];
+    return SOCKS_PORT;
+}
+
+// some tweaks already listen on 1080; move our socks inbound to a free port
+static int moveSocksIfBusy(void) {
+    int port = SOCKS_PORT;
+    if (!portOpen(port)) return port;
+    for (port = 10808; port < 10830 && portOpen(port); port++) {}
+    NSData *d = [NSData dataWithContentsOfFile:@ROOT_CONFIG];
+    NSMutableDictionary *cfg = d ? [NSJSONSerialization JSONObjectWithData:d options:NSJSONReadingMutableContainers error:nil] : nil;
+    for (NSMutableDictionary *in in cfg[@"inbounds"])
+        if ([in[@"tag"] isEqual:@"socks-in"]) in[@"port"] = @(port);
+    NSData *out = cfg ? [NSJSONSerialization dataWithJSONObject:cfg options:NSJSONWritingPrettyPrinted error:nil] : nil;
+    if (!out || ![out writeToFile:@ROOT_CONFIG atomically:YES]) return 0;
+    chmod(ROOT_CONFIG, 0600);
+    return port;
+}
+
 static int cmdStatus(void) {
     pid_t pid = findXray();
     if (pid > 0 && portOpen(HTTP_PORT)) {
-        printf("running %d\n", pid);
+        printf("running %d socks %d\n", pid, configSocksPort());
         return 0;
     }
     if (pid > 0) {
@@ -327,11 +351,14 @@ static int cmdStart(uid_t caller) {
     removeJob(lc);
     killXray();
 
-    for (int port = HTTP_PORT; port; port = port == HTTP_PORT ? SOCKS_PORT : 0) {
-        if (portOpen(port)) {
-            printf("error: port %d is already used by another app (another proxy or vpn tweak?). close it or reboot, then connect again.\n", port);
-            return 1;
-        }
+    if (portOpen(HTTP_PORT)) {
+        printf("error: port %d is already used by another app or tweak. reboot, then connect again.\n", HTTP_PORT);
+        return 1;
+    }
+    int socks = moveSocksIfBusy();
+    if (!socks) {
+        printf("error: port %d is used by another tweak and the config couldn't be moved to another port\n", SOCKS_PORT);
+        return 1;
     }
     // fresh log per connect so errors are easy to find
     truncate(LOG_PATH, 0);
@@ -385,7 +412,7 @@ static int cmdStart(uid_t caller) {
         }
     }
     tuneJetsam(pid);
-    printf(direct ? "running %d (direct)\n" : "running %d\n", pid);
+    printf("running %d socks %d%s\n", pid, socks, direct ? " (direct)" : "");
     return 0;
 }
 

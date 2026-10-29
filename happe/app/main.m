@@ -328,8 +328,18 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
     return self.store.allServers.count ? @"Pick a server below." : @"Add a subscription or a vless:// link.";
 }
 
-- (NSString *)proxyNoteFor:(BOOL)proxyOK {
-    return proxyOK ? @"Wi-Fi proxy is set to 127.0.0.1:8080. SOCKS5 is on 127.0.0.1:1080." : kManualProxyHint;
+// helper output looks like "running 123 socks 10808 (direct)"
+static int socksPortFrom(NSString *helperOut) {
+    NSRange r = [helperOut rangeOfString:@"socks "];
+    int port = r.location == NSNotFound ? 0 : [[helperOut substringFromIndex:NSMaxRange(r)] intValue];
+    return port > 0 ? port : 1080;
+}
+
+- (NSString *)proxyNoteFor:(BOOL)proxyOK socks:(int)socks {
+    NSString *socksNote = socks == 1080 ? @"SOCKS5 is on 127.0.0.1:1080."
+        : [NSString stringWithFormat:@"SOCKS5 is on 127.0.0.1:%d (1080 is taken by another tweak).", socks];
+    return proxyOK ? [@"Wi-Fi proxy is set to 127.0.0.1:8080. " stringByAppendingString:socksNote]
+                   : [NSString stringWithFormat:@"%@ %@", kManualProxyHint, socksNote];
 }
 
 - (void)refreshStatus {
@@ -342,7 +352,7 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
                 self.connectedLink = self.store.selectedLink;
                 HPServer *s = self.store.selectedServer;
                 [self setState:VPStateConnected title:@"Connected" detail:s ? s.name : [@"xray " stringByAppendingString:out]
-                          note:[self proxyNoteFor:proxyOK]];
+                          note:[self proxyNoteFor:proxyOK socks:socksPortFrom(out)]];
             } else if (rc == 3) {
                 [self setState:VPStateDisconnected title:@"Not connected" detail:[self idleDetail] note:nil];
             } else {
@@ -389,9 +399,9 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
                 return;
             }
             self.connectedLink = server.link;
-            NSString *note = [self proxyNoteFor:proxyOK];
+            NSString *note = [self proxyNoteFor:proxyOK socks:socksPortFrom(startOut)];
             if (!proxyOK && prc != 0 && proxyOut.length)
-                note = [NSString stringWithFormat:@"Couldn't set the Wi-Fi proxy (%@). %@", proxyOut, kManualProxyHint];
+                note = [NSString stringWithFormat:@"Couldn't set the Wi-Fi proxy (%@). %@", proxyOut, note];
             [self setState:VPStateConnected title:@"Connected" detail:server.name note:note];
         });
     });
