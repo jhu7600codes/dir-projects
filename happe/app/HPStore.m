@@ -138,9 +138,19 @@ static NSString *HPStripFragment(NSString *link) {
 
 - (NSUInteger)addFromText:(NSString *)text newSubs:(NSArray<HPSub *> **)newSubs message:(NSString **)message {
     NSMutableArray *added = [NSMutableArray array];
-    NSUInteger links = 0, unsupported = 0, dupes = 0;
-    for (NSString *token in [text componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]) {
-        if (!token.length) continue;
+    NSUInteger links = 0, unsupported = 0, dupes = 0, encrypted = 0;
+    for (NSString *raw in [text componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]) {
+        if (!raw.length) continue;
+        NSString *token = raw;
+        // happ deep links / qr codes: happ://add/<subscription url>
+        if ([token.lowercaseString hasPrefix:@"happ://add/"]) {
+            token = [token substringFromIndex:11];
+            if ([token rangeOfString:@"://"].location == NSNotFound) token = [token stringByRemovingPercentEncoding] ?: token;
+        } else if ([token.lowercaseString hasPrefix:@"happ://crypt"]) {
+            // encrypted with a key only the happ app has
+            encrypted++;
+            continue;
+        }
         NSString *lower = token.lowercaseString;
         if ([lower hasPrefix:@"https://"] || [lower hasPrefix:@"http://"]) {
             if ([[_subs valueForKey:@"url"] containsObject:token]) { dupes++; continue; }
@@ -163,6 +173,7 @@ static NSString *HPStripFragment(NSString *link) {
     [self save];
     if (newSubs) *newSubs = added;
     NSMutableArray *notes = [NSMutableArray array];
+    if (encrypted) [notes addObject:@"encrypted Happ links (happ://crypt…) can only be opened by the Happ app; ask your provider for the plain https:// subscription link"];
     if (unsupported) [notes addObject:[NSString stringWithFormat:@"%lu skipped (only vless:// and subscription URLs work)", (unsigned long)unsupported]];
     if (dupes) [notes addObject:[NSString stringWithFormat:@"%lu already added", (unsigned long)dupes]];
     if (message) *message = notes.count ? [notes componentsJoinedByString:@", "] : nil;

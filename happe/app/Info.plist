@@ -42,6 +42,23 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan subscription and server QR codes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Read QR codes from screenshots and photos.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.jhu.happe</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>happe</string>
+				<string>happ</string>
+				<string>vless</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleIcons</key>
 	<dict>
 		<key>CFBundlePrimaryIcon</key>

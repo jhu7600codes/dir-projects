@@ -25,6 +25,8 @@ cp "$OUT/xray" "$STAGE/usr/libexec/happe/xray"
 cp "$OUT/happectl" "$STAGE/usr/libexec/happe/happectl"
 cp "$OUT/vless2json" "$STAGE/usr/bin/vless2json"
 cp "$OUT/cacert.pem" "$STAGE/usr/share/happe/cacert.pem"
+# "v26.10.29 go1.27.3", shown in the app
+cp "$OUT/xray.version" "$STAGE/usr/share/happe/xray.version" 2>/dev/null || echo unknown > "$STAGE/usr/share/happe/xray.version"
 
 ldid -S"$ENT/app.plist" "$STAGE/Applications/Happe.app/Happe"
 ldid -S"$ENT/happectl.plist" "$STAGE/usr/libexec/happe/happectl"

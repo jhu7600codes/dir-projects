@@ -32,6 +32,16 @@ for lc in LC_DYLD_CHAINED_FIXUPS LC_DYLD_EXPORTS_TRIE; do
   if printf '%s\n' "$loads" | grep -q "cmd $lc"; then bad "$lc present (needs ios 13.4+ dyld)"; fi
 done
 
+# the a7 on ios 10 traps user reads of the generic timer registers
+# (go 1.27's runtime.procyieldAsm did this -> SIGILL). nothing may read them.
+timer=$(otool -tV "$BIN" 2>/dev/null | grep -iE 'mrs[[:space:]].*(cntvct|cntpct|cntfrq)' | head -5)
+if [ -n "$timer" ]; then
+  bad "reads timer registers that trap on ios 10:"
+  printf '%s\n' "$timer" | sed 's/^/        /'
+else
+  echo "  no timer register reads"
+fi
+
 # every linked dylib must exist in the ios 10.3 sdk
 names=$(grep -Rhs 'install-name:' --include='*.tbd' "$SDK" | awk '{print $2}' | tr -d "'\"")
 while read -r lib; do

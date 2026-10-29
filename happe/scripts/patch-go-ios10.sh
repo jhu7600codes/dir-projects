@@ -81,5 +81,32 @@ if [ "$has_generic_loader" = 0 ]; then
 fi
 mv "$X/root_darwin.go.new" "$X/root_darwin.go"
 
+# 3. go 1.27+ procyield on arm64 times its spin with the CNTVCT_EL0 counter.
+#    ios 10 doesn't let user code read it (SIGILL in runtime.procyieldAsm on
+#    the a7), so put back the old plain YIELD loop.
+A="$GOROOT_DIR/src/runtime/asm_arm64.s"
+if grep -q 'CNTVCT_EL0' "$A"; then
+  python3 - "$A" <<'PY'
+import re, sys
+p = sys.argv[1]
+s = open(p).read()
+start = s.index("TEXT runtime·procyieldAsm(SB)")
+end = s.index("RET", start) + len("RET")
+s = s[:start] + """TEXT runtime·procyieldAsm(SB),NOSPLIT,$0-0
+	// happe-ios10-patch: no virtual counter reads (they trap on ios 10)
+	MOVWU	cycles+0(FP), R0
+	CBZ	R0, done
+again:
+	YIELD
+	SUBW	$1, R0
+	CBNZ	R0, again
+done:
+	RET""" + s[end:]
+open(p, "w").write(s)
+PY
+  echo "patched procyieldAsm in $A"
+fi
+grep -n 'CNTVCT_EL0\|CNTPCT_EL0' "$A" && { echo "timer register still used in $A"; exit 1; }
+
 echo "patched $X"
 grep -n 'GOOS == "ios"' "$X"/*.go | grep -v _test.go || true

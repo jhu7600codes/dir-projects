@@ -13,6 +13,8 @@ everything is built by github actions on a macos runner (`.github/workflows/happ
    - subscriptions are fetched with a `v2rayN` user agent so panels (marzban, 3x-ui, remnawave, ...) answer with base64 share links. plain lists work too. non-vless entries (vmess, trojan, ss) are hidden and counted.
    - pull down to update all subscriptions. stale ones (older than 6 h) update when the app opens. swipe a server for update / delete.
    - tapping another server while connected reconnects right away.
+   - add servers by pasting, scanning a qr code with the camera, or picking a qr screenshot from photos. `happ://add/<url>` links/qr codes work, and the app registers the `happ`, `happe` and `vless` url schemes so those links open it from safari. encrypted `happ://crypt…` links can't work: only the happ app has the key.
+   - the bottom of the list shows the app and xray versions.
    - subscriptions, links and the selected server are stored only on the phone in `/var/mobile/Library/Happe/state.plist` (0600). fakesigned with `ldid -S` plus entitlements (`entitlements/`).
 5. **wifi proxy.** `happectl proxy-on` uses the private SCPreferences api (as root, with the systemconfiguration write entitlements) to set http+https proxy 127.0.0.1:8080 on the wifi service, and backs up the old settings. `proxy-off` restores them. afterwards the app reads the live setting back with `CFNetworkCopySystemProxySettings()`. if it isn't 127.0.0.1:8080, the app shows a one-line manual instruction.
 
@@ -26,6 +28,7 @@ everything is built by github actions on a macos runner (`.github/workflows/happ
 ## what won't work (or is shaky) on ios 10
 
 - **stock go since 1.18 can't make an ios 10 binary at all.** `crypto/x509` on ios hard-imports `SecTrustEvaluateWithError` (ios 12+) and, in newer go, `SecTrustCopyCertificateChain` (ios 15+). dyld on ios 10 refuses to start such a binary. reality needs xray ≥ 1.8.0, which needs go ≥ 1.20, so there is no unpatched combo. fix: `scripts/patch-go-ios10.sh` patches the downloaded go so `GOOS=ios` reads a pem ca bundle (`/usr/share/happe/cacert.pem`, mozilla's list from curl.se) instead of calling Security.framework. the ci "control" row in the build report shows the unpatched link failing.
+- **go 1.27's runtime reads the arm generic timer (`CNTVCT_EL0`) in `procyield`.** ios 10 doesn't allow that from user code, so the first build died with `SIGILL: illegal instruction` in `runtime.procyieldAsm` on the phone. the go patch puts back the old `YIELD` loop, and `verify-macho.sh` now disassembles every binary and fails if anything reads `cntvct`/`cntpct`/`cntfrq`.
 - **checked when building, not at runtime.** the build proves the binary loads on ios 10 (right min version and only symbols ios 10 has). it can't prove the go runtime behaves on an ios 10 kernel. that's what stage 1 on the phone is for. older candidates (older go) are uploaded too, in case the newest one misbehaves.
 - **xcode 15+ dropped ios < 12 deployment targets** in its build system and removed libarclite. we bypass xcode projects (plain `clang` + the 10.3 sdk) and don't pass `-fobjc-arc` at link time.
 - **setting the wifi proxy from code is unverified on device.** ios keeps proxy settings per wifi network, and settings.app may not reflect what configd uses. the app checks the real effective setting and falls back to the one-line manual hint.

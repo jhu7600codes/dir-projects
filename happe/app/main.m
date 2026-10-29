@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #import "VLESSConfig.h"
 #import "HPStore.h"
+#import "HPScanner.h"
 
 #define HELPER      "/usr/libexec/happe/happectl"
 #define CONFIG_DIR  @"/var/mobile/Library/Happe"
@@ -258,7 +259,7 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
 
 #pragma mark - main screen
 
-@interface VPViewController : UITableViewController
+@interface VPViewController : UITableViewController <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 @property (nonatomic, assign) VPState state;
 @property (nonatomic, copy) NSString *statusTitle;
 @property (nonatomic, copy) NSString *statusDetail;
@@ -444,9 +445,51 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
     if (!self.store.subs.count) [self.refreshControl endRefreshing];
 }
 
+- (void)showAlert:(NSString *)title message:(NSString *)message {
+    UIAlertController *info = [UIAlertController alertControllerWithTitle:title message:message
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    [info addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:info animated:YES completion:nil];
+}
+
+// everything that adds servers ends up here: the paste alert, qr codes and
+// happ:// / vless:// links opened from safari
+- (void)addText:(NSString *)text {
+    NSArray *newSubs = nil;
+    NSString *msg = nil;
+    NSUInteger n = [self.store addFromText:text ?: @"" newSubs:&newSubs message:&msg];
+    if (self.state != VPStateConnected && !self.busy) self.statusDetail = [self idleDetail];
+    [self.tableView reloadData];
+    [self refreshSubs:newSubs done:^{
+        if (self.state == VPStateDisconnected) {
+            self.statusDetail = [self idleDetail];
+            [self.tableView reloadData];
+        }
+    }];
+    if (n == 0 || msg)
+        [self showAlert:n ? @"Added" : @"Nothing Added"
+                message:msg ?: @"Use a subscription URL (https://…), a vless:// link or a happ://add/… link."];
+}
+
 - (void)showAdd {
+    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil message:nil
+                                                            preferredStyle:UIAlertControllerStyleActionSheet];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"Paste Link or URL" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) {
+        [self showPasteAlert];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"Scan QR Code" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) {
+        [self showScanner];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"QR Code from Photos" style:UIAlertActionStyleDefault handler:^(UIAlertAction *a) {
+        [self showPhotoPicker];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+
+- (void)showPasteAlert {
     UIAlertController *a = [UIAlertController alertControllerWithTitle:@"Add Servers"
-        message:@"Paste subscription URLs or vless:// links. Several at once are fine." preferredStyle:UIAlertControllerStyleAlert];
+        message:@"Paste subscription URLs, vless:// or happ://add/ links. Several at once are fine." preferredStyle:UIAlertControllerStyleAlert];
     NSString *clip = [UIPasteboard generalPasteboard].string;
     [a addTextFieldWithConfigurationHandler:^(UITextField *f) {
         f.placeholder = @"https://… or vless://…";
@@ -459,25 +502,49 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
     [a addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
     __weak UIAlertController *wa = a;
     [a addAction:[UIAlertAction actionWithTitle:@"Add" style:UIAlertActionStyleDefault handler:^(UIAlertAction *act) {
-        NSArray *newSubs = nil;
-        NSString *msg = nil;
-        NSUInteger n = [self.store addFromText:wa.textFields.firstObject.text ?: @"" newSubs:&newSubs message:&msg];
-        if (self.state != VPStateConnected && !self.busy) self.statusDetail = [self idleDetail];
-        [self.tableView reloadData];
-        [self refreshSubs:newSubs done:^{
-            if (self.state == VPStateDisconnected) {
-                self.statusDetail = [self idleDetail];
-                [self.tableView reloadData];
-            }
-        }];
-        if (n == 0 || msg) {
-            UIAlertController *info = [UIAlertController alertControllerWithTitle:n ? @"Added" : @"Nothing Added"
-                message:msg ?: @"Paste a subscription URL (https://…) or a vless:// link." preferredStyle:UIAlertControllerStyleAlert];
-            [info addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-            [self presentViewController:info animated:YES completion:nil];
-        }
+        [self addText:wa.textFields.firstObject.text];
     }]];
     [self presentViewController:a animated:YES completion:nil];
+}
+
+- (void)showScanner {
+    HPScanViewController *scan = [[HPScanViewController alloc] initWithCompletion:^(NSString *text) {
+        [self dismissViewControllerAnimated:YES completion:^{
+            if (text) [self addText:text];
+        }];
+    }];
+    [self presentViewController:scan animated:YES completion:nil];
+}
+
+- (void)showPhotoPicker {
+    UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+    picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+    picker.delegate = self;
+    [self presentViewController:picker animated:YES completion:nil];
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    UIImage *image = info[UIImagePickerControllerOriginalImage];
+    [self dismissViewControllerAnimated:YES completion:^{
+        NSString *text = image ? HPQRTextInImage(image) : nil;
+        if (text) [self addText:text];
+        else [self showAlert:@"No QR Code Found" message:@"Pick a photo or screenshot with a clearly visible QR code."];
+    }];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (NSString *)versionLine {
+    NSString *app = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"] ?: @"?";
+    NSString *xray = [[NSString stringWithContentsOfFile:@"/usr/share/happe/xray.version" encoding:NSUTF8StringEncoding error:nil]
+        stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    NSArray *parts = [xray componentsSeparatedByString:@" "];
+    NSString *xv = parts.count ? [parts[0] stringByReplacingOccurrencesOfString:@"v" withString:@""] : nil;
+    if (!xv.length) return [NSString stringWithFormat:@"Happe %@", app];
+    return parts.count > 1 ? [NSString stringWithFormat:@"Happe %@ · Xray %@ (%@)", app, xv, parts[1]]
+                           : [NSString stringWithFormat:@"Happe %@ · Xray %@", app, xv];
 }
 
 - (void)confirmDeleteSub:(HPSub *)sub {
@@ -660,14 +727,16 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
     HPSub *sub = [self subForSection:section];
     if (sub) text = [self footerForSub:sub];
     else if (section == 1) text = self.proxyNote;
-    else if (section == self.addSection) text = self.store.subs.count ? @"Pull down to update subscriptions. Swipe a server for more." : nil;
+    else if (section == self.addSection)
+        text = self.store.subs.count ? [NSString stringWithFormat:@"Pull down to update subscriptions. Swipe a server for more.\n\n%@", self.versionLine]
+                                     : self.versionLine;
     return text.length ? [self labelView:text header:NO] : nil;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
     HPSub *sub = [self subForSection:section];
     BOOL has = (sub && [self footerForSub:sub].length) || (section == 1 && self.proxyNote.length)
-        || (section == self.addSection && self.store.subs.count);
+        || section == self.addSection;
     return has ? UITableViewAutomaticDimension : 4;
 }
 
@@ -749,6 +818,18 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.window.rootViewController = [[VPViewController alloc] init];
     [self.window makeKeyAndVisible];
+    return YES;
+}
+
+// happ://add/…, vless://… and happe://… links from safari or a qr scan in another app
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary *)options {
+    VPViewController *vc = (VPViewController *)self.window.rootViewController;
+    NSString *text = url.absoluteString;
+    if ([url.scheme.lowercaseString isEqualToString:@"happe"]) {
+        // happe://add/<url> works like happ://add/<url>
+        text = [@"happ://" stringByAppendingString:[text substringFromIndex:8]];
+    }
+    [vc addText:text];
     return YES;
 }
 

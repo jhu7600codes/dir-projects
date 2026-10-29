@@ -33,9 +33,10 @@ rm -rf "$APP"
 mkdir -p "$APP"
 "${CC[@]}" "${CFLAGS[@]}" -c "$ROOT/common/HPSubscription.m" -o "$OBJ/HPSubscription.o"
 "${CC[@]}" "${CFLAGS[@]}" -I"$ROOT/app" -c "$ROOT/app/HPStore.m" -o "$OBJ/HPStore.o"
+"${CC[@]}" "${CFLAGS[@]}" -I"$ROOT/app" -c "$ROOT/app/HPScanner.m" -o "$OBJ/HPScanner.o"
 "${CC[@]}" "${CFLAGS[@]}" -I"$ROOT/app" -c "$ROOT/app/main.m" -o "$OBJ/main.o"
-"${CC[@]}" "$OBJ/main.o" "$OBJ/HPStore.o" "$OBJ/HPSubscription.o" "$OBJ/VLESSConfig.o" -framework UIKit -framework Foundation -framework CFNetwork \
-  -framework CoreGraphics -framework QuartzCore -o "$APP/Happe"
+"${CC[@]}" "$OBJ/main.o" "$OBJ/HPStore.o" "$OBJ/HPScanner.o" "$OBJ/HPSubscription.o" "$OBJ/VLESSConfig.o" -framework UIKit -framework Foundation -framework CFNetwork \
+  -framework CoreGraphics -framework QuartzCore -framework AVFoundation -framework CoreImage -o "$APP/Happe"
 sed "s/@VERSION@/$VERSION/g" "$ROOT/app/Info.plist" > "$APP/Info.plist"
 printf 'APPL????' > "$APP/PkgInfo"
 python3 "$HERE/make-images.py" "$APP"

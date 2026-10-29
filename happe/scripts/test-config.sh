@@ -81,4 +81,28 @@ OBJC
 clang -fobjc-arc -Wall -Werror -I"$ROOT/common" "$ROOT/common/HPSubscription.m" "$T/subtest.m" -framework Foundation -o "$T/subtest"
 { printf '%s\n' "${links[@]:0:4}"; echo "vmess://eyJhZGQiOiJleGFtcGxlLmNvbSJ9"; echo "trojan://pw@example.com:443#t"; } > "$T/list.txt"
 "$T/subtest" "$T/list.txt"
+# happ links: happ://add/<url> (plain or percent-encoded) adds a subscription,
+# happ://crypt… is reported instead of silently dropped
+cat > "$T/happtest.m" <<'OBJC'
+#import <Foundation/Foundation.h>
+#import "HPStore.h"
+int main(void) {
+    @autoreleasepool {
+        HPStore *st = [HPStore shared];
+        NSArray *subs = nil; NSString *msg = nil;
+        NSUInteger n = [st addFromText:@"happ://add/https%3A%2F%2Fsub.example.net%2Fapi%2Fsub%2Fabc happ://add/https://two.example.net/s happ://crypt4/AbCdEf"
+                               newSubs:&subs message:&msg];
+        NSArray *urls = [subs valueForKey:@"url"];
+        if (n != 2 || ![urls isEqual:@[ @"https://sub.example.net/api/sub/abc", @"https://two.example.net/s" ]]) {
+            printf("happ add: n=%lu urls=%s\n", (unsigned long)n, urls.description.UTF8String); return 1;
+        }
+        if ([msg rangeOfString:@"encrypted"].location == NSNotFound) { printf("happ crypt not reported: %s\n", msg.UTF8String); return 1; }
+        printf("happ links ok\n");
+    }
+    return 0;
+}
+OBJC
+clang -fobjc-arc -Wall -Werror -I"$ROOT/common" -I"$ROOT/app" "$ROOT/common/HPSubscription.m" "$ROOT/common/VLESSConfig.m" \
+  "$ROOT/app/HPStore.m" "$T/happtest.m" -framework Foundation -o "$T/happtest"
+"$T/happtest"
 rm -rf "$T"
