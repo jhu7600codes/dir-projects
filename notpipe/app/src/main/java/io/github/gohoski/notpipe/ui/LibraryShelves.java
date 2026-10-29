@@ -106,7 +106,9 @@ public class LibraryShelves {
             String profileName = account.getProfileName();
             name.setText(profileName == null || profileName.length() == 0
                     ? activity.getString(R.string.youtube_account) : profileName);
-            sub.setText(activity.getString(R.string.signed_in_via, account.getInstanceHost()));
+            String handle = account.getProfileHandle();
+            sub.setText(handle.length() > 0 ? handle + " · " + account.getInstanceHost()
+                    : activity.getString(R.string.signed_in_via, account.getInstanceHost()));
         } else {
             name.setText(R.string.not_signed_in);
             sub.setText(R.string.tap_to_sign_in);

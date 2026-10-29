@@ -48,6 +48,7 @@ public class Yt2009Account {
     private static final int FEED_TIMEOUT = 30000;
     private static final String KEY_PROFILE_NAME = "profile_name";
     private static final String KEY_PROFILE_AVATAR = "profile_avatar";
+    private static final String KEY_PROFILE_HANDLE = "profile_handle";
     private static final Pattern FLOW_TOKEN = Pattern.compile("name=\"flow-token\" value=\"([a-z]{24})\"");
     private static final Pattern UPLOADED_ID = Pattern.compile("(?:watch\\?v=|/vi/|video_id=)([a-zA-Z0-9_-]{11})");
     private static final String DEVICE_CHARS = "qwertyuiopasdfghjklzxcvbnm1234567890";
@@ -232,11 +233,54 @@ public class Yt2009Account {
      * @return {name, avatar url}
      */
     public String[] loadProfile() throws IOException {
+        try {
+            String[] picked = loadSelectedAccount();
+            if (picked != null) {
+                prefs.edit().putString(KEY_PROFILE_NAME, picked[0]).putString(KEY_PROFILE_AVATAR, picked[1])
+                        .putString(KEY_PROFILE_HANDLE, picked[2]).commit();
+                return picked;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         String xml = get("/feeds/api/users/default");
         String[] profile = GdataParser.parseProfile(getInstanceUrl(), xml);
         if ("default".equals(profile[0])) profile[0] = "";
         prefs.edit().putString(KEY_PROFILE_NAME, profile[0]).putString(KEY_PROFILE_AVATAR, profile[1]).commit();
         return profile;
+    }
+
+    /**
+     * The account picked on yt2009's account picker, from the list its sign-in pages use. More reliable than
+     * the GData user entry, which yt2009 builds from the first channel it finds on the library page.
+     * @return {name, avatar url, handle}, or null if there's no selected account
+     */
+    private String[] loadSelectedAccount() throws IOException {
+        HttpRequest req = new HttpRequest(getInstanceUrl(), "/gsign_get_devices");
+        req.addHeader("device", getDeviceCode());
+        cc.nnproject.json.JSONArray accounts = cc.nnproject.json.JSON.getArray(
+                HttpClient.executeToString(req, FEED_TIMEOUT));
+        cc.nnproject.json.JSONObject chosen = null;
+        for (int i = 0; i < accounts.size(); i++) {
+            cc.nnproject.json.JSONObject a = accounts.getObject(i);
+            if (a.getBoolean("selected", false) || chosen == null) chosen = a;
+            if (a.getBoolean("selected", false)) break;
+        }
+        if (chosen == null) return null;
+        String name = chosen.getString("name", "");
+        String handle = chosen.getString("handle", "");
+        if (name == null || name.length() == 0) name = handle == null ? "" : handle;
+        String avatar = chosen.getString("avatar", "");
+        if (avatar == null || "false".equals(avatar)) avatar = "";
+        if (avatar.length() > 0 && !avatar.startsWith("http")) {
+            avatar = getInstanceUrl() + (avatar.startsWith("/") ? "" : "/") + avatar;
+        }
+        return new String[]{name, avatar, handle == null || "false".equals(handle) ? "" : handle};
+    }
+
+    /** @return the remembered @handle, or "" */
+    public String getProfileHandle() {
+        return prefs.getString(KEY_PROFILE_HANDLE, "");
     }
 
     /** @return the remembered account name, or null before the profile was loaded */
