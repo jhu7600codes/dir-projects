@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Flat sharp-cornered button for the channel header (Shorts, Playlists) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true"><shape><solid android:color="#FF33B5E5"/></shape></item>
+    <item android:state_focused="true"><shape><solid android:color="#FF33B5E5"/></shape></item>
+    <item><shape><solid android:color="#FF333333"/></shape></item>
+</selector>

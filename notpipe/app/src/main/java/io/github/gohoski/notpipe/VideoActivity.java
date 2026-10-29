@@ -646,6 +646,7 @@ public class VideoActivity extends Activity {
 
         ((TextView) findViewById(R.id.title)).setText(video.title);
         ((TextView) findViewById(R.id.channel_title)).setText(video.channel);
+        if (controls != null) controls.setTitle(video.title, video.channel);
         ((TextView) findViewById(R.id.subscribers)).setText(Utils.formatNumber(context, video.subscribers));
         if (video.likes > 0)
             ((Button) findViewById(R.id.like)).setText(Utils.formatNumber(context, video.likes));
@@ -1966,6 +1967,7 @@ public class VideoActivity extends Activity {
 
         ((TextView) findViewById(R.id.title)).setText(video.title);
         ((TextView) findViewById(R.id.channel_title)).setText(video.channel);
+        if (controls != null) controls.setTitle(video.title, video.channel);
         ((TextView) findViewById(R.id.subscribers)).setText(Utils.formatNumber(context, video.subscribers));
         if (video.likes > 0)
             ((Button) findViewById(R.id.like)).setText(Utils.formatNumber(context, video.likes));
@@ -2175,6 +2177,7 @@ public class VideoActivity extends Activity {
                 public List<VideoInfo> getRelatedVideos() { return relatedVideos; }
                 public void onOpenRelated(VideoInfo item) { openFromPlayer(item); }
             });
+            if (video != null) controls.setTitle(video.title, video.channel);
         }
         if (videoFrame != null) {
             captionView = new TextView(this);

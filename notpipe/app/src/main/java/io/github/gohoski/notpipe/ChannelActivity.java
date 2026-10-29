@@ -16,6 +16,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
@@ -70,6 +71,140 @@ public class ChannelActivity extends Activity {
     List<VideoInfo> latestVideos = null;
     List<VideoInfo> popularVideos = null;
 
+    /**
+     * Big YouTube-style cards on phones (same margins as Home), compact rows in tablet grids.
+     * Also hides the banner while the list is scrolled so there's more room for videos.
+     */
+    private int cardLayout(AbsListView view) {
+        if (!(view instanceof ListView)) return R.layout.item_video_compact;
+        ListView list = (ListView) view;
+        int side = (int) (24 * getResources().getDisplayMetrics().density);
+        list.setPadding(side, 0, side, 0);
+        list.setDivider(null);
+        list.setOnScrollListener(new AbsListView.OnScrollListener() {
+            public void onScrollStateChanged(AbsListView v, int state) {}
+
+            public void onScroll(AbsListView v, int first, int visible, int total) {
+                if (banner == null || channel == null || channel.banner == null || channel.banner.length() == 0) return;
+                if (first >= 2 && banner.getVisibility() == View.VISIBLE) banner.setVisibility(View.GONE);
+                else if (first == 0 && banner.getVisibility() != View.VISIBLE) banner.setVisibility(View.VISIBLE);
+            }
+        });
+        return R.layout.item_video;
+    }
+
+    /** Subscribe / Shorts / Playlists buttons under the channel header, instead of only in the menu */
+    private void addActionRow() {
+        if (actionRow != null || !(channelLayout.getParent() instanceof ViewGroup)) return;
+        final float density = getResources().getDisplayMetrics().density;
+        actionRow = new LinearLayout(context);
+        actionRow.setPadding((int) (16 * density), 0, (int) (16 * density), (int) (8 * density));
+        actionRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        subscribeButton = actionButton(getString(R.string.subscribe));
+        subscribeButton.setBackgroundResource(R.drawable.subscribe_button);
+        subscribeButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                toggleSubscribe();
+            }
+        });
+        subscribeButton.setOnLongClickListener(new View.OnLongClickListener() {
+            public boolean onLongClick(View v) {
+                if (!io.github.gohoski.notpipe.api.Yt2009Account.getInstance().isSignedIn()) return false;
+                showYoutubeSubscribe();
+                return true;
+            }
+        });
+        actionRow.addView(subscribeButton);
+
+        TextView shorts = actionButton(getString(R.string.shorts));
+        shorts.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent = new Intent(context, ShortsActivity.class);
+                intent.putExtra(ShortsActivity.EXTRA_CHANNEL, channel != null ? channel.id : channelId);
+                startActivity(intent);
+            }
+        });
+        actionRow.addView(shorts);
+
+        TextView playlists = actionButton(getString(R.string.playlists));
+        playlists.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                VideoListActivity.open(ChannelActivity.this, VideoListActivity.SOURCE_CHANNEL_PLAYLISTS,
+                        channel != null ? channel.id : channelId, getString(R.string.playlists));
+            }
+        });
+        actionRow.addView(playlists);
+
+        ViewGroup parent = (ViewGroup) channelLayout.getParent();
+        parent.addView(actionRow, parent.indexOfChild(channelLayout) + 1);
+        updateSubscribeButton();
+    }
+
+    private TextView actionButton(String text) {
+        float density = getResources().getDisplayMetrics().density;
+        TextView button = new TextView(context);
+        button.setText(text);
+        button.setTextColor(0xFFFFFFFF);
+        button.setTextSize(14);
+        button.setTypeface(null, android.graphics.Typeface.BOLD);
+        button.setSingleLine(true);
+        button.setPadding((int) (14 * density), (int) (7 * density), (int) (14 * density), (int) (7 * density));
+        button.setBackgroundResource(R.drawable.channel_button);
+        button.setClickable(true);
+        button.setFocusable(true);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.rightMargin = (int) (8 * density);
+        button.setLayoutParams(params);
+        return button;
+    }
+
+    private void toggleSubscribe() {
+        if (channel == null) return;
+        LocalLibrary library = LocalLibrary.getInstance();
+        if (library.isSubscribed(channel.id)) {
+            library.unsubscribe(channel.id);
+            Toast.makeText(context, getString(R.string.unsubscribed, channel.title), Toast.LENGTH_SHORT).show();
+        } else {
+            library.subscribe(channel.id, channel.title, channel.thumbnail);
+            Toast.makeText(context, getString(R.string.subscribed, channel.title), Toast.LENGTH_SHORT).show();
+        }
+        updateSubscribeButton();
+        Compat.invalidateOptionsMenu(this);
+    }
+
+    private void updateSubscribeButton() {
+        if (subscribeButton == null || channel == null) return;
+        boolean subscribed = LocalLibrary.getInstance().isSubscribed(channel.id);
+        subscribeButton.setSelected(subscribed);
+        subscribeButton.setText(subscribed ? R.string.subscribed_short : R.string.subscribe);
+    }
+
+    /** Subscribe or unsubscribe on the yt2009 YouTube account */
+    private void showYoutubeSubscribe() {
+        if (channel == null) return;
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.youtube_account)
+                .setItems(new String[]{getString(R.string.subscribe), getString(R.string.unsubscribe)},
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                final boolean subscribe = which == 0;
+                                final String id = channel.id;
+                                VideoActions.runAccountAction(ChannelActivity.this,
+                                        new VideoActions.AccountAction() {
+                                            public void run(Yt2009Account account) throws Exception {
+                                                account.setSubscribed(id, subscribe);
+                                            }
+                                        }, subscribe ? R.string.subscribed_youtube : R.string.unsubscribed_youtube);
+                            }
+                        }).show();
+    }
+
+    private LinearLayout actionRow;
+    private TextView subscribeButton;
+
     private void setAdapterForView(AbsListView view, VideoAdapter adapter) {
         if (view instanceof ListView) {
             ((ListView) view).setAdapter(adapter);
@@ -120,7 +255,7 @@ public class ChannelActivity extends Activity {
             findViewById(R.id.for_you_loading).setVisibility(View.GONE);
             forYouList.setVisibility(View.VISIBLE);
 
-            forYouAdapter = new VideoAdapter(context, R.layout.item_video_compact, forYouVideos, true);
+            forYouAdapter = new VideoAdapter(context, cardLayout(forYouList), forYouVideos, true);
             setAdapterForView(forYouList, forYouAdapter);
 
             forYouList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -215,7 +350,7 @@ public class ChannelActivity extends Activity {
             }
         }
         if (fetchedVideos != null) {
-            videosAdapter = new VideoAdapter(context, R.layout.item_video_compact, fetchedVideos, true);
+            videosAdapter = new VideoAdapter(context, cardLayout(videosList), fetchedVideos, true);
             setAdapterForView(videosList, videosAdapter);
             videosList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -281,16 +416,7 @@ public class ChannelActivity extends Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_subscribe) {
-            if (channel == null) return true;
-            LocalLibrary library = LocalLibrary.getInstance();
-            if (library.isSubscribed(channel.id)) {
-                library.unsubscribe(channel.id);
-                Toast.makeText(context, getString(R.string.unsubscribed, channel.title), Toast.LENGTH_SHORT).show();
-            } else {
-                library.subscribe(channel.id, channel.title, channel.thumbnail);
-                Toast.makeText(context, getString(R.string.subscribed, channel.title), Toast.LENGTH_SHORT).show();
-            }
-            Compat.invalidateOptionsMenu(this);
+            toggleSubscribe();
             return true;
         }
         if (item.getItemId() == R.id.action_channel_playlists) {
@@ -305,23 +431,7 @@ public class ChannelActivity extends Activity {
             return true;
         }
         if (item.getItemId() == R.id.action_subscribe_youtube) {
-            if (channel == null) return true;
-            new AlertDialog.Builder(context)
-                    .setTitle(R.string.youtube_account)
-                    .setItems(new String[]{getString(R.string.subscribe), getString(R.string.unsubscribe)},
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    final boolean subscribe = which == 0;
-                                    final String id = channel.id;
-                                    VideoActions.runAccountAction(ChannelActivity.this,
-                                            new VideoActions.AccountAction() {
-                                                public void run(Yt2009Account account) throws Exception {
-                                                    account.setSubscribed(id, subscribe);
-                                                }
-                                            }, subscribe ? R.string.subscribed_youtube : R.string.unsubscribed_youtube);
-                                }
-                            }).show();
+            showYoutubeSubscribe();
             return true;
         }
         if (NotPipe.SDK < 11) {
@@ -389,6 +499,8 @@ public class ChannelActivity extends Activity {
             Compat.invalidateOptionsMenu(ChannelActivity.this);
 
             ((TextView) findViewById(R.id.title)).setText(channel.title);
+            setTitle(channel.title);
+            addActionRow();
             ((TextView) findViewById(R.id.subscribers)).setText(getString(R.string.subscribers, Utils.formatNumber(context, channel.subscriberCount)));
             ((TextView) findViewById(R.id.description)).setText(channel.description);
             ImageLoader.loadImage(channel.thumbnail, ((ImageView) findViewById(R.id.thumbnail)), false);

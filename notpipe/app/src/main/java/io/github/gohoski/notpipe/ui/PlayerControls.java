@@ -61,7 +61,8 @@ public class PlayerControls {
     private final SeekBar seekBar;
     private final TextView position, duration, speedButton, qualityButton, gestureLabel;
     private final Handler handler = new Handler();
-    private final TextView moreVideosButton;
+    private final TextView moreVideosButton, titleText, channelText;
+    private final LinearLayout titleBlock;
     private final android.widget.ProgressBar buffering;
     private final LinearLayout moreVideos, moreRow;
     private final GestureDetector gestures;
@@ -144,6 +145,29 @@ public class PlayerControls {
         }));
         overlay.addView(top, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.RIGHT));
+
+        // Top left, full screen only: video title and channel, like YouTube
+        titleBlock = new LinearLayout(activity);
+        titleBlock.setOrientation(LinearLayout.VERTICAL);
+        titleBlock.setPadding(dp(16), dp(10), dp(8), 0);
+        titleText = new TextView(activity);
+        titleText.setTextColor(Color.WHITE);
+        titleText.setTextSize(16);
+        titleText.setTypeface(null, Typeface.BOLD);
+        titleText.setSingleLine(true);
+        titleText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        titleText.setShadowLayer(3, 0, 0, Color.BLACK);
+        channelText = new TextView(activity);
+        channelText.setTextColor(0xFFCCCCCC);
+        channelText.setTextSize(13);
+        channelText.setSingleLine(true);
+        channelText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        channelText.setShadowLayer(3, 0, 0, Color.BLACK);
+        titleBlock.addView(titleText);
+        titleBlock.addView(channelText);
+        titleBlock.setVisibility(View.GONE);
+        overlay.addView(titleBlock, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT));
 
         // Bottom: time, seek bar, duration, next, fullscreen
         LinearLayout bottom = new LinearLayout(activity);
@@ -311,9 +335,23 @@ public class PlayerControls {
         return gestures.onTouchEvent(event);
     }
 
+    /** Title and channel shown in the top left corner in full screen */
+    public void setTitle(String title, String channel) {
+        titleText.setText(title == null ? "" : title);
+        channelText.setText(channel == null ? "" : channel);
+    }
+
     public void show() {
         if (!enabled) return;
         updatePlayIcon();
+        boolean fullscreen = host().isFullscreen() && titleText.length() > 0;
+        titleBlock.setVisibility(fullscreen ? View.VISIBLE : View.GONE);
+        if (fullscreen) {
+            // Leave room for the quick settings on the right
+            int max = Math.max(dp(120), overlay.getWidth() - dp(330));
+            titleText.setMaxWidth(max);
+            channelText.setMaxWidth(max);
+        }
         moreVideosButton.setVisibility(host().isFullscreen() && !host().getRelatedVideos().isEmpty()
                 ? View.VISIBLE : View.GONE);
         overlay.setVisibility(View.VISIBLE);

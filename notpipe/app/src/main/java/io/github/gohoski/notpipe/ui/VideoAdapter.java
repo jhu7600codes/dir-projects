@@ -106,7 +106,7 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
         if (video.views > 0) {
             String viewsText = Utils.formatNumber(context, video.views);
             if (layoutResource == R.layout.item_video) {
-                holder.channelTitle.setText(video.channel + " · " + context.getString(R.string.views, viewsText) + (video.publishedAt == null ? "" : " · " + Utils.formatTimeAgo(context, video.publishedAt)));
+                holder.channelTitle.setText((isInChannelActivity ? "" : video.channel + " · ") + context.getString(R.string.views, viewsText) + (video.publishedAt == null ? "" : " · " + Utils.formatTimeAgo(context, video.publishedAt)));
             } else if (layoutResource == R.layout.item_video_compact) {
                 if (isInChannelActivity) {
                     holder.channelTitle.setText(context.getString(R.string.views, viewsText) + (video.publishedAt == null ? "" : "\n" + Utils.formatTimeAgo(context, video.publishedAt)));
@@ -151,6 +151,7 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
         holder.imagesLoaded = false;
         holder.videoThumb.setImageBitmap(null);
         if (holder.channelThumb != null) {
+            if (isInChannelActivity && layoutResource == R.layout.item_video) holder.channelThumb.setVisibility(View.GONE);
             holder.channelThumb.setImageBitmap(null);
         }
 
