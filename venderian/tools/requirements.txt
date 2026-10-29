@@ -1,0 +1,2 @@
+fonttools>=4.47
+shapely>=2.0
