@@ -1,6 +1,6 @@
 # Happe
 
-a vless + reality client for a jailbroken iphone 5s on ios 10.x (arm64). one text field: paste a `vless://` link, tap connect. the app turns the link into an xray `config.json`, starts xray-core as a root launchdaemon and points the wifi http proxy at it. disconnect undoes all of that.
+a vless + reality client for a jailbroken iphone 5s on ios 10.x (arm64). add subscription urls (several are fine) and/or single `vless://` links, pick a server from the list, tap connect. the app turns the selected server into an xray `config.json`, starts xray-core as a root launchdaemon and points the wifi http proxy at it. disconnect undoes all of that.
 
 everything is built by github actions on a macos runner (`.github/workflows/happe.yml`). no mac or apple developer account needed.
 
@@ -9,7 +9,11 @@ everything is built by github actions on a macos runner (`.github/workflows/happ
 1. **xray for ios 10.** cross-build xray-core with `GOOS=ios GOARCH=arm64`, cgo, and apple clang. it links against the **ios 10.3 sdk** from theos/sdks with `-target arm64-apple-ios10.0`. linking against the old sdk is itself a check: any symbol ios 10 doesn't have fails the link. `scripts/verify-macho.sh` then checks the binary with `lipo -info` (thin arm64), with `otool -l` (`LC_VERSION_MIN_IPHONEOS 10.0`, no chained fixups), and confirms every imported symbol and dylib exists in the 10.3 sdk. `scripts/build-xray.sh` tries xray releases newest first, each one with the newest go its `go.mod` allows. it keeps every combo that passes.
 2. **daemon.** `/Library/LaunchDaemons/com.jhu.happe.plist` runs `/usr/libexec/happe/xray run -c /etc/happe/config.json` as root. it ships with `Disabled=true`. `launchctl load -w` / `unload -w` turn it on and off, so it only comes back after a reboot if it was connected when you rebooted.
 3. **helper.** `/usr/libexec/happe/happectl` is root:wheel 4755 and only knows `start | stop | status | proxy-on | proxy-off | log`. `start` copies the app's config into a root-only dir (refusing symlinks and files that aren't yours), runs `xray run -test` on it, then loads the daemon.
-4. **app.** plain uikit in objective-c, built against the 10.3 sdk. it uses nothing newer than ios 9 (`UIStackView`). fakesigned with `ldid -S` plus entitlements (`entitlements/`).
+4. **app.** plain uikit in objective-c, built against the 10.3 sdk (so nothing newer than ios 10 can even compile). one grouped list: status card, connect/disconnect button, one section per subscription (with traffic used, expiry and last update from the `subscription-userinfo` header), then manually added links.
+   - subscriptions are fetched with a `v2rayN` user agent so panels (marzban, 3x-ui, remnawave, ...) answer with base64 share links. plain lists work too. non-vless entries (vmess, trojan, ss) are hidden and counted.
+   - pull down to update all subscriptions. stale ones (older than 6 h) update when the app opens. swipe a server for update / delete.
+   - tapping another server while connected reconnects right away.
+   - subscriptions, links and the selected server are stored only on the phone in `/var/mobile/Library/Happe/state.plist` (0600). fakesigned with `ldid -S` plus entitlements (`entitlements/`).
 5. **wifi proxy.** `happectl proxy-on` uses the private SCPreferences api (as root, with the systemconfiguration write entitlements) to set http+https proxy 127.0.0.1:8080 on the wifi service, and backs up the old settings. `proxy-off` restores them. afterwards the app reads the live setting back with `CFNetworkCopySystemProxySettings()`. if it isn't 127.0.0.1:8080, the app shows a one-line manual instruction.
 
 ### config written from the link
@@ -102,9 +106,9 @@ if `start` says not setuid root, run `chown root:wheel /usr/libexec/happe/happec
 
 the .deb from stage 2 already installed it. no icon? run `su mobile -c uicache` (or respring). or install the .deb from filza/zebra instead of ssh.
 
-1. open "Happe", paste the link, tap connect
-2. the status should say `connected: <name> (host:port, tcp, reality, xtls-rprx-vision)`
-3. the line under it says `wifi proxy -> 127.0.0.1:8080`, or tells you to set it by hand: settings > wi-fi > (i) > http proxy > manual > server 127.0.0.1, port 8080
+1. open "Happe", tap "Add Subscription or Link…", paste your subscription url (or a vless:// link), tap add
+2. pick a server (checkmark), tap connect
+3. the status card should say "Connected" with the server name. the note under the button says the wi-fi proxy is set, or tells you to set it by hand: settings > wi-fi > (i) > http proxy > manual, server 127.0.0.1, port 8080
 4. safari: open ifconfig.me, which should show the server's ip
 5. tap disconnect: proxy cleared, xray stopped
 

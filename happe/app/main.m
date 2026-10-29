@@ -1,4 +1,4 @@
-// Happe: paste a vless:// link, connect. plain uikit, ios 10.
+// Happe: subscriptions + vless:// links, pick a server, connect. plain uikit, ios 10.
 
 #import <UIKit/UIKit.h>
 #import <CFNetwork/CFNetwork.h>
@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #import "VLESSConfig.h"
+#import "HPStore.h"
 
 #define HELPER      "/usr/libexec/happe/happectl"
 #define CONFIG_DIR  @"/var/mobile/Library/Happe"
@@ -69,209 +70,264 @@ static UIColor *VPRGB(uint32_t hex) {
     return [UIColor colorWithRed:((hex >> 16) & 0xff) / 255.0 green:((hex >> 8) & 0xff) / 255.0 blue:(hex & 0xff) / 255.0 alpha:1];
 }
 
-// insets the text of the link field so it lines up with the other cards
-@interface VPInsetTextField : UITextField
+static const CGFloat kSide = 16;    // card inset from the screen edge
+static const CGFloat kInner = 16;   // text inset inside a card
+static const CGFloat kRadius = 12;
+
+#pragma mark - cells
+
+typedef NS_ENUM(NSInteger, HPCardPosition) {
+    HPCardSingle,
+    HPCardTop,
+    HPCardMiddle,
+    HPCardBottom,
+};
+
+// a grouped cell drawn as part of a rounded, inset card (ios 10 has no
+// insetGrouped style, so the cell insets its own frame and masks its corners)
+@interface HPCardCell : UITableViewCell
+@property (nonatomic, assign) HPCardPosition position;
+@property (nonatomic, strong) UIView *separator;
 @end
 
-@implementation VPInsetTextField
-- (CGRect)textRectForBounds:(CGRect)bounds {
-    return CGRectInset([super textRectForBounds:bounds], 14, 0);
+@implementation HPCardCell
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
+    if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier])) {
+        self.backgroundColor = [UIColor whiteColor];
+        self.separator = [[UIView alloc] init];
+        self.separator.backgroundColor = VPRGB(0xc8c7cc);
+        [self addSubview:self.separator];
+        UIView *sel = [[UIView alloc] init];
+        sel.backgroundColor = VPRGB(0xd9d9d9);
+        self.selectedBackgroundView = sel;
+    }
+    return self;
 }
-- (CGRect)editingRectForBounds:(CGRect)bounds {
-    return CGRectInset([super editingRectForBounds:bounds], 14, 0);
+
+- (void)setFrame:(CGRect)frame {
+    if (self.superview && frame.size.width > 2 * kSide + 100) {
+        frame.origin.x = kSide;
+        frame.size.width = self.superview.bounds.size.width - 2 * kSide;
+    }
+    [super setFrame:frame];
 }
-- (CGRect)placeholderRectForBounds:(CGRect)bounds {
-    return CGRectInset([super placeholderRectForBounds:bounds], 14, 0);
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    UIRectCorner corners = 0;
+    if (self.position == HPCardSingle || self.position == HPCardTop) corners |= UIRectCornerTopLeft | UIRectCornerTopRight;
+    if (self.position == HPCardSingle || self.position == HPCardBottom) corners |= UIRectCornerBottomLeft | UIRectCornerBottomRight;
+    CAShapeLayer *mask = [CAShapeLayer layer];
+    mask.path = [UIBezierPath bezierPathWithRoundedRect:self.bounds byRoundingCorners:corners
+                                            cornerRadii:CGSizeMake(kRadius, kRadius)].CGPath;
+    self.layer.mask = mask;
+
+    CGFloat px = 1.0 / [UIScreen mainScreen].scale;
+    self.separator.hidden = self.position == HPCardSingle || self.position == HPCardBottom;
+    self.separator.frame = CGRectMake(kInner, self.bounds.size.height - px, self.bounds.size.width - kInner, px);
+    [self bringSubviewToFront:self.separator];
+
+    // keep labels on the same inner margin as everything else
+    for (UILabel *l in @[ self.textLabel ?: [UILabel new], self.detailTextLabel ?: [UILabel new] ]) {
+        CGRect f = l.frame;
+        CGFloat right = CGRectGetMaxX(f);
+        f.origin.x = kInner;
+        f.size.width = MAX(0, right - kInner);
+        l.frame = f;
+    }
 }
+
 @end
 
-@interface VPViewController : UIViewController <UITextFieldDelegate>
-@property (nonatomic, strong) UITextField *linkField;
-@property (nonatomic, strong) UIButton *actionButton;
-@property (nonatomic, strong) UIActivityIndicatorView *buttonSpinner;
-@property (nonatomic, strong) UIView *statusDot;
-@property (nonatomic, strong) UILabel *statusTitle;
-@property (nonatomic, strong) UILabel *statusDetail;
-@property (nonatomic, strong) UILabel *footerLabel;
+@interface HPStatusCell : HPCardCell
+@property (nonatomic, strong) UIView *dot;
+@property (nonatomic, strong) UILabel *title;
+@property (nonatomic, strong) UILabel *detail;
+@end
+
+@implementation HPStatusCell
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
+    if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier])) {
+        self.selectionStyle = UITableViewCellSelectionStyleNone;
+        self.dot = [[UIView alloc] init];
+        self.dot.layer.cornerRadius = 5;
+        self.title = [[UILabel alloc] init];
+        self.title.font = [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold];
+        self.detail = [[UILabel alloc] init];
+        self.detail.font = [UIFont systemFontOfSize:13];
+        self.detail.textColor = VPRGB(0x8e8e93);
+        self.detail.numberOfLines = 0;
+        for (UIView *v in @[ self.dot, self.title, self.detail ]) {
+            v.translatesAutoresizingMaskIntoConstraints = NO;
+            [self.contentView addSubview:v];
+        }
+        UIView *c = self.contentView;
+        [NSLayoutConstraint activateConstraints:@[
+            [self.dot.widthAnchor constraintEqualToConstant:10],
+            [self.dot.heightAnchor constraintEqualToConstant:10],
+            [self.dot.leadingAnchor constraintEqualToAnchor:c.leadingAnchor constant:kInner],
+            [self.dot.centerYAnchor constraintEqualToAnchor:self.title.centerYAnchor],
+            [self.title.leadingAnchor constraintEqualToAnchor:self.dot.trailingAnchor constant:10],
+            [self.title.trailingAnchor constraintEqualToAnchor:c.trailingAnchor constant:-kInner],
+            [self.title.topAnchor constraintEqualToAnchor:c.topAnchor constant:14],
+            [self.detail.leadingAnchor constraintEqualToAnchor:self.title.leadingAnchor],
+            [self.detail.trailingAnchor constraintEqualToAnchor:self.title.trailingAnchor],
+            [self.detail.topAnchor constraintEqualToAnchor:self.title.bottomAnchor constant:3],
+            [self.detail.bottomAnchor constraintEqualToAnchor:c.bottomAnchor constant:-14],
+        ]];
+    }
+    return self;
+}
+
+@end
+
+@interface HPButtonCell : HPCardCell
+@property (nonatomic, strong) UILabel *label;
+@property (nonatomic, strong) UIActivityIndicatorView *spinner;
+@end
+
+@implementation HPButtonCell
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
+    if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier])) {
+        self.label = [[UILabel alloc] init];
+        self.label.font = [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold];
+        self.label.textColor = [UIColor whiteColor];
+        self.label.textAlignment = NSTextAlignmentCenter;
+        self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+        self.spinner.hidesWhenStopped = YES;
+        for (UIView *v in @[ self.label, self.spinner ]) {
+            v.translatesAutoresizingMaskIntoConstraints = NO;
+            [self.contentView addSubview:v];
+        }
+        UIView *c = self.contentView;
+        [NSLayoutConstraint activateConstraints:@[
+            [self.label.centerXAnchor constraintEqualToAnchor:c.centerXAnchor],
+            [self.label.centerYAnchor constraintEqualToAnchor:c.centerYAnchor],
+            [self.spinner.centerYAnchor constraintEqualToAnchor:c.centerYAnchor],
+            [self.spinner.trailingAnchor constraintEqualToAnchor:c.trailingAnchor constant:-kInner],
+        ]];
+    }
+    return self;
+}
+
+- (void)setColor:(UIColor *)color {
+    self.backgroundColor = color;
+    UIView *sel = [[UIView alloc] init];
+    CGFloat r, g, b, a;
+    [color getRed:&r green:&g blue:&b alpha:&a];
+    sel.backgroundColor = [UIColor colorWithRed:r * 0.85 green:g * 0.85 blue:b * 0.85 alpha:a];
+    self.selectedBackgroundView = sel;
+}
+
+@end
+
+// section header / footer text, lined up with the text inside the cards
+@interface HPSectionLabel : UITableViewHeaderFooterView
+@property (nonatomic, strong) UILabel *label;
+@property (nonatomic, strong) NSLayoutConstraint *top;
+@property (nonatomic, strong) NSLayoutConstraint *bottom;
+@end
+
+@implementation HPSectionLabel
+
+- (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier {
+    if ((self = [super initWithReuseIdentifier:reuseIdentifier])) {
+        self.label = [[UILabel alloc] init];
+        self.label.font = [UIFont systemFontOfSize:13];
+        self.label.textColor = VPRGB(0x6d6d72);
+        self.label.numberOfLines = 0;
+        self.label.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:self.label];
+        UIView *c = self.contentView;
+        self.top = [self.label.topAnchor constraintEqualToAnchor:c.topAnchor];
+        self.bottom = [self.label.bottomAnchor constraintEqualToAnchor:c.bottomAnchor];
+        [NSLayoutConstraint activateConstraints:@[
+            [self.label.leadingAnchor constraintEqualToAnchor:c.leadingAnchor constant:kSide + kInner],
+            [self.label.trailingAnchor constraintEqualToAnchor:c.trailingAnchor constant:-(kSide + kInner)],
+            self.top, self.bottom,
+        ]];
+        self.backgroundView = [[UIView alloc] init];
+    }
+    return self;
+}
+
+@end
+
+#pragma mark - main screen
+
+@interface VPViewController : UITableViewController
 @property (nonatomic, assign) VPState state;
+@property (nonatomic, copy) NSString *statusTitle;
+@property (nonatomic, copy) NSString *statusDetail;
+@property (nonatomic, copy) NSString *proxyNote;
+@property (nonatomic, copy) NSString *connectedLink;
 @end
 
 @implementation VPViewController
 
-- (UIView *)card {
-    UIView *v = [[UIView alloc] init];
-    v.backgroundColor = [UIColor whiteColor];
-    v.layer.cornerRadius = 12;
-    return v;
+- (instancetype)init {
+    return [super initWithStyle:UITableViewStyleGrouped];
 }
 
-- (UILabel *)labelWithFont:(UIFont *)font color:(UIColor *)color {
-    UILabel *l = [[UILabel alloc] init];
-    l.font = font;
-    l.textColor = color;
-    l.numberOfLines = 0;
-    return l;
-}
-
-- (UIView *)spacer:(CGFloat)height {
-    UIView *v = [[UIView alloc] init];
-    [v.heightAnchor constraintEqualToConstant:height].active = YES;
-    return v;
-}
-
-// section headers/footers sit indented like in settings, cards don't
-- (UIView *)inset:(UIView *)content {
-    UIView *wrap = [[UIView alloc] init];
-    content.translatesAutoresizingMaskIntoConstraints = NO;
-    [wrap addSubview:content];
-    [NSLayoutConstraint activateConstraints:@[
-        [content.leadingAnchor constraintEqualToAnchor:wrap.leadingAnchor constant:16],
-        [content.trailingAnchor constraintEqualToAnchor:wrap.trailingAnchor constant:-16],
-        [content.topAnchor constraintEqualToAnchor:wrap.topAnchor],
-        [content.bottomAnchor constraintEqualToAnchor:wrap.bottomAnchor],
-    ]];
-    return wrap;
-}
-
-- (UILabel *)sectionHeader:(NSString *)text {
-    UILabel *l = [self labelWithFont:[UIFont systemFontOfSize:13] color:VPRGB(0x6d6d72)];
-    l.text = text.uppercaseString;
-    return l;
+- (HPStore *)store {
+    return [HPStore shared];
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = VPRGB(0xefeff4);
+    UITableView *tv = self.tableView;
+    tv.backgroundColor = VPRGB(0xefeff4);
+    tv.separatorStyle = UITableViewCellSeparatorStyleNone;
+    tv.estimatedRowHeight = 56;
+    tv.rowHeight = UITableViewAutomaticDimension;
+    tv.estimatedSectionHeaderHeight = 30;
+    tv.sectionHeaderHeight = UITableViewAutomaticDimension;
+    tv.estimatedSectionFooterHeight = 20;
+    tv.sectionFooterHeight = UITableViewAutomaticDimension;
+    tv.tintColor = VPRGB(0x007aff);
+    [tv registerClass:[HPSectionLabel class] forHeaderFooterViewReuseIdentifier:@"label"];
 
-    UILabel *title = [self labelWithFont:[UIFont systemFontOfSize:34 weight:UIFontWeightBold] color:[UIColor blackColor]];
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 64)];
+    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(kSide, 16, 280, 41)];
+    title.font = [UIFont systemFontOfSize:34 weight:UIFontWeightBold];
     title.text = @"Happe";
+    [header addSubview:title];
+    tv.tableHeaderView = header;
 
-    // status card: dot + title, detail underneath
-    UIView *statusCard = [self card];
-    self.statusDot = [[UIView alloc] init];
-    self.statusDot.layer.cornerRadius = 5;
-    self.statusTitle = [self labelWithFont:[UIFont systemFontOfSize:17 weight:UIFontWeightSemibold] color:[UIColor blackColor]];
-    self.statusDetail = [self labelWithFont:[UIFont systemFontOfSize:13] color:VPRGB(0x8e8e93)];
-    for (UIView *v in @[ self.statusDot, self.statusTitle, self.statusDetail ]) {
-        v.translatesAutoresizingMaskIntoConstraints = NO;
-        [statusCard addSubview:v];
-    }
+    UIRefreshControl *rc = [[UIRefreshControl alloc] init];
+    [rc addTarget:self action:@selector(pullToRefresh) forControlEvents:UIControlEventValueChanged];
+    tv.refreshControl = rc;
 
-    self.linkField = [[VPInsetTextField alloc] init];
-    self.linkField.backgroundColor = [UIColor whiteColor];
-    self.linkField.layer.cornerRadius = 12;
-    self.linkField.placeholder = @"vless://…";
-    self.linkField.font = [UIFont fontWithName:@"Menlo-Regular" size:14] ?: [UIFont systemFontOfSize:14];
-    self.linkField.autocorrectionType = UITextAutocorrectionTypeNo;
-    self.linkField.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    self.linkField.spellCheckingType = UITextSpellCheckingTypeNo;
-    self.linkField.keyboardType = UIKeyboardTypeURL;
-    self.linkField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    self.linkField.returnKeyType = UIReturnKeyDone;
-    self.linkField.delegate = self;
-
-    self.actionButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.actionButton.layer.cornerRadius = 12;
-    self.actionButton.titleLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold];
-    [self.actionButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [self.actionButton setTitleColor:[UIColor colorWithWhite:1 alpha:0.6] forState:UIControlStateHighlighted];
-    [self.actionButton addTarget:self action:@selector(toggle) forControlEvents:UIControlEventTouchUpInside];
-    self.buttonSpinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
-    self.buttonSpinner.hidesWhenStopped = YES;
-    self.buttonSpinner.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.actionButton addSubview:self.buttonSpinner];
-
-    self.footerLabel = [self labelWithFont:[UIFont systemFontOfSize:13] color:VPRGB(0x6d6d72)];
-
-    // no setCustomSpacing: that is ios 11+. fixed-height spacers instead.
-    UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[
-        title, [self spacer:16], statusCard, [self spacer:28],
-        [self inset:[self sectionHeader:@"Server link"]], [self spacer:8], self.linkField, [self spacer:16],
-        self.actionButton, [self spacer:10], [self inset:self.footerLabel]
-    ]];
-    stack.axis = UILayoutConstraintAxisVertical;
-    stack.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:stack];
-
-    [NSLayoutConstraint activateConstraints:@[
-        [stack.topAnchor constraintEqualToAnchor:self.topLayoutGuide.bottomAnchor constant:12],
-        [stack.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16],
-        [stack.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16],
-
-        [self.statusDot.widthAnchor constraintEqualToConstant:10],
-        [self.statusDot.heightAnchor constraintEqualToConstant:10],
-        [self.statusDot.leadingAnchor constraintEqualToAnchor:statusCard.leadingAnchor constant:16],
-        [self.statusDot.centerYAnchor constraintEqualToAnchor:self.statusTitle.centerYAnchor],
-        [self.statusTitle.leadingAnchor constraintEqualToAnchor:self.statusDot.trailingAnchor constant:10],
-        [self.statusTitle.trailingAnchor constraintEqualToAnchor:statusCard.trailingAnchor constant:-16],
-        [self.statusTitle.topAnchor constraintEqualToAnchor:statusCard.topAnchor constant:14],
-        [self.statusDetail.leadingAnchor constraintEqualToAnchor:self.statusTitle.leadingAnchor],
-        [self.statusDetail.trailingAnchor constraintEqualToAnchor:self.statusTitle.trailingAnchor],
-        [self.statusDetail.topAnchor constraintEqualToAnchor:self.statusTitle.bottomAnchor constant:3],
-        [self.statusDetail.bottomAnchor constraintEqualToAnchor:statusCard.bottomAnchor constant:-14],
-
-        [self.linkField.heightAnchor constraintEqualToConstant:48],
-        [self.actionButton.heightAnchor constraintEqualToConstant:50],
-        [self.buttonSpinner.centerYAnchor constraintEqualToAnchor:self.actionButton.centerYAnchor],
-        [self.buttonSpinner.trailingAnchor constraintEqualToAnchor:self.actionButton.trailingAnchor constant:-16],
-    ]];
-
-    [self.view addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self.view action:@selector(endEditing:)]];
-    [self setState:VPStateUnknown title:@"Checking…" detail:@" " footer:nil];
+    self.state = VPStateUnknown;
+    self.statusTitle = @"Checking…";
     [self refreshStatus];
+    [self refreshStaleSubscriptions];
 }
 
-- (UIStatusBarStyle)preferredStatusBarStyle {
-    return UIStatusBarStyleDefault;
-}
+#pragma mark state
 
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    [textField resignFirstResponder];
-    return YES;
-}
-
-- (void)setState:(VPState)state title:(NSString *)title detail:(NSString *)detail footer:(NSString *)footer {
+- (void)setState:(VPState)state title:(NSString *)title detail:(NSString *)detail note:(NSString *)note {
     self.state = state;
-    self.statusTitle.text = title;
-    self.statusDetail.text = detail.length ? detail : @" ";
-    self.footerLabel.text = footer;
-    self.footerLabel.superview.hidden = footer.length == 0;
-
-    UIColor *dot = VPRGB(0xc7c7cc);
-    NSString *button = @"Connect";
-    UIColor *buttonColor = VPRGB(0x007aff);
-    BOOL busy = NO;
-    switch (state) {
-        case VPStateConnected:
-            dot = VPRGB(0x34c759);
-            button = @"Disconnect";
-            buttonColor = VPRGB(0xff3b30);
-            break;
-        case VPStateWorking:
-        case VPStateUnknown:
-            dot = VPRGB(0xff9500);
-            busy = YES;
-            break;
-        case VPStateError:
-            dot = VPRGB(0xff3b30);
-            break;
-        case VPStateDisconnected:
-            break;
-    }
-    self.statusDot.backgroundColor = dot;
-    [UIView performWithoutAnimation:^{
-        [self.actionButton setTitle:button forState:UIControlStateNormal];
-        [self.actionButton layoutIfNeeded];
-    }];
-    self.actionButton.backgroundColor = busy ? [buttonColor colorWithAlphaComponent:0.5] : buttonColor;
-    self.actionButton.enabled = !busy;
-    self.linkField.enabled = state != VPStateConnected && !busy;
-    self.linkField.textColor = self.linkField.enabled ? [UIColor blackColor] : VPRGB(0x8e8e93);
-    if (busy) [self.buttonSpinner startAnimating];
-    else [self.buttonSpinner stopAnimating];
+    self.statusTitle = title;
+    self.statusDetail = detail;
+    self.proxyNote = note;
+    [self.tableView reloadData];
 }
 
-- (NSString *)proxyFooter:(BOOL)proxyOK {
+- (BOOL)busy {
+    return self.state == VPStateWorking || self.state == VPStateUnknown;
+}
+
+- (NSString *)idleDetail {
+    HPServer *s = self.store.selectedServer;
+    if (s) return s.name;
+    return self.store.allServers.count ? @"Pick a server below." : @"Add a subscription or a vless:// link.";
+}
+
+- (NSString *)proxyNoteFor:(BOOL)proxyOK {
     return proxyOK ? @"Wi-Fi proxy is set to 127.0.0.1:8080. SOCKS5 is on 127.0.0.1:1080." : kManualProxyHint;
 }
 
@@ -282,43 +338,43 @@ static UIColor *VPRGB(uint32_t hex) {
         BOOL proxyOK = systemProxyIsOurs();
         dispatch_async(dispatch_get_main_queue(), ^{
             if (rc == 0) {
-                [self setState:VPStateConnected title:@"Connected" detail:[@"xray " stringByAppendingString:out]
-                        footer:[self proxyFooter:proxyOK]];
+                self.connectedLink = self.store.selectedLink;
+                HPServer *s = self.store.selectedServer;
+                [self setState:VPStateConnected title:@"Connected" detail:s ? s.name : [@"xray " stringByAppendingString:out]
+                          note:[self proxyNoteFor:proxyOK]];
             } else if (rc == 3) {
-                [self setState:VPStateDisconnected title:@"Not connected" detail:@"Paste a link and tap Connect." footer:nil];
+                [self setState:VPStateDisconnected title:@"Not connected" detail:[self idleDetail] note:nil];
             } else {
-                [self setState:VPStateError title:@"Helper unavailable" detail:out footer:nil];
+                [self setState:VPStateError title:@"Helper unavailable" detail:out note:nil];
             }
         });
     });
 }
 
-- (void)toggle {
-    if (self.state == VPStateConnected) [self disconnect];
-    else [self connect];
-}
+#pragma mark connect / disconnect
 
 - (void)connect {
-    [self.view endEditing:YES];
-    NSString *link = self.linkField.text ?: @"";
-    NSString *err = nil;
-    NSData *json = [VLESSConfig configJSONFromLink:link error:&err];
-    if (!json) {
-        [self setState:VPStateError title:@"Invalid link" detail:err footer:nil];
+    HPServer *server = self.store.selectedServer;
+    if (!server) {
+        [self setState:VPStateError title:@"No server selected" detail:[self idleDetail] note:nil];
         return;
     }
-    NSString *summary = [VLESSConfig summaryForLink:link];
-
+    NSString *err = nil;
+    NSData *json = [VLESSConfig configJSONFromLink:server.link error:&err];
+    if (!json) {
+        [self setState:VPStateError title:@"Invalid link" detail:err note:nil];
+        return;
+    }
     [[NSFileManager defaultManager] createDirectoryAtPath:CONFIG_DIR withIntermediateDirectories:YES
                                                attributes:@{ NSFilePosixPermissions: @0700 } error:nil];
     NSError *werr = nil;
     if (![json writeToFile:CONFIG_PATH options:NSDataWritingAtomic error:&werr]) {
-        [self setState:VPStateError title:@"Couldn't save config" detail:werr.localizedDescription footer:nil];
+        [self setState:VPStateError title:@"Couldn't save config" detail:werr.localizedDescription note:nil];
         return;
     }
     chmod(CONFIG_PATH.fileSystemRepresentation, 0600);
 
-    [self setState:VPStateWorking title:@"Connecting…" detail:summary footer:nil];
+    [self setState:VPStateWorking title:@"Connecting…" detail:server.name note:nil];
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         NSString *startOut = nil, *proxyOut = nil;
         int rc = runHelper(@"start", &startOut);
@@ -328,32 +384,356 @@ static UIColor *VPRGB(uint32_t hex) {
         for (int i = 0; rc == 0 && i < 10 && !(proxyOK = systemProxyIsOurs()); i++) usleep(200 * 1000);
         dispatch_async(dispatch_get_main_queue(), ^{
             if (rc != 0) {
-                [self setState:VPStateError title:@"Couldn't connect" detail:startOut footer:nil];
+                [self setState:VPStateError title:@"Couldn't connect" detail:startOut note:nil];
                 return;
             }
-            NSString *footer = [self proxyFooter:proxyOK];
+            self.connectedLink = server.link;
+            NSString *note = [self proxyNoteFor:proxyOK];
             if (!proxyOK && prc != 0 && proxyOut.length)
-                footer = [NSString stringWithFormat:@"Couldn't set the Wi-Fi proxy (%@). %@", proxyOut, kManualProxyHint];
-            [self setState:VPStateConnected title:@"Connected" detail:summary footer:footer];
+                note = [NSString stringWithFormat:@"Couldn't set the Wi-Fi proxy (%@). %@", proxyOut, kManualProxyHint];
+            [self setState:VPStateConnected title:@"Connected" detail:server.name note:note];
         });
     });
 }
 
 - (void)disconnect {
-    [self.view endEditing:YES];
-    [self setState:VPStateWorking title:@"Disconnecting…" detail:self.statusDetail.text footer:nil];
+    [self setState:VPStateWorking title:@"Disconnecting…" detail:self.statusDetail note:nil];
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         NSString *proxyOut = nil, *stopOut = nil;
         int prc = runHelper(@"proxy-off", &proxyOut);
         int rc = runHelper(@"stop", &stopOut);
         BOOL stillOurs = systemProxyIsOurs();
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *footer = (stillOurs || prc != 0)
+            self.connectedLink = nil;
+            NSString *note = (stillOurs || prc != 0)
                 ? @"Turn the proxy off manually: Settings > Wi-Fi > (i) > HTTP Proxy > Off." : nil;
-            if (rc == 0) [self setState:VPStateDisconnected title:@"Not connected" detail:@"Paste a link and tap Connect." footer:footer];
-            else [self setState:VPStateError title:@"Couldn't stop xray" detail:stopOut footer:footer];
+            if (rc == 0) [self setState:VPStateDisconnected title:@"Not connected" detail:[self idleDetail] note:note];
+            else [self setState:VPStateError title:@"Couldn't stop xray" detail:stopOut note:note];
         });
     });
+}
+
+#pragma mark subscriptions
+
+- (void)refreshSubs:(NSArray<HPSub *> *)subs done:(void (^)(void))done {
+    if (!subs.count) {
+        if (done) done();
+        return;
+    }
+    __block NSUInteger left = subs.count;
+    for (HPSub *s in subs) {
+        [self.store refresh:s done:^{
+            [self.tableView reloadData];
+            if (--left == 0 && done) done();
+        }];
+    }
+    [self.tableView reloadData];
+}
+
+- (void)refreshStaleSubscriptions {
+    NSMutableArray *stale = [NSMutableArray array];
+    for (HPSub *s in self.store.subs)
+        if (!s.updated || -[s.updated timeIntervalSinceNow] > 6 * 3600) [stale addObject:s];
+    [self refreshSubs:stale done:nil];
+}
+
+- (void)pullToRefresh {
+    [self refreshSubs:self.store.subs done:^{
+        [self.refreshControl endRefreshing];
+    }];
+    if (!self.store.subs.count) [self.refreshControl endRefreshing];
+}
+
+- (void)showAdd {
+    UIAlertController *a = [UIAlertController alertControllerWithTitle:@"Add Servers"
+        message:@"Paste subscription URLs or vless:// links. Several at once are fine." preferredStyle:UIAlertControllerStyleAlert];
+    NSString *clip = [UIPasteboard generalPasteboard].string;
+    [a addTextFieldWithConfigurationHandler:^(UITextField *f) {
+        f.placeholder = @"https://… or vless://…";
+        f.autocorrectionType = UITextAutocorrectionTypeNo;
+        f.autocapitalizationType = UITextAutocapitalizationTypeNone;
+        f.keyboardType = UIKeyboardTypeURL;
+        f.clearButtonMode = UITextFieldViewModeWhileEditing;
+        if ([clip rangeOfString:@"://"].location != NSNotFound) f.text = clip;
+    }];
+    [a addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    __weak UIAlertController *wa = a;
+    [a addAction:[UIAlertAction actionWithTitle:@"Add" style:UIAlertActionStyleDefault handler:^(UIAlertAction *act) {
+        NSArray *newSubs = nil;
+        NSString *msg = nil;
+        NSUInteger n = [self.store addFromText:wa.textFields.firstObject.text ?: @"" newSubs:&newSubs message:&msg];
+        if (self.state != VPStateConnected && !self.busy) self.statusDetail = [self idleDetail];
+        [self.tableView reloadData];
+        [self refreshSubs:newSubs done:^{
+            if (self.state == VPStateDisconnected) {
+                self.statusDetail = [self idleDetail];
+                [self.tableView reloadData];
+            }
+        }];
+        if (n == 0 || msg) {
+            UIAlertController *info = [UIAlertController alertControllerWithTitle:n ? @"Added" : @"Nothing Added"
+                message:msg ?: @"Paste a subscription URL (https://…) or a vless:// link." preferredStyle:UIAlertControllerStyleAlert];
+            [info addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+            [self presentViewController:info animated:YES completion:nil];
+        }
+    }]];
+    [self presentViewController:a animated:YES completion:nil];
+}
+
+- (void)confirmDeleteSub:(HPSub *)sub {
+    UIAlertController *a = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"Delete “%@”?", sub.displayTitle]
+        message:@"Its servers are removed from the list." preferredStyle:UIAlertControllerStyleAlert];
+    [a addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    [a addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *act) {
+        [self.store removeSub:sub];
+        if (self.state == VPStateDisconnected) self.statusDetail = [self idleDetail];
+        [self.tableView reloadData];
+    }]];
+    [self presentViewController:a animated:YES completion:nil];
+}
+
+#pragma mark table layout
+// sections: status, button, one per subscription, manual links (if any), add
+
+- (NSInteger)subBase {
+    return 2;
+}
+
+- (BOOL)hasManual {
+    return self.store.manual.count > 0;
+}
+
+- (NSInteger)manualSection {
+    return self.hasManual ? self.subBase + (NSInteger)self.store.subs.count : -1;
+}
+
+- (NSInteger)addSection {
+    return self.subBase + (NSInteger)self.store.subs.count + (self.hasManual ? 1 : 0);
+}
+
+- (HPSub *)subForSection:(NSInteger)section {
+    NSInteger i = section - self.subBase;
+    return (i >= 0 && i < (NSInteger)self.store.subs.count) ? self.store.subs[(NSUInteger)i] : nil;
+}
+
+- (HPServer *)serverAt:(NSIndexPath *)ip {
+    HPSub *sub = [self subForSection:ip.section];
+    if (sub) return (NSUInteger)ip.row < sub.servers.count ? sub.servers[(NSUInteger)ip.row] : nil;
+    if (ip.section == self.manualSection) return self.store.manual[(NSUInteger)ip.row];
+    return nil;
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return self.addSection + 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    HPSub *sub = [self subForSection:section];
+    if (sub) return MAX((NSInteger)sub.servers.count, 1);
+    if (section == self.manualSection) return (NSInteger)self.store.manual.count;
+    return 1;
+}
+
+- (HPCardPosition)positionFor:(NSIndexPath *)ip {
+    NSInteger n = [self tableView:self.tableView numberOfRowsInSection:ip.section];
+    if (n == 1) return HPCardSingle;
+    if (ip.row == 0) return HPCardTop;
+    return ip.row == n - 1 ? HPCardBottom : HPCardMiddle;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)ip {
+    if (ip.section == 0) {
+        HPStatusCell *c = [tableView dequeueReusableCellWithIdentifier:@"status"]
+            ?: [[HPStatusCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"status"];
+        c.position = HPCardSingle;
+        c.title.text = self.statusTitle;
+        c.detail.text = self.statusDetail.length ? self.statusDetail : @" ";
+        UIColor *dot = VPRGB(0xc7c7cc);
+        if (self.state == VPStateConnected) dot = VPRGB(0x34c759);
+        if (self.busy) dot = VPRGB(0xff9500);
+        if (self.state == VPStateError) dot = VPRGB(0xff3b30);
+        c.dot.backgroundColor = dot;
+        return c;
+    }
+    if (ip.section == 1) {
+        HPButtonCell *c = [tableView dequeueReusableCellWithIdentifier:@"button"]
+            ?: [[HPButtonCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"button"];
+        c.position = HPCardSingle;
+        BOOL connected = self.state == VPStateConnected;
+        UIColor *color = connected ? VPRGB(0xff3b30) : VPRGB(0x007aff);
+        [c setColor:self.busy ? [color colorWithAlphaComponent:0.5] : color];
+        c.label.text = connected ? @"Disconnect" : @"Connect";
+        if (self.busy) [c.spinner startAnimating];
+        else [c.spinner stopAnimating];
+        return c;
+    }
+    if (ip.section == self.addSection) {
+        HPCardCell *c = [tableView dequeueReusableCellWithIdentifier:@"add"]
+            ?: [[HPCardCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"add"];
+        c.position = HPCardSingle;
+        c.textLabel.text = @"Add Subscription or Link…";
+        c.textLabel.textColor = VPRGB(0x007aff);
+        c.textLabel.font = [UIFont systemFontOfSize:17];
+        return c;
+    }
+
+    HPCardCell *c = [tableView dequeueReusableCellWithIdentifier:@"server"]
+        ?: [[HPCardCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"server"];
+    c.position = [self positionFor:ip];
+    c.textLabel.font = [UIFont systemFontOfSize:16];
+    c.detailTextLabel.font = [UIFont systemFontOfSize:12];
+    c.detailTextLabel.textColor = VPRGB(0x8e8e93);
+    HPServer *s = [self serverAt:ip];
+    if (!s) {
+        HPSub *sub = [self subForSection:ip.section];
+        c.textLabel.text = sub.refreshing ? @"Loading…" : @"No servers";
+        c.textLabel.textColor = VPRGB(0x8e8e93);
+        c.detailTextLabel.text = nil;
+        c.accessoryType = UITableViewCellAccessoryNone;
+        c.selectionStyle = UITableViewCellSelectionStyleNone;
+        return c;
+    }
+    c.textLabel.text = s.name;
+    c.textLabel.textColor = [UIColor blackColor];
+    c.detailTextLabel.text = s.detail;
+    c.selectionStyle = UITableViewCellSelectionStyleDefault;
+    c.accessoryType = [s.link isEqualToString:self.store.selectedServer.link] ? UITableViewCellAccessoryCheckmark
+                                                                                : UITableViewCellAccessoryNone;
+    return c;
+}
+
+- (NSString *)footerForSub:(HPSub *)sub {
+    if (sub.refreshing) return @"Updating…";
+    NSMutableArray *bits = [NSMutableArray array];
+    if (sub.error) [bits addObject:[@"Couldn't update: " stringByAppendingString:sub.error]];
+    NSDictionary *u = sub.userinfo;
+    if (u[@"total"] || u[@"download"]) {
+        long long used = [u[@"upload"] longLongValue] + [u[@"download"] longLongValue];
+        long long total = [u[@"total"] longLongValue];
+        NSString *usedStr = [NSByteCountFormatter stringFromByteCount:used countStyle:NSByteCountFormatterCountStyleFile];
+        [bits addObject:total > 0 ? [NSString stringWithFormat:@"%@ of %@ used", usedStr,
+                                     [NSByteCountFormatter stringFromByteCount:total countStyle:NSByteCountFormatterCountStyleFile]]
+                                  : [usedStr stringByAppendingString:@" used"]];
+    }
+    if ([u[@"expire"] longLongValue] > 0) {
+        NSDateFormatter *f = [[NSDateFormatter alloc] init];
+        f.dateStyle = NSDateFormatterMediumStyle;
+        f.timeStyle = NSDateFormatterNoStyle;
+        [bits addObject:[@"expires " stringByAppendingString:[f stringFromDate:[NSDate dateWithTimeIntervalSince1970:[u[@"expire"] doubleValue]]]]];
+    }
+    if (sub.skipped) [bits addObject:[NSString stringWithFormat:@"%lu non-vless hidden", (unsigned long)sub.skipped]];
+    if (sub.updated) {
+        NSTimeInterval ago = -[sub.updated timeIntervalSinceNow];
+        NSString *when = ago < 60 ? @"just now"
+            : ago < 3600 ? [NSString stringWithFormat:@"%d min ago", (int)(ago / 60)]
+            : ago < 86400 ? [NSString stringWithFormat:@"%d h ago", (int)(ago / 3600)]
+            : [NSString stringWithFormat:@"%d d ago", (int)(ago / 86400)];
+        [bits addObject:[@"updated " stringByAppendingString:when]];
+    }
+    return [bits componentsJoinedByString:@" · "];
+}
+
+- (UIView *)labelView:(NSString *)text header:(BOOL)header {
+    HPSectionLabel *v = [self.tableView dequeueReusableHeaderFooterViewWithIdentifier:@"label"];
+    v.label.text = text;
+    v.top.constant = header ? 8 : 8;
+    v.bottom.constant = header ? -8 : -4;
+    return v;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    HPSub *sub = [self subForSection:section];
+    if (sub) return [self labelView:sub.displayTitle.uppercaseString header:YES];
+    if (section == self.manualSection) return [self labelView:@"LINKS" header:YES];
+    return nil;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    if ([self subForSection:section] || section == self.manualSection) return UITableViewAutomaticDimension;
+    if (section == 0) return 8;
+    return section == 1 ? 12 : 24;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    NSString *text = nil;
+    HPSub *sub = [self subForSection:section];
+    if (sub) text = [self footerForSub:sub];
+    else if (section == 1) text = self.proxyNote;
+    else if (section == self.addSection) text = self.store.subs.count ? @"Pull down to update subscriptions. Swipe a server for more." : nil;
+    return text.length ? [self labelView:text header:NO] : nil;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    HPSub *sub = [self subForSection:section];
+    BOOL has = (sub && [self footerForSub:sub].length) || (section == 1 && self.proxyNote.length)
+        || (section == self.addSection && self.store.subs.count);
+    return has ? UITableViewAutomaticDimension : 4;
+}
+
+#pragma mark table actions
+
+- (BOOL)tableView:(UITableView *)tableView shouldHighlightRowAtIndexPath:(NSIndexPath *)ip {
+    if (ip.section == 0) return NO;
+    if (ip.section == 1) return !self.busy;
+    if (ip.section == self.addSection) return YES;
+    return [self serverAt:ip] != nil;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)ip {
+    [tableView deselectRowAtIndexPath:ip animated:YES];
+    if (ip.section == 1) {
+        if (self.busy) return;
+        if (self.state == VPStateConnected) [self disconnect];
+        else [self connect];
+        return;
+    }
+    if (ip.section == self.addSection) {
+        [self showAdd];
+        return;
+    }
+    HPServer *s = [self serverAt:ip];
+    if (!s || self.busy) return;
+    self.store.selectedLink = s.link;
+    [self.store save];
+    if (self.state == VPStateConnected) {
+        // switching servers while connected reconnects right away
+        if (![s.link isEqualToString:self.connectedLink]) [self connect];
+        else [tableView reloadData];
+    } else {
+        [self setState:VPStateDisconnected title:@"Not connected" detail:s.name note:nil];
+    }
+}
+
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)ip {
+    return [self subForSection:ip.section] != nil || ip.section == self.manualSection;
+}
+
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)style forRowAtIndexPath:(NSIndexPath *)ip {
+}
+
+- (NSArray<UITableViewRowAction *> *)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)ip {
+    HPSub *sub = [self subForSection:ip.section];
+    if (sub) {
+        UITableViewRowAction *del = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDestructive
+            title:@"Delete Sub" handler:^(UITableViewRowAction *a, NSIndexPath *p) {
+                [tableView setEditing:NO animated:YES];
+                [self confirmDeleteSub:sub];
+            }];
+        UITableViewRowAction *upd = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal
+            title:@"Update" handler:^(UITableViewRowAction *a, NSIndexPath *p) {
+                [tableView setEditing:NO animated:YES];
+                [self refreshSubs:@[ sub ] done:nil];
+            }];
+        upd.backgroundColor = VPRGB(0x8e8e93);
+        return @[ del, upd ];
+    }
+    HPServer *s = [self serverAt:ip];
+    return @[ [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDestructive title:@"Delete"
+        handler:^(UITableViewRowAction *a, NSIndexPath *p) {
+            [self.store removeManual:s];
+            if (self.state == VPStateDisconnected) self.statusDetail = [self idleDetail];
+            [tableView reloadData];
+        }] ];
 }
 
 @end
@@ -372,7 +752,9 @@ static UIColor *VPRGB(uint32_t hex) {
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
-    [(VPViewController *)self.window.rootViewController refreshStatus];
+    VPViewController *vc = (VPViewController *)self.window.rootViewController;
+    [vc refreshStatus];
+    [vc refreshStaleSubscriptions];
 }
 
 @end

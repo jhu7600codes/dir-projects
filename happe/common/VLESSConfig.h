@@ -17,4 +17,8 @@
 // "name (host:port, reality, xtls-rprx-vision)" - safe to show, no uuid/keys.
 + (NSString *)summaryForLink:(NSString *)link;
 
+// display name from the #fragment ("" if none) and "host:port · tcp · reality".
++ (NSString *)nameForLink:(NSString *)link;
++ (NSString *)detailForLink:(NSString *)link;
+
 @end

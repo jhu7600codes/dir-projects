@@ -31,9 +31,11 @@ CFLAGS=(-fobjc-arc -O2 -Wall -Wextra -Wno-unused-parameter -Werror -I"$ROOT/comm
 APP="$OUT/Happe.app"
 rm -rf "$APP"
 mkdir -p "$APP"
-"${CC[@]}" "${CFLAGS[@]}" -c "$ROOT/app/main.m" -o "$OBJ/main.o"
-"${CC[@]}" "$OBJ/main.o" "$OBJ/VLESSConfig.o" -framework UIKit -framework Foundation -framework CFNetwork \
-  -framework CoreGraphics -o "$APP/Happe"
+"${CC[@]}" "${CFLAGS[@]}" -c "$ROOT/common/HPSubscription.m" -o "$OBJ/HPSubscription.o"
+"${CC[@]}" "${CFLAGS[@]}" -I"$ROOT/app" -c "$ROOT/app/HPStore.m" -o "$OBJ/HPStore.o"
+"${CC[@]}" "${CFLAGS[@]}" -I"$ROOT/app" -c "$ROOT/app/main.m" -o "$OBJ/main.o"
+"${CC[@]}" "$OBJ/main.o" "$OBJ/HPStore.o" "$OBJ/HPSubscription.o" "$OBJ/VLESSConfig.o" -framework UIKit -framework Foundation -framework CFNetwork \
+  -framework CoreGraphics -framework QuartzCore -o "$APP/Happe"
 sed "s/@VERSION@/$VERSION/g" "$ROOT/app/Info.plist" > "$APP/Info.plist"
 printf 'APPL????' > "$APP/PkgInfo"
 python3 "$HERE/make-images.py" "$APP"

@@ -271,6 +271,20 @@ static NSArray *VPSplitList(NSString *s) {
     return data;
 }
 
++ (NSString *)nameForLink:(NSString *)link {
+    NSDictionary *parts = [self partsOfLink:link error:NULL];
+    return parts ? parts[@"name"] : @"";
+}
+
++ (NSString *)detailForLink:(NSString *)link {
+    NSDictionary *parts = [self partsOfLink:link error:NULL];
+    if (!parts) return @"";
+    NSDictionary *p = parts[@"params"];
+    NSString *host = [parts[@"host"] rangeOfString:@":"].location != NSNotFound
+        ? [NSString stringWithFormat:@"[%@]", parts[@"host"]] : parts[@"host"];
+    return [NSString stringWithFormat:@"%@:%@ · %@ · %@", host, parts[@"port"], P(p, @"type") ?: @"tcp", P(p, @"security") ?: @"none"];
+}
+
 + (NSString *)summaryForLink:(NSString *)link {
     NSDictionary *parts = [self partsOfLink:link error:NULL];
     if (!parts) return nil;
