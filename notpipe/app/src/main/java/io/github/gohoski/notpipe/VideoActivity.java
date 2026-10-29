@@ -974,6 +974,7 @@ public class VideoActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (isFinishing() && proxiedUrl != null) io.github.gohoski.notpipe.http.StreamProxy.getInstance().release(proxiedUrl);
         systemUiHandler.removeCallbacks(hideSystemUiRunnable);
         scrollHandler.removeCallbacks(scrollCheckRunnable);
         if (retryRunnable != null) {
@@ -1850,7 +1851,19 @@ public class VideoActivity extends Activity {
         }).start();
     }
 
-    private void loadVideoUri(final String targetUrl) {
+    /** HD files from yt2009 go through StreamProxy, which downloads ahead over several connections */
+    private String proxyIfHd(String url) {
+        String quality = resolvedQuality != null ? resolvedQuality : config.getPreferredQuality();
+        if (quality == null || "360".equals(quality) || url == null || !url.startsWith("http")
+                || url.startsWith("http://127.0.0.1")) return url;
+        proxiedUrl = url;
+        return io.github.gohoski.notpipe.http.StreamProxy.getInstance().proxy(url);
+    }
+
+    private String proxiedUrl;
+
+    private void loadVideoUri(final String sourceUrl) {
+        final String targetUrl = proxyIfHd(sourceUrl);
         Log.d("VideoActivity", targetUrl);
         if (config.isAsyncSetVideoUri()) {
             boolean surfaceReady = false;
