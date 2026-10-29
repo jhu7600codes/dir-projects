@@ -58,27 +58,42 @@ static NSData *HPBase64Decode(NSString *s) {
     return out;
 }
 
+// some panels only answer apps they know; try these in order
++ (NSArray<NSString *> *)userAgents {
+    return @[ @"v2rayN/6.0", @"Happ/1.0", @"v2rayNG/1.8.0", @"Streisand/1.0" ];
+}
+
 + (void)fetch:(NSString *)url completion:(void (^)(NSDictionary *, NSString *))completion {
     NSURL *u = [NSURL URLWithString:HPTrim(url)];
     if (!u || !u.host) {
         completion(nil, @"Not a valid URL.");
         return;
     }
+    [self fetch:u agent:0 firstError:nil completion:completion];
+}
+
++ (void)fetch:(NSURL *)u agent:(NSUInteger)agent firstError:(NSString *)firstError
+   completion:(void (^)(NSDictionary *, NSString *))completion {
     NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
                                                    timeoutInterval:20];
-    [req setValue:@"v2rayN/6.0" forHTTPHeaderField:@"User-Agent"];
+    [req setValue:self.userAgents[agent] forHTTPHeaderField:@"User-Agent"];
     [[[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData *data, NSURLResponse *resp, NSError *err) {
         NSDictionary *info = nil;
         NSString *error = nil;
+        BOOL retry = NO;
         NSHTTPURLResponse *http = [resp isKindOfClass:[NSHTTPURLResponse class]] ? (NSHTTPURLResponse *)resp : nil;
         if (err) {
-            error = err.localizedDescription;
+            // network-level failure: another user agent won't help
+            error = [NSString stringWithFormat:@"%@ (%@ %ld)", err.localizedDescription,
+                     [err.domain isEqualToString:NSURLErrorDomain] ? @"url" : err.domain, (long)err.code];
         } else if (http && (http.statusCode < 200 || http.statusCode >= 300)) {
             error = [NSString stringWithFormat:@"Server answered %ld.", (long)http.statusCode];
+            retry = YES;
         } else {
             NSArray *links = [self linksFromBody:data ?: [NSData data]];
             if (!links.count) {
                 error = @"No servers found in this subscription.";
+                retry = YES;
             } else {
                 NSDictionary *headers = http.allHeaderFields;
                 NSString *title = nil, *userinfo = nil;
@@ -93,8 +108,12 @@ static NSData *HPBase64Decode(NSString *s) {
                 info = m;
             }
         }
+        if (!info && retry && agent + 1 < self.userAgents.count) {
+            [self fetch:u agent:agent + 1 firstError:firstError ?: error completion:completion];
+            return;
+        }
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion(info, error);
+            completion(info, info ? nil : (firstError ?: error));
         });
     }] resume];
 }

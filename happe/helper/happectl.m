@@ -138,6 +138,15 @@ static pid_t findXray(void) {
     return findXrayProc(YES);
 }
 
+// unix time the process started, 0 if unknown
+static long processStart(pid_t pid) {
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
+    struct kinfo_proc kp;
+    size_t len = sizeof kp;
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) != 0 || len == 0) return 0;
+    return (long)kp.kp_proc.p_starttime.tv_sec;
+}
+
 static BOOL portOpen(int port) {
     int s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0) return NO;
@@ -230,7 +239,7 @@ static int moveSocksIfBusy(void) {
 static int cmdStatus(void) {
     pid_t pid = findXray();
     if (pid > 0 && portOpen(HTTP_PORT)) {
-        printf("running %d socks %d\n", pid, configSocksPort());
+        printf("running %d socks %d since %ld\n", pid, configSocksPort(), processStart(pid));
         return 0;
     }
     if (pid > 0) {
@@ -423,7 +432,7 @@ static int cmdStart(uid_t caller, BOOL useInstalledConfig) {
     }
     tuneJetsam(pid);
     close(open(AUTOSTART, O_WRONLY | O_CREAT, 0600));
-    printf("running %d socks %d%s\n", pid, socks, direct ? " (direct)" : "");
+    printf("running %d socks %d since %ld%s\n", pid, socks, processStart(pid), direct ? " (direct)" : "");
     return 0;
 }
 

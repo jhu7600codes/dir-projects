@@ -8,6 +8,7 @@
 #import "VLESSConfig.h"
 #import "HPStore.h"
 #import "HPScanner.h"
+#import "HPPing.h"
 
 #define HELPER      "/usr/libexec/happe/happectl"
 #define CONFIG_DIR  @"/var/mobile/Library/Happe"
@@ -225,6 +226,71 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
 
 @end
 
+// a server row: name + "host:port · tcp · reality", ping and checkmark on the right
+@interface HPServerCell : HPCardCell
+@property (nonatomic, strong) UILabel *name;
+@property (nonatomic, strong) UILabel *info;
+@property (nonatomic, strong) UILabel *ping;
+@property (nonatomic, strong) UIImageView *check;
+@end
+
+static UIImage *HPCheckImage(UIColor *color) {
+    CGSize size = CGSizeMake(14, 11);
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+    UIBezierPath *p = [UIBezierPath bezierPath];
+    [p moveToPoint:CGPointMake(1, 5.5)];
+    [p addLineToPoint:CGPointMake(5, 9.5)];
+    [p addLineToPoint:CGPointMake(13, 1.5)];
+    p.lineWidth = 2;
+    p.lineCapStyle = kCGLineCapRound;
+    p.lineJoinStyle = kCGLineJoinRound;
+    [color setStroke];
+    [p stroke];
+    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return img;
+}
+
+@implementation HPServerCell
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
+    if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier])) {
+        self.name = [[UILabel alloc] init];
+        self.name.font = [UIFont systemFontOfSize:16];
+        self.info = [[UILabel alloc] init];
+        self.info.font = [UIFont systemFontOfSize:12];
+        self.info.textColor = VPRGB(0x8e8e93);
+        self.ping = [[UILabel alloc] init];
+        self.ping.font = [UIFont monospacedDigitSystemFontOfSize:13 weight:UIFontWeightMedium];
+        self.ping.textAlignment = NSTextAlignmentRight;
+        self.check = [[UIImageView alloc] initWithImage:HPCheckImage(VPRGB(0x007aff))];
+        for (UIView *v in @[ self.name, self.info, self.ping, self.check ]) {
+            v.translatesAutoresizingMaskIntoConstraints = NO;
+            [self.contentView addSubview:v];
+        }
+        [self.ping setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [self.ping setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        UIView *c = self.contentView;
+        [NSLayoutConstraint activateConstraints:@[
+            [self.name.leadingAnchor constraintEqualToAnchor:c.leadingAnchor constant:kInner],
+            [self.name.topAnchor constraintEqualToAnchor:c.topAnchor constant:10],
+            [self.name.trailingAnchor constraintLessThanOrEqualToAnchor:self.ping.leadingAnchor constant:-8],
+            [self.info.leadingAnchor constraintEqualToAnchor:self.name.leadingAnchor],
+            [self.info.topAnchor constraintEqualToAnchor:self.name.bottomAnchor constant:2],
+            [self.info.trailingAnchor constraintLessThanOrEqualToAnchor:self.ping.leadingAnchor constant:-8],
+            [self.info.bottomAnchor constraintEqualToAnchor:c.bottomAnchor constant:-10],
+            [self.check.trailingAnchor constraintEqualToAnchor:c.trailingAnchor constant:-kInner],
+            [self.check.centerYAnchor constraintEqualToAnchor:c.centerYAnchor],
+            [self.check.widthAnchor constraintEqualToConstant:14],
+            [self.ping.trailingAnchor constraintEqualToAnchor:self.check.leadingAnchor constant:-10],
+            [self.ping.centerYAnchor constraintEqualToAnchor:c.centerYAnchor],
+        ]];
+    }
+    return self;
+}
+
+@end
+
 // section header / footer text, lined up with the text inside the cards
 @interface HPSectionLabel : UITableViewHeaderFooterView
 @property (nonatomic, strong) UILabel *label;
@@ -265,6 +331,11 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
 @property (nonatomic, copy) NSString *statusDetail;
 @property (nonatomic, copy) NSString *proxyNote;
 @property (nonatomic, copy) NSString *connectedLink;
+@property (nonatomic, strong) NSDate *connectedSince;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *pings; // link -> ms (-1 = timeout)
+@property (nonatomic, assign) BOOL pinging;
+@property (nonatomic, assign) BOOL detailExpanded;
+@property (nonatomic, strong) NSTimer *uptimeTimer;
 @end
 
 @implementation VPViewController
@@ -304,14 +375,57 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
 
     self.state = VPStateUnknown;
     self.statusTitle = @"Checking…";
+    self.pings = [NSMutableDictionary dictionary];
     [self refreshStatus];
     [self refreshStaleSubscriptions];
+    [self pingAll];
+    // keeps "connected · 12 min" current
+    self.uptimeTimer = [NSTimer scheduledTimerWithTimeInterval:30 target:self selector:@selector(tickUptime)
+                                                      userInfo:nil repeats:YES];
+}
+
+- (void)tickUptime {
+    if (self.state == VPStateConnected && self.connectedSince)
+        [self.tableView reloadRowsAtIndexPaths:@[ [NSIndexPath indexPathForRow:0 inSection:0] ]
+                              withRowAnimation:UITableViewRowAnimationNone];
+}
+
+#pragma mark ping
+
+- (void)pingAll {
+    if (self.pinging) return;
+    NSArray *links = [self.store.allServers valueForKey:@"link"];
+    if (!links.count) return;
+    self.pinging = YES;
+    [HPPing pingLinks:links each:^(NSString *link, NSInteger ms) {
+        self.pings[link] = @(ms);
+        [NSObject cancelPreviousPerformRequestsWithTarget:self.tableView selector:@selector(reloadData) object:nil];
+        [self.tableView performSelector:@selector(reloadData) withObject:nil afterDelay:0.2];
+    } done:^{
+        self.pinging = NO;
+    }];
+}
+
+static NSString *HPUptime(NSDate *since) {
+    NSTimeInterval t = -[since timeIntervalSinceNow];
+    if (t < 60) return @"just now";
+    if (t < 3600) return [NSString stringWithFormat:@"%d min", (int)(t / 60)];
+    if (t < 86400) return [NSString stringWithFormat:@"%d h %d min", (int)(t / 3600), (int)((long)t % 3600) / 60];
+    return [NSString stringWithFormat:@"%d d %d h", (int)(t / 86400), (int)((long)t % 86400) / 3600];
+}
+
+// "running 123 socks 1080 since 1793270000 (direct)"
+static NSDate *HPSinceFrom(NSString *helperOut) {
+    NSRange r = [helperOut rangeOfString:@"since "];
+    long t = r.location == NSNotFound ? 0 : (long)[[helperOut substringFromIndex:NSMaxRange(r)] longLongValue];
+    return t > 0 ? [NSDate dateWithTimeIntervalSince1970:t] : nil;
 }
 
 #pragma mark state
 
 - (void)setState:(VPState)state title:(NSString *)title detail:(NSString *)detail note:(NSString *)note {
     self.state = state;
+    self.detailExpanded = NO;
     self.statusTitle = title;
     self.statusDetail = detail;
     self.proxyNote = note;
@@ -358,6 +472,7 @@ static int socksPortFrom(NSString *helperOut) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if (rc == 0) {
                 self.connectedLink = self.store.selectedLink;
+                self.connectedSince = HPSinceFrom(out) ?: [NSDate date];
                 HPServer *s = self.store.selectedServer;
                 [self setState:VPStateConnected title:@"Connected" detail:s ? s.name : [@"xray " stringByAppendingString:out]
                           note:[self proxyNoteFor:proxyOK socks:socksPortFrom(out)]];
@@ -407,6 +522,7 @@ static int socksPortFrom(NSString *helperOut) {
                 return;
             }
             self.connectedLink = server.link;
+            self.connectedSince = HPSinceFrom(startOut) ?: [NSDate date];
             NSString *note = [self proxyNoteFor:proxyOK socks:socksPortFrom(startOut)];
             if (!proxyOK && prc != 0 && proxyOut.length)
                 note = [NSString stringWithFormat:@"Couldn't set the Wi-Fi proxy (%@). %@", proxyOut, note];
@@ -459,8 +575,14 @@ static int socksPortFrom(NSString *helperOut) {
 - (void)pullToRefresh {
     [self refreshSubs:self.store.subs done:^{
         [self.refreshControl endRefreshing];
+        [self.pings removeAllObjects];
+        [self pingAll];
     }];
-    if (!self.store.subs.count) [self.refreshControl endRefreshing];
+    if (!self.store.subs.count) {
+        [self.refreshControl endRefreshing];
+        [self.pings removeAllObjects];
+        [self pingAll];
+    }
 }
 
 - (void)showAlert:(NSString *)title message:(NSString *)message {
@@ -478,7 +600,9 @@ static int socksPortFrom(NSString *helperOut) {
     NSUInteger n = [self.store addFromText:text ?: @"" newSubs:&newSubs message:&msg];
     if (self.state != VPStateConnected && !self.busy) self.statusDetail = [self idleDetail];
     [self.tableView reloadData];
+    [self pingAll];
     [self refreshSubs:newSubs done:^{
+        [self pingAll];
         if (self.state == VPStateDisconnected) {
             self.statusDetail = [self idleDetail];
             [self.tableView reloadData];
@@ -631,8 +755,12 @@ static int socksPortFrom(NSString *helperOut) {
         HPStatusCell *c = [tableView dequeueReusableCellWithIdentifier:@"status"]
             ?: [[HPStatusCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"status"];
         c.position = HPCardSingle;
-        c.title.text = self.statusTitle;
+        c.title.text = self.state == VPStateConnected && self.connectedSince
+            ? [NSString stringWithFormat:@"Connected · %@", HPUptime(self.connectedSince)] : self.statusTitle;
         c.detail.text = self.statusDetail.length ? self.statusDetail : @" ";
+        // long helper errors collapse to a few lines; tap the card to see all
+        c.detail.numberOfLines = self.state == VPStateError && !self.detailExpanded ? 5 : 0;
+        c.selectionStyle = UITableViewCellSelectionStyleNone;
         UIColor *dot = VPRGB(0xc7c7cc);
         if (self.state == VPStateConnected) dot = VPRGB(0x34c759);
         if (self.busy) dot = VPRGB(0xff9500);
@@ -663,28 +791,36 @@ static int socksPortFrom(NSString *helperOut) {
         return c;
     }
 
-    HPCardCell *c = [tableView dequeueReusableCellWithIdentifier:@"server"]
-        ?: [[HPCardCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"server"];
+    HPServerCell *c = [tableView dequeueReusableCellWithIdentifier:@"server"]
+        ?: [[HPServerCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"server"];
     c.position = [self positionFor:ip];
-    c.textLabel.font = [UIFont systemFontOfSize:16];
-    c.detailTextLabel.font = [UIFont systemFontOfSize:12];
-    c.detailTextLabel.textColor = VPRGB(0x8e8e93);
     HPServer *s = [self serverAt:ip];
     if (!s) {
         HPSub *sub = [self subForSection:ip.section];
-        c.textLabel.text = sub.refreshing ? @"Loading…" : @"No servers";
-        c.textLabel.textColor = VPRGB(0x8e8e93);
-        c.detailTextLabel.text = nil;
-        c.accessoryType = UITableViewCellAccessoryNone;
+        c.name.text = sub.refreshing ? @"Loading…" : @"No servers";
+        c.name.textColor = VPRGB(0x8e8e93);
+        c.info.text = sub.refreshing ? @" " : @"Pull down to try again.";
+        c.ping.text = nil;
+        c.check.hidden = YES;
         c.selectionStyle = UITableViewCellSelectionStyleNone;
         return c;
     }
-    c.textLabel.text = s.name;
-    c.textLabel.textColor = [UIColor blackColor];
-    c.detailTextLabel.text = s.detail;
+    c.name.text = s.name;
+    c.name.textColor = [UIColor blackColor];
+    c.info.text = s.detail;
+    NSNumber *ms = self.pings[s.link];
+    if (!ms) {
+        c.ping.text = self.pinging ? @"…" : nil;
+        c.ping.textColor = VPRGB(0xc7c7cc);
+    } else if (ms.integerValue < 0) {
+        c.ping.text = @"timeout";
+        c.ping.textColor = VPRGB(0xff3b30);
+    } else {
+        c.ping.text = [NSString stringWithFormat:@"%ld ms", (long)ms.integerValue];
+        c.ping.textColor = ms.integerValue < 150 ? VPRGB(0x34c759) : ms.integerValue < 400 ? VPRGB(0xff9500) : VPRGB(0xff3b30);
+    }
+    c.check.hidden = ![s.link isEqualToString:self.store.selectedServer.link];
     c.selectionStyle = UITableViewCellSelectionStyleDefault;
-    c.accessoryType = [s.link isEqualToString:self.store.selectedServer.link] ? UITableViewCellAccessoryCheckmark
-                                                                                : UITableViewCellAccessoryNone;
     return c;
 }
 
@@ -761,7 +897,7 @@ static int socksPortFrom(NSString *helperOut) {
 #pragma mark table actions
 
 - (BOOL)tableView:(UITableView *)tableView shouldHighlightRowAtIndexPath:(NSIndexPath *)ip {
-    if (ip.section == 0) return NO;
+    if (ip.section == 0) return self.state == VPStateError;
     if (ip.section == 1) return !self.busy;
     if (ip.section == self.addSection) return YES;
     return [self serverAt:ip] != nil;
@@ -769,6 +905,11 @@ static int socksPortFrom(NSString *helperOut) {
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)ip {
     [tableView deselectRowAtIndexPath:ip animated:YES];
+    if (ip.section == 0) {
+        self.detailExpanded = !self.detailExpanded;
+        [tableView reloadRowsAtIndexPaths:@[ ip ] withRowAnimation:UITableViewRowAnimationAutomatic];
+        return;
+    }
     if (ip.section == 1) {
         if (self.busy) return;
         if (self.state == VPStateConnected) [self disconnect];
@@ -860,6 +1001,7 @@ static int socksPortFrom(NSString *helperOut) {
     VPViewController *vc = (VPViewController *)self.window.rootViewController;
     [vc refreshStatus];
     [vc refreshStaleSubscriptions];
+    [vc pingAll];
 }
 
 @end
