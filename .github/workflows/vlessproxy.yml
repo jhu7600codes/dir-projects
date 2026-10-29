@@ -34,6 +34,7 @@ jobs:
         run: |
           git clone -q --depth 1 --filter=blob:none --sparse https://github.com/theos/sdks sdks
           git -C sdks sparse-checkout set iPhoneOS10.3.sdk
+          bash vlessproxy/scripts/fix-sdk-tbd.sh "$SDK10"
           ls "$SDK10"
           xcodebuild -version
           xcrun --sdk iphoneos clang --version

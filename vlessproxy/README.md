@@ -129,4 +129,4 @@ entitlements/ ldid entitlements per binary
 scripts/      patch-go-ios10, build-xray, verify-macho, build-native, package, test-config
 ```
 
-local build on linux works too, for hacking. use `IOS_CC` with a clang + ld64.lld wrapper (`-target arm64-apple-ios10.0 -mlinker-version=711`). lld chokes on the simulator archs in the 10.3 sdk's tbd files, so strip `i386, x86_64` from them in a copy first.
+local build on linux works too, for hacking. use `IOS_CC` with a clang + ld64.lld wrapper (`-target arm64-apple-ios10.0 -mlinker-version=711`). run `scripts/fix-sdk-tbd.sh` on the sdk first (ci does the same; apple ld and lld both read the old tbds as simulator libs otherwise).
