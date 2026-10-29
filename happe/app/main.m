@@ -559,7 +559,8 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
         HPButtonCell *c = [tableView dequeueReusableCellWithIdentifier:@"button"]
             ?: [[HPButtonCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"button"];
         c.position = HPCardSingle;
-        BOOL connected = self.state == VPStateConnected;
+        // while reconnecting/disconnecting the button keeps its red "Disconnect" look
+        BOOL connected = self.state == VPStateConnected || (self.busy && self.connectedLink);
         UIColor *color = connected ? VPRGB(0xff3b30) : VPRGB(0x007aff);
         [c setColor:self.busy ? [color colorWithAlphaComponent:0.5] : color];
         c.label.text = connected ? @"Disconnect" : @"Connect";
