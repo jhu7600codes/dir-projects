@@ -230,18 +230,61 @@ static void waitForXray(BOOL running, int tenths) {
     }
 }
 
-static int cmdStop(void) {
-    const char *lc = launchctlPath();
-    if (lc) {
-        const char *argv[] = { lc, "unload", PLIST, NULL };
-        run(argv, NULL);
-    }
-    unlink(PLIST);
+// forget the job by label (works even if its plist file is already gone,
+// e.g. after a package upgrade) and by path
+static void removeJob(const char *lc) {
+    if (!lc) return;
+    const char *rm[] = { lc, "remove", LABEL, NULL };
+    run(rm, NULL);
+    const char *unload[] = { lc, "unload", PLIST, NULL };
+    run(unload, NULL);
+}
+
+static void killXray(void) {
+    pid_t pid = findXray();
+    if (pid <= 0) return;
+    kill(pid, SIGTERM);
     waitForXray(NO, 30);
-    pid_t left = findXray();
-    if (left > 0) kill(left, SIGKILL);
+    pid = findXray();
+    if (pid > 0) kill(pid, SIGKILL);
+    waitForXray(NO, 10);
+}
+
+static int cmdStop(void) {
+    removeJob(launchctlPath());
+    unlink(PLIST);
+    killXray();
     printf("stopped\n");
     return 0;
+}
+
+// fallback when launchd won't run the job: start xray ourselves, detached
+// (own session, reparented to launchd), same env and log as the plist
+static pid_t spawnDirect(void) {
+    pid_t child = fork();
+    if (child < 0) return -1;
+    if (child == 0) {
+        setsid();
+        if (fork() != 0) _exit(0);
+        int fd = open(LOG_PATH, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        int nul = open("/dev/null", O_RDONLY);
+        if (nul >= 0) dup2(nul, 0);
+        if (fd >= 0) {
+            dup2(fd, 1);
+            dup2(fd, 2);
+        }
+        for (int i = 3; i < 256; i++) close(i);
+        chdir("/");
+        char *const argv[] = { XRAY, "run", "-c", ROOT_CONFIG, NULL };
+        char *const env[] = { "PATH=/usr/bin:/bin:/usr/sbin:/sbin", "SSL_CERT_FILE=" CACERT,
+                              "XRAY_LOCATION_ASSET=/usr/share/happe", "GOMEMLIMIT=96MiB", "GOGC=50", NULL };
+        execve(XRAY, argv, env);
+        _exit(127);
+    }
+    int st;
+    waitpid(child, &st, 0);
+    waitForXray(YES, 50);
+    return findXray();
 }
 
 static int cmdStart(uid_t caller) {
@@ -269,11 +312,8 @@ static int cmdStart(uid_t caller) {
     }
 
     // reload so a new config takes effect
-    const char *unload[] = { lc, "unload", PLIST, NULL };
-    run(unload, NULL);
-    waitForXray(NO, 30);
-    pid_t stale = findXray();
-    if (stale > 0) kill(stale, SIGKILL);
+    removeJob(lc);
+    killXray();
 
     if (!copyFile(PLIST_SRC, PLIST, 0644)) {
         printf("error: cannot install %s from %s\n", PLIST, PLIST_SRC);
@@ -293,17 +333,31 @@ static int cmdStart(uid_t caller) {
     }
 
     pid_t pid = findXray();
+    BOOL direct = NO;
     if (pid <= 0) {
         NSString *list = nil;
         const char *ls[] = { lc, "list", LABEL, NULL };
         int lrc = run(ls, &list);
         NSString *trim = [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        printf("error: xray did not start.\nlaunchctl load: exit %d %s\nlaunchctl list (exit %d):\n%s\nlog:\n%s\n", rc,
-               trim.UTF8String, lrc, list.UTF8String, tailOf(@LOG_PATH, 15).UTF8String);
-        return 1;
+        NSString *why = [NSString stringWithFormat:@"launchctl load: exit %d %@\nlaunchctl list (exit %d):\n%@\nlog:\n%@",
+                         rc, trim, lrc, list, tailOf(@LOG_PATH, 15)];
+        [why writeToFile:@"/etc/happe/launchd-failure.txt" atomically:YES encoding:NSUTF8StringEncoding error:nil];
+
+        // launchd won't run it: drop the job and run xray ourselves
+        removeJob(lc);
+        unlink(PLIST);
+        killXray();
+        pid = spawnDirect();
+        if (pid <= 0 || !portOpen(HTTP_PORT)) {
+            if (pid > 0) killXray();
+            printf("error: xray did not start, not via launchd and not directly.\n%s\nlog:\n%s\n",
+                   why.UTF8String, tailOf(@LOG_PATH, 15).UTF8String);
+            return 1;
+        }
+        direct = YES;
     }
     tuneJetsam(pid);
-    printf("running %d\n", pid);
+    printf(direct ? "running %d (direct)\n" : "running %d\n", pid);
     return 0;
 }
 

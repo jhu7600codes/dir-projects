@@ -818,6 +818,11 @@ typedef NS_ENUM(NSInteger, HPCardPosition) {
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.window.rootViewController = [[VPViewController alloc] init];
     [self.window makeKeyAndVisible];
+    // the list scrolls under the transparent status bar; give the bar a backdrop
+    UIView *bar = [[UIView alloc] initWithFrame:[UIApplication sharedApplication].statusBarFrame];
+    bar.backgroundColor = [VPRGB(0xefeff4) colorWithAlphaComponent:0.96];
+    bar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [self.window addSubview:bar];
     return YES;
 }
 
