@@ -4,10 +4,6 @@
 <dict>
 	<key>Label</key>
 	<string>com.jhu.happe</string>
-	<!-- disabled until happectl start does "launchctl load -w"; "unload -w" disables it again,
-	     so it only comes back after a reboot if it was connected when you rebooted -->
-	<key>Disabled</key>
-	<true/>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/usr/libexec/happe/xray</string>
@@ -43,12 +39,5 @@
 	<string>/var/log/happe.log</string>
 	<key>POSIXSpawnType</key>
 	<string>Interactive</string>
-	<key>JetsamProperties</key>
-	<dict>
-		<key>JetsamPriority</key>
-		<integer>10</integer>
-		<key>JetsamMemoryLimit</key>
-		<integer>256</integer>
-	</dict>
 </dict>
 </plist>

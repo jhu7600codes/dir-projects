@@ -2,16 +2,14 @@
 chown root:wheel /usr/libexec/happe/happectl
 chmod 4755 /usr/libexec/happe/happectl
 chmod 0755 /usr/libexec/happe/xray /usr/bin/vless2json
-chown root:wheel /Library/LaunchDaemons/com.jhu.happe.plist
-chmod 0644 /Library/LaunchDaemons/com.jhu.happe.plist
+chmod 0644 /usr/share/happe/com.jhu.happe.plist
 mkdir -p /var/mobile/Library/Happe
 chown mobile:mobile /var/mobile/Library/Happe
 chmod 0700 /var/mobile/Library/Happe
 if [ "$1" = "configure" ] && [ -n "$2" ]; then
   # upgrade: restart the daemon if it was running so the new xray is used
   if /usr/libexec/happe/happectl status >/dev/null 2>&1; then
-    /bin/launchctl unload /Library/LaunchDaemons/com.jhu.happe.plist 2>/dev/null
-    /bin/launchctl load -w /Library/LaunchDaemons/com.jhu.happe.plist 2>/dev/null
+    /usr/libexec/happe/happectl start >/dev/null 2>&1
   fi
 fi
 # ask cydia/zebra for a respring once the install finishes

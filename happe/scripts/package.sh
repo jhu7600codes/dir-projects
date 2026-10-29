@@ -35,7 +35,7 @@ ldid -S "$STAGE/usr/bin/vless2json"
 
 chmod 0755 "$STAGE/Applications/Happe.app/Happe" "$STAGE/usr/libexec/happe/xray" "$STAGE/usr/bin/vless2json"
 chmod 4755 "$STAGE/usr/libexec/happe/happectl"
-chmod 0644 "$STAGE/Library/LaunchDaemons/com.jhu.happe.plist" "$STAGE/usr/share/happe/cacert.pem"
+chmod 0644 "$STAGE/usr/share/happe/com.jhu.happe.plist" "$STAGE/usr/share/happe/cacert.pem"
 chmod 0755 "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/prerm" "$STAGE/DEBIAN/postrm"
 
 SIZE=$(du -sk "$STAGE" | awk '{print $1}')

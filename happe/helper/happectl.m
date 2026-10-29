@@ -23,6 +23,11 @@
 
 #define LABEL       "com.jhu.happe"
 #define PLIST       "/Library/LaunchDaemons/com.jhu.happe.plist"
+// the daemon plist ships here and is only copied into LaunchDaemons while
+// connected: no Disabled key / -w override games, which ios 10's launchctl
+// silently ignored. a reboot while connected starts xray again, like the
+// wifi proxy setting that also survives the reboot.
+#define PLIST_SRC   "/usr/share/happe/com.jhu.happe.plist"
 #define XRAY        "/usr/libexec/happe/xray"
 #define USER_CONFIG "/var/mobile/Library/Happe/config.json"
 #define ROOT_DIR    "/etc/happe"
@@ -199,16 +204,40 @@ static int cmdStatus(void) {
     return 3;
 }
 
+static BOOL copyFile(const char *from, const char *to, mode_t mode) {
+    NSData *d = [NSData dataWithContentsOfFile:@(from)];
+    if (!d) return NO;
+    NSString *tmp = [@(to) stringByAppendingString:@".tmp"];
+    if (![d writeToFile:tmp atomically:NO]) return NO;
+    chown(tmp.fileSystemRepresentation, 0, 0);
+    chmod(tmp.fileSystemRepresentation, mode);
+    return rename(tmp.fileSystemRepresentation, to) == 0;
+}
+
+static NSString *tailOf(NSString *path, NSUInteger lines) {
+    NSString *s = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
+    NSArray *all = [[s stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]
+        componentsSeparatedByString:@"\n"];
+    NSUInteger from = all.count > lines ? all.count - lines : 0;
+    return [[all subarrayWithRange:NSMakeRange(from, all.count - from)] componentsJoinedByString:@"\n"];
+}
+
+static void waitForXray(BOOL running, int tenths) {
+    for (int i = 0; i < tenths; i++) {
+        BOOL up = findXray() > 0 && (!running || portOpen(HTTP_PORT));
+        if (up == running) return;
+        usleep(100 * 1000);
+    }
+}
+
 static int cmdStop(void) {
     const char *lc = launchctlPath();
-    if (!lc) {
-        printf("error: launchctl not found\n");
-        return 1;
+    if (lc) {
+        const char *argv[] = { lc, "unload", PLIST, NULL };
+        run(argv, NULL);
     }
-    NSString *out = nil;
-    const char *argv[] = { lc, "unload", "-w", PLIST, NULL };
-    run(argv, &out);
-    for (int i = 0; i < 30 && findXray() > 0; i++) usleep(100 * 1000);
+    unlink(PLIST);
+    waitForXray(NO, 30);
     pid_t left = findXray();
     if (left > 0) kill(left, SIGKILL);
     printf("stopped\n");
@@ -242,23 +271,35 @@ static int cmdStart(uid_t caller) {
     // reload so a new config takes effect
     const char *unload[] = { lc, "unload", PLIST, NULL };
     run(unload, NULL);
-    for (int i = 0; i < 30 && findXray() > 0; i++) usleep(100 * 1000);
+    waitForXray(NO, 30);
+    pid_t stale = findXray();
+    if (stale > 0) kill(stale, SIGKILL);
 
-    const char *load[] = { lc, "load", "-w", PLIST, NULL };
+    if (!copyFile(PLIST_SRC, PLIST, 0644)) {
+        printf("error: cannot install %s from %s\n", PLIST, PLIST_SRC);
+        return 1;
+    }
+    // fresh log per connect so errors are easy to find
+    truncate(LOG_PATH, 0);
+
+    const char *load[] = { lc, "load", PLIST, NULL };
     rc = run(load, &out);
-    for (int i = 0; i < 50 && !(findXray() > 0 && portOpen(HTTP_PORT)); i++) usleep(100 * 1000);
-
+    waitForXray(YES, 50);
     if (findXray() <= 0) {
-        // some old launchctl builds ignore -w overrides; force it
-        const char *force[] = { lc, "load", "-F", PLIST, NULL };
-        run(force, NULL);
-        for (int i = 0; i < 50 && !(findXray() > 0 && portOpen(HTTP_PORT)); i++) usleep(100 * 1000);
+        // loaded but not launched (RunAtLoad ignored?) - kick it by label
+        const char *kick[] = { lc, "start", LABEL, NULL };
+        run(kick, NULL);
+        waitForXray(YES, 50);
     }
 
     pid_t pid = findXray();
     if (pid <= 0) {
-        printf("error: xray did not start (launchctl exit %d: %s). see %s\n", rc,
-               [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].UTF8String, LOG_PATH);
+        NSString *list = nil;
+        const char *ls[] = { lc, "list", LABEL, NULL };
+        int lrc = run(ls, &list);
+        NSString *trim = [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        printf("error: xray did not start.\nlaunchctl load: exit %d %s\nlaunchctl list (exit %d):\n%s\nlog:\n%s\n", rc,
+               trim.UTF8String, lrc, list.UTF8String, tailOf(@LOG_PATH, 15).UTF8String);
         return 1;
     }
     tuneJetsam(pid);
