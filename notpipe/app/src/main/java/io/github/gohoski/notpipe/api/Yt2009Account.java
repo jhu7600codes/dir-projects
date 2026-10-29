@@ -16,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.gohoski.notpipe.NotPipe;
+import io.github.gohoski.notpipe.R;
 import io.github.gohoski.notpipe.data.Channel;
 import io.github.gohoski.notpipe.data.Playlist;
 import io.github.gohoski.notpipe.data.VideoInfo;
@@ -472,6 +473,8 @@ public class Yt2009Account {
      */
     private void post(String endpoint, String body, String contentType) throws IOException {
         if (!isSignedIn()) throw new IOException("Not signed in");
+        // A device yt2009 forgot still gets "OK" for some writes (comments are faked locally), so check first
+        if (!checkLinked()) throw new IOException(NotPipe.getAppContext().getString(R.string.session_lost));
         HttpURLConnection connection = open(endpoint, HttpClient.VIDEO_TIMEOUT);
         connection.setRequestProperty("X-GData-Device", "device-id=\"" + getDeviceCode() + "\"");
         connection.setRequestProperty("Content-Type", contentType);
