@@ -12,7 +12,7 @@ on:
         default: "latest v25.12.8 v25.6.8 v24.12.31"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -95,3 +95,15 @@ jobs:
         with:
           name: xray-candidates-unsigned
           path: happe/dist/xray-candidates/
+
+      # phone-only install: a fixed public url safari can open (artifacts need a github login)
+      - name: publish to the happe-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp dist/*.deb dist/happe.deb
+          gh release delete happe-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create happe-latest --prerelease --target "$GITHUB_SHA" \
+            --title "Happe (ios 10) $VERSION" \
+            --notes "on the phone: open happe.deb in safari, tap Open in Filza, install, respring. built from $GITHUB_SHA." \
+            dist/happe.deb dist/Happe.ipa dist/xray-build-report.md
