@@ -278,6 +278,16 @@ public class Yt2009Account {
         return new String[]{name, avatar, handle == null || "false".equals(handle) ? "" : handle};
     }
 
+    /**
+     * Avatar of a channel known only by its handle, through the signed-in yt2009 instance.
+     * @return the avatar url, or null
+     */
+    public String getUserAvatar(String handle) throws IOException {
+        if (getInstanceUrl() == null) return null;
+        String avatar = GdataParser.parseProfile(getInstanceUrl(), get("/feeds/api/users/" + enc(handle)))[1];
+        return avatar.length() > 0 ? avatar : null;
+    }
+
     /** @return the remembered @handle, or "" */
     public String getProfileHandle() {
         return prefs.getString(KEY_PROFILE_HANDLE, "");

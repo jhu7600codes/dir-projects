@@ -2198,10 +2198,25 @@ public class VideoActivity extends Activity {
         stallRecoveries++;
         resetVideo();
         showVideoLoadingUI();
+        String currentQuality = resolvedQuality != null ? resolvedQuality : config.getPreferredQuality();
+        boolean isHq = currentQuality != null && !"360".equals(currentQuality);
         if (stallRecoveries <= 1) {
             videoUrl = url;
             videoPlaying = true;
             loadVideoUri(url);
+        } else if (isHq) {
+            // HD comes from yt2009 as a finished file on that instance, so it buffers when the instance's upload
+            // is too slow for the bitrate, and another instance would have to download and process it again first.
+            // 360p comes from elsewhere and starts right away, so drop to it for this video only.
+            stallRecoveries = 0;
+            Toast.makeText(context, getString(R.string.hd_buffering_360, currentQuality), Toast.LENGTH_LONG).show();
+            resolvedQuality = "360";
+            hqUrl = null;
+            waitingForHq = false;
+            videoStream = null;
+            VideoCache.clearAll();
+            resolveStreamTask = new ResolveStreamTask(null, "360");
+            resolveStreamTask.execute(videoId);
         } else {
             // Reopening didn't help: the instance itself is slow, so switch to another one
             stallRecoveries = 0;

@@ -355,4 +355,5 @@
     <string name="session_lost">Инстанс yt2009 забыл ваш вход (скорее всего, он перезапускался). Войдите снова.</string>
     <string name="loading_account">Загрузка аккаунта…</string>
     <string name="account_unreachable">Этот инстанс не может достучаться до вашего аккаунта YouTube. Нажмите, чтобы войти снова или выбрать другой инстанс</string>
+    <string name="hd_buffering_360">%sp постоянно буферизовалось, для этого видео включено 360p</string>
 </resources>

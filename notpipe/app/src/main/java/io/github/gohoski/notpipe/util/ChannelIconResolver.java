@@ -73,9 +73,14 @@ public class ChannelIconResolver {
             public void run() {
                 String fetchedUrl = null;
                 try {
-                    Metadata fallbackApi = Manager.getInstance().getRandomMetadata();
-                    if (fallbackApi != null) {
-                        fetchedUrl = fallbackApi.getChannelIcon(channelId);
+                    if (channelId.startsWith("@")) {
+                        fetchedUrl = io.github.gohoski.notpipe.api.Yt2009Account.getInstance()
+                                .getUserAvatar(channelId.substring(1));
+                    } else {
+                        Metadata fallbackApi = Manager.getInstance().getRandomMetadata();
+                        if (fallbackApi != null) {
+                            fetchedUrl = fallbackApi.getChannelIcon(channelId);
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

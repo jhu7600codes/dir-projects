@@ -195,11 +195,24 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
     /**
      * Centralized loading of channel icon with automatic fallback logic
      */
+    /**
+     * What to look the channel icon up by: the channel ID, or "@name" for feeds that only give a handle
+     * (yt2009's Watch later and playlists), or null if there's nothing to go on.
+     */
+    private static String iconKey(VideoInfo video) {
+        if (video.channelId != null && video.channelId.length() > 0) return video.channelId;
+        if (video.channel != null && video.channel.length() > 0 && video.channel.indexOf(' ') < 0) {
+            return video.channel.startsWith("@") ? video.channel : "@" + video.channel;
+        }
+        return null;
+    }
+
     private void loadChannelIcon(final ViewHolder holder) {
         if (holder.channelThumb == null || holder.video == null) return;
         String urlToLoad = holder.video.channelThumbnail;
-        if (iconListener != null && holder.video.channelId != null && holder.video.channelId.length() > 0) {
-            String resolved = iconListener.getResolvedIcon(holder.video.channelId);
+        final String key = iconKey(holder.video);
+        if (iconListener != null && key != null) {
+            String resolved = iconListener.getResolvedIcon(key);
             if ("FAILED".equals(resolved)) {
                 return;
             } else if (resolved != null) {
@@ -207,17 +220,17 @@ public class VideoAdapter extends ArrayAdapter<VideoInfo> {
             }
         }
         if (urlToLoad == null || urlToLoad.length() == 0) {
-            if (iconListener != null && holder.video.channelId != null && holder.video.channelId.length() > 0) {
-                iconListener.onRequestFallbackIcon(holder.video.channelId);
+            if (iconListener != null && key != null) {
+                iconListener.onRequestFallbackIcon(key);
             }
         } else {
             ImageLoader.loadImage(urlToLoad, holder.channelThumb, true, new ImageLoader.ImageLoaderCallback() {
                 @Override
                 public void onFail() {
-                    if (iconListener != null && holder.video.channelId != null && holder.video.channelId.length() > 0) {
-                        String resolved = iconListener.getResolvedIcon(holder.video.channelId);
+                    if (iconListener != null && key != null) {
+                        String resolved = iconListener.getResolvedIcon(key);
                         if (resolved == null) {
-                            iconListener.onRequestFallbackIcon(holder.video.channelId);
+                            iconListener.onRequestFallbackIcon(key);
                         }
                     }
                 }
