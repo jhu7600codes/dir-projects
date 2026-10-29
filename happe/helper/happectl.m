@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/file.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -30,6 +31,9 @@
 #define PLIST_SRC   "/usr/share/happe/com.jhu.happe.plist"
 // written when launchd refused to run the job; later starts go direct
 #define LAUNCHD_BROKEN "/etc/happe/launchd-broken"
+// present while the user wants to be connected; "boot" reconnects from it
+#define AUTOSTART   "/etc/happe/autostart"
+#define LOCK_PATH   "/etc/happe/.lock"
 #define XRAY        "/usr/libexec/happe/xray"
 #define USER_CONFIG "/var/mobile/Library/Happe/config.json"
 #define ROOT_DIR    "/etc/happe"
@@ -233,6 +237,11 @@ static int cmdStatus(void) {
         printf("starting %d (port %d not open yet)\n", pid, HTTP_PORT);
         return 0;
     }
+    if (access(AUTOSTART, F_OK) == 0) {
+        // connected before a reboot/respring, xray not back yet
+        printf("stopped (reconnect pending)\n");
+        return 4;
+    }
     printf("stopped\n");
     return 3;
 }
@@ -287,6 +296,7 @@ static void killXray(void) {
 }
 
 static int cmdStop(void) {
+    unlink(AUTOSTART);
     removeJob(launchctlPath());
     unlink(PLIST);
     killXray();
@@ -323,7 +333,7 @@ static pid_t spawnDirect(void) {
     return findXray();
 }
 
-static int cmdStart(uid_t caller) {
+static int cmdStart(uid_t caller, BOOL useInstalledConfig) {
     const char *lc = launchctlPath();
     if (!lc) {
         printf("error: launchctl not found (install the launchctl package from cydia)\n");
@@ -334,8 +344,8 @@ static int cmdStart(uid_t caller) {
         return 1;
     }
     NSString *err = nil;
-    if (!installConfig(caller, &err)) {
-        printf("error: %s\n", err.UTF8String);
+    if (useInstalledConfig ? access(ROOT_CONFIG, R_OK) != 0 : !installConfig(caller, &err)) {
+        printf("error: %s\n", err ? err.UTF8String : "no saved config to reconnect with");
         return 1;
     }
 
@@ -412,6 +422,7 @@ static int cmdStart(uid_t caller) {
         }
     }
     tuneJetsam(pid);
+    close(open(AUTOSTART, O_WRONLY | O_CREAT, 0600));
     printf("running %d socks %d%s\n", pid, socks, direct ? " (direct)" : "");
     return 0;
 }
@@ -467,7 +478,11 @@ static int setProxy(BOOL on) {
             next[@"HTTPSPort"] = @HTTP_PORT;
             next[@"ProxyAutoConfigEnable"] = @0;
             next[@"ProxyAutoDiscoveryEnable"] = @0;
-            next[@"ExceptionsList"] = @[ @"localhost", @"127.0.0.1", @"*.local", @"169.254/16" ];
+            // totallynotspyware is the safari jailbreak: after a reboot the proxy is
+            // still set but xray only comes back after re-jailbreaking, so tns
+            // must stay reachable without it
+            next[@"ExceptionsList"] = @[ @"localhost", @"127.0.0.1", @"*.local", @"169.254/16",
+                                         @"totallynotspyware.app", @"*.totallynotspyware.app" ];
         } else {
             NSDictionary *old = backup[key];
             if (old) {
@@ -515,12 +530,28 @@ static int cmdLog(void) {
     return 0;
 }
 
+// after a (re)jailbreak: reconnect if the user was connected. run by the
+// boot launchd job, /etc/rc.d/happe and the app; safe to run many times.
+static int cmdBoot(void) {
+    if (access(AUTOSTART, F_OK) != 0) {
+        printf("not connected before, nothing to do\n");
+        return 0;
+    }
+    if (findXray() > 0 && portOpen(HTTP_PORT)) {
+        printf("already running %d\n", findXray());
+        return 0;
+    }
+    int rc = cmdStart(0, YES);
+    if (rc == 0) setProxy(YES);
+    return rc;
+}
+
 int main(int argc, char **argv) {
     @autoreleasepool {
         setvbuf(stdout, NULL, _IONBF, 0);
         uid_t caller = getuid();
         if (argc != 2) {
-            fprintf(stderr, "usage: happectl start|stop|status|proxy-on|proxy-off|log\n");
+            fprintf(stderr, "usage: happectl start|stop|status|boot|proxy-on|proxy-off|log\n");
             return 64;
         }
         const char *cmd = argv[1];
@@ -531,7 +562,12 @@ int main(int argc, char **argv) {
             printf("error: happectl is not setuid root (run: chown root:wheel %s && chmod 4755 %s)\n", argv[0], argv[0]);
             return 2;
         }
-        if (strcmp(cmd, "start") == 0) return cmdStart(caller);
+        // one start/stop/boot at a time (the boot job, rc.d and the app can race)
+        mkdir(ROOT_DIR, 0700);
+        int lockfd = open(LOCK_PATH, O_RDWR | O_CREAT, 0600);
+        if (lockfd >= 0) flock(lockfd, LOCK_EX);
+        if (strcmp(cmd, "boot") == 0) return cmdBoot();
+        if (strcmp(cmd, "start") == 0) return cmdStart(caller, NO);
         if (strcmp(cmd, "stop") == 0) return cmdStop();
         if (strcmp(cmd, "proxy-on") == 0) return setProxy(YES);
         if (strcmp(cmd, "proxy-off") == 0) return setProxy(NO);

@@ -1,0 +1,3 @@
+#!/bin/sh
+# run by the jailbreak after it's done: reconnect Happe if it was connected
+/usr/libexec/happe/happectl boot >> /var/log/happe-boot.log 2>&1 &

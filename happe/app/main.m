@@ -346,6 +346,14 @@ static int socksPortFrom(NSString *helperOut) {
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         NSString *out = nil;
         int rc = runHelper(@"status", &out);
+        if (rc == 4) {
+            // was connected before a reboot and the boot job hasn't brought xray back yet
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self setState:VPStateWorking title:@"Reconnecting…" detail:self.store.selectedServer.name note:nil];
+            });
+            runHelper(@"boot", &out);
+            rc = runHelper(@"status", &out);
+        }
         BOOL proxyOK = systemProxyIsOurs();
         dispatch_async(dispatch_get_main_queue(), ^{
             if (rc == 0) {
@@ -356,7 +364,7 @@ static int socksPortFrom(NSString *helperOut) {
             } else if (rc == 3) {
                 [self setState:VPStateDisconnected title:@"Not connected" detail:[self idleDetail] note:nil];
             } else {
-                [self setState:VPStateError title:@"Helper unavailable" detail:out note:nil];
+                [self setState:VPStateError title:rc == 4 ? @"Couldn't reconnect" : @"Helper unavailable" detail:out note:nil];
             }
         });
     });

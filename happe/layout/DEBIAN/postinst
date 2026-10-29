@@ -2,7 +2,9 @@
 chown root:wheel /usr/libexec/happe/happectl
 chmod 4755 /usr/libexec/happe/happectl
 chmod 0755 /usr/libexec/happe/xray /usr/bin/vless2json
-chmod 0644 /usr/share/happe/com.jhu.happe.plist
+chmod 0644 /usr/share/happe/com.jhu.happe.plist /Library/LaunchDaemons/com.jhu.happe.boot.plist
+chown root:wheel /Library/LaunchDaemons/com.jhu.happe.boot.plist
+chmod 0755 /etc/rc.d/happe
 mkdir -p /var/mobile/Library/Happe
 chown mobile:mobile /var/mobile/Library/Happe
 chmod 0700 /var/mobile/Library/Happe

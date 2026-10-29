@@ -15,6 +15,7 @@ everything is built by github actions on a macos runner (`.github/workflows/happ
    - tapping another server while connected reconnects right away.
    - add servers by pasting, scanning a qr code with the camera, or picking a qr screenshot from photos. `happ://add/<url>` links/qr codes work, and the app registers the `happ`, `happe` and `vless` url schemes so those links open it from safari. encrypted `happ://crypt…` links can't work: only the happ app has the key.
    - the bottom of the list shows the app and xray versions.
+   - **reconnect after reboot:** connect leaves `/etc/happe/autostart`, disconnect removes it. when the (semi-untethered) jailbreak comes back, `com.jhu.happe.boot` (launchd, RunAtLoad) and `/etc/rc.d/happe` run `happectl boot`, which restarts xray with the saved config. opening the app does the same if neither ran. the wifi proxy's bypass list includes `totallynotspyware.app` so the safari jailbreak loads while xray is still down.
    - subscriptions, links and the selected server are stored only on the phone in `/var/mobile/Library/Happe/state.plist` (0600). fakesigned with `ldid -S` plus entitlements (`entitlements/`).
 5. **wifi proxy.** `happectl proxy-on` uses the private SCPreferences api (as root, with the systemconfiguration write entitlements) to set http+https proxy 127.0.0.1:8080 on the wifi service, and backs up the old settings. `proxy-off` restores them. afterwards the app reads the live setting back with `CFNetworkCopySystemProxySettings()`. if it isn't 127.0.0.1:8080, the app shows a one-line manual instruction.
 
