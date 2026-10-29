@@ -49,6 +49,7 @@ public class LibraryShelves {
     private List<Playlist> accountPlaylists;
     private boolean loadingAccount = false;
     private boolean sessionLost = false;
+    private volatile boolean profileFailed = false;
     private long lastAccountLoad = 0;
     private static final long ACCOUNT_REFRESH_MS = 60000;
 
@@ -109,6 +110,21 @@ public class LibraryShelves {
             String handle = account.getProfileHandle();
             sub.setText(handle.length() > 0 ? handle + " · " + account.getInstanceHost()
                     : activity.getString(R.string.signed_in_via, account.getInstanceHost()));
+            boolean noProfile = profileName == null || profileName.length() == 0;
+            if (noProfile && loadingAccount) {
+                sub.setText(R.string.loading_account);
+            } else if (noProfile && profileFailed) {
+                // The instance still knows the device but can't talk to YouTube for it (expired login, blocked instance)
+                sub.setText(R.string.account_unreachable);
+                sub.setTextColor(0xFFFFAA33);
+                row.setClickable(true);
+                row.setBackgroundResource(R.drawable.tv_focus);
+                row.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        listener.onSignIn();
+                    }
+                });
+            }
         } else {
             name.setText(R.string.not_signed_in);
             sub.setText(R.string.tap_to_sign_in);
@@ -265,8 +281,10 @@ public class LibraryShelves {
                     public void run() {
                         try {
                             account.loadProfile();
+                            profileFailed = false;
                         } catch (Exception e) {
                             e.printStackTrace();
+                            profileFailed = true;
                         }
                     }
                 });
@@ -294,8 +312,8 @@ public class LibraryShelves {
                     return;
                 }
                 if (playlists != null) accountPlaylists = playlists;
-                refresh();
                 loadingAccount = false;
+                refresh();
             }
         }.execute();
     }
