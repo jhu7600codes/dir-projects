@@ -147,6 +147,11 @@ public class VideoActivity extends Activity {
     private int stallTicks = 0;
     private int stallPosition = -1;
     private int stallRecoveries = 0;
+    /** How much HD to have buffered ahead before resuming after a stall */
+    private static final int BUFFER_AHEAD_MS = 30000;
+    private static final int BUFFER_WAIT_MAX_TICKS = 150;
+    private boolean bufferPaused = false;
+    private int bufferWaitTicks = 0;
     private Yt2009Account.WatchSession watchSession;
     private static final String DIR_VIDEOS = "notPipe/videos";
 
@@ -446,6 +451,7 @@ public class VideoActivity extends Activity {
     }
 
     private void resetVideo() {
+        bufferPaused = false;
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         cancelVideoTimeout();
         stopPositionTracking();
@@ -2226,6 +2232,56 @@ public class VideoActivity extends Activity {
         }
     }
 
+    /**
+     * HD comes as one file from a yt2009 instance that often uploads barely faster than the video plays,
+     * so playing as soon as a little arrives turns into play-buffer-play-buffer. On a stall this pauses
+     * until a good chunk is buffered ahead, giving fewer, longer waits instead.
+     * @return true if playback was paused to buffer
+     */
+    private boolean startBufferAhead() {
+        String quality = resolvedQuality != null ? resolvedQuality : config.getPreferredQuality();
+        if (quality == null || "360".equals(quality)) return false;
+        try {
+            int percent = videoView.getBufferPercentage();
+            if (percent <= 0 || percent >= 100) return false;
+            videoView.pause();
+        } catch (Exception e) {
+            return false;
+        }
+        bufferPaused = true;
+        bufferWaitTicks = 0;
+        stallTicks = 0;
+        if (controls != null) controls.setBuffering(true);
+        return true;
+    }
+
+    /**
+     * Resumes once enough is buffered ahead (or everything, or after a minute at most).
+     * @return true while still waiting
+     */
+    private boolean waitForBuffer() {
+        try {
+            if (videoView.isPlaying()) {
+                // The user pressed play themselves
+                bufferPaused = false;
+                return false;
+            }
+            int percent = videoView.getBufferPercentage();
+            int duration = videoView.getDuration();
+            int ahead = (int) ((long) percent * duration / 100) - videoView.getCurrentPosition();
+            if (percent >= 100 || ahead >= BUFFER_AHEAD_MS || ++bufferWaitTicks > BUFFER_WAIT_MAX_TICKS) {
+                bufferPaused = false;
+                if (controls != null) controls.setBuffering(false);
+                videoView.start();
+                return false;
+            }
+        } catch (Exception e) {
+            bufferPaused = false;
+            return false;
+        }
+        return true;
+    }
+
     private void tickExtras() {
         if (videoView == null || !videoPrepared) return;
         if (SleepTimer.consumeVideoPause()) {
@@ -2234,6 +2290,7 @@ public class VideoActivity extends Activity {
             } catch (Exception ignored) {}
             return;
         }
+        if (bufferPaused && waitForBuffer()) return;
         int position;
         try {
             if (!videoView.isPlaying()) {
@@ -2251,6 +2308,8 @@ public class VideoActivity extends Activity {
             if (controls != null) controls.setBuffering(false);
         } else if (++stallTicks == 2 && controls != null) {
             controls.setBuffering(true);
+        } else if (stallTicks == 3 && startBufferAhead()) {
+            return;
         } else if (stallTicks >= STALL_TICKS) {
             stallTicks = 0;
             recoverFromStall(position);
