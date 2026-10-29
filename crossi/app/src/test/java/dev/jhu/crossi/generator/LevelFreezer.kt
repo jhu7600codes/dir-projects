@@ -17,6 +17,10 @@ import java.io.File
  *   CROSSI_FREEZE=1 ./gradlew :app:testDebugUnitTest --tests '*LevelFreezer*'   (or =en / =ru)
  */
 class LevelFreezer {
+    private companion object {
+        const val HAND_WRITTEN = 6
+    }
+
     @Test
     fun freeze() {
         // CROSSI_FREEZE=1 does both languages, CROSSI_FREEZE=en or =ru just one
@@ -24,13 +28,23 @@ class LevelFreezer {
         assumeTrue(which != null)
         val all = listOf(Language.EN to Fixtures.english, Language.RU to Fixtures.russian)
         for ((language, dictionary) in all.filter { which == "1" || it.first.code == which }) {
+            // small levels only use words with hand-written clues when they can (that's where kids start)
+            val curated = Dictionary(
+                dictionary.alphabet,
+                dictionary.words.filter { it.commonness >= HAND_WRITTEN },
+                dictionary.longWords,
+                dictionary.version,
+            )
+            val curatedGenerator = PuzzleGenerator(curated)
             val generator = PuzzleGenerator(dictionary)
             val levels = (1..LevelCatalog.COUNT).map { n ->
                 val spec = LevelCatalog.spec(n)
                 val base = Seeds.level(n, language)
-                (0L until 20L).firstNotNullOf { i ->
+                val tries = (if (spec.size <= 9) (0L until 4L).map { curatedGenerator to it } else emptyList()) +
+                    (0L until 20L).map { generator to it }
+                tries.firstNotNullOf { (gen, i) ->
                     runCatching {
-                        generator.generate(
+                        gen.generate(
                             GenConfig(
                                 size = spec.size,
                                 seed = base + i,

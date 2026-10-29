@@ -93,8 +93,8 @@ class ContentRepository(private val context: Context, private val scope: Corouti
 
         /** Bump when a words.tsv changes, so dailies stay in sync between players on the same version. */
         fun dictionaryVersion(language: Language): Int = when (language) {
-            Language.EN -> 1
-            Language.RU -> 1
+            Language.EN -> 2
+            Language.RU -> 2
         }
     }
 }

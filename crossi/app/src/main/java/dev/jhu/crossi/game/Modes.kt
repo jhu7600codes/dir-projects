@@ -27,25 +27,31 @@ enum class Difficulty(val size: Int, val maxHardness: Int, val scoreMultiplier: 
 @Serializable
 enum class PowerUpType { REVEAL_LETTER, REVEAL_WORD, EXTRA_CHECK, SKIP_CLUE }
 
+/**
+ * Bump when words, clues or levels change. Saved games from an older version are
+ * ignored, so everyone gets the regenerated puzzles instead of stale ones.
+ */
+const val CONTENT_VERSION = 2
+
 @Serializable
 sealed interface GameMode {
-    /** Saved games and results are keyed by this, per language. */
+    /** Saved games are keyed by this, per language and content version. */
     fun key(language: Language): String
 
     @Serializable
     data class Level(val number: Int) : GameMode {
-        override fun key(language: Language) = "${language.code}:level:$number"
+        override fun key(language: Language) = "v$CONTENT_VERSION:${language.code}:level:$number"
     }
 
     @Serializable
     data class FreeRoam(val difficulty: Difficulty) : GameMode {
-        override fun key(language: Language) = "${language.code}:free:${difficulty.name}"
+        override fun key(language: Language) = "v$CONTENT_VERSION:${language.code}:free:${difficulty.name}"
     }
 
     /** [date] is ISO yyyy-MM-dd in the player's local time zone. */
     @Serializable
     data class Daily(val date: String, val difficulty: Difficulty) : GameMode {
-        override fun key(language: Language) = "${language.code}:daily:$date:${difficulty.name}"
+        override fun key(language: Language) = "v$CONTENT_VERSION:${language.code}:daily:$date:${difficulty.name}"
     }
 }
 

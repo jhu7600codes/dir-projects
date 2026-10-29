@@ -1,6 +1,7 @@
 package dev.jhu.crossi.data
 
 import androidx.room.withTransaction
+import dev.jhu.crossi.game.CONTENT_VERSION
 import dev.jhu.crossi.game.Difficulty
 import dev.jhu.crossi.game.GameMode
 import dev.jhu.crossi.game.GameState
@@ -149,7 +150,7 @@ class GameRepository(private val db: CrossiDatabase) {
     suspend fun deleteSave(language: Language, mode: GameMode) = dao.deleteSavedGame(mode.key(language))
 
     /** Most recent unfinished game in [language], for the home screen's continue button. */
-    fun latestSave(language: Language): Flow<GameMode?> = dao.latestSavedGame("${language.code}:").map { entity ->
+    fun latestSave(language: Language): Flow<GameMode?> = dao.latestSavedGame("v$CONTENT_VERSION:${language.code}:").map { entity ->
         entity?.let { runCatching { json.decodeFromString(GameMode.serializer(), it.modeJson) }.getOrNull() }
     }
 

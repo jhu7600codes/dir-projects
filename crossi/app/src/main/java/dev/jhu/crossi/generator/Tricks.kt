@@ -52,7 +52,7 @@ class TrickSet(
                 'B' to listOf("the letter that buzzes", "plan ___, but just the letter"),
                 'C' to listOf("the letter you can also do with your eyes", "the letter that sounds like the ocean"),
                 'E' to listOf("the most used letter in english, spelled out very dramatically"),
-                'F' to listOf("the grade nobody wants", "the letter you press to pay respects"),
+                'F' to listOf("the grade nobody wants", "the letter that starts fun and finishes off"),
                 'G' to listOf("the letter that sounds like 'wow, really?'"),
                 'I' to listOf("the letter you see with", "the letter that's all about me"),
                 'J' to listOf("the letter that's also a blue bird"),

@@ -175,8 +175,44 @@ BAD_EXACT = {"ass", "asses", "arse", "arses", "tit", "tits", "cum", "anal", "anu
              "heroin", "beer", "beers", "wine", "wines", "vodka", "rum", "gin", "lager", "ale", "ales"}
 
 
+# kid friendly: no drinking, drugs, gambling, violence, death, bodies, insults
+KID_EXACT = {
+    "tipsy", "drunk", "drunks", "drunken", "drunker", "booze", "boozy", "liquor", "whiskey", "whisky", "brandy", "mead",
+    "wino", "winos", "cocktail", "cocktails", "brew", "brews", "brewed", "brewer", "brewery", "pub", "pubs", "bar", "bars",
+    "tavern", "saloon", "saloons", "hangover", "sober", "cigar", "cigars", "cigarette", "cigarettes", "tobacco", "smoke",
+    "smoker", "smokes", "smoking", "pot", "casino", "casinos", "gamble", "gambler", "gambling", "bet", "bets", "betting",
+    "wager", "craps", "poker", "ante", "antes", "gun", "guns", "gunman", "rifle", "rifles", "pistol", "pistols", "bomb",
+    "bombs", "bombed", "bullet", "bullets", "shoot", "shot", "shots", "sniper", "snipers", "slay", "slain", "slew",
+    "stab", "stabs", "stabbed", "dead", "death", "deaths", "die", "died", "dies", "dying", "fatal", "corpse", "grave",
+    "graves", "gravest", "tomb", "tombs", "coffin", "crypt", "obit", "obits", "murder", "kill", "slave", "slaves",
+    "torture", "war", "wars", "warfare", "blood", "bloody", "gore", "gory", "gash", "wound", "wounds", "impale",
+    "carnal", "crotch", "bosom", "breast", "breasts", "bust", "busty", "nipple", "buttock", "buttocks", "bum", "bums",
+    "butt", "butts", "udder", "udders", "obese", "fatty", "idiot", "idiots", "moron", "morons", "dolt", "dolts", "dumb",
+    "stupid", "loser", "losers", "ugly", "sadist", "sadists", "leper", "lepers", "demon", "demons", "devil", "devils",
+    "satan", "hag", "hags", "witch", "curse", "cursed", "hex", "abort", "aborts", "aborted", "pregnant", "seduce",
+    "sexy", "flirt", "kiss", "kisses", "kissed", "wed", "lover", "lovers", "tryst", "elope", "eloped", "spit", "spits",
+    "vomit", "barf", "puke", "snot", "pee", "poop", "fart", "tumor", "tumors", "coma", "comas", "senile", "insane",
+    "prison", "jail", "thug", "thugs", "crime", "criminal", "steal", "stole", "stolen", "rob", "robs", "thief",
+    "arrest", "cops", "wench", "harem", "pervert", "creep", "creeps", "drug", "drugs", "dose", "doses", "addict",
+}
+KID_DEFINITION = re.compile(
+    r"alcohol|intoxicat|drunk|liquor|beer|\bwine|whisk|spirits|tipsy|narcotic|marijuana|tobacco|cigar|gambl|"
+    r"\bkill|murder|corpse|dead body|execut|\bweapon|firearm|\bgun\b|bomb|explosiv|torture|suicide|"
+    r"\bsex|sexual|erotic|\bnude|naked|breast|buttock|genital|pregnan|prostitut|brothel|prison|\bdevil|satan|"
+    r"obscen|vulgar|slang|insult|stupid|idiot", re.I)
+
+
 def is_bad(word):
-    return word in BAD_EXACT or word.startswith(BAD_PREFIXES)
+    return word in BAD_EXACT or word in KID_EXACT or word.startswith(BAD_PREFIXES)
+
+
+def is_adult_meaning(word, senses, synsets, irregular):
+    """True if one of the word's main meanings is an adult topic (TIPSY = slightly intoxicated)."""
+    for _, base in lemmatize(word, senses, irregular)[:1]:
+        for _, sid in senses[base][:2]:
+            if KID_DEFINITION.search(synsets[sid][1]):
+                return True
+    return False
 
 
 def main():
@@ -194,9 +230,12 @@ def main():
                 hand[w.strip().lower()] = [x.strip() for x in c.split("|") if x.strip()]
     synsets, senses, irregular = read_wordnet(wn_path)
 
-    rows, skipped = [], 0
+    rows, skipped, adult = [], 0, 0
     for word in sorted(levels):
         if word in blocklist or is_bad(word):
+            continue
+        if word not in hand and is_adult_meaning(word, senses, synsets, irregular):
+            adult += 1
             continue
         lv = levels[word]
         commonness, hardness = LEVELS[lv]
@@ -213,7 +252,7 @@ def main():
             rows.append(f"{word.upper()}\t{HAND_WRITTEN_SCORE}\t1\t{'|'.join(clues)}")
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     Path(out_path).write_text("\n".join(sorted(rows)) + "\n", encoding="utf-8")
-    print(f"{len(rows)} words written, {skipped} skipped (no clue)")
+    print(f"{len(rows)} words written, {skipped} skipped (no clue), {adult} dropped as not kid friendly")
 
 
 if __name__ == "__main__":
