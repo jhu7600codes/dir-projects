@@ -129,8 +129,10 @@ def is_bad(word):
 def main():
     hand, bad = hand_written()
     rows = {}
-    if len(sys.argv) >= 3:
-        rows.update(wiktionary(sys.argv[1], sys.argv[2]))
+    # only hand-written clues ship: wiktionary glosses are too confusing for kids.
+    # pass --wiktionary <jsonl> <freq> to mix them back in.
+    if len(sys.argv) >= 4 and sys.argv[1] == "--wiktionary":
+        rows.update(wiktionary(sys.argv[2], sys.argv[3]))
     blocklist = {l.strip().upper() for l in (HERE / "ru_blocklist.txt").read_text(encoding="utf-8").splitlines()
                  if l.strip() and not l.startswith("#")}
     rows.update(hand)

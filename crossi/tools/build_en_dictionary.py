@@ -102,6 +102,7 @@ def inflect(base, kind, wordset):
 
 wordset_level = {}
 HAND_WRITTEN_SCORE = 6
+WITH_AUTO_CLUES = "--auto-clues" in sys.argv
 POS_FOR_KIND = {"plural": {"n"}, "past": {"v"}, "ing": {"v"}, "er": {"a", "s"}, "est": {"a", "s"}}
 TAG = {"plural": " (pl.)", "past": " (past)", "ing": " (-ing)", "er": " (more so)", "est": " (most so)"}
 
@@ -216,7 +217,7 @@ def is_adult_meaning(word, senses, synsets, irregular):
 
 
 def main():
-    scowl_dir, wn_path, out_path = sys.argv[1:4]
+    scowl_dir, wn_path, out_path = [a for a in sys.argv[1:] if not a.startswith("--")][:3]
     levels = read_scowl(scowl_dir)
     wordset = set(levels)
     wordset_level.update(levels)
@@ -239,7 +240,8 @@ def main():
             continue
         lv = levels[word]
         commonness, hardness = LEVELS[lv]
-        clues = hand.get(word) or clues_for(word, senses, synsets, irregular, wordset)
+        # only hand-written clues ship, dictionary definitions are too confusing for kids
+        clues = hand.get(word) or (clues_for(word, senses, synsets, irregular, wordset) if WITH_AUTO_CLUES else None)
         if word in hand:
             commonness = HAND_WRITTEN_SCORE  # the filler prefers words with good clues
         if not clues:
