@@ -3,26 +3,26 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.jhu.vlessproxy</string>
-	<!-- disabled until vlessctl start does "launchctl load -w"; "unload -w" disables it again,
+	<string>com.jhu.happe</string>
+	<!-- disabled until happectl start does "launchctl load -w"; "unload -w" disables it again,
 	     so it only comes back after a reboot if it was connected when you rebooted -->
 	<key>Disabled</key>
 	<true/>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/libexec/vlessproxy/xray</string>
+		<string>/usr/libexec/happe/xray</string>
 		<string>run</string>
 		<string>-c</string>
-		<string>/etc/vlessproxy/config.json</string>
+		<string>/etc/happe/config.json</string>
 	</array>
 	<key>UserName</key>
 	<string>root</string>
 	<key>EnvironmentVariables</key>
 	<dict>
 		<key>SSL_CERT_FILE</key>
-		<string>/usr/share/vlessproxy/cacert.pem</string>
+		<string>/usr/share/happe/cacert.pem</string>
 		<key>XRAY_LOCATION_ASSET</key>
-		<string>/usr/share/vlessproxy</string>
+		<string>/usr/share/happe</string>
 		<key>GOMEMLIMIT</key>
 		<string>96MiB</string>
 		<key>GOGC</key>
@@ -38,9 +38,9 @@
 	<key>ThrottleInterval</key>
 	<integer>10</integer>
 	<key>StandardOutPath</key>
-	<string>/var/log/vlessproxy.log</string>
+	<string>/var/log/happe.log</string>
 	<key>StandardErrorPath</key>
-	<string>/var/log/vlessproxy.log</string>
+	<string>/var/log/happe.log</string>
 	<key>POSIXSpawnType</key>
 	<string>Interactive</string>
 	<key>JetsamProperties</key>

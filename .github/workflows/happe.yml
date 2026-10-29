@@ -1,10 +1,10 @@
-name: vlessproxy (ios 10)
+name: happe (ios 10)
 
 on:
   push:
     paths:
-      - "vlessproxy/**"
-      - ".github/workflows/vlessproxy.yml"
+      - "happe/**"
+      - ".github/workflows/happe.yml"
   workflow_dispatch:
     inputs:
       candidates:
@@ -20,10 +20,10 @@ jobs:
     timeout-minutes: 90
     defaults:
       run:
-        working-directory: vlessproxy
+        working-directory: happe
     env:
       SDK10: ${{ github.workspace }}/sdks/iPhoneOS10.3.sdk
-      OUT: ${{ github.workspace }}/vlessproxy/dist
+      OUT: ${{ github.workspace }}/happe/dist
       VERSION: 1.0.${{ github.run_number }}
       GITHUB_TOKEN: ${{ github.token }}
     steps:
@@ -34,7 +34,7 @@ jobs:
         run: |
           git clone -q --depth 1 --filter=blob:none --sparse https://github.com/theos/sdks sdks
           git -C sdks sparse-checkout set iPhoneOS10.3.sdk
-          bash vlessproxy/scripts/fix-sdk-tbd.sh "$SDK10"
+          bash happe/scripts/fix-sdk-tbd.sh "$SDK10"
           ls "$SDK10"
           xcodebuild -version
           xcrun --sdk iphoneos clang --version
@@ -73,25 +73,25 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: vlessproxy-deb
-          path: vlessproxy/dist/*.deb
+          name: happe-deb
+          path: happe/dist/*.deb
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
         with:
-          name: vlessproxy-ipa
-          path: vlessproxy/dist/VLESSProxy.ipa
+          name: happe-ipa
+          path: happe/dist/Happe.ipa
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
         with:
           name: stage1-xray
           path: |
-            vlessproxy/dist/stage1/
-            vlessproxy/dist/xray-build-report.md
+            happe/dist/stage1/
+            happe/dist/xray-build-report.md
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
         with:
           name: xray-candidates-unsigned
-          path: vlessproxy/dist/xray-candidates/
+          path: happe/dist/xray-candidates/

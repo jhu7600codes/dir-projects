@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
+  /usr/libexec/happe/happectl proxy-off >/dev/null 2>&1
+  /usr/libexec/happe/happectl stop >/dev/null 2>&1
+fi
+exit 0

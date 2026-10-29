@@ -1,13 +1,13 @@
-// vlessctl: tiny setuid-root helper the app calls to control the xray daemon
-// and the wifi http proxy. installed as /usr/libexec/vlessproxy/vlessctl,
+// happectl: tiny setuid-root helper the app calls to control the xray daemon
+// and the wifi http proxy. installed as /usr/libexec/happe/happectl,
 // root:wheel 4755.
 //
-//   vlessctl start       copy the app's config, test it, launchctl load -w
-//   vlessctl stop        launchctl unload -w
-//   vlessctl status      "running <pid>" / "stopped"
-//   vlessctl proxy-on    set wifi http/https proxy to 127.0.0.1:8080
-//   vlessctl proxy-off   restore the previous wifi proxy settings
-//   vlessctl log         last lines of the xray log
+//   happectl start       copy the app's config, test it, launchctl load -w
+//   happectl stop        launchctl unload -w
+//   happectl status      "running <pid>" / "stopped"
+//   happectl proxy-on    set wifi http/https proxy to 127.0.0.1:8080
+//   happectl proxy-off   restore the previous wifi proxy settings
+//   happectl log         last lines of the xray log
 
 #import <Foundation/Foundation.h>
 #include <spawn.h>
@@ -21,15 +21,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define LABEL       "com.jhu.vlessproxy"
-#define PLIST       "/Library/LaunchDaemons/com.jhu.vlessproxy.plist"
-#define XRAY        "/usr/libexec/vlessproxy/xray"
-#define USER_CONFIG "/var/mobile/Library/VLESSProxy/config.json"
-#define ROOT_DIR    "/etc/vlessproxy"
-#define ROOT_CONFIG "/etc/vlessproxy/config.json"
-#define PROXY_BACKUP "/etc/vlessproxy/proxies-backup.plist"
-#define LOG_PATH    "/var/log/vlessproxy.log"
-#define CACERT      "/usr/share/vlessproxy/cacert.pem"
+#define LABEL       "com.jhu.happe"
+#define PLIST       "/Library/LaunchDaemons/com.jhu.happe.plist"
+#define XRAY        "/usr/libexec/happe/xray"
+#define USER_CONFIG "/var/mobile/Library/Happe/config.json"
+#define ROOT_DIR    "/etc/happe"
+#define ROOT_CONFIG "/etc/happe/config.json"
+#define PROXY_BACKUP "/etc/happe/proxies-backup.plist"
+#define LOG_PATH    "/var/log/happe.log"
+#define CACERT      "/usr/share/happe/cacert.pem"
 #define HTTP_PORT   8080
 
 // --- private apis (present on ios, headers are mac-only) ---
@@ -267,7 +267,7 @@ static int cmdStart(uid_t caller) {
 }
 
 static SCPreferencesRef openPrefs(void) {
-    SCPreferencesRef prefs = SCPreferencesCreate(NULL, CFSTR("vlessctl"), NULL);
+    SCPreferencesRef prefs = SCPreferencesCreate(NULL, CFSTR("happectl"), NULL);
     if (!prefs) printf("error: SCPreferencesCreate failed: %s\n", SCErrorString(SCError()));
     return prefs;
 }
@@ -370,7 +370,7 @@ int main(int argc, char **argv) {
         setvbuf(stdout, NULL, _IONBF, 0);
         uid_t caller = getuid();
         if (argc != 2) {
-            fprintf(stderr, "usage: vlessctl start|stop|status|proxy-on|proxy-off|log\n");
+            fprintf(stderr, "usage: happectl start|stop|status|proxy-on|proxy-off|log\n");
             return 64;
         }
         const char *cmd = argv[1];
@@ -378,7 +378,7 @@ int main(int argc, char **argv) {
         if (strcmp(cmd, "log") == 0) return cmdLog();
 
         if (setgid(0) != 0 || setuid(0) != 0) {
-            printf("error: vlessctl is not setuid root (run: chown root:wheel %s && chmod 4755 %s)\n", argv[0], argv[0]);
+            printf("error: happectl is not setuid root (run: chown root:wheel %s && chmod 4755 %s)\n", argv[0], argv[0]);
             return 2;
         }
         if (strcmp(cmd, "start") == 0) return cmdStart(caller);

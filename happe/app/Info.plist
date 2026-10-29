@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>vless proxy</string>
+	<string>Happe</string>
 	<key>CFBundleExecutable</key>
-	<string>VLESSProxy</string>
+	<string>Happe</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.jhu.vlessproxy</string>
+	<string>com.jhu.happe</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>VLESSProxy</string>
+	<string>Happe</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

@@ -11,7 +11,7 @@ set -euo pipefail
 GOROOT_DIR="${1:?usage: patch-go-ios10.sh GOROOT}"
 X="$GOROOT_DIR/src/crypto/x509"
 [ -f "$X/root_darwin.go" ] || { echo "no $X/root_darwin.go"; exit 1; }
-if grep -q 'vlessproxy-ios10-patch' "$X/root_darwin.go"; then echo "already patched"; exit 0; fi
+if grep -q 'happe-ios10-patch' "$X/root_darwin.go"; then echo "already patched"; exit 0; fi
 
 # 1. ios must never take the "platform verifier" branches.
 for f in "$X"/*.go; do
@@ -27,7 +27,7 @@ grep -q '^func loadSystemRoots' "$X/root.go" 2>/dev/null && has_generic_loader=1
 
 {
 cat <<'EOF'
-// vlessproxy-ios10-patch: Security.framework verifier removed so the binary
+// happe-ios10-patch: Security.framework verifier removed so the binary
 // loads on ios 10. roots come from a pem bundle on disk.
 
 package x509
@@ -36,7 +36,7 @@ import "errors"
 
 // Possible certificate files; stop after finding one.
 var certFiles = []string{
-	"/usr/share/vlessproxy/cacert.pem",
+	"/usr/share/happe/cacert.pem",
 	"/etc/ssl/cert.pem",
 	"/usr/lib/ssl/cert.pem",
 	"/etc/ssl/certs/ca-certificates.crt",

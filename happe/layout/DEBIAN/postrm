@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ "$1" = "purge" ]; then
+  rm -rf /etc/happe /var/mobile/Library/Happe /var/log/happe.log
+fi
+exit 0

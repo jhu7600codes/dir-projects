@@ -1,5 +1,5 @@
 #!/bin/bash
-# builds the objc parts (app, vlessctl, vless2json) for arm64 ios 10.0
+# builds the objc parts (app, happectl, vless2json) for arm64 ios 10.0
 # against the ios 10.3 sdk.
 #   SDK10=... OUT=dist VERSION=1.0.0 build-native.sh
 set -euo pipefail
@@ -25,19 +25,19 @@ CFLAGS=(-fobjc-arc -O2 -Wall -Wextra -Wno-unused-parameter -Werror -I"$ROOT/comm
 "${CC[@]}" "${CFLAGS[@]}" -c "$ROOT/common/vless2json.m" -o "$OBJ/vless2json.o"
 "${CC[@]}" "$OBJ/vless2json.o" "$OBJ/VLESSConfig.o" -framework Foundation -o "$OUT/vless2json"
 
-"${CC[@]}" "${CFLAGS[@]}" -c "$ROOT/helper/vlessctl.m" -o "$OBJ/vlessctl.o"
-"${CC[@]}" "$OBJ/vlessctl.o" -framework Foundation -framework SystemConfiguration -o "$OUT/vlessctl"
+"${CC[@]}" "${CFLAGS[@]}" -c "$ROOT/helper/happectl.m" -o "$OBJ/happectl.o"
+"${CC[@]}" "$OBJ/happectl.o" -framework Foundation -framework SystemConfiguration -o "$OUT/happectl"
 
-APP="$OUT/VLESSProxy.app"
+APP="$OUT/Happe.app"
 rm -rf "$APP"
 mkdir -p "$APP"
 "${CC[@]}" "${CFLAGS[@]}" -c "$ROOT/app/main.m" -o "$OBJ/main.o"
 "${CC[@]}" "$OBJ/main.o" "$OBJ/VLESSConfig.o" -framework UIKit -framework Foundation -framework CFNetwork \
-  -framework CoreGraphics -o "$APP/VLESSProxy"
+  -framework CoreGraphics -o "$APP/Happe"
 sed "s/@VERSION@/$VERSION/g" "$ROOT/app/Info.plist" > "$APP/Info.plist"
 printf 'APPL????' > "$APP/PkgInfo"
 python3 "$HERE/make-images.py" "$APP"
 
-for b in "$APP/VLESSProxy" "$OUT/vlessctl" "$OUT/vless2json"; do
+for b in "$APP/Happe" "$OUT/happectl" "$OUT/vless2json"; do
   bash "$HERE/verify-macho.sh" "$b" "$SDK10"
 done
