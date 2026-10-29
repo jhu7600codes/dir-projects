@@ -56,6 +56,10 @@ object Sounds {
 
     fun toScript(sounds: List<String>): String = String(CharArray(sounds.size) { glyph(sounds[it]) })
 
+    /** romanized text (several words, dictionary hyphens allowed) to venderian script */
+    fun scriptOf(roman: String): String =
+        roman.split(' ').joinToString(" ") { toScript(parseRoman(it.replace("-", ""))) }
+
     /** venderian text back to romanization. non-letters (spaces, digits, punctuation) pass through. */
     fun scriptToRoman(script: String): String = buildString {
         var run = mutableListOf<String>()

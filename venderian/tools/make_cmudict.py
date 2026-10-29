@@ -1,4 +1,4 @@
-"""downloads cmudict and writes app/src/main/assets/cmudict.txt.gz: one line per word,
+"""downloads cmudict and writes app/src/main/assets/cmudict.dat: one line per word,
 `word ARPABET...`, first pronunciation only, plain a-z and ' words only, sorted by
 bytes so the app can binary search it without loading it into a map.
 
@@ -12,7 +12,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 URL = "https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict"
-OUT = ROOT / "app/src/main/assets/cmudict.txt.gz"
+# gzip inside, but not named .gz: asset packaging can mangle .gz names
+# gzipped inside, but not named .gz: android asset packaging mangles .gz names
+OUT = ROOT / "app/src/main/assets/cmudict.dat"
 
 
 def main():

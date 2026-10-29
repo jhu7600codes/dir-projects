@@ -21,7 +21,7 @@ class CmuDictTest {
 
     @Test
     fun `the bundled cmudict loads`() {
-        val dict = CmuDict.fromGzip(File("src/main/assets/cmudict.txt.gz").inputStream())
+        val dict = CmuDict.fromGzip(File("src/main/assets/cmudict.dat").inputStream())
         assertTrue(dict.size > 100_000)
         assertEquals(listOf("HH", "AH0", "L", "OW1"), dict.lookup("hello"))
         assertEquals(listOf("D", "OW1", "N", "T"), dict.lookup("don't"))

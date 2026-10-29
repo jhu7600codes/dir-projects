@@ -40,6 +40,12 @@ android {
         compose = true
     }
 
+    testOptions {
+        // robolectric screenshot tests (ScreenshotTest) need the real resources
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all { it.systemProperty("roborazzi.test.record", "true") }
+    }
+
     // docs/alphabet.json is the one copy of the glyph strokes: ship it as an asset
     sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/alphabet"))
 }
@@ -81,4 +87,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.39.0")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

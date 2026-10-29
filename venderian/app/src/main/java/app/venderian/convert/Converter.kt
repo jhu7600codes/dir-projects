@@ -81,7 +81,7 @@ class Converter(private val dict: Pronunciations, private val lexicon: Lexicon? 
 
     private fun venderian(english: String, roman: String) = Piece(
         english, roman,
-        roman.split(' ').joinToString(" ") { Sounds.toScript(Sounds.parseRoman(it)) },
+        Sounds.scriptOf(roman),
         Source.LEXICON,
     )
 
