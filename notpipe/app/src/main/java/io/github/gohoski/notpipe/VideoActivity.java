@@ -147,9 +147,11 @@ public class VideoActivity extends Activity {
     private int stallTicks = 0;
     private int stallPosition = -1;
     private int stallRecoveries = 0;
-    /** How much HD to have buffered ahead before resuming after a stall */
-    private static final int BUFFER_AHEAD_MS = 30000;
-    private static final int BUFFER_WAIT_MAX_TICKS = 150;
+    /** Buffer kept ahead when resuming HD after a stall: at least this, at most the max, never waiting over ~25 s */
+    private static final int BUFFER_MIN_MS = 6000, BUFFER_MAX_MS = 90000;
+    private static final int BUFFER_WAIT_MAX_TICKS = 62;
+    private float downloadRate = -1f;
+    private long rateSampleTime = 0, rateSampleBuffered = 0;
     private boolean bufferPaused = false;
     private int bufferWaitTicks = 0;
     private Yt2009Account.WatchSession watchSession;
@@ -452,6 +454,8 @@ public class VideoActivity extends Activity {
 
     private void resetVideo() {
         bufferPaused = false;
+        downloadRate = -1f;
+        rateSampleTime = 0;
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         cancelVideoTimeout();
         stopPositionTracking();
@@ -2256,6 +2260,39 @@ public class VideoActivity extends Activity {
     }
 
     /**
+     * Just enough buffer to play the rest without stopping again, from the measured download speed:
+     * if the instance delivers r seconds of video per second, the rest needs remaining × (1 − r) up front.
+     * Fast instances only get a short cushion; the wait is capped so it never turns into minutes.
+     */
+    private int requiredBuffer(int remainingMs) {
+        if (downloadRate < 0) return BUFFER_MIN_MS * 2;
+        if (downloadRate >= 1f) return BUFFER_MIN_MS;
+        return Math.max(BUFFER_MIN_MS, Math.min(BUFFER_MAX_MS, (int) (remainingMs * (1f - downloadRate))));
+    }
+
+    /** Tracks how fast the stream downloads compared to real time (smoothed) */
+    private void sampleDownloadRate() {
+        try {
+            int percent = videoView.getBufferPercentage();
+            int duration = videoView.getDuration();
+            if (percent <= 0 || duration <= 0 || percent >= 100) return;
+            long buffered = (long) percent * duration / 100;
+            long now = android.os.SystemClock.uptimeMillis();
+            if (rateSampleTime == 0) {
+                rateSampleTime = now;
+                rateSampleBuffered = buffered;
+                return;
+            }
+            long elapsed = now - rateSampleTime;
+            if (elapsed < 4000) return;
+            float rate = (buffered - rateSampleBuffered) / (float) elapsed;
+            downloadRate = downloadRate < 0 ? rate : downloadRate * 0.6f + rate * 0.4f;
+            rateSampleTime = now;
+            rateSampleBuffered = buffered;
+        } catch (Exception ignored) {}
+    }
+
+    /**
      * Resumes once enough is buffered ahead (or everything, or after a minute at most).
      * @return true while still waiting
      */
@@ -2268,8 +2305,9 @@ public class VideoActivity extends Activity {
             }
             int percent = videoView.getBufferPercentage();
             int duration = videoView.getDuration();
-            int ahead = (int) ((long) percent * duration / 100) - videoView.getCurrentPosition();
-            if (percent >= 100 || ahead >= BUFFER_AHEAD_MS || ++bufferWaitTicks > BUFFER_WAIT_MAX_TICKS) {
+            int position = videoView.getCurrentPosition();
+            int ahead = (int) ((long) percent * duration / 100) - position;
+            if (percent >= 100 || ahead >= requiredBuffer(duration - position) || ++bufferWaitTicks > BUFFER_WAIT_MAX_TICKS) {
                 bufferPaused = false;
                 if (controls != null) controls.setBuffering(false);
                 videoView.start();
@@ -2290,6 +2328,7 @@ public class VideoActivity extends Activity {
             } catch (Exception ignored) {}
             return;
         }
+        sampleDownloadRate();
         if (bufferPaused && waitForBuffer()) return;
         int position;
         try {
