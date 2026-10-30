@@ -24,6 +24,6 @@ NSLog(@"%@", callstackString);
   nil author/text/date are replaced, one unparseable item no longer drops the page, continuation tokens are
   read from both places YouTube puts them, and comments in the newer commentViewModel format are read too
 - SABR quality: bandwidth is reported to YouTube in bits/s (was bytes/s, 8x too low) with a sane estimate
-  before the first measurement, and the stream asks for the best allowed format up to 720p instead of
+  before the first measurement, and the stream asks for the best allowed format up to 1080p instead of
   letting the server start at 144p
 - requests no longer throw when the device locale has no region (gl falls back to US)

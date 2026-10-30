@@ -277,15 +277,15 @@
 }
 
 /**
- * The video format to ask for: the tallest allowed one up to 720p (what these devices decode
- * comfortably), or the smallest one if everything is taller.
+ * The video format to ask for: the tallest allowed one up to 1080p (lower ones can be turned off in
+ * the quality settings), or the smallest one if everything is taller.
  */
 -(TRAdaptiveFormat*)targetVideoFormat {
     TRAdaptiveFormat *best = nil, *smallest = nil;
     for (TRAdaptiveFormat *format in [self.formats allValues]) {
         if (![format.mimeType hasPrefix:@"video"] || format.height <= 0) continue;
         if (smallest == nil || format.height < smallest.height) smallest = format;
-        if (format.height > 720) continue;
+        if (format.height > 1080) continue;
         if (best == nil || format.height > best.height
                 || (format.height == best.height && format.bitrate > best.bitrate)) best = format;
     }
@@ -315,7 +315,7 @@
 
     state.playerState = 0;
 
-    // Pin the resolution to the best allowed format (up to 720p), otherwise the server's ABR starts
+    // Pin the resolution to the best allowed format (up to 1080p), otherwise the server's ABR starts
     // from 144p and rarely climbs on slow-looking connections
     TRAdaptiveFormat *target = [self targetVideoFormat];
     if (target != nil && target.height > 0) {
