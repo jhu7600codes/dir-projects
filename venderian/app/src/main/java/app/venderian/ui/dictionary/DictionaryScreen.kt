@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import app.venderian.convert.Entry
 import app.venderian.convert.Sounds
 import app.venderian.course.ExerciseMaker
+import app.venderian.ui.SpeakButton
 import app.venderian.ui.VText
 import app.venderian.ui.app
 import kotlinx.coroutines.launch
@@ -121,7 +122,10 @@ private fun WordSheet(e: Entry, inDeck: Boolean, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 32.dp)) {
             if (e.pos != "suffix") VText(Sounds.scriptOf(e.word), size = 64.sp)
-            Text(e.word, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(e.word, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                if (e.pos != "suffix") SpeakButton(e.word, Modifier.padding(start = 8.dp))
+            }
             Text(e.pos, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Text(e.meaning, style = MaterialTheme.typography.titleLarge)
@@ -136,7 +140,10 @@ private fun WordSheet(e: Entry, inDeck: Boolean, onDismiss: () -> Unit) {
                 examples.forEach { s ->
                     Card(Modifier.fillMaxWidth().padding(top = 8.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                         Column(Modifier.padding(12.dp)) {
-                            VText(Sounds.scriptOfText(s.v), size = 24.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                VText(Sounds.scriptOfText(s.v), size = 24.sp, modifier = Modifier.weight(1f))
+                                SpeakButton(s.v)
+                            }
                             Text(s.v, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                             Text(s.e, style = MaterialTheme.typography.bodyMedium)
                         }

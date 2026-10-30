@@ -84,6 +84,7 @@ import app.venderian.course.SoundExerciseMaker
 import app.venderian.course.SoundLessons
 import app.venderian.course.Kind
 import app.venderian.data.Repository
+import app.venderian.ui.SpeakButton
 import app.venderian.ui.VText
 import app.venderian.ui.appViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -324,8 +325,11 @@ private fun HintedSentence(roman: String) {
     val lookup = app().lookup
     var showRoman by remember(roman) { mutableStateOf(false) }
     Column {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            roman.split(' ').filter { it.isNotBlank() }.forEach { token -> HintedWord(token, lookup.analyze(token)) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SpeakButton(roman, Modifier.padding(end = 8.dp))
+            FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                roman.split(' ').filter { it.isNotBlank() }.forEach { token -> HintedWord(token, lookup.analyze(token)) }
+            }
         }
         Text(
             if (showRoman) roman else "tap a word to see what it means · show letters",
@@ -389,7 +393,10 @@ internal fun ExerciseView(e: Exercise, locked: Boolean, onAnswer: (Boolean, Stri
             Text("new word", style = MaterialTheme.typography.titleLarge)
             Column(Modifier.weight(1f).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 VText(Sounds.scriptOf(e.word.word), size = 72.sp)
-                Text(e.word.word, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(e.word.word, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                    if (e.word.pos != "suffix") SpeakButton(e.word.word, Modifier.padding(start = 8.dp))
+                }
                 Text(e.word.meaning, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
                 Text(e.word.pos, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -400,7 +407,10 @@ internal fun ExerciseView(e: Exercise, locked: Boolean, onAnswer: (Boolean, Stri
             var picked by remember { mutableStateOf<Int?>(null) }
             val title = if (e.word.pos == "english word") "which english word is this?" else "what does this mean?"
             Frame(title, locked, picked != null, { onAnswer(picked == e.answer, e.word.meaning) }) {
-                Script(e.word.word, 56)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) { Script(e.word.word, 56) }
+                    SpeakButton(e.word.word)
+                }
                 Spacer(Modifier.height(20.dp))
                 e.options.forEachIndexed { i, o -> Option(o, script = false, selected = picked == i, enabled = !locked) { picked = i } }
             }

@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.sp
 import app.venderian.convert.Converter
 import app.venderian.convert.Sounds
 import app.venderian.ui.ScreenTitle
+import app.venderian.ui.SpeakButton
 import app.venderian.ui.VText
 import app.venderian.ui.app
 import kotlinx.coroutines.delay
@@ -137,7 +138,9 @@ private fun Preview(script: String, roman: String, placeholder: String, modifier
                 Spacer(Modifier.height(6.dp))
                 Text(roman, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                if (script.isNotEmpty()) SpeakButton(roman, Modifier.padding(end = 4.dp))
+                Spacer(Modifier.weight(1f))
                 TextButton(onClick = { clipboard.setText(AnnotatedString(roman)) }, enabled = script.isNotEmpty()) { Text("copy roman") }
                 FilledTonalButton(onClick = { clipboard.setText(AnnotatedString(script)) }, enabled = script.isNotEmpty()) {
                     Icon(Icons.Outlined.ContentCopy, null, Modifier.padding(end = 6.dp))

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment
@@ -47,5 +48,14 @@ fun ScreenTitle(title: String, subtitle: String? = null, onOpenDictionary: (() -
         if (subtitle != null) {
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+/** says venderian out loud (see VenderianApp.speakVenderian) */
+@Composable
+fun SpeakButton(roman: String, modifier: Modifier = Modifier) {
+    val app = app()
+    FilledTonalIconButton(onClick = { app.speakVenderian(roman) }, modifier = modifier) {
+        Icon(Icons.AutoMirrored.Outlined.VolumeUp, "say it")
     }
 }

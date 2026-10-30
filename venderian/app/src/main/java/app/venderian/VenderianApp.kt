@@ -5,6 +5,7 @@ import android.speech.tts.TextToSpeech
 import app.venderian.convert.CmuDict
 import app.venderian.convert.Converter
 import app.venderian.convert.Lexicon
+import app.venderian.convert.Speech
 import app.venderian.convert.WordLookup
 import app.venderian.course.Course
 import app.venderian.course.SoundLessons
@@ -35,26 +36,40 @@ class VenderianApp : Application() {
 
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    private var spanish = false
+    private var pending: (() -> Unit)? = null
 
-    override fun onCreate() {
-        super.onCreate()
-        converter.start()
+    /** the phone's text to speech, started the first time something is said */
+    private fun withTts(say: () -> Unit) {
+        if (ttsReady) return say()
+        pending = say
+        if (tts != null) return
+        tts = TextToSpeech(this) { status ->
+            ttsReady = status == TextToSpeech.SUCCESS
+            if (ttsReady) {
+                val es = Locale("es", "ES")
+                spanish = (tts?.isLanguageAvailable(es) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
+                tts?.setSpeechRate(0.85f)
+                pending?.invoke()
+                pending = null
+            }
+        }
     }
 
-    /** speaks a sound hint with the phone's (offline) text to speech, if it has one */
-    fun speak(text: String) {
-        val engine = tts
-        if (engine == null) {
-            tts = TextToSpeech(this) { status ->
-                ttsReady = status == TextToSpeech.SUCCESS
-                if (ttsReady) {
-                    tts?.language = Locale.US
-                    tts?.setSpeechRate(0.85f)
-                    tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "hint")
-                }
-            }
-        } else if (ttsReady) {
-            engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "hint")
+    /** speaks an english sound hint (letter lessons) */
+    fun speak(text: String) = withTts {
+        tts?.language = Locale.US
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "hint")
+    }
+
+    /** says venderian (romanized) out loud, with a spanish voice if the phone has one */
+    fun speakVenderian(roman: String) = withTts {
+        if (spanish) {
+            tts?.language = Locale("es", "ES")
+            tts?.speak(Speech.spanish(roman), TextToSpeech.QUEUE_FLUSH, null, "venderian")
+        } else {
+            tts?.language = Locale.US
+            tts?.speak(Speech.english(roman), TextToSpeech.QUEUE_FLUSH, null, "venderian")
         }
     }
 }
