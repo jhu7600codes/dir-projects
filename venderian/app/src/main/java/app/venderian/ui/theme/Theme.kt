@@ -11,6 +11,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import app.venderian.R
+import app.venderian.data.Holiday
+import androidx.compose.ui.graphics.lerp
 
 val VenderianFont = FontFamily(Font(R.font.venderian))
 
@@ -32,8 +34,32 @@ private val Fallback = darkColorScheme(
     surfaceContainerHighest = Color(0xFF36343B),
 )
 
+/** a holiday's colors on top of the normal dark scheme */
+private fun holidayScheme(base: androidx.compose.material3.ColorScheme, h: Holiday): androidx.compose.material3.ColorScheme {
+    val primary = Color(h.primary)
+    val container = Color(h.container)
+    val bg = Color(h.background)
+    return base.copy(
+        primary = primary,
+        onPrimary = Color(0xFF1A1A1A),
+        primaryContainer = container,
+        onPrimaryContainer = Color(0xFFF5F0FF),
+        tertiary = primary,
+        tertiaryContainer = container,
+        onTertiaryContainer = Color(0xFFF5F0FF),
+        secondaryContainer = lerp(container, bg, 0.4f),
+        background = bg,
+        surface = bg,
+        surfaceContainer = lerp(bg, container, 0.15f),
+        surfaceContainerHigh = lerp(bg, container, 0.25f),
+        surfaceContainerHighest = lerp(bg, container, 0.35f),
+    )
+}
+
 @Composable
 fun VenderianTheme(content: @Composable () -> Unit) {
-    val colors = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicDarkColorScheme(LocalContext.current) else Fallback
+    val base = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicDarkColorScheme(LocalContext.current) else Fallback
+    val holiday = Holiday.today()
+    val colors = if (holiday != null) holidayScheme(base, holiday) else base
     MaterialTheme(colorScheme = colors, typography = Typography(), content = content)
 }

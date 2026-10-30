@@ -30,6 +30,9 @@ built in stages:
    - **system keyboard** (works in every app, turn it on from the keyboard tab): a qwerty layout with a strip that shows your english as venderian while you type, and a translate button that swaps it in (tap again to undo). a second layout has the venderian glyph keys for writing it directly. the strip switches between translate / spell by sound, and between writing the script or its romanization (other apps don't have the venderian font, so the script shows up as boxes there). the image button sends it as a picture (script + roman underneath) to apps that take images from keyboards, or through the share sheet
    - **keyboard tab**: the same thing inside the app, with copy buttons
    - **dictionary** (book button on learn and practice): all 1295 words (the course's words plus a word bank of everyday words in `course/bank.txt`, made by `tools/make_bank.py`), search in english, roman letters, script, or with endings (kitën finds kitë). each word shows where the course teaches it and example sentences, and can go into your practice deck
+   - **widget**: your streak with a venderian tagline that changes as it grows ("vela! ashir ra vendëri!" on day 1, "ek vek! tu heroë!" at a week...) and a word of the day from the words you've learned
+   - **holidays**: the app changes color and greets you in venderian on new year, both christmases, valentine's, march 8, april fools, halloween and vendëri day (july 15)
+   - **audio**: a speaker button on words and sentences, using the phone's own voice (a spanish one if there is one, it's the closest to venderian)
    - **progress**: streak, xp and levels, the last 7 days, letters and words learned
 
 ## building

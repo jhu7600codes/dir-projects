@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.venderian.ui.HolidayBanner
 import app.venderian.ui.ScreenTitle
 import app.venderian.ui.course.CourseMap
 import androidx.compose.material3.SegmentedButton
@@ -59,6 +60,7 @@ fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit, onO
             },
             onOpenDictionary,
         )
+        HolidayBanner()
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             SegmentedButton(shown == 0, { tab = 0 }, SegmentedButtonDefaults.itemShape(0, 3)) { Text("script") }
             SegmentedButton(shown == 1, { tab = 1 }, SegmentedButtonDefaults.itemShape(1, 3)) { Text("course") }

@@ -25,6 +25,18 @@
             </intent-filter>
         </activity>
 
+        <!-- home screen widget: streak and word of the day -->
+        <receiver
+            android:name=".WordWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+
         <!-- venderian messages sent as images from the keyboard -->
         <provider
             android:name="androidx.core.content.FileProvider"

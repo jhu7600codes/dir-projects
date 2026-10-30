@@ -1004,3 +1004,6 @@ pre | in fact | adverb
 pash | of course not | adverb
 dorak | on purpose | adverb
 met | by accident | adverb
+salmashzas | christmas | noun
+pimigu | halloween | noun
+romtal | new year | noun

@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -57,5 +58,24 @@ fun SpeakButton(roman: String, modifier: Modifier = Modifier) {
     val app = app()
     FilledTonalIconButton(onClick = { app.speakVenderian(roman) }, modifier = modifier) {
         Icon(Icons.AutoMirrored.Outlined.VolumeUp, "say it")
+    }
+}
+
+/** on holidays: the greeting, in script, with its translation */
+@Composable
+fun HolidayBanner() {
+    val h = app.venderian.data.Holiday.today() ?: return
+    androidx.compose.material3.Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                VText(app.venderian.convert.Sounds.scriptOfText(h.greeting), size = 26.sp)
+                Text(h.greeting, style = MaterialTheme.typography.titleMedium)
+                Text(h.english, style = MaterialTheme.typography.bodySmall)
+            }
+            SpeakButton(h.greeting)
+        }
     }
 }
