@@ -59,8 +59,23 @@ static NSData *HPBase64Decode(NSString *s) {
 }
 
 // some panels only answer apps they know; try these in order
+// some panels only answer apps they know (allvpn: happ and karing only);
+// try these in order. happ goes first since it gets plain share links.
 + (NSArray<NSString *> *)userAgents {
-    return @[ @"v2rayN/6.0", @"Happ/1.0", @"v2rayNG/1.8.0", @"Streisand/1.0" ];
+    return @[ @"Happ/3.5.0", @"v2rayN/6.0", @"v2rayNG/1.8.0", @"karing/1.1.2.0", @"Streisand/1.0" ];
+}
+
+// a stable per-install device id, sent like happ's x-hwid (panels with a
+// device limit count devices by it)
++ (NSString *)hwid {
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    NSString *h = [d stringForKey:@"hwid"];
+    if (!h.length) {
+        h = [[NSUUID UUID].UUIDString.lowercaseString stringByReplacingOccurrencesOfString:@"-" withString:@""];
+        [d setObject:h forKey:@"hwid"];
+        [d synchronize];
+    }
+    return h;
 }
 
 + (void)fetch:(NSString *)url completion:(void (^)(NSDictionary *, NSString *))completion {
@@ -76,14 +91,23 @@ static NSData *HPBase64Decode(NSString *s) {
    completion:(void (^)(NSDictionary *, NSString *))completion {
     NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
                                                    timeoutInterval:20];
-    [req setValue:self.userAgents[agent] forHTTPHeaderField:@"User-Agent"];
+    NSString *ua = self.userAgents[agent];
+    [req setValue:ua forHTTPHeaderField:@"User-Agent"];
+    if ([ua hasPrefix:@"Happ/"]) {
+        [req setValue:self.hwid forHTTPHeaderField:@"X-HWID"];
+        [req setValue:@"iOS" forHTTPHeaderField:@"X-Device-OS"];
+        [req setValue:[[NSProcessInfo processInfo] operatingSystemVersionString] forHTTPHeaderField:@"X-Ver-OS"];
+        [req setValue:@"iPhone" forHTTPHeaderField:@"X-Device-Model"];
+    }
     [[[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData *data, NSURLResponse *resp, NSError *err) {
         NSDictionary *info = nil;
         NSString *error = nil;
         BOOL retry = NO;
         NSHTTPURLResponse *http = [resp isKindOfClass:[NSHTTPURLResponse class]] ? (NSHTTPURLResponse *)resp : nil;
         if (err) {
-            // network-level failure: another user agent won't help
+            // a timeout can be a panel ignoring an app it doesn't know, so
+            // try the next user agent; other network errors won't change
+            retry = err.code == NSURLErrorTimedOut;
             error = [NSString stringWithFormat:@"%@ (%@ %ld)", err.localizedDescription,
                      [err.domain isEqualToString:NSURLErrorDomain] ? @"url" : err.domain, (long)err.code];
         } else if (http && (http.statusCode < 200 || http.statusCode >= 300)) {
