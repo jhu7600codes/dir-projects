@@ -1,0 +1,291 @@
+# section 1, lessons 6-10 of every module (merged into s1.txt's modules by make_course.py)
+
+section 1 | first steps | family, food and home
+
+module 1 | family!
+
+lesson how old are you?
+new: kwo, dek, yer
++ edë | age | noun
+tip: to say how old you are, have years: "mi dek yer ha", I have ten years.
+edë da tu kwo? = what is your age?
+mi dek yer ha. = I am ten years old.
+bro da mi dor yer ha. = my brother is two years old.
+tu dek yer ha ka? = are you ten years old?
+sesa da ana ek yer ha. = Ana's sister is one year old.
+
+lesson names
+new: ishe, kwi
++ lela | Lela (a name) | name
+ishe da tu kwo? = what is your name?
+ishe da mi tomo. = my name is Tomo.
+kwi sa? = who is he?
+sa bro da mi. = he is my brother.
+ishe da sesa da mi lela. = my sister's name is Lela.
+
+lesson aunts and uncles
++ tiya | aunt | noun
++ tiyo | uncle | noun
++ kuzo | cousin | noun
+tiya da mi tis kiti ha. = my aunt has three children.
+tiyo da tu gran ka? = is your uncle big?
+mi dor kuzo ha. = I have two cousins.
+tiya i tiyo vet. = the aunt and uncle are old.
+kuzo da ana tomo. = Ana's cousin is Tomo.
+
+lesson the baby
+new: nov, nema, liva
++ bebë | baby | noun
+folka da mi bebë nov ha. = my family has a new baby.
+bebë pik. = the baby is small.
+bebë nema. = the baby sleeps.
+bebë da sesa da mi nema ka? = is my sister's baby sleeping?
+baba bebë liva. = grandmother loves the baby.
+
+lesson a family picture
+new: ik, lë
++ kuadro | picture | noun
+ve kuadro da folka da mi. = this is a picture of my family.
+ik ama i aba. = here are mother and father.
+lë baba i dedo. = there are grandmother and grandfather.
+kwi ve? = who is this?
+ve tiyo da mi. = this is my uncle.
+
+module 1.5 | family traditions
+
+lesson birthday
+new: vedey, fasa, kwan, fela
++ nasdey | birthday | noun
++ torta | cake | noun
+vedey nasdey da mi! = today is my birthday!
+ama torta fasa. = mother makes a cake.
+tot dara ra mi do. = everyone gives a gift to me.
+mi mol fela. = I am very happy.
+nasdey da tu kwan? = when is your birthday?
+
+lesson songs at home
+new: lira, lir, kenë, bela
+baba lir vet lira. = grandmother sings an old song.
+kitin kun lira. = the children sing together.
+dedo liran multa kenë. = grandfather knows many songs.
+tu ve lir kenë ka? = do you know this song?
+ve lir bela. = this song is beautiful.
+
+lesson grandmother's food
+new: skri
++ resita | recipe | noun
+baba yamë bon fasa. = grandmother makes good food.
+resita da baba vet. = grandmother's recipe is old.
+min yamë da baba liva. = we love grandmother's food.
+resita ra mi do! = give the recipe to me!
+ama resita skri. = mother writes the recipe.
+
+lesson visiting
+new: ven, es
++ vizita | to visit | verb
++ saven | often | adverb
+min baba vizita. = we visit grandmother.
+tiyo saven ven. = the uncle comes often.
+tu dedo saven vizita ka? = do you visit grandfather often?
+kuzon da mi ik ven. = my cousins come here.
+folka tot kun es. = the whole family is together.
+
+lesson thank you, family
+new: shevan, ayda
+shevan, ama! = thank you, mother!
+aba mi ayda. = father helps me.
+mi ama ayda. = I help mother.
+folka da mi mi liva. = my family loves me.
+shevan, folka! = thank you, family!
+
+module 2 | food
+
+lesson vegetables
++ legum | vegetable | noun
++ karot | carrot | noun
++ patat | potato | noun
++ tomat | tomato | noun
+leguman bon. = vegetables are good.
+karot gel. = the carrot is yellow.
+mi patatan goda. = I like potatoes.
+tomat rud i sava. = the tomato is red and sweet.
+kiti leguman ne goda. = the child does not like vegetables.
+
+lesson meat and fish
+new: glob, o
++ karnë | meat | noun
+aba karnë yama. = father eats meat.
+mi glob goda. = I like fish.
+ama glob kuka. = mother cooks fish.
+karnë kal. = the meat is hot.
+tu karnë o glob vola? = do you want meat or fish?
+
+lesson drinks
+new: kiro
++ suko | juice | noun
++ glasë | glass | noun
+mi suko vola. = I want juice.
+kiro, glasë da nami ra mi do. = please give me a glass of water.
+suko sava. = the juice is sweet.
+kafa kal, suko frid. = the coffee is hot, the juice is cold.
+tu kwo sipa? = what do you drink?
+
+lesson the restaurant
++ restoran | restaurant | noun
++ menu | menu | noun
++ garson | waiter | noun
+min un restoran es. = we are in a restaurant.
+garson menu do. = the waiter gives the menu.
+mi supa vola. = I want soup.
+ve restoran bon ka? = is this restaurant good?
+menu gran. = the menu is big.
+
+lesson sweet things
+new: mal
++ choko | chocolate | noun
++ kandi | candy | noun
++ mel | honey | noun
+kitin choko goda. = the children like chocolate.
+mel sava. = honey is sweet.
+kandi multa mal. = a lot of candy is bad.
+tu choko vola ka? = do you want chocolate?
+ama choko ne yama. = mother does not eat chocolate.
+
+module 2.5 | cooking and meals
+
+lesson lunch
+new: nun
++ medey | lunch | noun
+un medey, mi supa yama. = at lunch, I eat soup.
+medey kwan? = when is lunch?
+min medey kun yama. = we eat lunch together.
+ve medey mol bon. = this lunch is very good.
+nun mi medey vola. = now I want lunch.
+
+lesson the shopping list
+new: lon
++ lista | list | noun
+mi lista skri. = I write a list.
+lista lon. = the list is long.
+aplon, bren i mikh un lista es. = apples, bread and milk are on the list.
+min un bazar kopa. = we buy at the market.
+lista da ama kwe es? = where is mother's list?
+
+lesson setting the table
++ kup | cup | noun
++ kulyë | spoon | noun
++ forko | fork | noun
+kupan sur tabla. = the cups are on the table.
+kulyë i forko ra mi do. = give me a spoon and a fork.
+forko kwe es? = where is the fork?
+nash sur plato es. = the knife is on the plate.
+tabla bela. = the table is beautiful.
+
+lesson cleaning up
++ limpa | to clean | verb
+mi platon limpa. = I clean the plates.
+aba kukin limpa. = father cleans the kitchen.
+kitin ayda. = the children help.
+nami kal bon. = hot water is good.
+tot kun limpa. = everyone cleans together.
+
+lesson favorite food
++ favo | favorite | adjective
+yamë favo da tu kwo? = what is your favorite food?
+yamë favo da mi supa. = my favorite food is soup.
+frut favo da sa banan. = her favorite fruit is the banana.
+ama torta favo da mi fasa. = mother makes my favorite cake.
+tu choko goda ka? = do you like chocolate?
+
+module 3 | home
+
+lesson the bathroom
++ twalet | toilet | noun
++ spegë | mirror | noun
++ savon | soap | noun
+twalet kwe es? = where is the toilet?
+spegë gran. = the mirror is big.
+savon nek spegë es. = the soap is next to the mirror.
+mi spegë un rum da mi ha. = I have a mirror in my room.
+savon alba. = the soap is white.
+
+lesson upstairs and downstairs
+new: gol
++ supra | upstairs | adverb
++ infra | downstairs | adverb
++ skala | stairs | noun
+rum da mi supra es. = my room is upstairs.
+kukin infra es. = the kitchen is downstairs.
+skala gran. = the stairs are big.
+vuf supra ne gol. = the dog does not go upstairs.
+mish infra nema. = the cat sleeps downstairs.
+
+lesson the garden
+new: gala, luda
++ gardo | garden | noun
+kar da mi gardo ha. = my house has a garden.
+galan multa un gardo es. = there are many flowers in the garden.
+tal gran un gardo es. = a big tree is in the garden.
+vuf un gardo luda. = the dog plays in the garden.
+gardo bela. = the garden is beautiful.
+
+lesson cleaning the house
++ polvo | dust | noun
+vedey min kar limpa. = today we clean the house.
+polvo multa sur tabla es. = there is a lot of dust on the table.
+aba vindë limpa. = father cleans the window.
+mi rum da mi limpa. = I clean my room.
+kar nun bela. = now the house is beautiful.
+
+lesson neighbors
++ vesin | neighbor | noun
+vesin da mi vet. = my neighbor is old.
+vesin vuf gran ha. = the neighbor has a big dog.
+vesinan bon. = the neighbors are good.
+vesin un kar alba viva. = the neighbor lives in a white house.
+tu vesin kenë ka? = do you know the neighbor?
+
+module 3.5 | daily routine
+
+lesson clothes
++ kamis | shirt | noun
++ pantal | pants | noun
++ shu | shoe | noun
+mi kamis blu ha. = I have a blue shirt.
+pantal da tu mog. = your pants are black.
+shun da mi kwe es? = where are my shoes?
+kiti shun nov ha. = the child has new shoes.
+ve kamis bela. = this shirt is beautiful.
+
+lesson getting dressed
++ vesta | to put on (clothes) | verb
+mi kamis vesta. = I put on a shirt.
+un matin, kiti shun vesta. = in the morning, the child puts on shoes.
+kamis rud vesta! = put on the red shirt!
+aba kamis alba vesta. = father puts on a white shirt.
+tu kwo vesta? = what do you put on?
+
+lesson hurry up!
++ tarda | late | adjective
++ preko | early | adjective
+mi tarda! = I am late!
+tu tarda ka? = are you late?
+nay, mi preko. = no, I am early.
+gol! gol! = go! go!
+ama preko leva. = mother gets up early.
+
+lesson bedtime
++ noksa | pajamas | noun
+un noch, mi noksa vesta. = at night, I put on pajamas.
+ama sago thela. = mother tells a story.
+lampa klu! = turn off the lamp!
+kiti nema vola. = the child wants to sleep.
+noch bon! = good night!
+
+lesson the weekend
++ fendey | weekend | noun
+un fendey, mi skol ne gol. = on the weekend, I do not go to school.
+un fendey, min un gardo luda. = on the weekend, we play in the garden.
+aba un fendey nema. = father sleeps on the weekend.
+fendey kwan? = when is the weekend?
+mi fendey liva. = I love the weekend.

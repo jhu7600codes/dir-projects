@@ -1110,11 +1110,6 @@
   "pos": "adjective"
  },
  {
-  "word": "torta",
-  "meaning": "cake",
-  "pos": "noun"
- },
- {
   "word": "rum",
   "meaning": "room",
   "pos": "noun"
@@ -1207,6 +1202,251 @@
  {
   "word": "fin",
   "meaning": "end",
+  "pos": "noun"
+ },
+ {
+  "word": "edë",
+  "meaning": "age",
+  "pos": "noun"
+ },
+ {
+  "word": "lela",
+  "meaning": "Lela (a name)",
+  "pos": "name"
+ },
+ {
+  "word": "tiya",
+  "meaning": "aunt",
+  "pos": "noun"
+ },
+ {
+  "word": "tiyo",
+  "meaning": "uncle",
+  "pos": "noun"
+ },
+ {
+  "word": "kuzo",
+  "meaning": "cousin",
+  "pos": "noun"
+ },
+ {
+  "word": "bebë",
+  "meaning": "baby",
+  "pos": "noun"
+ },
+ {
+  "word": "kuadro",
+  "meaning": "picture",
+  "pos": "noun"
+ },
+ {
+  "word": "nasdey",
+  "meaning": "birthday",
+  "pos": "noun"
+ },
+ {
+  "word": "torta",
+  "meaning": "cake",
+  "pos": "noun"
+ },
+ {
+  "word": "resita",
+  "meaning": "recipe",
+  "pos": "noun"
+ },
+ {
+  "word": "vizita",
+  "meaning": "to visit",
+  "pos": "verb"
+ },
+ {
+  "word": "saven",
+  "meaning": "often",
+  "pos": "adverb"
+ },
+ {
+  "word": "legum",
+  "meaning": "vegetable",
+  "pos": "noun"
+ },
+ {
+  "word": "karot",
+  "meaning": "carrot",
+  "pos": "noun"
+ },
+ {
+  "word": "patat",
+  "meaning": "potato",
+  "pos": "noun"
+ },
+ {
+  "word": "tomat",
+  "meaning": "tomato",
+  "pos": "noun"
+ },
+ {
+  "word": "karnë",
+  "meaning": "meat",
+  "pos": "noun"
+ },
+ {
+  "word": "suko",
+  "meaning": "juice",
+  "pos": "noun"
+ },
+ {
+  "word": "glasë",
+  "meaning": "glass",
+  "pos": "noun"
+ },
+ {
+  "word": "restoran",
+  "meaning": "restaurant",
+  "pos": "noun"
+ },
+ {
+  "word": "menu",
+  "meaning": "menu",
+  "pos": "noun"
+ },
+ {
+  "word": "garson",
+  "meaning": "waiter",
+  "pos": "noun"
+ },
+ {
+  "word": "choko",
+  "meaning": "chocolate",
+  "pos": "noun"
+ },
+ {
+  "word": "kandi",
+  "meaning": "candy",
+  "pos": "noun"
+ },
+ {
+  "word": "mel",
+  "meaning": "honey",
+  "pos": "noun"
+ },
+ {
+  "word": "medey",
+  "meaning": "lunch",
+  "pos": "noun"
+ },
+ {
+  "word": "lista",
+  "meaning": "list",
+  "pos": "noun"
+ },
+ {
+  "word": "kup",
+  "meaning": "cup",
+  "pos": "noun"
+ },
+ {
+  "word": "kulyë",
+  "meaning": "spoon",
+  "pos": "noun"
+ },
+ {
+  "word": "forko",
+  "meaning": "fork",
+  "pos": "noun"
+ },
+ {
+  "word": "limpa",
+  "meaning": "to clean",
+  "pos": "verb"
+ },
+ {
+  "word": "favo",
+  "meaning": "favorite",
+  "pos": "adjective"
+ },
+ {
+  "word": "twalet",
+  "meaning": "toilet",
+  "pos": "noun"
+ },
+ {
+  "word": "spegë",
+  "meaning": "mirror",
+  "pos": "noun"
+ },
+ {
+  "word": "savon",
+  "meaning": "soap",
+  "pos": "noun"
+ },
+ {
+  "word": "supra",
+  "meaning": "upstairs",
+  "pos": "adverb"
+ },
+ {
+  "word": "infra",
+  "meaning": "downstairs",
+  "pos": "adverb"
+ },
+ {
+  "word": "skala",
+  "meaning": "stairs",
+  "pos": "noun"
+ },
+ {
+  "word": "gardo",
+  "meaning": "garden",
+  "pos": "noun"
+ },
+ {
+  "word": "polvo",
+  "meaning": "dust",
+  "pos": "noun"
+ },
+ {
+  "word": "vesin",
+  "meaning": "neighbor",
+  "pos": "noun"
+ },
+ {
+  "word": "kamis",
+  "meaning": "shirt",
+  "pos": "noun"
+ },
+ {
+  "word": "pantal",
+  "meaning": "pants",
+  "pos": "noun"
+ },
+ {
+  "word": "shu",
+  "meaning": "shoe",
+  "pos": "noun"
+ },
+ {
+  "word": "vesta",
+  "meaning": "to put on (clothes)",
+  "pos": "verb"
+ },
+ {
+  "word": "tarda",
+  "meaning": "late",
+  "pos": "adjective"
+ },
+ {
+  "word": "preko",
+  "meaning": "early",
+  "pos": "adjective"
+ },
+ {
+  "word": "noksa",
+  "meaning": "pajamas",
+  "pos": "noun"
+ },
+ {
+  "word": "fendey",
+  "meaning": "weekend",
   "pos": "noun"
  },
  {
@@ -1570,6 +1810,311 @@
   "pos": "adjective"
  },
  {
+  "word": "bus",
+  "meaning": "bus",
+  "pos": "noun"
+ },
+ {
+  "word": "stasyo",
+  "meaning": "stop, station",
+  "pos": "noun"
+ },
+ {
+  "word": "bilet",
+  "meaning": "ticket",
+  "pos": "noun"
+ },
+ {
+  "word": "avyon",
+  "meaning": "airplane",
+  "pos": "noun"
+ },
+ {
+  "word": "avyokar",
+  "meaning": "airport",
+  "pos": "noun"
+ },
+ {
+  "word": "klavë",
+  "meaning": "key",
+  "pos": "noun"
+ },
+ {
+  "word": "karo",
+  "meaning": "expensive",
+  "pos": "adjective"
+ },
+ {
+  "word": "barat",
+  "meaning": "cheap",
+  "pos": "adjective"
+ },
+ {
+  "word": "posta",
+  "meaning": "postcard",
+  "pos": "noun"
+ },
+ {
+  "word": "manda",
+  "meaning": "to send",
+  "pos": "verb"
+ },
+ {
+  "word": "ponto",
+  "meaning": "bridge",
+  "pos": "noun"
+ },
+ {
+  "word": "plaza",
+  "meaning": "square (in a town)",
+  "pos": "noun"
+ },
+ {
+  "word": "sentro",
+  "meaning": "center",
+  "pos": "noun"
+ },
+ {
+  "word": "fontan",
+  "meaning": "fountain",
+  "pos": "noun"
+ },
+ {
+  "word": "turë",
+  "meaning": "tower",
+  "pos": "noun"
+ },
+ {
+  "word": "taksi",
+  "meaning": "taxi",
+  "pos": "noun"
+ },
+ {
+  "word": "kondu",
+  "meaning": "to drive",
+  "pos": "verb"
+ },
+ {
+  "word": "suvenir",
+  "meaning": "souvenir",
+  "pos": "noun"
+ },
+ {
+  "word": "torna",
+  "meaning": "to come back",
+  "pos": "verb"
+ },
+ {
+  "word": "playa",
+  "meaning": "beach",
+  "pos": "noun"
+ },
+ {
+  "word": "sablo",
+  "meaning": "sand",
+  "pos": "noun"
+ },
+ {
+  "word": "onda",
+  "meaning": "wave",
+  "pos": "noun"
+ },
+ {
+  "word": "storma",
+  "meaning": "storm",
+  "pos": "noun"
+ },
+ {
+  "word": "tondra",
+  "meaning": "thunder",
+  "pos": "noun"
+ },
+ {
+  "word": "planta",
+  "meaning": "plant",
+  "pos": "noun"
+ },
+ {
+  "word": "rado",
+  "meaning": "root",
+  "pos": "noun"
+ },
+ {
+  "word": "insek",
+  "meaning": "insect",
+  "pos": "noun"
+ },
+ {
+  "word": "abë",
+  "meaning": "bee",
+  "pos": "noun"
+ },
+ {
+  "word": "mosko",
+  "meaning": "fly (the insect)",
+  "pos": "noun"
+ },
+ {
+  "word": "papiyon",
+  "meaning": "butterfly",
+  "pos": "noun"
+ },
+ {
+  "word": "domo",
+  "meaning": "pet",
+  "pos": "noun"
+ },
+ {
+  "word": "rato",
+  "meaning": "mouse",
+  "pos": "noun"
+ },
+ {
+  "word": "kagë",
+  "meaning": "cage",
+  "pos": "noun"
+ },
+ {
+  "word": "zoo",
+  "meaning": "zoo",
+  "pos": "noun"
+ },
+ {
+  "word": "leon",
+  "meaning": "lion",
+  "pos": "noun"
+ },
+ {
+  "word": "elefan",
+  "meaning": "elephant",
+  "pos": "noun"
+ },
+ {
+  "word": "simyo",
+  "meaning": "monkey",
+  "pos": "noun"
+ },
+ {
+  "word": "piko",
+  "meaning": "peak",
+  "pos": "noun"
+ },
+ {
+  "word": "monta",
+  "meaning": "to climb",
+  "pos": "verb"
+ },
+ {
+  "word": "planet",
+  "meaning": "planet",
+  "pos": "noun"
+ },
+ {
+  "word": "kosmo",
+  "meaning": "space (beyond the sky)",
+  "pos": "noun"
+ },
+ {
+  "word": "lili",
+  "meaning": "lily",
+  "pos": "noun"
+ },
+ {
+  "word": "tulpa",
+  "meaning": "tulip",
+  "pos": "noun"
+ },
+ {
+  "word": "buket",
+  "meaning": "bouquet",
+  "pos": "noun"
+ },
+ {
+  "word": "pauza",
+  "meaning": "break",
+  "pos": "noun"
+ },
+ {
+  "word": "kantina",
+  "meaning": "cafeteria",
+  "pos": "noun"
+ },
+ {
+  "word": "nota",
+  "meaning": "grade",
+  "pos": "noun"
+ },
+ {
+  "word": "kompu",
+  "meaning": "computer",
+  "pos": "noun"
+ },
+ {
+  "word": "ekran",
+  "meaning": "screen",
+  "pos": "noun"
+ },
+ {
+  "word": "tipa",
+  "meaning": "to type",
+  "pos": "verb"
+ },
+ {
+  "word": "biblio",
+  "meaning": "library",
+  "pos": "noun"
+ },
+ {
+  "word": "silen",
+  "meaning": "quiet",
+  "pos": "adjective"
+ },
+ {
+  "word": "kwesto",
+  "meaning": "question",
+  "pos": "noun"
+ },
+ {
+  "word": "repo",
+  "meaning": "answer",
+  "pos": "noun"
+ },
+ {
+  "word": "piloto",
+  "meaning": "pilot",
+  "pos": "noun"
+ },
+ {
+  "word": "teknik",
+  "meaning": "engineer",
+  "pos": "noun"
+ },
+ {
+  "word": "ofis",
+  "meaning": "office",
+  "pos": "noun"
+ },
+ {
+  "word": "shef",
+  "meaning": "boss",
+  "pos": "noun"
+ },
+ {
+  "word": "paga",
+  "meaning": "to pay",
+  "pos": "verb"
+ },
+ {
+  "word": "kalendar",
+  "meaning": "calendar",
+  "pos": "noun"
+ },
+ {
+  "word": "data",
+  "meaning": "date",
+  "pos": "noun"
+ },
+ {
   "word": "angra",
   "meaning": "angry",
   "pos": "adjective"
@@ -1888,5 +2433,170 @@
   "word": "muda",
   "meaning": "to change",
   "pos": "verb"
+ },
+ {
+  "word": "fatiga",
+  "meaning": "tired",
+  "pos": "adjective"
+ },
+ {
+  "word": "tedo",
+  "meaning": "bored",
+  "pos": "adjective"
+ },
+ {
+  "word": "kisa",
+  "meaning": "to kiss",
+  "pos": "verb"
+ },
+ {
+  "word": "abraza",
+  "meaning": "to hug",
+  "pos": "verb"
+ },
+ {
+  "word": "kwida",
+  "meaning": "to worry",
+  "pos": "verb"
+ },
+ {
+  "word": "surpriza",
+  "meaning": "surprise",
+  "pos": "noun"
+ },
+ {
+  "word": "aktiva",
+  "meaning": "active",
+  "pos": "adjective"
+ },
+ {
+  "word": "feya",
+  "meaning": "fairy",
+  "pos": "noun"
+ },
+ {
+  "word": "magik",
+  "meaning": "magic",
+  "pos": "noun"
+ },
+ {
+  "word": "heroë",
+  "meaning": "hero",
+  "pos": "noun"
+ },
+ {
+  "word": "salva",
+  "meaning": "to save",
+  "pos": "verb"
+ },
+ {
+  "word": "sekret",
+  "meaning": "secret",
+  "pos": "noun"
+ },
+ {
+  "word": "letra",
+  "meaning": "letter",
+  "pos": "noun"
+ },
+ {
+  "word": "shaka",
+  "meaning": "joke",
+  "pos": "noun"
+ },
+ {
+  "word": "novela",
+  "meaning": "novel",
+  "pos": "noun"
+ },
+ {
+  "word": "autor",
+  "meaning": "author",
+  "pos": "noun"
+ },
+ {
+  "word": "filmo",
+  "meaning": "movie",
+  "pos": "noun"
+ },
+ {
+  "word": "kino",
+  "meaning": "cinema",
+  "pos": "noun"
+ },
+ {
+  "word": "kolekta",
+  "meaning": "to collect",
+  "pos": "verb"
+ },
+ {
+  "word": "stampo",
+  "meaning": "stamp",
+  "pos": "noun"
+ },
+ {
+  "word": "kamera",
+  "meaning": "camera",
+  "pos": "noun"
+ },
+ {
+  "word": "nada",
+  "meaning": "to swim",
+  "pos": "verb"
+ },
+ {
+  "word": "piskina",
+  "meaning": "pool",
+  "pos": "noun"
+ },
+ {
+  "word": "biko",
+  "meaning": "bike",
+  "pos": "noun"
+ },
+ {
+  "word": "korso",
+  "meaning": "race",
+  "pos": "noun"
+ },
+ {
+  "word": "video",
+  "meaning": "video",
+  "pos": "noun"
+ },
+ {
+  "word": "reto",
+  "meaning": "internet",
+  "pos": "noun"
+ },
+ {
+  "word": "honesta",
+  "meaning": "honest",
+  "pos": "adjective"
+ },
+ {
+  "word": "dulsë",
+  "meaning": "kind",
+  "pos": "adjective"
+ },
+ {
+  "word": "nova",
+  "meaning": "news",
+  "pos": "noun"
+ },
+ {
+  "word": "invita",
+  "meaning": "to invite",
+  "pos": "verb"
+ },
+ {
+  "word": "pardon",
+  "meaning": "sorry",
+  "pos": "interjection"
+ },
+ {
+  "word": "konsel",
+  "meaning": "advice",
+  "pos": "noun"
  }
 ]

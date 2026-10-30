@@ -71,7 +71,7 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
                 var number = 0
                 for (lesson in module.lessons) {
                     if (lesson.kind == Kind.LESSON) number++
-                    add(Row.Node(lesson, number + if (module.half) 5 else 0, index++))
+                    add(Row.Node(lesson, number + if (module.half) 10 else 0, index++))
                 }
             }
         }

@@ -4,7 +4,7 @@ venderian (native name **vendëri**, said VEN-dë-ri) is a made-up language with
 
 - glyph strokes: [`alphabet.json`](alphabet.json) (rendered as [`alphabet.svg`](alphabet.svg) by `tools/render_chart.py`)
 - dictionary: [`app/src/main/assets/dictionary.json`](../app/src/main/assets/dictionary.json), the starter words in `tools/make_dictionary.py` plus every word the course defines
-- the course: [`course/`](../course) (3 sections, 9 modules, 90 lessons), built and checked by `tools/make_course.py`
+- the course: [`course/`](../course) (3 sections, 9 modules, 180 lessons), built and checked by `tools/make_course.py`
 
 ![alphabet chart](alphabet.svg)
 

@@ -14,7 +14,8 @@ it checks that every word in a sentence was taught in this lesson or an earlier 
 endings like -an, -ta, -or only once those endings were taught), that endings attach the
 right way (-n after a vowel, -an after a consonant...), that new words follow the sound
 rules, and that no ending turns one word into another word. a challenge is added after
-every module N, and a gold lesson after every module N.5."""
+every module N, and a gold lesson after every module N.5.
+s1.txt holds lessons 1-5 of each module and s1x.txt lessons 6-10 (same for s2, s3)."""
 import json
 import re
 import sys
@@ -44,22 +45,29 @@ def ends_in_vowel(word):
 
 def parse():
     sections, errors = [], []
+    # s1.txt, s1x.txt, s2.txt...: a file's base comes before its extra lessons
     defined = []  # (word, meaning, pos) defined by the course
-    for path in sorted(COURSE.glob("s*.txt")):
+    for path in sorted(COURSE.glob("s*.txt"), key=lambda p: (p.stem.rstrip("x"), p.stem)):
         section = module = lesson = None
         for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             line = raw.split("#")[0].strip() if not raw.strip().startswith("+") else raw.strip()
             if not line:
                 continue
             where = f"{path.name}:{n}"
+            # a section or module that already exists (from an earlier file) gets the new lessons
+            # appended: s1.txt has lessons 1-5 of each module, s1x.txt lessons 6-10
             if line.startswith("section "):
                 num, title, subtitle = (x.strip() for x in line[len("section "):].split("|"))
-                section = {"id": int(num), "title": title, "subtitle": subtitle, "modules": []}
-                sections.append(section)
+                section = next((x for x in sections if x["id"] == int(num)), None)
+                if section is None:
+                    section = {"id": int(num), "title": title, "subtitle": subtitle, "modules": []}
+                    sections.append(section)
             elif line.startswith("module "):
                 num, title = (x.strip() for x in line[len("module "):].split("|"))
-                module = {"id": num, "title": title, "half": num.endswith(".5"), "lessons": []}
-                section["modules"].append(module)
+                module = next((x for x in section["modules"] if x["id"] == num), None)
+                if module is None:
+                    module = {"id": num, "title": title, "half": num.endswith(".5"), "lessons": []}
+                    section["modules"].append(module)
             elif line.startswith("lesson "):
                 lesson = {"title": line[len("lesson "):].strip(), "tip": "", "words": [], "sentences": [], "where": where}
                 module["lessons"].append(lesson)
@@ -136,6 +144,8 @@ def check_lessons(sections, entries, errors):
     for section in sections:
         for module in section["modules"]:
             for lesson in module["lessons"]:
+                # a word listed again later is only taught the first time
+                lesson["words"] = [w for w in lesson["words"] if w not in known and not (w.startswith("-") and w[1:] in endings)]
                 for w in lesson["words"]:
                     if w not in dictionary:
                         errors.append(f"{lesson['where']}: {w} is not in the dictionary")

@@ -203,6 +203,173 @@
        ]
       },
       {
+       "id": "m1-l6",
+       "kind": "lesson",
+       "title": "how old are you?",
+       "tip": "to say how old you are, have years: \"mi dek yer ha\", I have ten years.",
+       "words": [
+        "kwo",
+        "dek",
+        "yer",
+        "edë"
+       ],
+       "sentences": [
+        {
+         "v": "edë da tu kwo?",
+         "e": "what is your age?"
+        },
+        {
+         "v": "mi dek yer ha.",
+         "e": "I am ten years old."
+        },
+        {
+         "v": "bro da mi dor yer ha.",
+         "e": "my brother is two years old."
+        },
+        {
+         "v": "tu dek yer ha ka?",
+         "e": "are you ten years old?"
+        },
+        {
+         "v": "sesa da ana ek yer ha.",
+         "e": "Ana's sister is one year old."
+        }
+       ]
+      },
+      {
+       "id": "m1-l7",
+       "kind": "lesson",
+       "title": "names",
+       "tip": "",
+       "words": [
+        "ishe",
+        "kwi",
+        "lela"
+       ],
+       "sentences": [
+        {
+         "v": "ishe da tu kwo?",
+         "e": "what is your name?"
+        },
+        {
+         "v": "ishe da mi tomo.",
+         "e": "my name is Tomo."
+        },
+        {
+         "v": "kwi sa?",
+         "e": "who is he?"
+        },
+        {
+         "v": "sa bro da mi.",
+         "e": "he is my brother."
+        },
+        {
+         "v": "ishe da sesa da mi lela.",
+         "e": "my sister's name is Lela."
+        }
+       ]
+      },
+      {
+       "id": "m1-l8",
+       "kind": "lesson",
+       "title": "aunts and uncles",
+       "tip": "",
+       "words": [
+        "tiya",
+        "tiyo",
+        "kuzo"
+       ],
+       "sentences": [
+        {
+         "v": "tiya da mi tis kiti ha.",
+         "e": "my aunt has three children."
+        },
+        {
+         "v": "tiyo da tu gran ka?",
+         "e": "is your uncle big?"
+        },
+        {
+         "v": "mi dor kuzo ha.",
+         "e": "I have two cousins."
+        },
+        {
+         "v": "tiya i tiyo vet.",
+         "e": "the aunt and uncle are old."
+        },
+        {
+         "v": "kuzo da ana tomo.",
+         "e": "Ana's cousin is Tomo."
+        }
+       ]
+      },
+      {
+       "id": "m1-l9",
+       "kind": "lesson",
+       "title": "the baby",
+       "tip": "",
+       "words": [
+        "nov",
+        "nema",
+        "liva",
+        "bebë"
+       ],
+       "sentences": [
+        {
+         "v": "folka da mi bebë nov ha.",
+         "e": "my family has a new baby."
+        },
+        {
+         "v": "bebë pik.",
+         "e": "the baby is small."
+        },
+        {
+         "v": "bebë nema.",
+         "e": "the baby sleeps."
+        },
+        {
+         "v": "bebë da sesa da mi nema ka?",
+         "e": "is my sister's baby sleeping?"
+        },
+        {
+         "v": "baba bebë liva.",
+         "e": "grandmother loves the baby."
+        }
+       ]
+      },
+      {
+       "id": "m1-l10",
+       "kind": "lesson",
+       "title": "a family picture",
+       "tip": "",
+       "words": [
+        "ik",
+        "lë",
+        "kuadro"
+       ],
+       "sentences": [
+        {
+         "v": "ve kuadro da folka da mi.",
+         "e": "this is a picture of my family."
+        },
+        {
+         "v": "ik ama i aba.",
+         "e": "here are mother and father."
+        },
+        {
+         "v": "lë baba i dedo.",
+         "e": "there are grandmother and grandfather."
+        },
+        {
+         "v": "kwi ve?",
+         "e": "who is this?"
+        },
+        {
+         "v": "ve tiyo da mi.",
+         "e": "this is my uncle."
+        }
+       ]
+      },
+      {
        "id": "m1-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -211,7 +378,12 @@
         "m1-l2",
         "m1-l3",
         "m1-l4",
-        "m1-l5"
+        "m1-l5",
+        "m1-l6",
+        "m1-l7",
+        "m1-l8",
+        "m1-l9",
+        "m1-l10"
        ]
       }
      ]
@@ -230,8 +402,6 @@
         "kar",
         "un",
         "viva",
-        "ik",
-        "lë",
         "kwe"
        ],
        "sentences": [
@@ -303,7 +473,6 @@
         "do",
         "ra",
         "fela",
-        "liva",
         "festa",
         "dara"
        ],
@@ -371,7 +540,6 @@
        "title": "we love each other",
        "tip": "mol (very) goes right before the word it makes stronger.",
        "words": [
-        "ishe",
         "goda",
         "vren",
         "bon",
@@ -402,6 +570,173 @@
        ]
       },
       {
+       "id": "m1.5-l6",
+       "kind": "lesson",
+       "title": "birthday",
+       "tip": "",
+       "words": [
+        "vedey",
+        "fasa",
+        "kwan",
+        "nasdey",
+        "torta"
+       ],
+       "sentences": [
+        {
+         "v": "vedey nasdey da mi!",
+         "e": "today is my birthday!"
+        },
+        {
+         "v": "ama torta fasa.",
+         "e": "mother makes a cake."
+        },
+        {
+         "v": "tot dara ra mi do.",
+         "e": "everyone gives a gift to me."
+        },
+        {
+         "v": "mi mol fela.",
+         "e": "I am very happy."
+        },
+        {
+         "v": "nasdey da tu kwan?",
+         "e": "when is your birthday?"
+        }
+       ]
+      },
+      {
+       "id": "m1.5-l7",
+       "kind": "lesson",
+       "title": "songs at home",
+       "tip": "",
+       "words": [
+        "lira",
+        "lir",
+        "kenë",
+        "bela"
+       ],
+       "sentences": [
+        {
+         "v": "baba lir vet lira.",
+         "e": "grandmother sings an old song."
+        },
+        {
+         "v": "kitin kun lira.",
+         "e": "the children sing together."
+        },
+        {
+         "v": "dedo liran multa kenë.",
+         "e": "grandfather knows many songs."
+        },
+        {
+         "v": "tu ve lir kenë ka?",
+         "e": "do you know this song?"
+        },
+        {
+         "v": "ve lir bela.",
+         "e": "this song is beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m1.5-l8",
+       "kind": "lesson",
+       "title": "grandmother's food",
+       "tip": "",
+       "words": [
+        "skri",
+        "resita"
+       ],
+       "sentences": [
+        {
+         "v": "baba yamë bon fasa.",
+         "e": "grandmother makes good food."
+        },
+        {
+         "v": "resita da baba vet.",
+         "e": "grandmother's recipe is old."
+        },
+        {
+         "v": "min yamë da baba liva.",
+         "e": "we love grandmother's food."
+        },
+        {
+         "v": "resita ra mi do!",
+         "e": "give the recipe to me!"
+        },
+        {
+         "v": "ama resita skri.",
+         "e": "mother writes the recipe."
+        }
+       ]
+      },
+      {
+       "id": "m1.5-l9",
+       "kind": "lesson",
+       "title": "visiting",
+       "tip": "",
+       "words": [
+        "ven",
+        "es",
+        "vizita",
+        "saven"
+       ],
+       "sentences": [
+        {
+         "v": "min baba vizita.",
+         "e": "we visit grandmother."
+        },
+        {
+         "v": "tiyo saven ven.",
+         "e": "the uncle comes often."
+        },
+        {
+         "v": "tu dedo saven vizita ka?",
+         "e": "do you visit grandfather often?"
+        },
+        {
+         "v": "kuzon da mi ik ven.",
+         "e": "my cousins come here."
+        },
+        {
+         "v": "folka tot kun es.",
+         "e": "the whole family is together."
+        }
+       ]
+      },
+      {
+       "id": "m1.5-l10",
+       "kind": "lesson",
+       "title": "thank you, family",
+       "tip": "",
+       "words": [
+        "shevan",
+        "ayda"
+       ],
+       "sentences": [
+        {
+         "v": "shevan, ama!",
+         "e": "thank you, mother!"
+        },
+        {
+         "v": "aba mi ayda.",
+         "e": "father helps me."
+        },
+        {
+         "v": "mi ama ayda.",
+         "e": "I help mother."
+        },
+        {
+         "v": "folka da mi mi liva.",
+         "e": "my family loves me."
+        },
+        {
+         "v": "shevan, folka!",
+         "e": "thank you, family!"
+        }
+       ]
+      },
+      {
        "id": "m1.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -411,11 +746,21 @@
         "m1-l3",
         "m1-l4",
         "m1-l5",
+        "m1-l6",
+        "m1-l7",
+        "m1-l8",
+        "m1-l9",
+        "m1-l10",
         "m1.5-l1",
         "m1.5-l2",
         "m1.5-l3",
         "m1.5-l4",
-        "m1.5-l5"
+        "m1.5-l5",
+        "m1.5-l6",
+        "m1.5-l7",
+        "m1.5-l8",
+        "m1.5-l9",
+        "m1.5-l10"
        ]
       }
      ]
@@ -434,7 +779,6 @@
         "bren",
         "mikh",
         "vola",
-        "kwo",
         "kafa",
         "chay"
        ],
@@ -510,9 +854,7 @@
         "sib",
         "okh",
         "nir",
-        "dek",
-        "zen",
-        "es"
+        "zen"
        ],
        "sentences": [
         {
@@ -579,7 +921,6 @@
        "title": "cooking",
        "tip": "",
        "words": [
-        "fasa",
         "kal",
         "frid",
         "kuka",
@@ -610,6 +951,173 @@
        ]
       },
       {
+       "id": "m2-l6",
+       "kind": "lesson",
+       "title": "vegetables",
+       "tip": "",
+       "words": [
+        "legum",
+        "karot",
+        "patat",
+        "tomat"
+       ],
+       "sentences": [
+        {
+         "v": "leguman bon.",
+         "e": "vegetables are good."
+        },
+        {
+         "v": "karot gel.",
+         "e": "the carrot is yellow."
+        },
+        {
+         "v": "mi patatan goda.",
+         "e": "I like potatoes."
+        },
+        {
+         "v": "tomat rud i sava.",
+         "e": "the tomato is red and sweet."
+        },
+        {
+         "v": "kiti leguman ne goda.",
+         "e": "the child does not like vegetables."
+        }
+       ]
+      },
+      {
+       "id": "m2-l7",
+       "kind": "lesson",
+       "title": "meat and fish",
+       "tip": "",
+       "words": [
+        "glob",
+        "o",
+        "karnë"
+       ],
+       "sentences": [
+        {
+         "v": "aba karnë yama.",
+         "e": "father eats meat."
+        },
+        {
+         "v": "mi glob goda.",
+         "e": "I like fish."
+        },
+        {
+         "v": "ama glob kuka.",
+         "e": "mother cooks fish."
+        },
+        {
+         "v": "karnë kal.",
+         "e": "the meat is hot."
+        },
+        {
+         "v": "tu karnë o glob vola?",
+         "e": "do you want meat or fish?"
+        }
+       ]
+      },
+      {
+       "id": "m2-l8",
+       "kind": "lesson",
+       "title": "drinks",
+       "tip": "",
+       "words": [
+        "kiro",
+        "suko",
+        "glasë"
+       ],
+       "sentences": [
+        {
+         "v": "mi suko vola.",
+         "e": "I want juice."
+        },
+        {
+         "v": "kiro, glasë da nami ra mi do.",
+         "e": "please give me a glass of water."
+        },
+        {
+         "v": "suko sava.",
+         "e": "the juice is sweet."
+        },
+        {
+         "v": "kafa kal, suko frid.",
+         "e": "the coffee is hot, the juice is cold."
+        },
+        {
+         "v": "tu kwo sipa?",
+         "e": "what do you drink?"
+        }
+       ]
+      },
+      {
+       "id": "m2-l9",
+       "kind": "lesson",
+       "title": "the restaurant",
+       "tip": "",
+       "words": [
+        "restoran",
+        "menu",
+        "garson"
+       ],
+       "sentences": [
+        {
+         "v": "min un restoran es.",
+         "e": "we are in a restaurant."
+        },
+        {
+         "v": "garson menu do.",
+         "e": "the waiter gives the menu."
+        },
+        {
+         "v": "mi supa vola.",
+         "e": "I want soup."
+        },
+        {
+         "v": "ve restoran bon ka?",
+         "e": "is this restaurant good?"
+        },
+        {
+         "v": "menu gran.",
+         "e": "the menu is big."
+        }
+       ]
+      },
+      {
+       "id": "m2-l10",
+       "kind": "lesson",
+       "title": "sweet things",
+       "tip": "",
+       "words": [
+        "mal",
+        "choko",
+        "kandi",
+        "mel"
+       ],
+       "sentences": [
+        {
+         "v": "kitin choko goda.",
+         "e": "the children like chocolate."
+        },
+        {
+         "v": "mel sava.",
+         "e": "honey is sweet."
+        },
+        {
+         "v": "kandi multa mal.",
+         "e": "a lot of candy is bad."
+        },
+        {
+         "v": "tu choko vola ka?",
+         "e": "do you want chocolate?"
+        },
+        {
+         "v": "ama choko ne yama.",
+         "e": "mother does not eat chocolate."
+        }
+       ]
+      },
+      {
        "id": "m2-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -618,7 +1126,12 @@
         "m2-l2",
         "m2-l3",
         "m2-l4",
-        "m2-l5"
+        "m2-l5",
+        "m2-l6",
+        "m2-l7",
+        "m2-l8",
+        "m2-l9",
+        "m2-l10"
        ]
       }
      ]
@@ -634,7 +1147,6 @@
        "title": "breakfast",
        "tip": "",
        "words": [
-        "o",
         "matin",
         "pran",
         "ovo"
@@ -703,7 +1215,6 @@
        "title": "tastes",
        "tip": "",
        "words": [
-        "mal",
         "amar",
         "salo",
         "gusta"
@@ -736,10 +1247,7 @@
        "kind": "lesson",
        "title": "please and thank you",
        "tip": "to tell someone to do something, leave out tu: just say the object and the verb. put kiro (please) in front to be nice.",
-       "words": [
-        "kiro",
-        "shevan"
-       ],
+       "words": [],
        "sentences": [
         {
          "v": "kiro, nami ra mi do.",
@@ -770,8 +1278,7 @@
        "tip": "",
        "words": [
         "yamik",
-        "satë",
-        "torta"
+        "satë"
        ],
        "sentences": [
         {
@@ -797,6 +1304,165 @@
        ]
       },
       {
+       "id": "m2.5-l6",
+       "kind": "lesson",
+       "title": "lunch",
+       "tip": "",
+       "words": [
+        "nun",
+        "medey"
+       ],
+       "sentences": [
+        {
+         "v": "un medey, mi supa yama.",
+         "e": "at lunch, I eat soup."
+        },
+        {
+         "v": "medey kwan?",
+         "e": "when is lunch?"
+        },
+        {
+         "v": "min medey kun yama.",
+         "e": "we eat lunch together."
+        },
+        {
+         "v": "ve medey mol bon.",
+         "e": "this lunch is very good."
+        },
+        {
+         "v": "nun mi medey vola.",
+         "e": "now I want lunch."
+        }
+       ]
+      },
+      {
+       "id": "m2.5-l7",
+       "kind": "lesson",
+       "title": "the shopping list",
+       "tip": "",
+       "words": [
+        "lon",
+        "lista"
+       ],
+       "sentences": [
+        {
+         "v": "mi lista skri.",
+         "e": "I write a list."
+        },
+        {
+         "v": "lista lon.",
+         "e": "the list is long."
+        },
+        {
+         "v": "aplon, bren i mikh un lista es.",
+         "e": "apples, bread and milk are on the list."
+        },
+        {
+         "v": "min un bazar kopa.",
+         "e": "we buy at the market."
+        },
+        {
+         "v": "lista da ama kwe es?",
+         "e": "where is mother's list?"
+        }
+       ]
+      },
+      {
+       "id": "m2.5-l8",
+       "kind": "lesson",
+       "title": "setting the table",
+       "tip": "",
+       "words": [
+        "kup",
+        "kulyë",
+        "forko"
+       ],
+       "sentences": [
+        {
+         "v": "kupan sur tabla.",
+         "e": "the cups are on the table."
+        },
+        {
+         "v": "kulyë i forko ra mi do.",
+         "e": "give me a spoon and a fork."
+        },
+        {
+         "v": "forko kwe es?",
+         "e": "where is the fork?"
+        },
+        {
+         "v": "nash sur plato es.",
+         "e": "the knife is on the plate."
+        },
+        {
+         "v": "tabla bela.",
+         "e": "the table is beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m2.5-l9",
+       "kind": "lesson",
+       "title": "cleaning up",
+       "tip": "",
+       "words": [
+        "limpa"
+       ],
+       "sentences": [
+        {
+         "v": "mi platon limpa.",
+         "e": "I clean the plates."
+        },
+        {
+         "v": "aba kukin limpa.",
+         "e": "father cleans the kitchen."
+        },
+        {
+         "v": "kitin ayda.",
+         "e": "the children help."
+        },
+        {
+         "v": "nami kal bon.",
+         "e": "hot water is good."
+        },
+        {
+         "v": "tot kun limpa.",
+         "e": "everyone cleans together."
+        }
+       ]
+      },
+      {
+       "id": "m2.5-l10",
+       "kind": "lesson",
+       "title": "favorite food",
+       "tip": "",
+       "words": [
+        "favo"
+       ],
+       "sentences": [
+        {
+         "v": "yamë favo da tu kwo?",
+         "e": "what is your favorite food?"
+        },
+        {
+         "v": "yamë favo da mi supa.",
+         "e": "my favorite food is soup."
+        },
+        {
+         "v": "frut favo da sa banan.",
+         "e": "her favorite fruit is the banana."
+        },
+        {
+         "v": "ama torta favo da mi fasa.",
+         "e": "mother makes my favorite cake."
+        },
+        {
+         "v": "tu choko goda ka?",
+         "e": "do you like chocolate?"
+        }
+       ]
+      },
+      {
        "id": "m2.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -806,11 +1472,21 @@
         "m2-l3",
         "m2-l4",
         "m2-l5",
+        "m2-l6",
+        "m2-l7",
+        "m2-l8",
+        "m2-l9",
+        "m2-l10",
         "m2.5-l1",
         "m2.5-l2",
         "m2.5-l3",
         "m2.5-l4",
-        "m2.5-l5"
+        "m2.5-l5",
+        "m2.5-l6",
+        "m2.5-l7",
+        "m2.5-l8",
+        "m2.5-l9",
+        "m2.5-l10"
        ]
       }
      ]
@@ -828,7 +1504,6 @@
        "words": [
         "dur",
         "vindë",
-        "bela",
         "rum",
         "kama",
         "stul"
@@ -902,8 +1577,7 @@
         "apra",
         "klu",
         "seda",
-        "sta",
-        "nema"
+        "sta"
        ],
        "sentences": [
         {
@@ -999,6 +1673,168 @@
        ]
       },
       {
+       "id": "m3-l6",
+       "kind": "lesson",
+       "title": "the bathroom",
+       "tip": "",
+       "words": [
+        "twalet",
+        "spegë",
+        "savon"
+       ],
+       "sentences": [
+        {
+         "v": "twalet kwe es?",
+         "e": "where is the toilet?"
+        },
+        {
+         "v": "spegë gran.",
+         "e": "the mirror is big."
+        },
+        {
+         "v": "savon nek spegë es.",
+         "e": "the soap is next to the mirror."
+        },
+        {
+         "v": "mi spegë un rum da mi ha.",
+         "e": "I have a mirror in my room."
+        },
+        {
+         "v": "savon alba.",
+         "e": "the soap is white."
+        }
+       ]
+      },
+      {
+       "id": "m3-l7",
+       "kind": "lesson",
+       "title": "upstairs and downstairs",
+       "tip": "",
+       "words": [
+        "gol",
+        "supra",
+        "infra",
+        "skala"
+       ],
+       "sentences": [
+        {
+         "v": "rum da mi supra es.",
+         "e": "my room is upstairs."
+        },
+        {
+         "v": "kukin infra es.",
+         "e": "the kitchen is downstairs."
+        },
+        {
+         "v": "skala gran.",
+         "e": "the stairs are big."
+        },
+        {
+         "v": "vuf supra ne gol.",
+         "e": "the dog does not go upstairs."
+        },
+        {
+         "v": "mish infra nema.",
+         "e": "the cat sleeps downstairs."
+        }
+       ]
+      },
+      {
+       "id": "m3-l8",
+       "kind": "lesson",
+       "title": "the garden",
+       "tip": "",
+       "words": [
+        "gala",
+        "luda",
+        "gardo"
+       ],
+       "sentences": [
+        {
+         "v": "kar da mi gardo ha.",
+         "e": "my house has a garden."
+        },
+        {
+         "v": "galan multa un gardo es.",
+         "e": "there are many flowers in the garden."
+        },
+        {
+         "v": "tal gran un gardo es.",
+         "e": "a big tree is in the garden."
+        },
+        {
+         "v": "vuf un gardo luda.",
+         "e": "the dog plays in the garden."
+        },
+        {
+         "v": "gardo bela.",
+         "e": "the garden is beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m3-l9",
+       "kind": "lesson",
+       "title": "cleaning the house",
+       "tip": "",
+       "words": [
+        "polvo"
+       ],
+       "sentences": [
+        {
+         "v": "vedey min kar limpa.",
+         "e": "today we clean the house."
+        },
+        {
+         "v": "polvo multa sur tabla es.",
+         "e": "there is a lot of dust on the table."
+        },
+        {
+         "v": "aba vindë limpa.",
+         "e": "father cleans the window."
+        },
+        {
+         "v": "mi rum da mi limpa.",
+         "e": "I clean my room."
+        },
+        {
+         "v": "kar nun bela.",
+         "e": "now the house is beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m3-l10",
+       "kind": "lesson",
+       "title": "neighbors",
+       "tip": "",
+       "words": [
+        "vesin"
+       ],
+       "sentences": [
+        {
+         "v": "vesin da mi vet.",
+         "e": "my neighbor is old."
+        },
+        {
+         "v": "vesin vuf gran ha.",
+         "e": "the neighbor has a big dog."
+        },
+        {
+         "v": "vesinan bon.",
+         "e": "the neighbors are good."
+        },
+        {
+         "v": "vesin un kar alba viva.",
+         "e": "the neighbor lives in a white house."
+        },
+        {
+         "v": "tu vesin kenë ka?",
+         "e": "do you know the neighbor?"
+        }
+       ]
+      },
+      {
        "id": "m3-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -1007,7 +1843,12 @@
         "m3-l2",
         "m3-l3",
         "m3-l4",
-        "m3-l5"
+        "m3-l5",
+        "m3-l6",
+        "m3-l7",
+        "m3-l8",
+        "m3-l9",
+        "m3-l10"
        ]
       }
      ]
@@ -1024,8 +1865,6 @@
        "tip": "",
        "words": [
         "khan",
-        "gol",
-        "kwan",
         "leva",
         "lava",
         "dentë"
@@ -1059,8 +1898,6 @@
        "title": "time words",
        "tip": "",
        "words": [
-        "nun",
-        "vedey",
         "posdey",
         "predey",
         "dey",
@@ -1099,7 +1936,6 @@
         "skol",
         "lerna",
         "ridë",
-        "skri",
         "mestro",
         "vendëri"
        ],
@@ -1132,9 +1968,6 @@
        "title": "evening",
        "tip": "want, like and can go after the other verb: \"mi nema vola\" is \"I want to sleep\".",
        "words": [
-        "luda",
-        "lira",
-        "lir",
         "ludo",
         "bano"
        ],
@@ -1197,6 +2030,164 @@
        ]
       },
       {
+       "id": "m3.5-l6",
+       "kind": "lesson",
+       "title": "clothes",
+       "tip": "",
+       "words": [
+        "kamis",
+        "pantal",
+        "shu"
+       ],
+       "sentences": [
+        {
+         "v": "mi kamis blu ha.",
+         "e": "I have a blue shirt."
+        },
+        {
+         "v": "pantal da tu mog.",
+         "e": "your pants are black."
+        },
+        {
+         "v": "shun da mi kwe es?",
+         "e": "where are my shoes?"
+        },
+        {
+         "v": "kiti shun nov ha.",
+         "e": "the child has new shoes."
+        },
+        {
+         "v": "ve kamis bela.",
+         "e": "this shirt is beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m3.5-l7",
+       "kind": "lesson",
+       "title": "getting dressed",
+       "tip": "",
+       "words": [
+        "vesta"
+       ],
+       "sentences": [
+        {
+         "v": "mi kamis vesta.",
+         "e": "I put on a shirt."
+        },
+        {
+         "v": "un matin, kiti shun vesta.",
+         "e": "in the morning, the child puts on shoes."
+        },
+        {
+         "v": "kamis rud vesta!",
+         "e": "put on the red shirt!"
+        },
+        {
+         "v": "aba kamis alba vesta.",
+         "e": "father puts on a white shirt."
+        },
+        {
+         "v": "tu kwo vesta?",
+         "e": "what do you put on?"
+        }
+       ]
+      },
+      {
+       "id": "m3.5-l8",
+       "kind": "lesson",
+       "title": "hurry up!",
+       "tip": "",
+       "words": [
+        "tarda",
+        "preko"
+       ],
+       "sentences": [
+        {
+         "v": "mi tarda!",
+         "e": "I am late!"
+        },
+        {
+         "v": "tu tarda ka?",
+         "e": "are you late?"
+        },
+        {
+         "v": "nay, mi preko.",
+         "e": "no, I am early."
+        },
+        {
+         "v": "gol! gol!",
+         "e": "go! go!"
+        },
+        {
+         "v": "ama preko leva.",
+         "e": "mother gets up early."
+        }
+       ]
+      },
+      {
+       "id": "m3.5-l9",
+       "kind": "lesson",
+       "title": "bedtime",
+       "tip": "",
+       "words": [
+        "noksa"
+       ],
+       "sentences": [
+        {
+         "v": "un noch, mi noksa vesta.",
+         "e": "at night, I put on pajamas."
+        },
+        {
+         "v": "ama sago thela.",
+         "e": "mother tells a story."
+        },
+        {
+         "v": "lampa klu!",
+         "e": "turn off the lamp!"
+        },
+        {
+         "v": "kiti nema vola.",
+         "e": "the child wants to sleep."
+        },
+        {
+         "v": "noch bon!",
+         "e": "good night!"
+        }
+       ]
+      },
+      {
+       "id": "m3.5-l10",
+       "kind": "lesson",
+       "title": "the weekend",
+       "tip": "",
+       "words": [
+        "fendey"
+       ],
+       "sentences": [
+        {
+         "v": "un fendey, mi skol ne gol.",
+         "e": "on the weekend, I do not go to school."
+        },
+        {
+         "v": "un fendey, min un gardo luda.",
+         "e": "on the weekend, we play in the garden."
+        },
+        {
+         "v": "aba un fendey nema.",
+         "e": "father sleeps on the weekend."
+        },
+        {
+         "v": "fendey kwan?",
+         "e": "when is the weekend?"
+        },
+        {
+         "v": "mi fendey liva.",
+         "e": "I love the weekend."
+        }
+       ]
+      },
+      {
        "id": "m3.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -1206,11 +2197,21 @@
         "m3-l3",
         "m3-l4",
         "m3-l5",
+        "m3-l6",
+        "m3-l7",
+        "m3-l8",
+        "m3-l9",
+        "m3-l10",
         "m3.5-l1",
         "m3.5-l2",
         "m3.5-l3",
         "m3.5-l4",
-        "m3.5-l5"
+        "m3.5-l5",
+        "m3.5-l6",
+        "m3.5-l7",
+        "m3.5-l8",
+        "m3.5-l9",
+        "m3.5-l10"
        ]
       }
      ]
@@ -1271,7 +2272,6 @@
        "tip": "past tense: add -ta to the verb. gol (go) becomes golta (went). kel means with, and also \"by\" for travel.",
        "words": [
         "-ta",
-        "ven",
         "pasa",
         "dos",
         "kel"
@@ -1340,7 +2340,6 @@
        "title": "travel",
        "tip": "",
        "words": [
-        "nov",
         "kwa",
         "vaya",
         "nasho",
@@ -1403,6 +2402,166 @@
        ]
       },
       {
+       "id": "m4-l6",
+       "kind": "lesson",
+       "title": "the bus",
+       "tip": "",
+       "words": [
+        "bus",
+        "stasyo",
+        "bilet"
+       ],
+       "sentences": [
+        {
+         "v": "bus un stasyo es.",
+         "e": "the bus is at the stop."
+        },
+        {
+         "v": "mi bilet kopata.",
+         "e": "I bought a ticket."
+        },
+        {
+         "v": "bus tarda.",
+         "e": "the bus is late."
+        },
+        {
+         "v": "tu kel bus golva ka?",
+         "e": "will you go by bus?"
+        },
+        {
+         "v": "stasyo kwe es?",
+         "e": "where is the station?"
+        }
+       ]
+      },
+      {
+       "id": "m4-l7",
+       "kind": "lesson",
+       "title": "the airport",
+       "tip": "",
+       "words": [
+        "avyon",
+        "avyokar"
+       ],
+       "sentences": [
+        {
+         "v": "avyon mol rap.",
+         "e": "the airplane is very fast."
+        },
+        {
+         "v": "min ra avyokar golta.",
+         "e": "we went to the airport."
+        },
+        {
+         "v": "avyon gran i alba.",
+         "e": "the airplane is big and white."
+        },
+        {
+         "v": "mi bagë gran ha.",
+         "e": "I have a big bag."
+        },
+        {
+         "v": "posdey min kel avyon vayava.",
+         "e": "tomorrow we will travel by airplane."
+        }
+       ]
+      },
+      {
+       "id": "m4-l8",
+       "kind": "lesson",
+       "title": "the hotel room",
+       "tip": "",
+       "words": [
+        "klavë"
+       ],
+       "sentences": [
+        {
+         "v": "rum da min un hotel pik.",
+         "e": "our room in the hotel is small."
+        },
+        {
+         "v": "klavë da rum kwe es?",
+         "e": "where is the room key?"
+        },
+        {
+         "v": "mi klavë ne ha.",
+         "e": "I do not have the key."
+        },
+        {
+         "v": "rum vindë gran ha.",
+         "e": "the room has a big window."
+        },
+        {
+         "v": "min ik dor noch esva.",
+         "e": "we will be here for two nights."
+        }
+       ]
+      },
+      {
+       "id": "m4-l9",
+       "kind": "lesson",
+       "title": "prices",
+       "tip": "",
+       "words": [
+        "karo",
+        "barat"
+       ],
+       "sentences": [
+        {
+         "v": "hotel karo.",
+         "e": "the hotel is expensive."
+        },
+        {
+         "v": "bus barat.",
+         "e": "the bus is cheap."
+        },
+        {
+         "v": "ve bilet kwanto kosta?",
+         "e": "how much does this ticket cost?"
+        },
+        {
+         "v": "avyon karo, tren barat.",
+         "e": "the airplane is expensive, the train is cheap."
+        },
+        {
+         "v": "mi zil multa ne ha.",
+         "e": "I do not have a lot of money."
+        }
+       ]
+      },
+      {
+       "id": "m4-l10",
+       "kind": "lesson",
+       "title": "postcards",
+       "tip": "",
+       "words": [
+        "posta",
+        "manda"
+       ],
+       "sentences": [
+        {
+         "v": "mi posta ra baba mandata.",
+         "e": "I sent a postcard to grandmother."
+        },
+        {
+         "v": "posta da tu bela.",
+         "e": "your postcard is beautiful."
+        },
+        {
+         "v": "mi postan multa kopata.",
+         "e": "I bought many postcards."
+        },
+        {
+         "v": "tu posta ra mi mandava ka?",
+         "e": "will you send me a postcard?"
+        },
+        {
+         "v": "baba posta ridëta.",
+         "e": "grandmother read the postcard."
+        }
+       ]
+      },
+      {
        "id": "m4-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -1411,7 +2570,12 @@
         "m4-l2",
         "m4-l3",
         "m4-l4",
-        "m4-l5"
+        "m4-l5",
+        "m4-l6",
+        "m4-l7",
+        "m4-l8",
+        "m4-l9",
+        "m4-l10"
        ]
       }
      ]
@@ -1463,7 +2627,6 @@
        "words": [
         "kweta",
         "repa",
-        "ayda",
         "hum",
         "prok",
         "dalë"
@@ -1497,7 +2660,6 @@
        "title": "how far",
        "tip": "",
        "words": [
-        "lon",
         "minut",
         "or"
        ],
@@ -1590,6 +2752,167 @@
        ]
       },
       {
+       "id": "m4.5-l6",
+       "kind": "lesson",
+       "title": "the bridge",
+       "tip": "",
+       "words": [
+        "ruma",
+        "ponto"
+       ],
+       "sentences": [
+        {
+         "v": "ponto sur ruma es.",
+         "e": "the bridge is over the river."
+        },
+        {
+         "v": "min sur ponto pasata.",
+         "e": "we walked over the bridge."
+        },
+        {
+         "v": "ponto vet i bela.",
+         "e": "the bridge is old and beautiful."
+        },
+        {
+         "v": "ruma gran nër ponto es.",
+         "e": "a big river is under the bridge."
+        },
+        {
+         "v": "ponto kwe es?",
+         "e": "where is the bridge?"
+        }
+       ]
+      },
+      {
+       "id": "m4.5-l7",
+       "kind": "lesson",
+       "title": "the town square",
+       "tip": "",
+       "words": [
+        "plaza",
+        "sentro",
+        "fontan",
+        "turë"
+       ],
+       "sentences": [
+        {
+         "v": "plaza un sentro da urba es.",
+         "e": "the square is in the center of the city."
+        },
+        {
+         "v": "fontan un plaza es.",
+         "e": "there is a fountain in the square."
+        },
+        {
+         "v": "turë mol gran.",
+         "e": "the tower is very big."
+        },
+        {
+         "v": "min ra turë golva.",
+         "e": "we will go to the tower."
+        },
+        {
+         "v": "sentro prok ka?",
+         "e": "is the center near?"
+        }
+       ]
+      },
+      {
+       "id": "m4.5-l8",
+       "kind": "lesson",
+       "title": "taking a taxi",
+       "tip": "",
+       "words": [
+        "dar",
+        "taksi",
+        "kondu"
+       ],
+       "sentences": [
+        {
+         "v": "taksi rap.",
+         "e": "the taxi is fast."
+        },
+        {
+         "v": "dar taksi kondu.",
+         "e": "the man drives the taxi."
+        },
+        {
+         "v": "min kel taksi ra hotel golta.",
+         "e": "we went to the hotel by taxi."
+        },
+        {
+         "v": "taksi karo ka?",
+         "e": "is the taxi expensive?"
+        },
+        {
+         "v": "aba oto kondu.",
+         "e": "father drives the car."
+        }
+       ]
+      },
+      {
+       "id": "m4.5-l9",
+       "kind": "lesson",
+       "title": "souvenirs",
+       "tip": "",
+       "words": [
+        "suvenir"
+       ],
+       "sentences": [
+        {
+         "v": "mi suvenir ra sesa kopata.",
+         "e": "I bought a souvenir for my sister."
+        },
+        {
+         "v": "suvenir pik i bela.",
+         "e": "the souvenir is small and beautiful."
+        },
+        {
+         "v": "boteka suveniran multa ha.",
+         "e": "the shop has many souvenirs."
+        },
+        {
+         "v": "ve suvenir kwanto kosta?",
+         "e": "how much does this souvenir cost?"
+        },
+        {
+         "v": "suvenir barat.",
+         "e": "the souvenir is cheap."
+        }
+       ]
+      },
+      {
+       "id": "m4.5-l10",
+       "kind": "lesson",
+       "title": "coming home",
+       "tip": "",
+       "words": [
+        "torna"
+       ],
+       "sentences": [
+        {
+         "v": "min ra kar tornata.",
+         "e": "we came back home."
+        },
+        {
+         "v": "vuf mol fela esta.",
+         "e": "the dog was very happy."
+        },
+        {
+         "v": "kar da min mol bon.",
+         "e": "our home is very good."
+        },
+        {
+         "v": "mi nema vola.",
+         "e": "I want to sleep."
+        },
+        {
+         "v": "posdey mi foton ra vren mandava.",
+         "e": "tomorrow I will send the photos to my friend."
+        }
+       ]
+      },
+      {
        "id": "m4.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -1599,11 +2922,21 @@
         "m4-l3",
         "m4-l4",
         "m4-l5",
+        "m4-l6",
+        "m4-l7",
+        "m4-l8",
+        "m4-l9",
+        "m4-l10",
         "m4.5-l1",
         "m4.5-l2",
         "m4.5-l3",
         "m4.5-l4",
-        "m4.5-l5"
+        "m4.5-l5",
+        "m4.5-l6",
+        "m4.5-l7",
+        "m4.5-l8",
+        "m4.5-l9",
+        "m4.5-l10"
        ]
       }
      ]
@@ -1690,8 +3023,6 @@
        "tip": "",
        "words": [
         "filo",
-        "gala",
-        "ruma",
         "tera",
         "lago",
         "silva"
@@ -1761,7 +3092,6 @@
        "tip": "",
        "words": [
         "pita",
-        "glob",
         "kaval",
         "uso",
         "vulka",
@@ -1791,6 +3121,166 @@
        ]
       },
       {
+       "id": "m5-l6",
+       "kind": "lesson",
+       "title": "the beach",
+       "tip": "",
+       "words": [
+        "playa",
+        "sablo",
+        "onda"
+       ],
+       "sentences": [
+        {
+         "v": "playa bela.",
+         "e": "the beach is beautiful."
+        },
+        {
+         "v": "sablo kal.",
+         "e": "the sand is hot."
+        },
+        {
+         "v": "ondan gran.",
+         "e": "the waves are big."
+        },
+        {
+         "v": "kitin sur playa ludata.",
+         "e": "the children played on the beach."
+        },
+        {
+         "v": "pelag blu.",
+         "e": "the sea is blue."
+        }
+       ]
+      },
+      {
+       "id": "m5-l7",
+       "kind": "lesson",
+       "title": "storms",
+       "tip": "",
+       "words": [
+        "storma",
+        "tondra"
+       ],
+       "sentences": [
+        {
+         "v": "vedey storma esva.",
+         "e": "today there will be a storm."
+        },
+        {
+         "v": "tondra forë.",
+         "e": "the thunder is strong."
+        },
+        {
+         "v": "mish tondra ne goda.",
+         "e": "the cat does not like thunder."
+        },
+        {
+         "v": "un storma, min un kar es.",
+         "e": "during the storm, we are at home."
+        },
+        {
+         "v": "storma ripë venta.",
+         "e": "the storm came again."
+        }
+       ]
+      },
+      {
+       "id": "m5-l8",
+       "kind": "lesson",
+       "title": "plants",
+       "tip": "",
+       "words": [
+        "planta",
+        "rado"
+       ],
+       "sentences": [
+        {
+         "v": "planta nami vola.",
+         "e": "the plant wants water."
+        },
+        {
+         "v": "talan radon lon ha.",
+         "e": "trees have long roots."
+        },
+        {
+         "v": "mi planta pik un rum ha.",
+         "e": "I have a small plant in my room."
+        },
+        {
+         "v": "plantan verdë.",
+         "e": "the plants are green."
+        },
+        {
+         "v": "ama plantan nami do.",
+         "e": "mother gives water to the plants."
+        }
+       ]
+      },
+      {
+       "id": "m5-l9",
+       "kind": "lesson",
+       "title": "insects",
+       "tip": "",
+       "words": [
+        "insek",
+        "abë",
+        "mosko",
+        "papiyon"
+       ],
+       "sentences": [
+        {
+         "v": "abë mel fasa.",
+         "e": "the bee makes honey."
+        },
+        {
+         "v": "papiyon bela.",
+         "e": "the butterfly is beautiful."
+        },
+        {
+         "v": "insekan multa un gardo es.",
+         "e": "there are many insects in the garden."
+        },
+        {
+         "v": "mosko mal.",
+         "e": "the fly is bad."
+        },
+        {
+         "v": "kiti abën ne goda.",
+         "e": "the child does not like bees."
+        }
+       ]
+      },
+      {
+       "id": "m5-l10",
+       "kind": "lesson",
+       "title": "hot and cold",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "vedey kalor dë predey.",
+         "e": "today is hotter than yesterday."
+        },
+        {
+         "v": "noch fridor dë dey.",
+         "e": "the night is colder than the day."
+        },
+        {
+         "v": "nami un lago frid.",
+         "e": "the water in the lake is cold."
+        },
+        {
+         "v": "ve dey kalesh da yer.",
+         "e": "this day is the hottest of the year."
+        },
+        {
+         "v": "sol kalesh.",
+         "e": "the sun is the hottest."
+        }
+       ]
+      },
+      {
        "id": "m5-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -1799,7 +3289,12 @@
         "m5-l2",
         "m5-l3",
         "m5-l4",
-        "m5-l5"
+        "m5-l5",
+        "m5-l6",
+        "m5-l7",
+        "m5-l8",
+        "m5-l9",
+        "m5-l10"
        ]
       }
      ]
@@ -1815,7 +3310,6 @@
        "title": "seasons",
        "tip": "",
        "words": [
-        "yer",
         "sezon",
         "primë",
         "somër",
@@ -1979,6 +3473,172 @@
        ]
       },
       {
+       "id": "m5.5-l6",
+       "kind": "lesson",
+       "title": "pets",
+       "tip": "",
+       "words": [
+        "domo",
+        "rato",
+        "kagë"
+       ],
+       "sentences": [
+        {
+         "v": "mi dor domo ha.",
+         "e": "I have two pets."
+        },
+        {
+         "v": "rato pik i gris.",
+         "e": "the mouse is small and gray."
+        },
+        {
+         "v": "mish rato goda.",
+         "e": "the cat likes the mouse."
+        },
+        {
+         "v": "pita un kagë viva.",
+         "e": "the bird lives in a cage."
+        },
+        {
+         "v": "domo da tu kwo?",
+         "e": "what is your pet?"
+        }
+       ]
+      },
+      {
+       "id": "m5.5-l7",
+       "kind": "lesson",
+       "title": "the zoo",
+       "tip": "",
+       "words": [
+        "vid",
+        "zoo",
+        "leon",
+        "elefan",
+        "simyo"
+       ],
+       "sentences": [
+        {
+         "v": "min ra zoo golta.",
+         "e": "we went to the zoo."
+        },
+        {
+         "v": "elefan granesh.",
+         "e": "the elephant is the biggest."
+        },
+        {
+         "v": "leon forë.",
+         "e": "the lion is strong."
+        },
+        {
+         "v": "simyon multa ludata.",
+         "e": "many monkeys played."
+        },
+        {
+         "v": "tu leon vidta ka?",
+         "e": "did you see the lion?"
+        }
+       ]
+      },
+      {
+       "id": "m5.5-l8",
+       "kind": "lesson",
+       "title": "climbing a mountain",
+       "tip": "",
+       "words": [
+        "khar",
+        "piko",
+        "monta"
+       ],
+       "sentences": [
+        {
+         "v": "min bor montata.",
+         "e": "we climbed the mountain."
+        },
+        {
+         "v": "piko da bor alba.",
+         "e": "the peak of the mountain is white."
+        },
+        {
+         "v": "zor khar esta.",
+         "e": "the road was hard."
+        },
+        {
+         "v": "sur piko, khal frid esta.",
+         "e": "on the peak, the wind was cold."
+        },
+        {
+         "v": "ve bor granesh da nasho.",
+         "e": "this mountain is the biggest in the country."
+        }
+       ]
+      },
+      {
+       "id": "m5.5-l9",
+       "kind": "lesson",
+       "title": "the night sky",
+       "tip": "",
+       "words": [
+        "planet",
+        "kosmo"
+       ],
+       "sentences": [
+        {
+         "v": "planetan multa un kosmo es.",
+         "e": "there are many planets in space."
+        },
+        {
+         "v": "tera planet.",
+         "e": "the earth is a planet."
+        },
+        {
+         "v": "ve noch, stelan mol bela.",
+         "e": "tonight, the stars are very beautiful."
+        },
+        {
+         "v": "mi ra kosmo vaya vola.",
+         "e": "I want to travel to space."
+        },
+        {
+         "v": "mera prok, stelan dalë.",
+         "e": "the moon is near, the stars are far."
+        }
+       ]
+      },
+      {
+       "id": "m5.5-l10",
+       "kind": "lesson",
+       "title": "flowers",
+       "tip": "",
+       "words": [
+        "lili",
+        "tulpa",
+        "buket"
+       ],
+       "sentences": [
+        {
+         "v": "mi buket ra ama dota.",
+         "e": "I gave a bouquet to mother."
+        },
+        {
+         "v": "tulpan rud.",
+         "e": "the tulips are red."
+        },
+        {
+         "v": "lili alba i bela.",
+         "e": "the lily is white and beautiful."
+        },
+        {
+         "v": "buket gran esta.",
+         "e": "the bouquet was big."
+        },
+        {
+         "v": "ama galan goda.",
+         "e": "mother likes flowers."
+        }
+       ]
+      },
+      {
        "id": "m5.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -1988,11 +3648,21 @@
         "m5-l3",
         "m5-l4",
         "m5-l5",
+        "m5-l6",
+        "m5-l7",
+        "m5-l8",
+        "m5-l9",
+        "m5-l10",
         "m5.5-l1",
         "m5.5-l2",
         "m5.5-l3",
         "m5.5-l4",
-        "m5.5-l5"
+        "m5.5-l5",
+        "m5.5-l6",
+        "m5.5-l7",
+        "m5.5-l8",
+        "m5.5-l9",
+        "m5.5-l10"
        ]
       }
      ]
@@ -2008,7 +3678,6 @@
        "title": "subjects",
        "tip": "",
        "words": [
-        "khar",
         "lekh",
         "matë",
         "histo",
@@ -2169,6 +3838,166 @@
        ]
       },
       {
+       "id": "m6-l6",
+       "kind": "lesson",
+       "title": "the break",
+       "tip": "",
+       "words": [
+        "pauza",
+        "kantina"
+       ],
+       "sentences": [
+        {
+         "v": "un pauza, min luda.",
+         "e": "during the break, we play."
+        },
+        {
+         "v": "pauza dek minut.",
+         "e": "the break is ten minutes."
+        },
+        {
+         "v": "min un kantina yama.",
+         "e": "we eat in the cafeteria."
+        },
+        {
+         "v": "yamë da kantina ne bon.",
+         "e": "the food in the cafeteria is not good."
+        },
+        {
+         "v": "pauza kwan?",
+         "e": "when is the break?"
+        }
+       ]
+      },
+      {
+       "id": "m6-l7",
+       "kind": "lesson",
+       "title": "grades",
+       "tip": "",
+       "words": [
+        "nota"
+       ],
+       "sentences": [
+        {
+         "v": "mi nota bon ha.",
+         "e": "I have a good grade."
+        },
+        {
+         "v": "nota da tu bonor dë nota da mi.",
+         "e": "your grade is better than my grade."
+        },
+        {
+         "v": "mestro notan dota.",
+         "e": "the teacher gave grades."
+        },
+        {
+         "v": "sesa notan bonesh ha.",
+         "e": "my sister has the best grades."
+        },
+        {
+         "v": "mi nota mal ha, shom mi lerna.",
+         "e": "I have a bad grade, but I learn."
+        }
+       ]
+      },
+      {
+       "id": "m6-l8",
+       "kind": "lesson",
+       "title": "computers",
+       "tip": "",
+       "words": [
+        "kompu",
+        "ekran",
+        "tipa"
+       ],
+       "sentences": [
+        {
+         "v": "mi kompu nov ha.",
+         "e": "I have a new computer."
+        },
+        {
+         "v": "ekran gran.",
+         "e": "the screen is big."
+        },
+        {
+         "v": "mi tasko kel kompu fasa.",
+         "e": "I do homework with the computer."
+        },
+        {
+         "v": "aba rapmo tipa.",
+         "e": "father types quickly."
+        },
+        {
+         "v": "kompu da skol vet.",
+         "e": "the school's computer is old."
+        }
+       ]
+      },
+      {
+       "id": "m6-l9",
+       "kind": "lesson",
+       "title": "the library",
+       "tip": "",
+       "words": [
+        "biblio",
+        "silen"
+       ],
+       "sentences": [
+        {
+         "v": "biblio kitën multa ha.",
+         "e": "the library has many books."
+        },
+        {
+         "v": "biblio silen.",
+         "e": "the library is quiet."
+        },
+        {
+         "v": "mi kitë un biblio ridë.",
+         "e": "I read a book in the library."
+        },
+        {
+         "v": "tu biblio goda ka?",
+         "e": "do you like the library?"
+        },
+        {
+         "v": "min un biblio silenmo thela.",
+         "e": "we speak quietly in the library."
+        }
+       ]
+      },
+      {
+       "id": "m6-l10",
+       "kind": "lesson",
+       "title": "questions and answers",
+       "tip": "",
+       "words": [
+        "kwesto",
+        "repo"
+       ],
+       "sentences": [
+        {
+         "v": "mi kwesto ha.",
+         "e": "I have a question."
+        },
+        {
+         "v": "kwesto da tu bon.",
+         "e": "your question is good."
+        },
+        {
+         "v": "mestro kwesto da mi repata.",
+         "e": "the teacher answered my question."
+        },
+        {
+         "v": "kitin kweston multa ha.",
+         "e": "the children have many questions."
+        },
+        {
+         "v": "tu repo kenë ka?",
+         "e": "do you know the answer?"
+        }
+       ]
+      },
+      {
        "id": "m6-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -2177,7 +4006,12 @@
         "m6-l2",
         "m6-l3",
         "m6-l4",
-        "m6-l5"
+        "m6-l5",
+        "m6-l6",
+        "m6-l7",
+        "m6-l8",
+        "m6-l9",
+        "m6-l10"
        ]
       }
      ]
@@ -2348,6 +4182,162 @@
        ]
       },
       {
+       "id": "m6.5-l6",
+       "kind": "lesson",
+       "title": "dream jobs",
+       "tip": "",
+       "words": [
+        "piloto",
+        "teknik"
+       ],
+       "sentences": [
+        {
+         "v": "mi piloto es vola.",
+         "e": "I want to be a pilot."
+        },
+        {
+         "v": "sesa da mi teknik esva.",
+         "e": "my sister will be an engineer."
+        },
+        {
+         "v": "piloto avyon kondu.",
+         "e": "the pilot flies the airplane."
+        },
+        {
+         "v": "rab da tu kwo esva?",
+         "e": "what will your job be?"
+        },
+        {
+         "v": "mi lirari es vola.",
+         "e": "I want to be a singer."
+        }
+       ]
+      },
+      {
+       "id": "m6.5-l7",
+       "kind": "lesson",
+       "title": "the office",
+       "tip": "",
+       "words": [
+        "ofis",
+        "shef"
+       ],
+       "sentences": [
+        {
+         "v": "aba un ofis rabo.",
+         "e": "father works in an office."
+        },
+        {
+         "v": "shef da aba bon.",
+         "e": "father's boss is good."
+        },
+        {
+         "v": "ofis gran i silen.",
+         "e": "the office is big and quiet."
+        },
+        {
+         "v": "ama un ofis ne rabo.",
+         "e": "mother does not work in an office."
+        },
+        {
+         "v": "shef mol okupa.",
+         "e": "the boss is very busy."
+        }
+       ]
+      },
+      {
+       "id": "m6.5-l8",
+       "kind": "lesson",
+       "title": "paying",
+       "tip": "",
+       "words": [
+        "paga"
+       ],
+       "sentences": [
+        {
+         "v": "shef zil paga.",
+         "e": "the boss pays money."
+        },
+        {
+         "v": "mi rabo i zil ha.",
+         "e": "I work and I have money."
+        },
+        {
+         "v": "tu bilet paga deba.",
+         "e": "you must pay for the ticket."
+        },
+        {
+         "v": "kwi paga?",
+         "e": "who pays?"
+        },
+        {
+         "v": "aba yamë paga.",
+         "e": "father pays for the food."
+        }
+       ]
+      },
+      {
+       "id": "m6.5-l9",
+       "kind": "lesson",
+       "title": "the calendar",
+       "tip": "",
+       "words": [
+        "kalendar",
+        "data"
+       ],
+       "sentences": [
+        {
+         "v": "kalendar un ofis es.",
+         "e": "the calendar is in the office."
+        },
+        {
+         "v": "vedey data kwo?",
+         "e": "what is the date today?"
+        },
+        {
+         "v": "nasdey da mi un kalendar es.",
+         "e": "my birthday is on the calendar."
+        },
+        {
+         "v": "mi kalendar nov kopata.",
+         "e": "I bought a new calendar."
+        },
+        {
+         "v": "ve data bon.",
+         "e": "this date is good."
+        }
+       ]
+      },
+      {
+       "id": "m6.5-l10",
+       "kind": "lesson",
+       "title": "on time",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "bus tarda, mi tarda.",
+         "e": "the bus is late, I am late."
+        },
+        {
+         "v": "tu un or nir ven deba.",
+         "e": "you must come at nine o'clock."
+        },
+        {
+         "v": "mi un or okh venta.",
+         "e": "I came at eight o'clock."
+        },
+        {
+         "v": "mi preko esta.",
+         "e": "I was early."
+        },
+        {
+         "v": "mi tarda ne esva.",
+         "e": "I will not be late."
+        }
+       ]
+      },
+      {
        "id": "m6.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -2357,11 +4347,21 @@
         "m6-l3",
         "m6-l4",
         "m6-l5",
+        "m6-l6",
+        "m6-l7",
+        "m6-l8",
+        "m6-l9",
+        "m6-l10",
         "m6.5-l1",
         "m6.5-l2",
         "m6.5-l3",
         "m6.5-l4",
-        "m6.5-l5"
+        "m6.5-l5",
+        "m6.5-l6",
+        "m6.5-l7",
+        "m6.5-l8",
+        "m6.5-l9",
+        "m6.5-l10"
        ]
       }
      ]
@@ -2547,6 +4547,163 @@
        ]
       },
       {
+       "id": "m7-l6",
+       "kind": "lesson",
+       "title": "tired and bored",
+       "tip": "",
+       "words": [
+        "fatiga",
+        "tedo"
+       ],
+       "sentences": [
+        {
+         "v": "mi fatiga, kaus mi multamo rabota.",
+         "e": "I am tired because I worked a lot."
+        },
+        {
+         "v": "kiti tedo.",
+         "e": "the child is bored."
+        },
+        {
+         "v": "sef tu fatiga, nema!",
+         "e": "if you are tired, sleep!"
+        },
+        {
+         "v": "tu tedo ka?",
+         "e": "are you bored?"
+        },
+        {
+         "v": "min tedo ne esta.",
+         "e": "we were not bored."
+        }
+       ]
+      },
+      {
+       "id": "m7-l7",
+       "kind": "lesson",
+       "title": "love",
+       "tip": "",
+       "words": [
+        "kisa",
+        "abraza"
+       ],
+       "sentences": [
+        {
+         "v": "ama kiti abraza.",
+         "e": "mother hugs the child."
+        },
+        {
+         "v": "mi tu liva.",
+         "e": "I love you."
+        },
+        {
+         "v": "aba ama kisata.",
+         "e": "father kissed mother."
+        },
+        {
+         "v": "kor da mi fela.",
+         "e": "my heart is happy."
+        },
+        {
+         "v": "sef tu mi liva, mi fela.",
+         "e": "if you love me, I am happy."
+        }
+       ]
+      },
+      {
+       "id": "m7-l8",
+       "kind": "lesson",
+       "title": "worries",
+       "tip": "",
+       "words": [
+        "kwida"
+       ],
+       "sentences": [
+        {
+         "v": "ama multamo kwida.",
+         "e": "mother worries a lot."
+        },
+        {
+         "v": "ne kwida!",
+         "e": "do not worry!"
+        },
+        {
+         "v": "mi kwida, kaus prova khar.",
+         "e": "I worry because the test is hard."
+        },
+        {
+         "v": "tu kwa kwida?",
+         "e": "why do you worry?"
+        },
+        {
+         "v": "aba ne kwida.",
+         "e": "father does not worry."
+        }
+       ]
+      },
+      {
+       "id": "m7-l9",
+       "kind": "lesson",
+       "title": "surprises",
+       "tip": "",
+       "words": [
+        "surpriza"
+       ],
+       "sentences": [
+        {
+         "v": "mi surpriza ra tu ha.",
+         "e": "I have a surprise for you."
+        },
+        {
+         "v": "surpriza bela esta!",
+         "e": "the surprise was beautiful!"
+        },
+        {
+         "v": "baba surpriza ne kenëta.",
+         "e": "grandmother did not know about the surprise."
+        },
+        {
+         "v": "sef tu surpriza goda, mi fela.",
+         "e": "if you like the surprise, I am happy."
+        },
+        {
+         "v": "surpriza kwe es?",
+         "e": "where is the surprise?"
+        }
+       ]
+      },
+      {
+       "id": "m7-l10",
+       "kind": "lesson",
+       "title": "staying healthy",
+       "tip": "",
+       "words": [
+        "aktiva"
+       ],
+       "sentences": [
+        {
+         "v": "leguman yama i sana es!",
+         "e": "eat vegetables and be healthy!"
+        },
+        {
+         "v": "sef tu aktiva, tu sana.",
+         "e": "if you are active, you are healthy."
+        },
+        {
+         "v": "aba dey tot pasa.",
+         "e": "father walks every day."
+        },
+        {
+         "v": "nami multa sipa!",
+         "e": "drink a lot of water!"
+        },
+        {
+         "v": "mi sana senta.",
+         "e": "I feel healthy."
+        }
+       ]
+      },
+      {
        "id": "m7-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -2555,7 +4712,12 @@
         "m7-l2",
         "m7-l3",
         "m7-l4",
-        "m7-l5"
+        "m7-l5",
+        "m7-l6",
+        "m7-l7",
+        "m7-l8",
+        "m7-l9",
+        "m7-l10"
        ]
       }
      ]
@@ -2723,6 +4885,163 @@
        ]
       },
       {
+       "id": "m7.5-l6",
+       "kind": "lesson",
+       "title": "fairy tales",
+       "tip": "",
+       "words": [
+        "feya",
+        "magik"
+       ],
+       "sentences": [
+        {
+         "v": "feya magik ha.",
+         "e": "the fairy has magic."
+        },
+        {
+         "v": "sago da feya mol bela.",
+         "e": "the story of the fairy is very beautiful."
+        },
+        {
+         "v": "feya ki un silva viva pik.",
+         "e": "the fairy who lives in the forest is small."
+        },
+        {
+         "v": "magik ver ka?",
+         "e": "is magic real?"
+        },
+        {
+         "v": "kitin feyan goda.",
+         "e": "the children like fairies."
+        }
+       ]
+      },
+      {
+       "id": "m7.5-l7",
+       "kind": "lesson",
+       "title": "heroes",
+       "tip": "",
+       "words": [
+        "heroë",
+        "salva"
+       ],
+       "sentences": [
+        {
+         "v": "heroë kiti salvata.",
+         "e": "the hero saved the child."
+        },
+        {
+         "v": "heroë ki kiti salvata forë.",
+         "e": "the hero who saved the child is strong."
+        },
+        {
+         "v": "mi heroë es vola.",
+         "e": "I want to be a hero."
+        },
+        {
+         "v": "heroë da mi aba.",
+         "e": "my hero is my father."
+        },
+        {
+         "v": "kwi tu salvata?",
+         "e": "who saved you?"
+        }
+       ]
+      },
+      {
+       "id": "m7.5-l8",
+       "kind": "lesson",
+       "title": "secrets",
+       "tip": "",
+       "words": [
+        "sekret"
+       ],
+       "sentences": [
+        {
+         "v": "mi sekret ha.",
+         "e": "I have a secret."
+        },
+        {
+         "v": "mi sekret ra tu thela ne pot.",
+         "e": "I cannot tell you the secret."
+        },
+        {
+         "v": "vren bonesh da mi sekretan da mi kenë.",
+         "e": "my best friend knows my secrets."
+        },
+        {
+         "v": "sekret ki tu thelata ver ka?",
+         "e": "is the secret that you told true?"
+        },
+        {
+         "v": "ve sekret da min.",
+         "e": "this is our secret."
+        }
+       ]
+      },
+      {
+       "id": "m7.5-l9",
+       "kind": "lesson",
+       "title": "a letter",
+       "tip": "",
+       "words": [
+        "letra"
+       ],
+       "sentences": [
+        {
+         "v": "mi letra ra vren skrita.",
+         "e": "I wrote a letter to my friend."
+        },
+        {
+         "v": "letra lon esta.",
+         "e": "the letter was long."
+        },
+        {
+         "v": "vren letra ripë mandata.",
+         "e": "my friend sent a letter again."
+        },
+        {
+         "v": "letra ki tu mandata mol bela.",
+         "e": "the letter that you sent is very beautiful."
+        },
+        {
+         "v": "letra kwan venva?",
+         "e": "when will the letter come?"
+        }
+       ]
+      },
+      {
+       "id": "m7.5-l10",
+       "kind": "lesson",
+       "title": "jokes",
+       "tip": "",
+       "words": [
+        "shaka"
+       ],
+       "sentences": [
+        {
+         "v": "aba shakan thela.",
+         "e": "father tells jokes."
+        },
+        {
+         "v": "ve shaka mol bon!",
+         "e": "this joke is very good!"
+        },
+        {
+         "v": "tot ridata.",
+         "e": "everyone laughed."
+        },
+        {
+         "v": "shaka ki tu thelata ne bon.",
+         "e": "the joke that you told is not good."
+        },
+        {
+         "v": "mi shaka nov kenë.",
+         "e": "I know a new joke."
+        }
+       ]
+      },
+      {
        "id": "m7.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -2732,11 +5051,21 @@
         "m7-l3",
         "m7-l4",
         "m7-l5",
+        "m7-l6",
+        "m7-l7",
+        "m7-l8",
+        "m7-l9",
+        "m7-l10",
         "m7.5-l1",
         "m7.5-l2",
         "m7.5-l3",
         "m7.5-l4",
-        "m7.5-l5"
+        "m7.5-l5",
+        "m7.5-l6",
+        "m7.5-l7",
+        "m7.5-l8",
+        "m7.5-l9",
+        "m7.5-l10"
        ]
       }
      ]
@@ -2819,7 +5148,6 @@
        "title": "I think that",
        "tip": "ke is the one thing that comes after the verb: \"mi penka ke ...\", I think that ... the part after ke has its own verb at the end.",
        "words": [
-        "kenë",
         "ke"
        ],
        "sentences": [
@@ -2912,6 +5240,163 @@
        ]
       },
       {
+       "id": "m8-l6",
+       "kind": "lesson",
+       "title": "reading",
+       "tip": "",
+       "words": [
+        "novela",
+        "autor"
+       ],
+       "sentences": [
+        {
+         "v": "mi novelan goda.",
+         "e": "I like novels."
+        },
+        {
+         "v": "autor da ve novela vet.",
+         "e": "the author of this novel is old."
+        },
+        {
+         "v": "mi dey tot ridë.",
+         "e": "I read every day."
+        },
+        {
+         "v": "novela ki mi ridë lon.",
+         "e": "the novel that I read is long."
+        },
+        {
+         "v": "tu autor favo ha ka?",
+         "e": "do you have a favorite author?"
+        }
+       ]
+      },
+      {
+       "id": "m8-l7",
+       "kind": "lesson",
+       "title": "movies",
+       "tip": "",
+       "words": [
+        "filmo",
+        "kino"
+       ],
+       "sentences": [
+        {
+         "v": "min ra kino golta.",
+         "e": "we went to the cinema."
+        },
+        {
+         "v": "filmo mol bon esta.",
+         "e": "the movie was very good."
+        },
+        {
+         "v": "mi filmon goda.",
+         "e": "I like movies."
+        },
+        {
+         "v": "filmo ki min vidta lon esta.",
+         "e": "the movie that we saw was long."
+        },
+        {
+         "v": "filmo favo da tu kwo?",
+         "e": "what is your favorite movie?"
+        }
+       ]
+      },
+      {
+       "id": "m8-l8",
+       "kind": "lesson",
+       "title": "cooking for fun",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "mi kuka goda.",
+         "e": "I like to cook."
+        },
+        {
+         "v": "aba kukari bon.",
+         "e": "father is a good cook."
+        },
+        {
+         "v": "mi torta nov fasata.",
+         "e": "I made a new cake."
+        },
+        {
+         "v": "sef tu kuka, mi yamava.",
+         "e": "if you cook, I will eat."
+        },
+        {
+         "v": "ve resita lekhor dë vo.",
+         "e": "this recipe is easier than that one."
+        }
+       ]
+      },
+      {
+       "id": "m8-l9",
+       "kind": "lesson",
+       "title": "collecting",
+       "tip": "",
+       "words": [
+        "pira",
+        "kolekta",
+        "stampo"
+       ],
+       "sentences": [
+        {
+         "v": "dedo stampon kolekta.",
+         "e": "grandfather collects stamps."
+        },
+        {
+         "v": "mi piran kolekta.",
+         "e": "I collect stones."
+        },
+        {
+         "v": "stampon da dedo vet.",
+         "e": "grandfather's stamps are old."
+        },
+        {
+         "v": "tu kwo kolekta?",
+         "e": "what do you collect?"
+        },
+        {
+         "v": "mi pira bela trovata.",
+         "e": "I found a beautiful stone."
+        }
+       ]
+      },
+      {
+       "id": "m8-l10",
+       "kind": "lesson",
+       "title": "photos",
+       "tip": "",
+       "words": [
+        "kamera"
+       ],
+       "sentences": [
+        {
+         "v": "mi kamera nov ha.",
+         "e": "I have a new camera."
+        },
+        {
+         "v": "mi foton da pitan fasa.",
+         "e": "I take photos of birds."
+        },
+        {
+         "v": "ve foto belash.",
+         "e": "this photo is the most beautiful."
+        },
+        {
+         "v": "kamera da tu karo ka?",
+         "e": "is your camera expensive?"
+        },
+        {
+         "v": "sef sol shina, foton bonor.",
+         "e": "if the sun shines, the photos are better."
+        }
+       ]
+      },
+      {
        "id": "m8-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -2920,7 +5405,12 @@
         "m8-l2",
         "m8-l3",
         "m8-l4",
-        "m8-l5"
+        "m8-l5",
+        "m8-l6",
+        "m8-l7",
+        "m8-l8",
+        "m8-l9",
+        "m8-l10"
        ]
       }
      ]
@@ -3000,7 +5490,6 @@
        "title": "board games",
        "tip": "",
        "words": [
-        "kwi",
         "shakh",
         "karta",
         "kubo",
@@ -3090,6 +5579,160 @@
        ]
       },
       {
+       "id": "m8.5-l6",
+       "kind": "lesson",
+       "title": "swimming",
+       "tip": "",
+       "words": [
+        "nada",
+        "piskina"
+       ],
+       "sentences": [
+        {
+         "v": "mi nada pot.",
+         "e": "I can swim."
+        },
+        {
+         "v": "min un piskina nadata.",
+         "e": "we swam in the pool."
+        },
+        {
+         "v": "nami un piskina frid.",
+         "e": "the water in the pool is cold."
+        },
+        {
+         "v": "tu rapmo nada ka?",
+         "e": "do you swim fast?"
+        },
+        {
+         "v": "kiti nada lerna.",
+         "e": "the child is learning to swim."
+        }
+       ]
+      },
+      {
+       "id": "m8.5-l7",
+       "kind": "lesson",
+       "title": "bikes",
+       "tip": "",
+       "words": [
+        "biko"
+       ],
+       "sentences": [
+        {
+         "v": "mi biko rud ha.",
+         "e": "I have a red bike."
+        },
+        {
+         "v": "min kel biko ra parka golta.",
+         "e": "we went to the park by bike."
+        },
+        {
+         "v": "biko da tu nov ka?",
+         "e": "is your bike new?"
+        },
+        {
+         "v": "aba biko kondu ne pot.",
+         "e": "father cannot ride a bike."
+        },
+        {
+         "v": "biko rapor dë oto un urba.",
+         "e": "a bike is faster than a car in the city."
+        }
+       ]
+      },
+      {
+       "id": "m8.5-l8",
+       "kind": "lesson",
+       "title": "the race",
+       "tip": "",
+       "words": [
+        "korso"
+       ],
+       "sentences": [
+        {
+         "v": "vedey korso gran es.",
+         "e": "today there is a big race."
+        },
+        {
+         "v": "mi un korso kurata.",
+         "e": "I ran in a race."
+        },
+        {
+         "v": "kwi korso vinata?",
+         "e": "who won the race?"
+        },
+        {
+         "v": "sesa da mi rapesh esta.",
+         "e": "my sister was the fastest."
+        },
+        {
+         "v": "sef tu trena, tu korso vinava.",
+         "e": "if you train, you will win the race."
+        }
+       ]
+      },
+      {
+       "id": "m8.5-l9",
+       "kind": "lesson",
+       "title": "video games",
+       "tip": "",
+       "words": [
+        "video"
+       ],
+       "sentences": [
+        {
+         "v": "mi ludon da video goda.",
+         "e": "I like video games."
+        },
+        {
+         "v": "aba ludon da video ne goda.",
+         "e": "father does not like video games."
+        },
+        {
+         "v": "ve ludo nov i rap.",
+         "e": "this game is new and fast."
+        },
+        {
+         "v": "mi kel vren un vechë luda.",
+         "e": "I play with a friend in the evening."
+        },
+        {
+         "v": "ludo ki tu kopata bon.",
+         "e": "the game that you bought is good."
+        }
+       ]
+      },
+      {
+       "id": "m8.5-l10",
+       "kind": "lesson",
+       "title": "a good team",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "ekipa bon kun trena.",
+         "e": "a good team trains together."
+        },
+        {
+         "v": "mi un ekipa da skol es.",
+         "e": "I am on the school team."
+        },
+        {
+         "v": "ludarin da ekipa da min vrenan.",
+         "e": "the players of our team are friends."
+        },
+        {
+         "v": "kwan min perda, min ne angra.",
+         "e": "when we lose, we are not angry."
+        },
+        {
+         "v": "ekipa ki kun rabo vina.",
+         "e": "a team that works together wins."
+        }
+       ]
+      },
+      {
        "id": "m8.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -3099,11 +5742,21 @@
         "m8-l3",
         "m8-l4",
         "m8-l5",
+        "m8-l6",
+        "m8-l7",
+        "m8-l8",
+        "m8-l9",
+        "m8-l10",
         "m8.5-l1",
         "m8.5-l2",
         "m8.5-l3",
         "m8.5-l4",
-        "m8.5-l5"
+        "m8.5-l5",
+        "m8.5-l6",
+        "m8.5-l7",
+        "m8.5-l8",
+        "m8.5-l9",
+        "m8.5-l10"
        ]
       }
      ]
@@ -3282,6 +5935,157 @@
        ]
       },
       {
+       "id": "m9-l6",
+       "kind": "lesson",
+       "title": "rules",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "reglan vala.",
+         "e": "rules are important."
+        },
+        {
+         "v": "min reglan da skol kenë deba.",
+         "e": "we must know the school rules."
+        },
+        {
+         "v": "ve regla ne ekwa.",
+         "e": "this rule is not fair."
+        },
+        {
+         "v": "mi penka ke reglan multa mal.",
+         "e": "I think that many rules are bad."
+        },
+        {
+         "v": "tu kel mi konsa ka?",
+         "e": "do you agree with me?"
+        }
+       ]
+      },
+      {
+       "id": "m9-l7",
+       "kind": "lesson",
+       "title": "the internet",
+       "tip": "",
+       "words": [
+        "shi",
+        "reto"
+       ],
+       "sentences": [
+        {
+         "v": "mi un reto multamo lerna.",
+         "e": "I learn a lot on the internet."
+        },
+        {
+         "v": "shi tot un reto ne ver.",
+         "e": "not everything on the internet is true."
+        },
+        {
+         "v": "reto rap.",
+         "e": "the internet is fast."
+        },
+        {
+         "v": "ve kompu reto ne ha.",
+         "e": "this computer does not have internet."
+        },
+        {
+         "v": "sef tu reto ne ha, ridë!",
+         "e": "if you do not have internet, read!"
+        }
+       ]
+      },
+      {
+       "id": "m9-l8",
+       "kind": "lesson",
+       "title": "money and happiness",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "zil felatal ne do.",
+         "e": "money does not give happiness."
+        },
+        {
+         "v": "mi penka ke zil vala.",
+         "e": "I think that money is important."
+        },
+        {
+         "v": "vrenan valar dë zil.",
+         "e": "friends are more important than money."
+        },
+        {
+         "v": "hum ki zil multa ha ne fela.",
+         "e": "the person who has a lot of money is not happy."
+        },
+        {
+         "v": "mi kel tu ne konsa.",
+         "e": "I do not agree with you."
+        }
+       ]
+      },
+      {
+       "id": "m9-l9",
+       "kind": "lesson",
+       "title": "protecting the earth",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "min tera garda deba.",
+         "e": "we must protect the earth."
+        },
+        {
+         "v": "sef min tera ne garda, avenë mal esva.",
+         "e": "if we do not protect the earth, the future will be bad."
+        },
+        {
+         "v": "avenë da kitin vala.",
+         "e": "the future of the children is important."
+        },
+        {
+         "v": "mi penka ke min ayda pot.",
+         "e": "I think that we can help."
+        },
+        {
+         "v": "min kun rabo deba.",
+         "e": "we must work together."
+        }
+       ]
+      },
+      {
+       "id": "m9-l10",
+       "kind": "lesson",
+       "title": "a good person",
+       "tip": "",
+       "words": [
+        "honesta",
+        "dulsë"
+       ],
+       "sentences": [
+        {
+         "v": "hum bon honesta.",
+         "e": "a good person is honest."
+        },
+        {
+         "v": "dulsëtal vala.",
+         "e": "kindness is important."
+        },
+        {
+         "v": "ama da mi mol dulsë.",
+         "e": "my mother is very kind."
+        },
+        {
+         "v": "sef tu honesta, human tu fida.",
+         "e": "if you are honest, people trust you."
+        },
+        {
+         "v": "mi penka ke tu hum bon.",
+         "e": "I think that you are a good person."
+        }
+       ]
+      },
+      {
        "id": "m9-challenge",
        "kind": "challenge",
        "title": "challenge",
@@ -3290,7 +6094,12 @@
         "m9-l2",
         "m9-l3",
         "m9-l4",
-        "m9-l5"
+        "m9-l5",
+        "m9-l6",
+        "m9-l7",
+        "m9-l8",
+        "m9-l9",
+        "m9-l10"
        ]
       }
      ]
@@ -3429,7 +6238,7 @@
       {
        "id": "m9.5-l5",
        "kind": "lesson",
-       "title": "you made it",
+       "title": "almost there",
        "tip": "",
        "words": [],
        "sentences": [
@@ -3456,6 +6265,161 @@
        ]
       },
       {
+       "id": "m9.5-l6",
+       "kind": "lesson",
+       "title": "the news",
+       "tip": "",
+       "words": [
+        "nova"
+       ],
+       "sentences": [
+        {
+         "v": "nova vedey bon.",
+         "e": "the news today is good."
+        },
+        {
+         "v": "tu nova otata ka?",
+         "e": "did you hear the news?"
+        },
+        {
+         "v": "mi nova un reto ridë.",
+         "e": "I read the news on the internet."
+        },
+        {
+         "v": "nova ki sa thelata ver ka?",
+         "e": "is the news that she told true?"
+        },
+        {
+         "v": "mi penka ke nova fal.",
+         "e": "I think that the news is false."
+        }
+       ]
+      },
+      {
+       "id": "m9.5-l7",
+       "kind": "lesson",
+       "title": "making plans",
+       "tip": "",
+       "words": [
+        "invita"
+       ],
+       "sentences": [
+        {
+         "v": "mi tu ra festa invita.",
+         "e": "I invite you to the party."
+        },
+        {
+         "v": "tu dey pami libër ka?",
+         "e": "are you free on Friday?"
+        },
+        {
+         "v": "min kun ra kino golva.",
+         "e": "we will go to the cinema together."
+        },
+        {
+         "v": "sef pluva, min un kar restava i filmo vidva.",
+         "e": "if it rains, we will stay at home and watch a movie."
+        },
+        {
+         "v": "plan bon!",
+         "e": "good plan!"
+        }
+       ]
+      },
+      {
+       "id": "m9.5-l8",
+       "kind": "lesson",
+       "title": "saying sorry",
+       "tip": "",
+       "words": [
+        "pardon"
+       ],
+       "sentences": [
+        {
+         "v": "pardon!",
+         "e": "sorry!"
+        },
+        {
+         "v": "pardon, mi tarda.",
+         "e": "sorry, I am late."
+        },
+        {
+         "v": "pardon, mi ishe da tu oblidata.",
+         "e": "sorry, I forgot your name."
+        },
+        {
+         "v": "ne kwida!",
+         "e": "do not worry!"
+        },
+        {
+         "v": "mi tarda ne esva.",
+         "e": "I will not be late."
+        }
+       ]
+      },
+      {
+       "id": "m9.5-l9",
+       "kind": "lesson",
+       "title": "advice",
+       "tip": "",
+       "words": [
+        "konsel"
+       ],
+       "sentences": [
+        {
+         "v": "mi konsel ra tu ha.",
+         "e": "I have advice for you."
+        },
+        {
+         "v": "konsel da mi, dey tot lerna.",
+         "e": "my advice, learn every day."
+        },
+        {
+         "v": "sef tu fatiga, nema deba.",
+         "e": "if you are tired, you must sleep."
+        },
+        {
+         "v": "konsel da baba sempo bon.",
+         "e": "grandmother's advice is always good."
+        },
+        {
+         "v": "tu konsel ra mi do pot ka?",
+         "e": "can you give me advice?"
+        }
+       ]
+      },
+      {
+       "id": "m9.5-l10",
+       "kind": "lesson",
+       "title": "you made it",
+       "tip": "",
+       "words": [
+        "dosha"
+       ],
+       "sentences": [
+        {
+         "v": "mi mol fela, kaus tu vendëri lernata.",
+         "e": "I am very happy because you learned Venderian."
+        },
+        {
+         "v": "tu heroë da vendëri!",
+         "e": "you are a Venderian hero!"
+        },
+        {
+         "v": "tu vendëri ra vrenan dosha pot.",
+         "e": "you can teach Venderian to friends."
+        },
+        {
+         "v": "sef tu thela, mi ota.",
+         "e": "if you speak, I listen."
+        },
+        {
+         "v": "dano i shevan!",
+         "e": "goodbye and thank you!"
+        }
+       ]
+      },
+      {
        "id": "m9.5-gold",
        "kind": "gold",
        "title": "gold lesson",
@@ -3465,11 +6429,21 @@
         "m9-l3",
         "m9-l4",
         "m9-l5",
+        "m9-l6",
+        "m9-l7",
+        "m9-l8",
+        "m9-l9",
+        "m9-l10",
         "m9.5-l1",
         "m9.5-l2",
         "m9.5-l3",
         "m9.5-l4",
-        "m9.5-l5"
+        "m9.5-l5",
+        "m9.5-l6",
+        "m9.5-l7",
+        "m9.5-l8",
+        "m9.5-l9",
+        "m9.5-l10"
        ]
       }
      ]

@@ -28,7 +28,13 @@ class ImeScreenshotTest {
         val ime = Robolectric.setupService(VenderianIme::class.java)
         // wait for cmudict, so the preview strip has something to show
         runBlocking { (RuntimeEnvironment.getApplication() as VenderianApp).converter.await() }
-        compose.waitUntil(20_000) { ime.converter != null }
+        // the ime picks the converter up on the main thread: run it until it has
+        repeat(200) {
+            if (ime.converter != null) return ime
+            org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+            Thread.sleep(50)
+        }
+        error("the keyboard never got its converter")
         return ime
     }
 
