@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -203,7 +204,7 @@ private fun Node(lesson: CourseLesson, number: Int, index: Int, done: Boolean, u
         unlocked -> c.secondaryContainer to c.onSecondaryContainer
         else -> c.surfaceContainerHighest to c.onSurfaceVariant
     }
-    val size = if (lesson.kind == Kind.LESSON) 68.dp else 80.dp
+    val size = if (lesson.kind == Kind.LESSON || lesson.kind == Kind.STORY) 68.dp else 80.dp
     Box(Modifier.fillMaxWidth().padding(vertical = 6.dp), contentAlignment = Alignment.Center) {
         Column(
             // wind left and right like a path
@@ -218,6 +219,7 @@ private fun Node(lesson: CourseLesson, number: Int, index: Int, done: Boolean, u
                     !unlocked -> Icon(Icons.Filled.Lock, "locked", tint = fg)
                     lesson.kind == Kind.GOLD -> Icon(Icons.Filled.EmojiEvents, "gold lesson", tint = fg, modifier = Modifier.size(36.dp))
                     lesson.kind == Kind.CHALLENGE -> Icon(Icons.Filled.Bolt, "challenge", tint = fg, modifier = Modifier.size(36.dp))
+                    lesson.kind == Kind.STORY -> Icon(Icons.AutoMirrored.Filled.Chat, "story", tint = fg, modifier = Modifier.size(32.dp))
                     done -> Icon(Icons.Filled.Check, "done", tint = fg, modifier = Modifier.size(32.dp))
                     else -> Text("$number", color = fg, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 }

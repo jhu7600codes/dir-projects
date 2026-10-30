@@ -99,7 +99,7 @@ interface ProgressDao {
     suspend fun courseNow(): List<CourseEntity>
 }
 
-@Database(entities = [CardEntity::class, DayEntity::class, LessonEntity::class, CourseEntity::class], version = 2)
+@Database(entities = [CardEntity::class, DayEntity::class, LessonEntity::class, CourseEntity::class], version = 3)
 abstract class VenderianDb : RoomDatabase() {
     abstract fun cards(): CardDao
     abstract fun progress(): ProgressDao
@@ -112,7 +112,14 @@ abstract class VenderianDb : RoomDatabase() {
             }
         }
 
+        /** 3: challenges and gold lessons got stories, so finished ones have to be done again */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DELETE FROM course WHERE id LIKE '%-challenge' OR id LIKE '%-gold'")
+            }
+        }
+
         fun create(context: Context) =
-            Room.databaseBuilder(context, VenderianDb::class.java, "venderian.db").addMigrations(MIGRATION_1_2).build()
+            Room.databaseBuilder(context, VenderianDb::class.java, "venderian.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
     }
 }

@@ -1,0 +1,140 @@
+# stories for section 1. format: see parse_stories in tools/make_course.py
+section 1
+
+module 1 | family!
+
+story the new friend
+ana: vela! mi ana. tu tomo ka? = hello! I am Ana. are you Tomo?
+tomo: ya, mi tomo. = yes, I am Tomo.
+ana: tu bro ha ka? = do you have a brother?
+tomo: nay. mi dor sesa ha. = no. I have two sisters.
+? how many sisters does Tomo have? | two* | one | three
+ana: folka da mi gran. baba i dedo vet. = my family is big. grandmother and grandfather are old.
+tomo: folka da mi pik. = my family is small.
+? whose family is big? | Ana's* | Tomo's | nobody's
+ana: dano, tomo! = goodbye, Tomo!
+
+challenge story the family picture
+lela: ve kuadro da folka da mi. = this is a picture of my family.
+tomo: kwi sa? = who is he?
+lela: sa kuzo da mi. sa dek yer ha. = he is my cousin. he is ten years old.
+tomo: i kwi vo? = and who is that?
+lela: vo bebë nov da tiya da mi. = that is my aunt's new baby.
+? who is ten years old? | Lela's cousin* | Lela's aunt | the baby
+tomo: bebë pik! = the baby is small!
+lela: ya. bebë nema. = yes. the baby sleeps.
+? what is the baby doing? | sleeping* | eating | singing
+
+module 1.5 | family traditions
+
+story dinner at grandmother's
+baba: vela, kitin! = hello, children!
+ana: vela, baba! min ik vespa yama ka? = hello, grandmother! do we eat dinner here?
+baba: ya! vespa gran. = yes! the dinner is big.
+tomo: mi nami sipa. = I drink water.
+? where do they eat dinner? | at grandmother's* | at school | in the park
+baba: un vechë, dedo sago thela. = in the evening, grandfather tells a story.
+ana: mi sagon da dedo liva! = I love grandfather's stories!
+? who tells a story? | grandfather* | grandmother | Tomo
+
+gold story the birthday
+ama: vedey nasdey da ana! = today is Ana's birthday!
+tomo: mi dara ra ana do. = I give a gift to Ana.
+ana: shevan, tomo! = thank you, Tomo!
+baba: mi torta fasa. = I make a cake.
+? whose birthday is it? | Ana's* | Tomo's | grandmother's
+dedo: min lir kun lira! = we sing a song together!
+ana: mi mol fela. = I am very happy.
+? who makes the cake? | grandmother* | Ana | Tomo
+
+module 2 | food
+
+story at the market
+tomo: vela! mi aplon vola. = hello! I want apples.
+ana: aplon rud ka? = red apples?
+tomo: ya, rud. aplo kwanto kosta? = yes, red. how much does an apple cost?
+ana: aplo ek mon kosta. = an apple costs one coin.
+? how much does one apple cost? | one coin* | five coins | ten coins
+tomo: mi pam aplo kopa. = I buy five apples.
+ana: shevan! dano! = thank you! goodbye!
+? how many apples does Tomo buy? | five* | one | two
+
+challenge story the restaurant
+garson: vela! tu kwo vola? = hello! what do you want?
+ana: mi supa i bren vola. = I want soup and bread.
+tomo: mi glob vola. = I want fish.
+garson: tun kwo sipa? = what do you drink?
+ana: kiro, glasë da nami. = please, a glass of water.
+tomo: mi suko vola. = I want juice.
+? what does Ana eat? | soup and bread* | fish | meat
+garson: supa kal! = the soup is hot!
+? what does Tomo drink? | juice* | water | coffee
+
+module 2.5 | cooking and meals
+
+story breakfast
+ama: un matin, min pran yama. = in the morning, we eat breakfast.
+tomo: mi yamik! = I am hungry!
+ama: tu ovo vola ka? = do you want an egg?
+tomo: ya, dor ovo! = yes, two eggs!
+? what does Tomo want? | two eggs* | soup | a cake
+ama: kafa amar. mi chay sipa. = coffee is bitter. I drink tea.
+tomo: mi satë. shevan, ama! = I am full. thank you, mother!
+? why doesn't mother drink coffee? | it is bitter* | it is cold | it is salty
+
+gold story making a cake
+ana: ama, mi torta fasa vola. = mother, I want to make a cake.
+ama: bon! lista skri. = good! write a list.
+ana: ovon, mikh i choko. = eggs, milk and chocolate.
+ama: choko favo da tu! = chocolate is your favorite!
+? what does Ana want to make? | a cake* | soup | bread
+ana: torta sava i bon! = the cake is sweet and good!
+ama: nun kukin limpa! = now clean the kitchen!
+? what must Ana do at the end? | clean the kitchen* | buy milk | sleep
+
+module 3 | home
+
+story where is the cat?
+ana: mish da mi kwe es? = where is my cat?
+tomo: mish nër kama ka? = is the cat under the bed?
+ana: nay. = no.
+tomo: mish pos dur ka? = is the cat behind the door?
+ana: nay! = no!
+? what is Ana looking for? | her cat* | her dog | a book
+tomo: mish gris sur kloza es! = the gray cat is on the closet!
+ana: ya! mish da mi! = yes! my cat!
+? where was the cat? | on the closet* | under the bed | behind the door
+
+challenge story the new house
+lela: kar nov da min gran! = our new house is big!
+tomo: rum da tu kwe es? = where is your room?
+lela: rum da mi supra es. kukin infra es. = my room is upstairs. the kitchen is downstairs.
+tomo: kar gardo ha ka? = does the house have a garden?
+lela: ya, gardo bela. galan multa es. = yes, the garden is beautiful. there are many flowers.
+? where is Lela's room? | upstairs* | downstairs | in the garden
+tomo: vesin da tu kwi? = who is your neighbor?
+lela: vesin vet. sa vuf gran ha. = the neighbor is old. he has a big dog.
+? what does the neighbor have? | a big dog* | a cat | a garden
+
+module 3.5 | daily routine
+
+story a school day
+ama: tomo, leva! skol! = Tomo, get up! school!
+tomo: nun? mi nema vola. = now? I want to sleep.
+ama: dentën lava i gol! = wash your teeth and go!
+? what does Tomo want? | to sleep* | to eat | to play
+mestro: vela, kitin! vedey min vendëri lerna. = hello, children! today we learn Venderian.
+tomo: mi vendëri goda! = I like Venderian!
+? what do they learn today? | Venderian* | music | math
+
+gold story late again
+ama: tomo, tu tarda! = Tomo, you are late!
+tomo: shun da mi kwe es? = where are my shoes?
+ama: shun nër kama. = the shoes are under the bed.
+tomo: kamis da mi kwe es? = where is my shirt?
+ama: kamis sur stul! = the shirt is on the chair!
+? where are Tomo's shoes? | under the bed* | on the chair | in the garden
+tomo: vedey fendey ka? = is today the weekend?
+ama: ya! vedey fendey. skol ne es. = yes! today is the weekend. there is no school.
+tomo: mi nema! = I sleep!
+? why doesn't Tomo go to school? | it is the weekend* | he is sick | the school is closed

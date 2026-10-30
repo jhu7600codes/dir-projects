@@ -1,0 +1,119 @@
+section 4
+
+module 10 | shopping and money
+
+story the sale
+ana: vedey losur gran un rokem es! = today there is a big sale at the mall!
+lela: mi dutlun nov vola. = I want a new jacket.
+ana: ve dutlun siga ha. = this jacket has a discount.
+lela: mi sa gani. kamaresh bon! = I try it on. the size is good!
+debes: kel wobel o vobri? = with cash or a bank card?
+lela: kel vobri. = with a bank card.
+? what does Lela buy? | a jacket* | a dress | a hat
+? how does Lela pay? | with a bank card* | with cash | she doesn't pay
+
+challenge story if I were rich
+tomo: sef tu teli esta, tu kwo kopave? = if you were rich, what would you buy?
+ana: mi kar gran kopave. i tu? = I would buy a big house. and you?
+tomo: mi zil ra human naske dove. = I would give money to poor people.
+ana: tu mol bon! = you are very good!
+? what would Ana buy? | a big house* | a car | a jacket
+? what would Tomo do? | give money to poor people* | buy a house | save money
+
+module 10.5 | the bank and the shop
+
+story the wrong size
+tomo: shun da mi kamaresh obru ha. = my shoes have the wrong size.
+thun: tu fleno vola ka? = do you want a refund?
+tomo: nay, mi shun gran vola. = no, I want big shoes.
+thun: ve shun gran. = these shoes are big.
+tomo: shevan! = thanks!
+? what was the problem? | the wrong size* | the wrong color | they were broken
+? does Tomo take a refund? | no, he takes bigger shoes* | yes | he takes nothing
+
+gold story saving up
+ana: mi zil zibe, orut mi biko kopa pot. = I save money so that I can buy a bike.
+tomo: tu khosh zibeta ka? = did you save a lot?
+ana: nay. biko karo. = no. the bike is expensive.
+tomo: zalël losur chagi! = wait until the sale!
+ana: ideya bon! mi chagiva. = good idea! I will wait.
+? what does Ana want to buy? | a bike* | a phone | a jacket
+? what is Tomo's advice? | wait until the sale* | borrow money | buy now
+
+module 11 | technology
+
+story the dead phone
+lela: ronish da mi ne rabo! = my phone doesn't work!
+tomo: zacha tedas ka? = is the battery empty?
+lela: ya. leleleng da mi kwe es? = yes. where is my charger?
+tomo: ik! = here!
+lela: shevan! nun mi pasinzët ra ama mure pot. = thanks! now I can text a message to mother.
+? what was wrong with the phone? | the battery was empty* | it broke | it had a virus
+? who will Lela text? | her mother* | Tomo | her teacher
+
+challenge story the robot
+tomo: min shemde wabata! = we built a robot!
+ana: shemde pasa pot ka? = can the robot walk?
+tomo: ya, shom sozising samu ha. = yes, but the code has a bug.
+ana: mi tu ayda. min samu retnoluva. = I'll help you. we will fix the bug.
+tomo: nun shemde rabo! = now the robot works!
+? what did they build? | a robot* | a computer | an app
+? what was the problem? | a bug in the code* | no battery | a virus
+
+module 11.5 | news and media
+
+story fake news
+ana: mi un reto ridëta ke mera ne es. = I read on the internet that the moon doesn't exist.
+tomo: ve nova pelo! = this news is fake!
+ana: mayë sa kika ka? = maybe it is real?
+tomo: nay. tu nova kihi deba! = no. you must check the news!
+? what did Ana read? | that the moon doesn't exist* | that the sun is cold | that cats can fly
+? what does Tomo say? | the news is fake* | it's real | he doesn't know
+
+gold story too much phone
+ama: tomo, tu ronish khosh mengpa! = Tomo, you use the phone a lot!
+tomo: mi puntilit luda. sa sishu! = I play a video game. it's exciting!
+ama: ronish utho i teshi gol! = turn off the phone and go outside!
+tomo: teshi, sol shina. mi fela! = outside, the sun shines. I am happy!
+? what was Tomo doing? | playing a video game* | reading | sleeping
+? what did mother say? | go outside* | go to sleep | do homework
+
+module 12 | travel and culture
+
+story the spicy dish
+ana: mi thelor da ve nasho ne rava. = I don't understand the language of this country.
+lela: mi thelan ranu kenë. = I know some words.
+ana: kiro, menu selu! = please translate the menu!
+lela: menu thela, mirin nirun luthu. = the menu says, the local dish is spicy.
+ana: mi luthu ne goda! mi napa vola. = I don't like spicy! I want a salad.
+? what does the menu say? | the local dish is spicy* | the dish is sweet | there is no food
+? what does Ana want? | a salad* | the spicy dish | rice
+
+challenge story the festival
+tomo: vedey sopu gran es! = today there is a big festival!
+lela: madok un vilë pasa. = the parade walks in the street.
+tomo: kitin tëdlan chati. = the children hold lanterns.
+lela: un noch, mutu esva! = at night, there will be fireworks!
+tomo: mi ve nasho liva. human lëbë. = I love this country. the people are friendly.
+? what will happen at night? | fireworks* | a parade | rain
+? how are the people? | friendly* | angry | scary
+
+module 12.5 | festivals and traditions
+
+story the wedding
+lela: tiya da mi posdey kevava! = my aunt will marry tomorrow!
+ana: rizo kwe esva? = where will the wedding be?
+lela: un kastë vet! = in an old castle!
+ana: kastë? mesan lë viva! = a castle? ghosts live there!
+lela: ve menisthi! ne kika. = that's a legend! not real.
+? where will the wedding be? | in an old castle* | in a church | at the beach
+? what does Ana think lives there? | ghosts* | dragons | a king
+
+gold story coming home
+ana: ish mi chiba, mi tu evuteva. = as soon as I arrive, I will call you.
+ama: unu da tu kwu esta? = how was your journey?
+ana: tamchin! mi noshsoman multa vidta. = interesting! I saw many cultures.
+ama: tu ripë vayave ka? = would you travel again?
+ana: ya! ve unu bonesh da tote da mi esta. = yes! this journey was the best of my life.
+? how was the journey? | interesting* | boring | scary
+? would Ana travel again? | yes* | no | maybe not

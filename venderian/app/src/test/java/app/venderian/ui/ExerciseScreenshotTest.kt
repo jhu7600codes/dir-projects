@@ -42,7 +42,7 @@ class ExerciseScreenshotTest {
     fun exercises() {
         val app = RuntimeEnvironment.getApplication() as VenderianApp
         val maker = ExerciseMaker(app.course, app.lexicon.entries, Random(3))
-        val all = maker.make(app.course.lesson("m1-l5")) + maker.make(app.course.lesson("m4.5-gold")) +
+        val all = maker.make(app.course.lesson("m1.5-story")) + maker.make(app.course.lesson("m1-l5")) + maker.make(app.course.lesson("m4.5-gold")) +
             SoundExerciseMaker(app.soundLessons, Random(1)).make(app.soundLessons.lessons[4])
         val kinds = all.groupBy { it::class.simpleName }.mapValues { it.value.first() }
         var current by mutableStateOf<Exercise>(all.first())
@@ -58,6 +58,12 @@ class ExerciseScreenshotTest {
             compose.waitForIdle()
             compose.onRoot().captureRoboImage("build/outputs/roborazzi/ex-$name.png")
         }
+        // a story, a few lines in
+        current = all.first()
+        compose.waitForIdle()
+        repeat(3) { compose.onAllNodesWithText("continue").onFirst().performClick(); compose.waitForIdle() }
+        compose.onRoot().captureRoboImage("build/outputs/roborazzi/ex-Story-2.png")
+
         // tap a word in a sentence: its meaning pops up
         val build = all.filterIsInstance<Exercise.BuildEnglish>().first()
         current = build

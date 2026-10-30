@@ -203,6 +203,66 @@
        ]
       },
       {
+       "id": "m1-story",
+       "kind": "story",
+       "title": "the new friend",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "vela! mi ana. tu tomo ka?",
+         "e": "hello! I am Ana. are you Tomo?"
+        },
+        {
+         "who": "tomo",
+         "v": "ya, mi tomo.",
+         "e": "yes, I am Tomo."
+        },
+        {
+         "who": "ana",
+         "v": "tu bro ha ka?",
+         "e": "do you have a brother?"
+        },
+        {
+         "who": "tomo",
+         "v": "nay. mi dor sesa ha.",
+         "e": "no. I have two sisters."
+        },
+        {
+         "q": "how many sisters does Tomo have?",
+         "options": [
+          "two",
+          "one",
+          "three"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "folka da mi gran. baba i dedo vet.",
+         "e": "my family is big. grandmother and grandfather are old."
+        },
+        {
+         "who": "tomo",
+         "v": "folka da mi pik.",
+         "e": "my family is small."
+        },
+        {
+         "q": "whose family is big?",
+         "options": [
+          "Ana's",
+          "Tomo's",
+          "nobody's"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "dano, tomo!",
+         "e": "goodbye, Tomo!"
+        }
+       ]
+      },
+      {
        "id": "m1-l6",
        "kind": "lesson",
        "title": "how old are you?",
@@ -384,6 +444,61 @@
         "m1-l8",
         "m1-l9",
         "m1-l10"
+       ],
+       "parts": [
+        {
+         "who": "lela",
+         "v": "ve kuadro da folka da mi.",
+         "e": "this is a picture of my family."
+        },
+        {
+         "who": "tomo",
+         "v": "kwi sa?",
+         "e": "who is he?"
+        },
+        {
+         "who": "lela",
+         "v": "sa kuzo da mi. sa dek yer ha.",
+         "e": "he is my cousin. he is ten years old."
+        },
+        {
+         "who": "tomo",
+         "v": "i kwi vo?",
+         "e": "and who is that?"
+        },
+        {
+         "who": "lela",
+         "v": "vo bebë nov da tiya da mi.",
+         "e": "that is my aunt's new baby."
+        },
+        {
+         "q": "who is ten years old?",
+         "options": [
+          "Lela's cousin",
+          "Lela's aunt",
+          "the baby"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "bebë pik!",
+         "e": "the baby is small!"
+        },
+        {
+         "who": "lela",
+         "v": "ya. bebë nema.",
+         "e": "yes. the baby sleeps."
+        },
+        {
+         "q": "what is the baby doing?",
+         "options": [
+          "sleeping",
+          "eating",
+          "singing"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -566,6 +681,61 @@
         {
          "v": "tu folka da tu liva ka?",
          "e": "do you love your family?"
+        }
+       ]
+      },
+      {
+       "id": "m1.5-story",
+       "kind": "story",
+       "title": "dinner at grandmother's",
+       "parts": [
+        {
+         "who": "baba",
+         "v": "vela, kitin!",
+         "e": "hello, children!"
+        },
+        {
+         "who": "ana",
+         "v": "vela, baba! min ik vespa yama ka?",
+         "e": "hello, grandmother! do we eat dinner here?"
+        },
+        {
+         "who": "baba",
+         "v": "ya! vespa gran.",
+         "e": "yes! the dinner is big."
+        },
+        {
+         "who": "tomo",
+         "v": "mi nami sipa.",
+         "e": "I drink water."
+        },
+        {
+         "q": "where do they eat dinner?",
+         "options": [
+          "at grandmother's",
+          "at school",
+          "in the park"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "baba",
+         "v": "un vechë, dedo sago thela.",
+         "e": "in the evening, grandfather tells a story."
+        },
+        {
+         "who": "ana",
+         "v": "mi sagon da dedo liva!",
+         "e": "I love grandfather's stories!"
+        },
+        {
+         "q": "who tells a story?",
+         "options": [
+          "grandfather",
+          "grandmother",
+          "Tomo"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -761,6 +931,56 @@
         "m1.5-l8",
         "m1.5-l9",
         "m1.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ama",
+         "v": "vedey nasdey da ana!",
+         "e": "today is Ana's birthday!"
+        },
+        {
+         "who": "tomo",
+         "v": "mi dara ra ana do.",
+         "e": "I give a gift to Ana."
+        },
+        {
+         "who": "ana",
+         "v": "shevan, tomo!",
+         "e": "thank you, Tomo!"
+        },
+        {
+         "who": "baba",
+         "v": "mi torta fasa.",
+         "e": "I make a cake."
+        },
+        {
+         "q": "whose birthday is it?",
+         "options": [
+          "Ana's",
+          "Tomo's",
+          "grandmother's"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "dedo",
+         "v": "min lir kun lira!",
+         "e": "we sing a song together!"
+        },
+        {
+         "who": "ana",
+         "v": "mi mol fela.",
+         "e": "I am very happy."
+        },
+        {
+         "q": "who makes the cake?",
+         "options": [
+          "grandmother",
+          "Ana",
+          "Tomo"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -951,6 +1171,61 @@
        ]
       },
       {
+       "id": "m2-story",
+       "kind": "story",
+       "title": "at the market",
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "vela! mi aplon vola.",
+         "e": "hello! I want apples."
+        },
+        {
+         "who": "ana",
+         "v": "aplon rud ka?",
+         "e": "red apples?"
+        },
+        {
+         "who": "tomo",
+         "v": "ya, rud. aplo kwanto kosta?",
+         "e": "yes, red. how much does an apple cost?"
+        },
+        {
+         "who": "ana",
+         "v": "aplo ek mon kosta.",
+         "e": "an apple costs one coin."
+        },
+        {
+         "q": "how much does one apple cost?",
+         "options": [
+          "one coin",
+          "five coins",
+          "ten coins"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "mi pam aplo kopa.",
+         "e": "I buy five apples."
+        },
+        {
+         "who": "ana",
+         "v": "shevan! dano!",
+         "e": "thank you! goodbye!"
+        },
+        {
+         "q": "how many apples does Tomo buy?",
+         "options": [
+          "five",
+          "one",
+          "two"
+         ],
+         "answer": 0
+        }
+       ]
+      },
+      {
        "id": "m2-l6",
        "kind": "lesson",
        "title": "vegetables",
@@ -1132,6 +1407,61 @@
         "m2-l8",
         "m2-l9",
         "m2-l10"
+       ],
+       "parts": [
+        {
+         "who": "garson",
+         "v": "vela! tu kwo vola?",
+         "e": "hello! what do you want?"
+        },
+        {
+         "who": "ana",
+         "v": "mi supa i bren vola.",
+         "e": "I want soup and bread."
+        },
+        {
+         "who": "tomo",
+         "v": "mi glob vola.",
+         "e": "I want fish."
+        },
+        {
+         "who": "garson",
+         "v": "tun kwo sipa?",
+         "e": "what do you drink?"
+        },
+        {
+         "who": "ana",
+         "v": "kiro, glasë da nami.",
+         "e": "please, a glass of water."
+        },
+        {
+         "who": "tomo",
+         "v": "mi suko vola.",
+         "e": "I want juice."
+        },
+        {
+         "q": "what does Ana eat?",
+         "options": [
+          "soup and bread",
+          "fish",
+          "meat"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "garson",
+         "v": "supa kal!",
+         "e": "the soup is hot!"
+        },
+        {
+         "q": "what does Tomo drink?",
+         "options": [
+          "juice",
+          "water",
+          "coffee"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -1300,6 +1630,61 @@
         {
          "v": "folka tot torta goda.",
          "e": "the whole family likes the cake."
+        }
+       ]
+      },
+      {
+       "id": "m2.5-story",
+       "kind": "story",
+       "title": "breakfast",
+       "parts": [
+        {
+         "who": "ama",
+         "v": "un matin, min pran yama.",
+         "e": "in the morning, we eat breakfast."
+        },
+        {
+         "who": "tomo",
+         "v": "mi yamik!",
+         "e": "I am hungry!"
+        },
+        {
+         "who": "ama",
+         "v": "tu ovo vola ka?",
+         "e": "do you want an egg?"
+        },
+        {
+         "who": "tomo",
+         "v": "ya, dor ovo!",
+         "e": "yes, two eggs!"
+        },
+        {
+         "q": "what does Tomo want?",
+         "options": [
+          "two eggs",
+          "soup",
+          "a cake"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ama",
+         "v": "kafa amar. mi chay sipa.",
+         "e": "coffee is bitter. I drink tea."
+        },
+        {
+         "who": "tomo",
+         "v": "mi satë. shevan, ama!",
+         "e": "I am full. thank you, mother!"
+        },
+        {
+         "q": "why doesn't mother drink coffee?",
+         "options": [
+          "it is bitter",
+          "it is cold",
+          "it is salty"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -1487,6 +1872,56 @@
         "m2.5-l8",
         "m2.5-l9",
         "m2.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "ama, mi torta fasa vola.",
+         "e": "mother, I want to make a cake."
+        },
+        {
+         "who": "ama",
+         "v": "bon! lista skri.",
+         "e": "good! write a list."
+        },
+        {
+         "who": "ana",
+         "v": "ovon, mikh i choko.",
+         "e": "eggs, milk and chocolate."
+        },
+        {
+         "who": "ama",
+         "v": "choko favo da tu!",
+         "e": "chocolate is your favorite!"
+        },
+        {
+         "q": "what does Ana want to make?",
+         "options": [
+          "a cake",
+          "soup",
+          "bread"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "torta sava i bon!",
+         "e": "the cake is sweet and good!"
+        },
+        {
+         "who": "ama",
+         "v": "nun kukin limpa!",
+         "e": "now clean the kitchen!"
+        },
+        {
+         "q": "what must Ana do at the end?",
+         "options": [
+          "clean the kitchen",
+          "buy milk",
+          "sleep"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -1673,6 +2108,66 @@
        ]
       },
       {
+       "id": "m3-story",
+       "kind": "story",
+       "title": "where is the cat?",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "mish da mi kwe es?",
+         "e": "where is my cat?"
+        },
+        {
+         "who": "tomo",
+         "v": "mish nër kama ka?",
+         "e": "is the cat under the bed?"
+        },
+        {
+         "who": "ana",
+         "v": "nay.",
+         "e": "no."
+        },
+        {
+         "who": "tomo",
+         "v": "mish pos dur ka?",
+         "e": "is the cat behind the door?"
+        },
+        {
+         "who": "ana",
+         "v": "nay!",
+         "e": "no!"
+        },
+        {
+         "q": "what is Ana looking for?",
+         "options": [
+          "her cat",
+          "her dog",
+          "a book"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "mish gris sur kloza es!",
+         "e": "the gray cat is on the closet!"
+        },
+        {
+         "who": "ana",
+         "v": "ya! mish da mi!",
+         "e": "yes! my cat!"
+        },
+        {
+         "q": "where was the cat?",
+         "options": [
+          "on the closet",
+          "under the bed",
+          "behind the door"
+         ],
+         "answer": 0
+        }
+       ]
+      },
+      {
        "id": "m3-l6",
        "kind": "lesson",
        "title": "the bathroom",
@@ -1849,6 +2344,61 @@
         "m3-l8",
         "m3-l9",
         "m3-l10"
+       ],
+       "parts": [
+        {
+         "who": "lela",
+         "v": "kar nov da min gran!",
+         "e": "our new house is big!"
+        },
+        {
+         "who": "tomo",
+         "v": "rum da tu kwe es?",
+         "e": "where is your room?"
+        },
+        {
+         "who": "lela",
+         "v": "rum da mi supra es. kukin infra es.",
+         "e": "my room is upstairs. the kitchen is downstairs."
+        },
+        {
+         "who": "tomo",
+         "v": "kar gardo ha ka?",
+         "e": "does the house have a garden?"
+        },
+        {
+         "who": "lela",
+         "v": "ya, gardo bela. galan multa es.",
+         "e": "yes, the garden is beautiful. there are many flowers."
+        },
+        {
+         "q": "where is Lela's room?",
+         "options": [
+          "upstairs",
+          "downstairs",
+          "in the garden"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "vesin da tu kwi?",
+         "e": "who is your neighbor?"
+        },
+        {
+         "who": "lela",
+         "v": "vesin vet. sa vuf gran ha.",
+         "e": "the neighbor is old. he has a big dog."
+        },
+        {
+         "q": "what does the neighbor have?",
+         "options": [
+          "a big dog",
+          "a cat",
+          "a garden"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -2026,6 +2576,56 @@
         {
          "v": "dey da tu kwu?",
          "e": "how is your day?"
+        }
+       ]
+      },
+      {
+       "id": "m3.5-story",
+       "kind": "story",
+       "title": "a school day",
+       "parts": [
+        {
+         "who": "ama",
+         "v": "tomo, leva! skol!",
+         "e": "Tomo, get up! school!"
+        },
+        {
+         "who": "tomo",
+         "v": "nun? mi nema vola.",
+         "e": "now? I want to sleep."
+        },
+        {
+         "who": "ama",
+         "v": "dentën lava i gol!",
+         "e": "wash your teeth and go!"
+        },
+        {
+         "q": "what does Tomo want?",
+         "options": [
+          "to sleep",
+          "to eat",
+          "to play"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "mestro",
+         "v": "vela, kitin! vedey min vendëri lerna.",
+         "e": "hello, children! today we learn Venderian."
+        },
+        {
+         "who": "tomo",
+         "v": "mi vendëri goda!",
+         "e": "I like Venderian!"
+        },
+        {
+         "q": "what do they learn today?",
+         "options": [
+          "Venderian",
+          "music",
+          "math"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -2212,6 +2812,66 @@
         "m3.5-l8",
         "m3.5-l9",
         "m3.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ama",
+         "v": "tomo, tu tarda!",
+         "e": "Tomo, you are late!"
+        },
+        {
+         "who": "tomo",
+         "v": "shun da mi kwe es?",
+         "e": "where are my shoes?"
+        },
+        {
+         "who": "ama",
+         "v": "shun nër kama.",
+         "e": "the shoes are under the bed."
+        },
+        {
+         "who": "tomo",
+         "v": "kamis da mi kwe es?",
+         "e": "where is my shirt?"
+        },
+        {
+         "who": "ama",
+         "v": "kamis sur stul!",
+         "e": "the shirt is on the chair!"
+        },
+        {
+         "q": "where are Tomo's shoes?",
+         "options": [
+          "under the bed",
+          "on the chair",
+          "in the garden"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "vedey fendey ka?",
+         "e": "is today the weekend?"
+        },
+        {
+         "who": "ama",
+         "v": "ya! vedey fendey. skol ne es.",
+         "e": "yes! today is the weekend. there is no school."
+        },
+        {
+         "who": "tomo",
+         "v": "mi nema!",
+         "e": "I sleep!"
+        },
+        {
+         "q": "why doesn't Tomo go to school?",
+         "options": [
+          "it is the weekend",
+          "he is sick",
+          "the school is closed"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -2402,6 +3062,61 @@
        ]
       },
       {
+       "id": "m4-story",
+       "kind": "story",
+       "title": "a trip to the city",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "predey mi ra urba golta.",
+         "e": "yesterday I went to the city."
+        },
+        {
+         "who": "lela",
+         "v": "tu kel tren golta ka?",
+         "e": "did you go by train?"
+        },
+        {
+         "who": "ana",
+         "v": "ya. tren rap.",
+         "e": "yes. the train is fast."
+        },
+        {
+         "who": "lela",
+         "v": "tu un urba kwo fasata?",
+         "e": "what did you do in the city?"
+        },
+        {
+         "who": "ana",
+         "v": "mi ra muzë golta i un kafë sedata.",
+         "e": "I went to the museum and sat in a café."
+        },
+        {
+         "q": "how did Ana go to the city?",
+         "options": [
+          "by train",
+          "by car",
+          "on foot"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "lela",
+         "v": "posdey mi ra urba golva!",
+         "e": "tomorrow I will go to the city!"
+        },
+        {
+         "q": "what will Lela do tomorrow?",
+         "options": [
+          "go to the city",
+          "go to the museum",
+          "stay home"
+         ],
+         "answer": 0
+        }
+       ]
+      },
+      {
        "id": "m4-l6",
        "kind": "lesson",
        "title": "the bus",
@@ -2576,6 +3291,56 @@
         "m4-l8",
         "m4-l9",
         "m4-l10"
+       ],
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "min ra avyokar golva.",
+         "e": "we will go to the airport."
+        },
+        {
+         "who": "ana",
+         "v": "bilet da tu kwe es?",
+         "e": "where is your ticket?"
+        },
+        {
+         "who": "tomo",
+         "v": "bilet un bagë da mi es.",
+         "e": "the ticket is in my bag."
+        },
+        {
+         "who": "ana",
+         "v": "avyon tarda!",
+         "e": "the airplane is late!"
+        },
+        {
+         "who": "tomo",
+         "v": "shom avyon rap.",
+         "e": "but the airplane is fast."
+        },
+        {
+         "q": "where is Tomo's ticket?",
+         "options": [
+          "in his bag",
+          "at home",
+          "in the hotel"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "mi posta ra baba mandava.",
+         "e": "I will send a postcard to grandmother."
+        },
+        {
+         "q": "what will Ana send to grandmother?",
+         "options": [
+          "a postcard",
+          "a gift",
+          "a photo"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -2748,6 +3513,56 @@
         {
          "v": "tu foton da mi goda ka?",
          "e": "do you like my photos?"
+        }
+       ]
+      },
+      {
+       "id": "m4.5-story",
+       "kind": "story",
+       "title": "lost in the city",
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "mi perdata! hotel kwe es?",
+         "e": "I got lost! where is the hotel?"
+        },
+        {
+         "who": "hum",
+         "v": "hotel prok. rekto gol, i ra lev gol.",
+         "e": "the hotel is near. go straight ahead, and go left."
+        },
+        {
+         "who": "tomo",
+         "v": "shevan! hotel dalë ka?",
+         "e": "thank you! is the hotel far?"
+        },
+        {
+         "who": "hum",
+         "v": "nay, dek minut.",
+         "e": "no, ten minutes."
+        },
+        {
+         "q": "is the hotel far?",
+         "options": [
+          "no, ten minutes",
+          "yes, two hours",
+          "yes, very far"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "mi hotel trovata!",
+         "e": "I found the hotel!"
+        },
+        {
+         "q": "which way does Tomo go?",
+         "options": [
+          "straight, then left",
+          "right",
+          "back"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -2937,6 +3752,51 @@
         "m4.5-l8",
         "m4.5-l9",
         "m4.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "lela",
+         "v": "vedey min ra kar tornava.",
+         "e": "today we will go back home."
+        },
+        {
+         "who": "ana",
+         "v": "mi suvenir ra sesa kopa vola.",
+         "e": "I want to buy a souvenir for my sister."
+        },
+        {
+         "who": "lela",
+         "v": "boteka nek plaza es.",
+         "e": "the shop is next to the square."
+        },
+        {
+         "who": "ana",
+         "v": "ve suvenir barat. mi sa kopa.",
+         "e": "this souvenir is cheap. I buy it."
+        },
+        {
+         "q": "what does Ana buy?",
+         "options": [
+          "a souvenir",
+          "a postcard",
+          "a ticket"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "lela",
+         "v": "nun, kel taksi ra stasyo!",
+         "e": "now, by taxi to the station!"
+        },
+        {
+         "q": "how do they go to the station?",
+         "options": [
+          "by taxi",
+          "by bus",
+          "on foot"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -3121,6 +3981,61 @@
        ]
       },
       {
+       "id": "m5-story",
+       "kind": "story",
+       "title": "the weather",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "klima vedey kwu?",
+         "e": "how is the weather today?"
+        },
+        {
+         "who": "tomo",
+         "v": "vedey pluva. nuban gris.",
+         "e": "it rains today. the clouds are gray."
+        },
+        {
+         "who": "ana",
+         "v": "i posdey?",
+         "e": "and tomorrow?"
+        },
+        {
+         "who": "tomo",
+         "v": "posdey sol esva!",
+         "e": "tomorrow there will be sun!"
+        },
+        {
+         "q": "how is the weather today?",
+         "options": [
+          "it rains",
+          "it is sunny",
+          "it snows"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "posdey min ra lago golva.",
+         "e": "tomorrow we will go to the lake."
+        },
+        {
+         "who": "tomo",
+         "v": "lago belar dë pelag!",
+         "e": "the lake is more beautiful than the sea!"
+        },
+        {
+         "q": "where will they go tomorrow?",
+         "options": [
+          "to the lake",
+          "to the sea",
+          "to the forest"
+         ],
+         "answer": 0
+        }
+       ]
+      },
+      {
        "id": "m5-l6",
        "kind": "lesson",
        "title": "the beach",
@@ -3295,6 +4210,51 @@
         "m5-l8",
         "m5-l9",
         "m5-l10"
+       ],
+       "parts": [
+        {
+         "who": "lela",
+         "v": "min sur playa luda!",
+         "e": "we play on the beach!"
+        },
+        {
+         "who": "tomo",
+         "v": "ondan gran.",
+         "e": "the waves are big."
+        },
+        {
+         "who": "lela",
+         "v": "tondra! storma ven!",
+         "e": "thunder! a storm is coming!"
+        },
+        {
+         "who": "tomo",
+         "v": "ra kar gol!",
+         "e": "go home!"
+        },
+        {
+         "q": "why do they go home?",
+         "options": [
+          "a storm is coming",
+          "they are hungry",
+          "it is night"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "lela",
+         "v": "un kar, min fela.",
+         "e": "at home, we are happy."
+        },
+        {
+         "q": "what was big at the beach?",
+         "options": [
+          "the waves",
+          "the sand",
+          "the sun"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -3469,6 +4429,56 @@
         {
          "v": "ve dey belash esta.",
          "e": "this was the most beautiful day."
+        }
+       ]
+      },
+      {
+       "id": "m5.5-story",
+       "kind": "story",
+       "title": "grandfather's farm",
+       "parts": [
+        {
+         "who": "dedo",
+         "v": "vela! ve ferma da mi.",
+         "e": "hello! this is my farm."
+        },
+        {
+         "who": "ana",
+         "v": "kovan multa!",
+         "e": "many cows!"
+        },
+        {
+         "who": "dedo",
+         "v": "kovan mikh do. pulon ovon do.",
+         "e": "the cows give milk. the chickens give eggs."
+        },
+        {
+         "who": "ana",
+         "v": "kavalan rapmo kura!",
+         "e": "the horses run fast!"
+        },
+        {
+         "q": "what do the chickens give?",
+         "options": [
+          "eggs",
+          "milk",
+          "honey"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "dedo",
+         "v": "un somër, ferma mol bela.",
+         "e": "in summer, the farm is very beautiful."
+        },
+        {
+         "q": "who lives on the farm?",
+         "options": [
+          "grandfather",
+          "Ana",
+          "the teacher"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -3663,6 +4673,56 @@
         "m5.5-l8",
         "m5.5-l9",
         "m5.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "min un zoo esta!",
+         "e": "we were at the zoo!"
+        },
+        {
+         "who": "ana",
+         "v": "tu kwo vidta?",
+         "e": "what did you see?"
+        },
+        {
+         "who": "tomo",
+         "v": "mi elefan vidta. elefan granesh!",
+         "e": "I saw an elephant. the elephant is the biggest!"
+        },
+        {
+         "who": "ana",
+         "v": "tu leon vidta ka?",
+         "e": "did you see the lion?"
+        },
+        {
+         "who": "tomo",
+         "v": "ya. leon forë, shom sa nemata.",
+         "e": "yes. the lion is strong, but it slept."
+        },
+        {
+         "q": "what is the biggest animal Tomo saw?",
+         "options": [
+          "the elephant",
+          "the lion",
+          "the monkey"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "simyon felamo ludata.",
+         "e": "the monkeys played happily."
+        },
+        {
+         "q": "what was the lion doing?",
+         "options": [
+          "sleeping",
+          "running",
+          "eating"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -3834,6 +4894,61 @@
         {
          "v": "mi tasko apre vespa finiva.",
          "e": "I will finish the homework after dinner."
+        }
+       ]
+      },
+      {
+       "id": "m6-story",
+       "kind": "story",
+       "title": "the test",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "posdey prova da matë esva.",
+         "e": "tomorrow there will be a math test."
+        },
+        {
+         "who": "tomo",
+         "v": "matë khar! mi lerna deba.",
+         "e": "math is hard! I have to study."
+        },
+        {
+         "who": "ana",
+         "v": "mi tu ayda pot.",
+         "e": "I can help you."
+        },
+        {
+         "who": "tomo",
+         "v": "shevan! tu matë goda ka?",
+         "e": "thanks! do you like math?"
+        },
+        {
+         "who": "ana",
+         "v": "ya, matë lekh ra mi.",
+         "e": "yes, math is easy for me."
+        },
+        {
+         "q": "what test is tomorrow?",
+         "options": [
+          "math",
+          "history",
+          "music"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "mi muzik goda.",
+         "e": "I like music."
+        },
+        {
+         "q": "who will help Tomo?",
+         "options": [
+          "Ana",
+          "the teacher",
+          "his mother"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -4012,6 +5127,56 @@
         "m6-l8",
         "m6-l9",
         "m6-l10"
+       ],
+       "parts": [
+        {
+         "who": "mestro",
+         "v": "vedey mi notan do.",
+         "e": "today I give grades."
+        },
+        {
+         "who": "mestro",
+         "v": "tomo, nota da tu bon!",
+         "e": "Tomo, your grade is good!"
+        },
+        {
+         "who": "tomo",
+         "v": "ver ka?",
+         "e": "is it true?"
+        },
+        {
+         "who": "mestro",
+         "v": "ya! tu multamo lernata.",
+         "e": "yes! you learned a lot."
+        },
+        {
+         "q": "what did Tomo get?",
+         "options": [
+          "a good grade",
+          "a bad grade",
+          "a book"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "ana, shevan!",
+         "e": "Ana, thank you!"
+        },
+        {
+         "who": "ana",
+         "v": "un pauza, min un kantina yamava.",
+         "e": "at the break, we will eat in the cafeteria."
+        },
+        {
+         "q": "where will they eat at the break?",
+         "options": [
+          "in the cafeteria",
+          "in the library",
+          "at home"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -4178,6 +5343,61 @@
         {
          "v": "shom dey sibi, mi libër.",
          "e": "but on Sunday, I am free."
+        }
+       ]
+      },
+      {
+       "id": "m6.5-story",
+       "kind": "story",
+       "title": "plans for the week",
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "tu dey pami libër ka?",
+         "e": "are you free on Friday?"
+        },
+        {
+         "who": "lela",
+         "v": "nay, mi okupa. dey sibi mi libër.",
+         "e": "no, I am busy. on Sunday I am free."
+        },
+        {
+         "who": "tomo",
+         "v": "dey sibi min ra parka golva ka?",
+         "e": "will we go to the park on Sunday?"
+        },
+        {
+         "who": "lela",
+         "v": "ya! plan bon.",
+         "e": "yes! good plan."
+        },
+        {
+         "q": "when is Lela free?",
+         "options": [
+          "on Sunday",
+          "on Friday",
+          "on Monday"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "lela",
+         "v": "aba da tu medik ka?",
+         "e": "is your father a doctor?"
+        },
+        {
+         "who": "tomo",
+         "v": "nay, aba da mi kukari.",
+         "e": "no, my father is a cook."
+        },
+        {
+         "q": "what is Tomo's father's job?",
+         "options": [
+          "a cook",
+          "a doctor",
+          "a teacher"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -4362,6 +5582,51 @@
         "m6.5-l8",
         "m6.5-l9",
         "m6.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "mestro",
+         "v": "kitin, tun kwo es vola?",
+         "e": "children, what do you want to be?"
+        },
+        {
+         "who": "ana",
+         "v": "mi piloto es vola!",
+         "e": "I want to be a pilot!"
+        },
+        {
+         "who": "tomo",
+         "v": "mi teknik es vola.",
+         "e": "I want to be an engineer."
+        },
+        {
+         "who": "lela",
+         "v": "mi lirari es vola!",
+         "e": "I want to be a singer!"
+        },
+        {
+         "q": "what does Ana want to be?",
+         "options": [
+          "a pilot",
+          "an engineer",
+          "a singer"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "mestro",
+         "v": "rab tot bon.",
+         "e": "every job is good."
+        },
+        {
+         "q": "who wants to be a singer?",
+         "options": [
+          "Lela",
+          "Tomo",
+          "Ana"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -4547,6 +5812,56 @@
        ]
       },
       {
+       "id": "m7-story",
+       "kind": "story",
+       "title": "at the doctor",
+       "parts": [
+        {
+         "who": "medik",
+         "v": "vela! tu kwo senta?",
+         "e": "hello! how do you feel?"
+        },
+        {
+         "who": "tomo",
+         "v": "mi sika. kop da mi dola.",
+         "e": "I am sick. my head hurts."
+        },
+        {
+         "who": "medik",
+         "v": "pilë ve yama, i un kama resta.",
+         "e": "take this medicine, and stay in bed."
+        },
+        {
+         "who": "tomo",
+         "v": "mi skol gol deba ka?",
+         "e": "must I go to school?"
+        },
+        {
+         "who": "medik",
+         "v": "nay. sef tu un kama resta, posdey tu sana esva.",
+         "e": "no. if you stay in bed, tomorrow you will be well."
+        },
+        {
+         "q": "what hurts?",
+         "options": [
+          "Tomo's head",
+          "his leg",
+          "his arm"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what must Tomo do?",
+         "options": [
+          "stay in bed",
+          "go to school",
+          "run"
+         ],
+         "answer": 0
+        }
+       ]
+      },
+      {
        "id": "m7-l6",
        "kind": "lesson",
        "title": "tired and bored",
@@ -4718,6 +6033,56 @@
         "m7-l8",
         "m7-l9",
         "m7-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "tomo, tu kwa tris?",
+         "e": "Tomo, why are you sad?"
+        },
+        {
+         "who": "tomo",
+         "v": "mi tris, kaus vren da mi dalë golta.",
+         "e": "I am sad because my friend went far away."
+        },
+        {
+         "who": "ana",
+         "v": "ne kwida! mi vren da tu.",
+         "e": "don't worry! I am your friend."
+        },
+        {
+         "who": "tomo",
+         "v": "shevan, ana.",
+         "e": "thanks, Ana."
+        },
+        {
+         "q": "why is Tomo sad?",
+         "options": [
+          "his friend went far away",
+          "he is sick",
+          "he lost a game"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "mi surpriza ra tu ha!",
+         "e": "I have a surprise for you!"
+        },
+        {
+         "who": "tomo",
+         "v": "torta! mi fela!",
+         "e": "a cake! I am happy!"
+        },
+        {
+         "q": "what was the surprise?",
+         "options": [
+          "a cake",
+          "a book",
+          "a dog"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -4881,6 +6246,56 @@
         {
          "v": "kitin sago tot otata.",
          "e": "the children heard the whole story."
+        }
+       ]
+      },
+      {
+       "id": "m7.5-story",
+       "kind": "story",
+       "title": "the good dragon",
+       "parts": [
+        {
+         "who": "dedo",
+         "v": "yordo, ek drako sur bor vivata.",
+         "e": "long ago, a dragon lived on a mountain."
+        },
+        {
+         "who": "ana",
+         "v": "drako mal esta ka?",
+         "e": "was the dragon bad?"
+        },
+        {
+         "who": "dedo",
+         "v": "nay! drako ki sur bor vivata bon esta.",
+         "e": "no! the dragon who lived on the mountain was good."
+        },
+        {
+         "who": "ana",
+         "v": "drako kwo yamata?",
+         "e": "what did the dragon eat?"
+        },
+        {
+         "who": "dedo",
+         "v": "drako frut yamata!",
+         "e": "the dragon ate fruit!"
+        },
+        {
+         "q": "where did the dragon live?",
+         "options": [
+          "on a mountain",
+          "in a castle",
+          "in the sea"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what did the dragon eat?",
+         "options": [
+          "fruit",
+          "people",
+          "fish"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -5066,6 +6481,56 @@
         "m7.5-l8",
         "m7.5-l9",
         "m7.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "lela",
+         "v": "mi sekret ha.",
+         "e": "I have a secret."
+        },
+        {
+         "who": "ana",
+         "v": "kwo? kiro thela!",
+         "e": "what? please tell!"
+        },
+        {
+         "who": "lela",
+         "v": "vren ki un nasho dalë viva letra ra mi mandata.",
+         "e": "a friend who lives in a far country sent me a letter."
+        },
+        {
+         "who": "ana",
+         "v": "letra lon ka?",
+         "e": "is the letter long?"
+        },
+        {
+         "who": "lela",
+         "v": "ya. sa ra ve urba venva!",
+         "e": "yes. she will come to this city!"
+        },
+        {
+         "q": "who sent the letter?",
+         "options": [
+          "a friend who lives far away",
+          "Ana",
+          "her aunt"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "mi fela, kaus tu fela.",
+         "e": "I am happy because you are happy."
+        },
+        {
+         "q": "what will the friend do?",
+         "options": [
+          "come to this city",
+          "send a gift",
+          "call Lela"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -5236,6 +6701,56 @@
         {
          "v": "mi ludo ripë luda vola.",
          "e": "I want to play the game again."
+        }
+       ]
+      },
+      {
+       "id": "m8-story",
+       "kind": "story",
+       "title": "the concert",
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "posdey bandë nov un shoa luda.",
+         "e": "tomorrow a new band plays at a concert."
+        },
+        {
+         "who": "lela",
+         "v": "mi kenë! lirari voka bela ha.",
+         "e": "I know! the singer has a beautiful voice."
+        },
+        {
+         "who": "tomo",
+         "v": "tu ra shoa golva ka?",
+         "e": "will you go to the concert?"
+        },
+        {
+         "who": "lela",
+         "v": "ya! mi dansa goda.",
+         "e": "yes! I like to dance."
+        },
+        {
+         "q": "who plays tomorrow?",
+         "options": [
+          "a new band",
+          "Tomo",
+          "a singer alone"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "tomo",
+         "v": "mi penka ke shoa mol bon esva.",
+         "e": "I think that the concert will be very good."
+        },
+        {
+         "q": "what does Lela like?",
+         "options": [
+          "to dance",
+          "to draw",
+          "to sing"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -5411,6 +6926,51 @@
         "m8-l8",
         "m8-l9",
         "m8-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "un vechë, min ra kino golva ka?",
+         "e": "in the evening, will we go to the cinema?"
+        },
+        {
+         "who": "tomo",
+         "v": "filmo kwo?",
+         "e": "what movie?"
+        },
+        {
+         "who": "ana",
+         "v": "filmo nov ki drakon ha.",
+         "e": "a new movie that has dragons."
+        },
+        {
+         "who": "tomo",
+         "v": "mi filmon ki drakon ha goda!",
+         "e": "I like movies that have dragons!"
+        },
+        {
+         "q": "what is the movie about?",
+         "options": [
+          "dragons",
+          "a farm",
+          "a castle"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "filmo lon, shom bon.",
+         "e": "the movie is long, but good."
+        },
+        {
+         "q": "where will they go?",
+         "options": [
+          "to the cinema",
+          "to a concert",
+          "to the museum"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -5575,6 +7135,56 @@
         {
          "v": "ve dey bonesh da yer esta.",
          "e": "this was the best day of the year."
+        }
+       ]
+      },
+      {
+       "id": "m8.5-story",
+       "kind": "story",
+       "title": "the big match",
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "min un stadyo es!",
+         "e": "we are at the stadium!"
+        },
+        {
+         "who": "lela",
+         "v": "fanun multa! tot krida!",
+         "e": "so many fans! everyone shouts!"
+        },
+        {
+         "who": "tomo",
+         "v": "ekipa da min rapor!",
+         "e": "our team is faster!"
+        },
+        {
+         "who": "lela",
+         "v": "kwi vina?",
+         "e": "who wins?"
+        },
+        {
+         "who": "tomo",
+         "v": "ekipa da min vinata!",
+         "e": "our team won!"
+        },
+        {
+         "q": "where are they?",
+         "options": [
+          "at the stadium",
+          "at school",
+          "at home"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "who won?",
+         "options": [
+          "their team",
+          "the other team",
+          "nobody"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -5757,6 +7367,46 @@
         "m8.5-l8",
         "m8.5-l9",
         "m8.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "vedey korso es. mi timë.",
+         "e": "today there is a race. I am scared."
+        },
+        {
+         "who": "tomo",
+         "v": "ne timë! tu dey tot trenata.",
+         "e": "don't be scared! you trained every day."
+        },
+        {
+         "who": "ana",
+         "v": "sef mi vina, mi mol fela esva.",
+         "e": "if I win, I will be very happy."
+        },
+        {
+         "who": "tomo",
+         "v": "ana rapesh! ana vinata!",
+         "e": "Ana is the fastest! Ana won!"
+        },
+        {
+         "q": "who won the race?",
+         "options": [
+          "Ana",
+          "Tomo",
+          "Lela"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "how often did Ana train?",
+         "options": [
+          "every day",
+          "once",
+          "never"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -5935,6 +7585,56 @@
        ]
       },
       {
+       "id": "m9-story",
+       "kind": "story",
+       "title": "three languages",
+       "parts": [
+        {
+         "who": "lela",
+         "v": "tu thelor kwanto thela?",
+         "e": "how many languages do you speak?"
+        },
+        {
+         "who": "tomo",
+         "v": "mi tis thelor thela, rusë, inglish i vendëri.",
+         "e": "I speak three languages, Russian, English and Venderian."
+        },
+        {
+         "who": "lela",
+         "v": "vendëri lekhor dë inglish ka?",
+         "e": "is Venderian easier than English?"
+        },
+        {
+         "who": "tomo",
+         "v": "ya! mi penka ke vendëri lekhesh.",
+         "e": "yes! I think that Venderian is the easiest."
+        },
+        {
+         "q": "how many languages does Tomo speak?",
+         "options": [
+          "three",
+          "two",
+          "one"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "lela",
+         "v": "mi konsa!",
+         "e": "I agree!"
+        },
+        {
+         "q": "what does Tomo think about Venderian?",
+         "options": [
+          "it's the easiest",
+          "it's hard",
+          "it's boring"
+         ],
+         "answer": 0
+        }
+       ]
+      },
+      {
        "id": "m9-l6",
        "kind": "lesson",
        "title": "rules",
@@ -6100,6 +7800,51 @@
         "m9-l8",
         "m9-l9",
         "m9-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "mi penka ke zil vala.",
+         "e": "I think that money is important."
+        },
+        {
+         "who": "tomo",
+         "v": "mi ne konsa. vrenan valar dë zil.",
+         "e": "I don't agree. friends are more important than money."
+        },
+        {
+         "who": "ana",
+         "v": "mayë tu ver.",
+         "e": "maybe you are right."
+        },
+        {
+         "who": "tomo",
+         "v": "hum ki vrenan bon ha fela.",
+         "e": "a person who has good friends is happy."
+        },
+        {
+         "q": "what does Tomo think is more important?",
+         "options": [
+          "friends",
+          "money",
+          "school"
+         ],
+         "answer": 0
+        },
+        {
+         "who": "ana",
+         "v": "tu vren honesta.",
+         "e": "you are an honest friend."
+        },
+        {
+         "q": "what does Ana say at the start?",
+         "options": [
+          "money is important",
+          "friends are bad",
+          "school is boring"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -6261,6 +8006,51 @@
         {
          "v": "dano, vren!",
          "e": "goodbye, friend!"
+        }
+       ]
+      },
+      {
+       "id": "m9.5-story",
+       "kind": "story",
+       "title": "dreams",
+       "parts": [
+        {
+         "who": "lela",
+         "v": "sonyo da tu kwo?",
+         "e": "what is your dream?"
+        },
+        {
+         "who": "ana",
+         "v": "mi lirari fama es vola.",
+         "e": "I want to be a famous singer."
+        },
+        {
+         "who": "lela",
+         "v": "mi sonyata ke mi sur mera vivata!",
+         "e": "I dreamed that I lived on the moon!"
+        },
+        {
+         "who": "ana",
+         "v": "un avenë, human sur mera vivava.",
+         "e": "in the future, people will live on the moon."
+        },
+        {
+         "q": "what did Lela dream?",
+         "options": [
+          "that she lived on the moon",
+          "that she was famous",
+          "that she flew"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what does Ana want to be?",
+         "options": [
+          "a famous singer",
+          "an astronaut",
+          "a doctor"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -6444,6 +8234,56 @@
         "m9.5-l8",
         "m9.5-l9",
         "m9.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "mi tu ra festa da mi invita!",
+         "e": "I invite you to my party!"
+        },
+        {
+         "who": "lela",
+         "v": "festa kwan?",
+         "e": "when is the party?"
+        },
+        {
+         "who": "tomo",
+         "v": "dey pami, un vechë.",
+         "e": "on Friday, in the evening."
+        },
+        {
+         "who": "lela",
+         "v": "pardon, dey pami mi okupa.",
+         "e": "sorry, on Friday I am busy."
+        },
+        {
+         "who": "tomo",
+         "v": "ne kwida! sef tu dey sibi libër, festa dey sibi esva.",
+         "e": "don't worry! if you are free on Sunday, the party will be on Sunday."
+        },
+        {
+         "who": "lela",
+         "v": "ya! shevan!",
+         "e": "yes! thanks!"
+        },
+        {
+         "q": "when was the party first?",
+         "options": [
+          "Friday evening",
+          "Sunday morning",
+          "Monday"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "why can't Lela come on Friday?",
+         "options": [
+          "she is busy",
+          "she is sick",
+          "she forgot"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -6628,6 +8468,61 @@
         {
          "v": "min aydave.",
          "e": "we would help."
+        }
+       ]
+      },
+      {
+       "id": "m10-story",
+       "kind": "story",
+       "title": "the sale",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "vedey losur gran un rokem es!",
+         "e": "today there is a big sale at the mall!"
+        },
+        {
+         "who": "lela",
+         "v": "mi dutlun nov vola.",
+         "e": "I want a new jacket."
+        },
+        {
+         "who": "ana",
+         "v": "ve dutlun siga ha.",
+         "e": "this jacket has a discount."
+        },
+        {
+         "who": "lela",
+         "v": "mi sa gani. kamaresh bon!",
+         "e": "I try it on. the size is good!"
+        },
+        {
+         "who": "debes",
+         "v": "kel wobel o vobri?",
+         "e": "with cash or a bank card?"
+        },
+        {
+         "who": "lela",
+         "v": "kel vobri.",
+         "e": "with a bank card."
+        },
+        {
+         "q": "what does Lela buy?",
+         "options": [
+          "a jacket",
+          "a dress",
+          "a hat"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "how does Lela pay?",
+         "options": [
+          "with a bank card",
+          "with cash",
+          "she doesn't pay"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -6818,6 +8713,46 @@
         "m10-l8",
         "m10-l9",
         "m10-l10"
+       ],
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "sef tu teli esta, tu kwo kopave?",
+         "e": "if you were rich, what would you buy?"
+        },
+        {
+         "who": "ana",
+         "v": "mi kar gran kopave. i tu?",
+         "e": "I would buy a big house. and you?"
+        },
+        {
+         "who": "tomo",
+         "v": "mi zil ra human naske dove.",
+         "e": "I would give money to poor people."
+        },
+        {
+         "who": "ana",
+         "v": "tu mol bon!",
+         "e": "you are very good!"
+        },
+        {
+         "q": "what would Ana buy?",
+         "options": [
+          "a big house",
+          "a car",
+          "a jacket"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what would Tomo do?",
+         "options": [
+          "give money to poor people",
+          "buy a house",
+          "save money"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -6994,6 +8929,56 @@
         {
          "v": "ama mol fela esva.",
          "e": "mother will be very happy."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-story",
+       "kind": "story",
+       "title": "the wrong size",
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "shun da mi kamaresh obru ha.",
+         "e": "my shoes have the wrong size."
+        },
+        {
+         "who": "thun",
+         "v": "tu fleno vola ka?",
+         "e": "do you want a refund?"
+        },
+        {
+         "who": "tomo",
+         "v": "nay, mi shun gran vola.",
+         "e": "no, I want big shoes."
+        },
+        {
+         "who": "thun",
+         "v": "ve shun gran.",
+         "e": "these shoes are big."
+        },
+        {
+         "who": "tomo",
+         "v": "shevan!",
+         "e": "thanks!"
+        },
+        {
+         "q": "what was the problem?",
+         "options": [
+          "the wrong size",
+          "the wrong color",
+          "they were broken"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "does Tomo take a refund?",
+         "options": [
+          "no, he takes bigger shoes",
+          "yes",
+          "he takes nothing"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -7190,6 +9175,51 @@
         "m10.5-l8",
         "m10.5-l9",
         "m10.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "mi zil zibe, orut mi biko kopa pot.",
+         "e": "I save money so that I can buy a bike."
+        },
+        {
+         "who": "tomo",
+         "v": "tu khosh zibeta ka?",
+         "e": "did you save a lot?"
+        },
+        {
+         "who": "ana",
+         "v": "nay. biko karo.",
+         "e": "no. the bike is expensive."
+        },
+        {
+         "who": "tomo",
+         "v": "zalël losur chagi!",
+         "e": "wait until the sale!"
+        },
+        {
+         "who": "ana",
+         "v": "ideya bon! mi chagiva.",
+         "e": "good idea! I will wait."
+        },
+        {
+         "q": "what does Ana want to buy?",
+         "options": [
+          "a bike",
+          "a phone",
+          "a jacket"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what is Tomo's advice?",
+         "options": [
+          "wait until the sale",
+          "borrow money",
+          "buy now"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -7374,6 +9404,56 @@
         {
          "v": "mi lir da mi murwa vola.",
          "e": "I want to record my song."
+        }
+       ]
+      },
+      {
+       "id": "m11-story",
+       "kind": "story",
+       "title": "the dead phone",
+       "parts": [
+        {
+         "who": "lela",
+         "v": "ronish da mi ne rabo!",
+         "e": "my phone doesn't work!"
+        },
+        {
+         "who": "tomo",
+         "v": "zacha tedas ka?",
+         "e": "is the battery empty?"
+        },
+        {
+         "who": "lela",
+         "v": "ya. leleleng da mi kwe es?",
+         "e": "yes. where is my charger?"
+        },
+        {
+         "who": "tomo",
+         "v": "ik!",
+         "e": "here!"
+        },
+        {
+         "who": "lela",
+         "v": "shevan! nun mi pasinzët ra ama mure pot.",
+         "e": "thanks! now I can text a message to mother."
+        },
+        {
+         "q": "what was wrong with the phone?",
+         "options": [
+          "the battery was empty",
+          "it broke",
+          "it had a virus"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "who will Lela text?",
+         "options": [
+          "her mother",
+          "Tomo",
+          "her teacher"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -7564,6 +9644,51 @@
         "m11-l8",
         "m11-l9",
         "m11-l10"
+       ],
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "min shemde wabata!",
+         "e": "we built a robot!"
+        },
+        {
+         "who": "ana",
+         "v": "shemde pasa pot ka?",
+         "e": "can the robot walk?"
+        },
+        {
+         "who": "tomo",
+         "v": "ya, shom sozising samu ha.",
+         "e": "yes, but the code has a bug."
+        },
+        {
+         "who": "ana",
+         "v": "mi tu ayda. min samu retnoluva.",
+         "e": "I'll help you. we will fix the bug."
+        },
+        {
+         "who": "tomo",
+         "v": "nun shemde rabo!",
+         "e": "now the robot works!"
+        },
+        {
+         "q": "what did they build?",
+         "options": [
+          "a robot",
+          "a computer",
+          "an app"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what was the problem?",
+         "options": [
+          "a bug in the code",
+          "no battery",
+          "a virus"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -7737,6 +9862,51 @@
         {
          "v": "mi ne golva, fan tu golva.",
          "e": "I will not go unless you go."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-story",
+       "kind": "story",
+       "title": "fake news",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "mi un reto ridëta ke mera ne es.",
+         "e": "I read on the internet that the moon doesn't exist."
+        },
+        {
+         "who": "tomo",
+         "v": "ve nova pelo!",
+         "e": "this news is fake!"
+        },
+        {
+         "who": "ana",
+         "v": "mayë sa kika ka?",
+         "e": "maybe it is real?"
+        },
+        {
+         "who": "tomo",
+         "v": "nay. tu nova kihi deba!",
+         "e": "no. you must check the news!"
+        },
+        {
+         "q": "what did Ana read?",
+         "options": [
+          "that the moon doesn't exist",
+          "that the sun is cold",
+          "that cats can fly"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what does Tomo say?",
+         "options": [
+          "the news is fake",
+          "it's real",
+          "he doesn't know"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -7933,6 +10103,46 @@
         "m11.5-l8",
         "m11.5-l9",
         "m11.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ama",
+         "v": "tomo, tu ronish khosh mengpa!",
+         "e": "Tomo, you use the phone a lot!"
+        },
+        {
+         "who": "tomo",
+         "v": "mi puntilit luda. sa sishu!",
+         "e": "I play a video game. it's exciting!"
+        },
+        {
+         "who": "ama",
+         "v": "ronish utho i teshi gol!",
+         "e": "turn off the phone and go outside!"
+        },
+        {
+         "who": "tomo",
+         "v": "teshi, sol shina. mi fela!",
+         "e": "outside, the sun shines. I am happy!"
+        },
+        {
+         "q": "what was Tomo doing?",
+         "options": [
+          "playing a video game",
+          "reading",
+          "sleeping"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what did mother say?",
+         "options": [
+          "go outside",
+          "go to sleep",
+          "do homework"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -8120,6 +10330,56 @@
         {
          "v": "mi noshsoman multa lerna vola.",
          "e": "I want to learn many cultures."
+        }
+       ]
+      },
+      {
+       "id": "m12-story",
+       "kind": "story",
+       "title": "the spicy dish",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "mi thelor da ve nasho ne rava.",
+         "e": "I don't understand the language of this country."
+        },
+        {
+         "who": "lela",
+         "v": "mi thelan ranu kenë.",
+         "e": "I know some words."
+        },
+        {
+         "who": "ana",
+         "v": "kiro, menu selu!",
+         "e": "please translate the menu!"
+        },
+        {
+         "who": "lela",
+         "v": "menu thela, mirin nirun luthu.",
+         "e": "the menu says, the local dish is spicy."
+        },
+        {
+         "who": "ana",
+         "v": "mi luthu ne goda! mi napa vola.",
+         "e": "I don't like spicy! I want a salad."
+        },
+        {
+         "q": "what does the menu say?",
+         "options": [
+          "the local dish is spicy",
+          "the dish is sweet",
+          "there is no food"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what does Ana want?",
+         "options": [
+          "a salad",
+          "the spicy dish",
+          "rice"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -8312,6 +10572,51 @@
         "m12-l8",
         "m12-l9",
         "m12-l10"
+       ],
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "vedey sopu gran es!",
+         "e": "today there is a big festival!"
+        },
+        {
+         "who": "lela",
+         "v": "madok un vilë pasa.",
+         "e": "the parade walks in the street."
+        },
+        {
+         "who": "tomo",
+         "v": "kitin tëdlan chati.",
+         "e": "the children hold lanterns."
+        },
+        {
+         "who": "lela",
+         "v": "un noch, mutu esva!",
+         "e": "at night, there will be fireworks!"
+        },
+        {
+         "who": "tomo",
+         "v": "mi ve nasho liva. human lëbë.",
+         "e": "I love this country. the people are friendly."
+        },
+        {
+         "q": "what will happen at night?",
+         "options": [
+          "fireworks",
+          "a parade",
+          "rain"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "how are the people?",
+         "options": [
+          "friendly",
+          "angry",
+          "scary"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -8490,6 +10795,56 @@
         {
          "v": "mi keszun ra vesin dota.",
          "e": "I gave cookies to the neighbor."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-story",
+       "kind": "story",
+       "title": "the wedding",
+       "parts": [
+        {
+         "who": "lela",
+         "v": "tiya da mi posdey kevava!",
+         "e": "my aunt will marry tomorrow!"
+        },
+        {
+         "who": "ana",
+         "v": "rizo kwe esva?",
+         "e": "where will the wedding be?"
+        },
+        {
+         "who": "lela",
+         "v": "un kastë vet!",
+         "e": "in an old castle!"
+        },
+        {
+         "who": "ana",
+         "v": "kastë? mesan lë viva!",
+         "e": "a castle? ghosts live there!"
+        },
+        {
+         "who": "lela",
+         "v": "ve menisthi! ne kika.",
+         "e": "that's a legend! not real."
+        },
+        {
+         "q": "where will the wedding be?",
+         "options": [
+          "in an old castle",
+          "in a church",
+          "at the beach"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what does Ana think lives there?",
+         "options": [
+          "ghosts",
+          "dragons",
+          "a king"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -8683,6 +11038,51 @@
         "m12.5-l8",
         "m12.5-l9",
         "m12.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "ish mi chiba, mi tu evuteva.",
+         "e": "as soon as I arrive, I will call you."
+        },
+        {
+         "who": "ama",
+         "v": "unu da tu kwu esta?",
+         "e": "how was your journey?"
+        },
+        {
+         "who": "ana",
+         "v": "tamchin! mi noshsoman multa vidta.",
+         "e": "interesting! I saw many cultures."
+        },
+        {
+         "who": "ama",
+         "v": "tu ripë vayave ka?",
+         "e": "would you travel again?"
+        },
+        {
+         "who": "ana",
+         "v": "ya! ve unu bonesh da tote da mi esta.",
+         "e": "yes! this journey was the best of my life."
+        },
+        {
+         "q": "how was the journey?",
+         "options": [
+          "interesting",
+          "boring",
+          "scary"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "would Ana travel again?",
+         "options": [
+          "yes",
+          "no",
+          "maybe not"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -8875,6 +11275,56 @@
        ]
       },
       {
+       "id": "m13-story",
+       "kind": "story",
+       "title": "the meeting",
+       "parts": [
+        {
+         "who": "keyer",
+         "v": "vela! vedey min dunur da dali ha.",
+         "e": "hello! today we have a community meeting."
+        },
+        {
+         "who": "ana",
+         "v": "min parka nov vola!",
+         "e": "we want a new park!"
+        },
+        {
+         "who": "tomo",
+         "v": "mi konsa. kitin luda deba.",
+         "e": "I agree. children must play."
+        },
+        {
+         "who": "keyer",
+         "v": "sef tot konsa, min parka nov fasava.",
+         "e": "if everyone agrees, we will make a new park."
+        },
+        {
+         "who": "tot",
+         "v": "ya!",
+         "e": "yes!"
+        },
+        {
+         "q": "what does the community want?",
+         "options": [
+          "a new park",
+          "a new school",
+          "a shop"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "does everyone agree?",
+         "options": [
+          "yes",
+          "no",
+          "only Tomo"
+         ],
+         "answer": 0
+        }
+       ]
+      },
+      {
        "id": "m13-l6",
        "kind": "lesson",
        "title": "rights and duties",
@@ -9059,6 +11509,51 @@
         "m13-l8",
         "m13-l9",
         "m13-l10"
+       ],
+       "parts": [
+        {
+         "who": "lela",
+         "v": "duse bonezam nov fasata.",
+         "e": "the government made a new law."
+        },
+        {
+         "who": "tomo",
+         "v": "bonezam kwo?",
+         "e": "what law?"
+        },
+        {
+         "who": "lela",
+         "v": "parka vufan ne merfe.",
+         "e": "the park doesn't allow dogs."
+        },
+        {
+         "who": "tomo",
+         "v": "ve pekro! vuf da mi parka liva.",
+         "e": "that's unfair! my dog loves the park."
+        },
+        {
+         "who": "lela",
+         "v": "posdey iket bena un plaza esva.",
+         "e": "tomorrow there will be a peaceful protest in the square."
+        },
+        {
+         "q": "what does the new law say?",
+         "options": [
+          "no dogs in the park",
+          "no cars in the city",
+          "no phones at school"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what will happen tomorrow?",
+         "options": [
+          "a peaceful protest",
+          "an election",
+          "a party"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -9237,6 +11732,56 @@
         {
          "v": "vra lebis sa thela.",
          "e": "everybody talks about it."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-story",
+       "kind": "story",
+       "title": "the stolen bike",
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "biko da mi! hum biko da mi nezata!",
+         "e": "my bike! someone stole my bike!"
+        },
+        {
+         "who": "gabël",
+         "v": "tu kwo vidta?",
+         "e": "what did you see?"
+        },
+        {
+         "who": "tomo",
+         "v": "dar ki kamis rud ha.",
+         "e": "a man who has a red shirt."
+        },
+        {
+         "who": "gabël",
+         "v": "min sa trovava.",
+         "e": "we will find him."
+        },
+        {
+         "who": "tomo",
+         "v": "gabël biko trovata!",
+         "e": "the police officer found the bike!"
+        },
+        {
+         "q": "what was stolen?",
+         "options": [
+          "Tomo's bike",
+          "his phone",
+          "his bag"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what did the man wear?",
+         "options": [
+          "a red shirt",
+          "a black hat",
+          "blue pants"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -9422,6 +11967,46 @@
         "m13.5-l8",
         "m13.5-l9",
         "m13.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "lela",
+         "v": "vedey nëki es. kwi vina?",
+         "e": "today is the election. who wins?"
+        },
+        {
+         "who": "tomo",
+         "v": "petosan un noch zosepova.",
+         "e": "the results will appear at night."
+        },
+        {
+         "who": "lela",
+         "v": "rastëtra keyer da mi ne vina, mi kreda ke dali bon esva.",
+         "e": "even if my leader doesn't win, I believe that the community will be good."
+        },
+        {
+         "who": "tomo",
+         "v": "vro min kun rabo, dapa bonor esva.",
+         "e": "as long as we work together, society will be better."
+        },
+        {
+         "q": "when will the results appear?",
+         "options": [
+          "at night",
+          "in the morning",
+          "next week"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what does Tomo say?",
+         "options": [
+          "working together makes society better",
+          "voting is boring",
+          "nobody wins"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -9603,6 +12188,56 @@
         {
          "v": "mi rasi es vola!",
          "e": "I want to be an astronaut!"
+        }
+       ]
+      },
+      {
+       "id": "m14-story",
+       "kind": "story",
+       "title": "the telescope",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "ve noch, min stelan kel prit blutri!",
+         "e": "tonight, we observe stars with a telescope!"
+        },
+        {
+         "who": "tomo",
+         "v": "mi lëlnë vidta!",
+         "e": "I saw a comet!"
+        },
+        {
+         "who": "ana",
+         "v": "ver ka?",
+         "e": "really?"
+        },
+        {
+         "who": "tomo",
+         "v": "ya! lëlnë gran un vin esta.",
+         "e": "yes! there was a big comet in the sky."
+        },
+        {
+         "who": "ana",
+         "v": "mi rasi es vola. mi ra krili sinang golve.",
+         "e": "I want to be an astronaut. I would go to another galaxy."
+        },
+        {
+         "q": "what did Tomo see?",
+         "options": [
+          "a comet",
+          "a planet",
+          "the moon"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "where would Ana go?",
+         "options": [
+          "to another galaxy",
+          "to the moon",
+          "to the sea"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -9789,6 +12424,51 @@
         "m14-l8",
         "m14-l9",
         "m14-l10"
+       ],
+       "parts": [
+        {
+         "who": "mestro",
+         "v": "tomo, tu kwo kureta?",
+         "e": "Tomo, what did you design?"
+        },
+        {
+         "who": "tomo",
+         "v": "mi vihubrol ki gozar dos sol fasa kureta.",
+         "e": "I designed a machine that makes energy from the sun."
+        },
+        {
+         "who": "mestro",
+         "v": "mol bon! ana, i tu?",
+         "e": "very good! Ana, and you?"
+        },
+        {
+         "who": "ana",
+         "v": "mi rorang da midisin gibita!",
+         "e": "I discovered a dinosaur fossil!"
+        },
+        {
+         "who": "mestro",
+         "v": "tun bosho vina!",
+         "e": "you win a prize!"
+        },
+        {
+         "q": "what did Tomo design?",
+         "options": [
+          "a machine that uses the sun",
+          "a robot",
+          "a rocket"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what did Ana discover?",
+         "options": [
+          "a dinosaur fossil",
+          "a new planet",
+          "a volcano"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -9965,6 +12645,56 @@
         {
          "v": "sef min ne ayda, krikareshan sashneva.",
          "e": "if we do not help, species will disappear."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-story",
+       "kind": "story",
+       "title": "the beach clean-up",
+       "parts": [
+        {
+         "who": "lela",
+         "v": "playa mudë. pininom multa es.",
+         "e": "the beach is dirty. there is a lot of plastic."
+        },
+        {
+         "who": "tomo",
+         "v": "min playa limpava!",
+         "e": "we will clean the beach!"
+        },
+        {
+         "who": "lela",
+         "v": "pininom ne chibumi, binu!",
+         "e": "don't throw the plastic away, recycle it!"
+        },
+        {
+         "who": "tomo",
+         "v": "eshshin i glob ode deba.",
+         "e": "whales and fish must survive."
+        },
+        {
+         "who": "lela",
+         "v": "nun playa puro!",
+         "e": "now the beach is clean!"
+        },
+        {
+         "q": "what was on the beach?",
+         "options": [
+          "a lot of plastic",
+          "a whale",
+          "many shells"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what do they do with the plastic?",
+         "options": [
+          "recycle it",
+          "throw it away",
+          "burn it"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -10146,6 +12876,46 @@
         "m14.5-l8",
         "m14.5-l9",
         "m14.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "vedey dey da tera es!",
+         "e": "today is earth day!"
+        },
+        {
+         "who": "tomo",
+         "v": "min dek tal kilava.",
+         "e": "we will plant ten trees."
+        },
+        {
+         "who": "ana",
+         "v": "talan khal puro do.",
+         "e": "trees give clean air."
+        },
+        {
+         "who": "tomo",
+         "v": "mi zapu. sef min muda, tera odeva.",
+         "e": "I am hopeful. if we change, the earth will survive."
+        },
+        {
+         "q": "how many trees will they plant?",
+         "options": [
+          "ten",
+          "two",
+          "a hundred"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what do trees give?",
+         "options": [
+          "clean air",
+          "money",
+          "water"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -10327,6 +13097,56 @@
         {
          "v": "mi lir da mi ra tu lirava.",
          "e": "I will sing my song for you."
+        }
+       ]
+      },
+      {
+       "id": "m15-story",
+       "kind": "story",
+       "title": "the painter",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "ve kuadro mol bela! kwi sa pintata?",
+         "e": "this picture is very beautiful! who painted it?"
+        },
+        {
+         "who": "bafel",
+         "v": "mi! mi uda dos pelag trovata.",
+         "e": "me! I found inspiration in the sea."
+        },
+        {
+         "who": "ana",
+         "v": "vethon multa!",
+         "e": "so many colors!"
+        },
+        {
+         "who": "bafel",
+         "v": "lupe ke tu sur playa es.",
+         "e": "imagine that you are on the beach."
+        },
+        {
+         "who": "ana",
+         "v": "mi kuadro da tu kopa vola.",
+         "e": "I want to buy your picture."
+        },
+        {
+         "q": "where did the artist find inspiration?",
+         "options": [
+          "in the sea",
+          "in the forest",
+          "in the city"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what does Ana want?",
+         "options": [
+          "to buy the picture",
+          "to paint",
+          "to go to the beach"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -10515,6 +13335,51 @@
         "m15-l8",
         "m15-l9",
         "m15-l10"
+       ],
+       "parts": [
+        {
+         "who": "tomo",
+         "v": "vedey min sur vlunni zozo. mi timë.",
+         "e": "today we perform on the stage. I am scared."
+        },
+        {
+         "who": "lela",
+         "v": "ne timë! tu dey tot trenata.",
+         "e": "don't be scared! you practiced every day."
+        },
+        {
+         "who": "tomo",
+         "v": "ipas mol gran.",
+         "e": "the audience is very big."
+        },
+        {
+         "who": "lela",
+         "v": "ipas kridata i ridata!",
+         "e": "the audience shouted and laughed!"
+        },
+        {
+         "who": "tomo",
+         "v": "mi mol fela!",
+         "e": "I am very happy!"
+        },
+        {
+         "q": "where do they perform?",
+         "options": [
+          "on the stage",
+          "in the street",
+          "at home"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "how was the audience?",
+         "options": [
+          "they shouted and laughed",
+          "they slept",
+          "they left"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]
@@ -10694,6 +13559,56 @@
         {
          "v": "tote dara.",
          "e": "life is a gift."
+        }
+       ]
+      },
+      {
+       "id": "m15.5-story",
+       "kind": "story",
+       "title": "sorry",
+       "parts": [
+        {
+         "who": "ana",
+         "v": "tomo, pardon. mi vënëshim fasata.",
+         "e": "Tomo, sorry. I made a mistake."
+        },
+        {
+         "who": "tomo",
+         "v": "kwo?",
+         "e": "what?"
+        },
+        {
+         "who": "ana",
+         "v": "mi nasdey da tu oblidata. mi mol tris.",
+         "e": "I forgot your birthday. I am very sad."
+        },
+        {
+         "who": "tomo",
+         "v": "mi tu godi. sispikyi da min forë.",
+         "e": "I forgive you. our friendship is strong."
+        },
+        {
+         "who": "ana",
+         "v": "shevan! tu vren bonesh.",
+         "e": "thanks! you are the best friend."
+        },
+        {
+         "q": "what did Ana forget?",
+         "options": [
+          "Tomo's birthday",
+          "his name",
+          "his book"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "does Tomo forgive Ana?",
+         "options": [
+          "yes",
+          "no",
+          "not yet"
+         ],
+         "answer": 0
         }
        ]
       },
@@ -10881,6 +13796,51 @@
         "m15.5-l8",
         "m15.5-l9",
         "m15.5-l10"
+       ],
+       "parts": [
+        {
+         "who": "ana",
+         "v": "tomo, tu lisra vendëri thela pot!",
+         "e": "Tomo, you can already speak Venderian!"
+        },
+        {
+         "who": "tomo",
+         "v": "i tu! min multamo lernata.",
+         "e": "and you! we learned a lot."
+        },
+        {
+         "who": "ana",
+         "v": "salong mi sago da mi un vendëri skriva.",
+         "e": "someday I will write my story in Venderian."
+        },
+        {
+         "who": "tomo",
+         "v": "fipi! mi tu givri.",
+         "e": "dream big! I support you."
+        },
+        {
+         "who": "ana",
+         "v": "sago da min nun raluyo!",
+         "e": "our story starts now!"
+        },
+        {
+         "q": "what will Ana write someday?",
+         "options": [
+          "her story in Venderian",
+          "a song",
+          "a letter"
+         ],
+         "answer": 0
+        },
+        {
+         "q": "what does Tomo say?",
+         "options": [
+          "dream big",
+          "stop",
+          "go home"
+         ],
+         "answer": 0
+        }
        ]
       }
      ]

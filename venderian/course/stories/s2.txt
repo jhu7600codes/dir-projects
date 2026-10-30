@@ -1,0 +1,128 @@
+section 2
+
+module 4 | city and travel
+
+story a trip to the city
+ana: predey mi ra urba golta. = yesterday I went to the city.
+lela: tu kel tren golta ka? = did you go by train?
+ana: ya. tren rap. = yes. the train is fast.
+lela: tu un urba kwo fasata? = what did you do in the city?
+ana: mi ra muzë golta i un kafë sedata. = I went to the museum and sat in a café.
+? how did Ana go to the city? | by train* | by car | on foot
+lela: posdey mi ra urba golva! = tomorrow I will go to the city!
+? what will Lela do tomorrow? | go to the city* | go to the museum | stay home
+
+challenge story the airport
+tomo: min ra avyokar golva. = we will go to the airport.
+ana: bilet da tu kwe es? = where is your ticket?
+tomo: bilet un bagë da mi es. = the ticket is in my bag.
+ana: avyon tarda! = the airplane is late!
+tomo: shom avyon rap. = but the airplane is fast.
+? where is Tomo's ticket? | in his bag* | at home | in the hotel
+ana: mi posta ra baba mandava. = I will send a postcard to grandmother.
+? what will Ana send to grandmother? | a postcard* | a gift | a photo
+
+module 4.5 | directions
+
+story lost in the city
+tomo: mi perdata! hotel kwe es? = I got lost! where is the hotel?
+hum: hotel prok. rekto gol, i ra lev gol. = the hotel is near. go straight ahead, and go left.
+tomo: shevan! hotel dalë ka? = thank you! is the hotel far?
+hum: nay, dek minut. = no, ten minutes.
+? is the hotel far? | no, ten minutes* | yes, two hours | yes, very far
+tomo: mi hotel trovata! = I found the hotel!
+? which way does Tomo go? | straight, then left* | right | back
+
+gold story the last day of the trip
+lela: vedey min ra kar tornava. = today we will go back home.
+ana: mi suvenir ra sesa kopa vola. = I want to buy a souvenir for my sister.
+lela: boteka nek plaza es. = the shop is next to the square.
+ana: ve suvenir barat. mi sa kopa. = this souvenir is cheap. I buy it.
+? what does Ana buy? | a souvenir* | a postcard | a ticket
+lela: nun, kel taksi ra stasyo! = now, by taxi to the station!
+? how do they go to the station? | by taxi* | by bus | on foot
+
+module 5 | nature and weather
+
+story the weather
+ana: klima vedey kwu? = how is the weather today?
+tomo: vedey pluva. nuban gris. = it rains today. the clouds are gray.
+ana: i posdey? = and tomorrow?
+tomo: posdey sol esva! = tomorrow there will be sun!
+? how is the weather today? | it rains* | it is sunny | it snows
+ana: posdey min ra lago golva. = tomorrow we will go to the lake.
+tomo: lago belar dë pelag! = the lake is more beautiful than the sea!
+? where will they go tomorrow? | to the lake* | to the sea | to the forest
+
+challenge story a storm at the beach
+lela: min sur playa luda! = we play on the beach!
+tomo: ondan gran. = the waves are big.
+lela: tondra! storma ven! = thunder! a storm is coming!
+tomo: ra kar gol! = go home!
+? why do they go home? | a storm is coming* | they are hungry | it is night
+lela: un kar, min fela. = at home, we are happy.
+? what was big at the beach? | the waves* | the sand | the sun
+
+module 5.5 | seasons and animals
+
+story grandfather's farm
+dedo: vela! ve ferma da mi. = hello! this is my farm.
+ana: kovan multa! = many cows!
+dedo: kovan mikh do. pulon ovon do. = the cows give milk. the chickens give eggs.
+ana: kavalan rapmo kura! = the horses run fast!
+? what do the chickens give? | eggs* | milk | honey
+dedo: un somër, ferma mol bela. = in summer, the farm is very beautiful.
+? who lives on the farm? | grandfather* | Ana | the teacher
+
+gold story the zoo
+tomo: min un zoo esta! = we were at the zoo!
+ana: tu kwo vidta? = what did you see?
+tomo: mi elefan vidta. elefan granesh! = I saw an elephant. the elephant is the biggest!
+ana: tu leon vidta ka? = did you see the lion?
+tomo: ya. leon forë, shom sa nemata. = yes. the lion is strong, but it slept.
+? what is the biggest animal Tomo saw? | the elephant* | the lion | the monkey
+tomo: simyon felamo ludata. = the monkeys played happily.
+? what was the lion doing? | sleeping* | running | eating
+
+module 6 | school and work
+
+story the test
+ana: posdey prova da matë esva. = tomorrow there will be a math test.
+tomo: matë khar! mi lerna deba. = math is hard! I have to study.
+ana: mi tu ayda pot. = I can help you.
+tomo: shevan! tu matë goda ka? = thanks! do you like math?
+ana: ya, matë lekh ra mi. = yes, math is easy for me.
+? what test is tomorrow? | math* | history | music
+tomo: mi muzik goda. = I like music.
+? who will help Tomo? | Ana* | the teacher | his mother
+
+challenge story after the test
+mestro: vedey mi notan do. = today I give grades.
+mestro: tomo, nota da tu bon! = Tomo, your grade is good!
+tomo: ver ka? = is it true?
+mestro: ya! tu multamo lernata. = yes! you learned a lot.
+? what did Tomo get? | a good grade* | a bad grade | a book
+tomo: ana, shevan! = Ana, thank you!
+ana: un pauza, min un kantina yamava. = at the break, we will eat in the cafeteria.
+? where will they eat at the break? | in the cafeteria* | in the library | at home
+
+module 6.5 | time and plans
+
+story plans for the week
+tomo: tu dey pami libër ka? = are you free on Friday?
+lela: nay, mi okupa. dey sibi mi libër. = no, I am busy. on Sunday I am free.
+tomo: dey sibi min ra parka golva ka? = will we go to the park on Sunday?
+lela: ya! plan bon. = yes! good plan.
+? when is Lela free? | on Sunday* | on Friday | on Monday
+lela: aba da tu medik ka? = is your father a doctor?
+tomo: nay, aba da mi kukari. = no, my father is a cook.
+? what is Tomo's father's job? | a cook* | a doctor | a teacher
+
+gold story dream jobs
+mestro: kitin, tun kwo es vola? = children, what do you want to be?
+ana: mi piloto es vola! = I want to be a pilot!
+tomo: mi teknik es vola. = I want to be an engineer.
+lela: mi lirari es vola! = I want to be a singer!
+? what does Ana want to be? | a pilot* | an engineer | a singer
+mestro: rab tot bon. = every job is good.
+? who wants to be a singer? | Lela* | Tomo | Ana

@@ -145,8 +145,9 @@ class PlayerViewModel(private val app: VenderianApp, private val id: String) : V
         val s = state.value
         if (s.feedback != null) return
         val hearts = if (!correct && lesson.hasHearts) s.hearts - 1 else s.hearts
-        // in normal lessons a missed exercise comes back at the end
-        val queue = if (!correct && !lesson.hasHearts) s.queue + s.queue[s.index] else s.queue
+        // in normal lessons a missed exercise comes back at the end (not a whole story though)
+        val current = s.queue[s.index]
+        val queue = if (!correct && !lesson.hasHearts && current !is Exercise.Story) s.queue + current else s.queue
         state.value = s.copy(
             feedback = Feedback(correct, rightAnswer), hearts = hearts, queue = queue,
             mistakes = s.mistakes + if (correct) 0 else 1,
@@ -340,12 +341,12 @@ private fun HintedSentence(roman: String) {
 }
 
 @Composable
-private fun HintedWord(token: String, hit: WordLookup.Hit?) {
+internal fun HintedWord(token: String, hit: WordLookup.Hit?, fontSize: Int = 40) {
     var open by remember { mutableStateOf(false) }
     val underline = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
     Box {
         VText(
-            Sounds.scriptOfText(token), size = 40.sp,
+            Sounds.scriptOfText(token), size = fontSize.sp,
             modifier = Modifier
                 .clickable(enabled = hit != null) { open = true }
                 .drawBehind {
@@ -434,6 +435,8 @@ internal fun ExerciseView(e: Exercise, locked: Boolean, onAnswer: (Boolean, Stri
             "write this in venderian", e.tiles, e.answer, locked, script = true,
             prompt = { Text(e.english, style = MaterialTheme.typography.headlineSmall) }, rightAnswer = e.venderian, onAnswer = onAnswer,
         )
+
+        is Exercise.Story -> StoryView(e, locked, onDone = { perfect -> onAnswer(perfect, null) })
 
         is Exercise.SpellLetters -> Build(
             "spell it in venderian", e.tiles, e.answer, locked, script = true,

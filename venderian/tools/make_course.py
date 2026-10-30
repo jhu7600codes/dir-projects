@@ -101,6 +101,56 @@ def bank():
     return out
 
 
+STORIES = ROOT / "course/stories"
+
+
+def parse_stories(sections, errors):
+    """course/stories/s*.txt: duolingo-style stories, a conversation with questions in between.
+
+      section N
+      module N | title
+      story title            in the middle of the module (after its 5th lesson)
+      challenge story title  part of module N's challenge
+      gold story title       part of module N.5's gold lesson
+      name: venderian = english            a line someone says
+      ? question | right* | wrong | wrong  a question about the story (* marks the answer)
+    """
+    for path in sorted(STORIES.glob("s*.txt")):
+        section = module = story = None
+        for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            where = f"stories/{path.name}:{n}"
+            if line.startswith("section "):
+                section = next(x for x in sections if x["id"] == int(line.split()[1]))
+            elif line.startswith("module "):
+                num = line[len("module "):].split("|")[0].strip()
+                module = next(x for x in section["modules"] if x["id"] == num)
+            elif line.startswith(("story ", "challenge story ", "gold story ")):
+                kind, _, title = line.partition("story ")
+                story = {"kind": "story", "title": title.strip(), "parts": [], "where": where}
+                slot = kind.strip() or "middle"
+                if slot == "middle":
+                    lessons = [l for l in module["lessons"] if l.get("kind") != "story"]
+                    module["lessons"].insert(module["lessons"].index(lessons[4]) + 1, story)
+                else:
+                    module[f"{slot}_story"] = story
+            elif line.startswith("?"):
+                q, *options = (x.strip() for x in line[1:].split("|"))
+                answer = [i for i, o in enumerate(options) if o.endswith("*")]
+                if len(answer) != 1:
+                    errors.append(f"{where}: a question needs exactly one answer marked with *")
+                    continue
+                story["parts"].append({"q": q, "options": [o.rstrip("*").strip() for o in options], "answer": answer[0]})
+            elif ":" in line and " = " in line:
+                who, _, rest = line.partition(":")
+                v, e = (x.strip() for x in rest.split(" = ", 1))
+                story["parts"].append({"who": who.strip(), "v": v, "e": e, "where": where})
+            else:
+                errors.append(f"{where}: can't read: {line}")
+
+
 def build_dictionary(defined, errors, with_bank=True):
     entries = starter()
     known = {e["word"] for e in entries}
@@ -154,12 +204,25 @@ def word_ok(token, known, endings, depth=0):
     return False
 
 
+def check_story(story, known, endings, errors):
+    lines = [p for p in story["parts"] if "v" in p]
+    if len(lines) < 4 or not any("q" in p for p in story["parts"]):
+        errors.append(f"{story['where']}: a story needs at least 4 lines and a question")
+    for p in lines:
+        for token in PUNCT.sub(" ", p["v"]).lower().split():
+            if not word_ok(token, known, endings):
+                errors.append(f"{p['where']}: '{token}' wasn't taught yet ({p['v']})")
+
+
 def check_lessons(sections, entries, errors):
     dictionary = {e["word"] for e in entries}
     known, endings = set(), set()
     for section in sections:
         for module in section["modules"]:
             for lesson in module["lessons"]:
+                if lesson.get("kind") == "story":
+                    check_story(lesson, known, endings, errors)
+                    continue
                 # a word listed again later is only taught the first time
                 lesson["words"] = [w for w in lesson["words"] if w not in known and not (w.startswith("-") and w[1:] in endings)]
                 for w in lesson["words"]:
@@ -175,6 +238,16 @@ def check_lessons(sections, entries, errors):
                     for token in PUNCT.sub(" ", s["v"]).lower().split():
                         if not word_ok(token, known, endings):
                             errors.append(f"{s['where']}: '{token}' wasn't taught yet ({s['v']})")
+            # the challenge / gold story comes after all of the module's lessons
+            for slot in ("challenge_story", "gold_story"):
+                if slot in module:
+                    check_story(module[slot], known, endings, errors)
+
+
+def story_parts(story):
+    if not story:
+        return []
+    return [{k: v for k, v in p.items() if k != "where"} for p in story["parts"]]
 
 
 def assemble(sections):
@@ -185,17 +258,26 @@ def assemble(sections):
         first_half = []
         for module in section["modules"]:
             lessons = []
-            for i, lesson in enumerate(module["lessons"], 1):
+            i = 0
+            for lesson in module["lessons"]:
+                if lesson.get("kind") == "story":
+                    # stories don't count as numbered lessons, so lesson ids (and progress) stay the same
+                    lessons.append({"id": f"m{module['id']}-story", "kind": "story", "title": lesson["title"],
+                                    "parts": story_parts(lesson)})
+                    continue
+                i += 1
                 lessons.append({
                     "id": f"m{module['id']}-l{i}", "kind": "lesson", "title": lesson["title"], "tip": lesson["tip"],
                     "words": lesson["words"], "sentences": [{"v": s["v"], "e": s["e"]} for s in lesson["sentences"]],
                 })
+            numbered = [l["id"] for l in lessons if l["kind"] == "lesson"]
             if not module["half"]:
-                first_half = [l["id"] for l in lessons]
-                lessons.append({"id": f"m{module['id']}-challenge", "kind": "challenge", "title": "challenge", "from": first_half})
+                first_half = numbered
+                lessons.append({"id": f"m{module['id']}-challenge", "kind": "challenge", "title": "challenge", "from": first_half,
+                                "parts": story_parts(module.get("challenge_story"))})
             else:
-                own = [l["id"] for l in lessons]
-                lessons.append({"id": f"m{module['id']}-gold", "kind": "gold", "title": "gold lesson", "from": first_half + own})
+                lessons.append({"id": f"m{module['id']}-gold", "kind": "gold", "title": "gold lesson", "from": first_half + numbered,
+                                "parts": story_parts(module.get("gold_story"))})
             sec["modules"].append({"id": module["id"], "title": module["title"], "half": module["half"], "lessons": lessons})
         out.append(sec)
     return {"sections": out}
@@ -203,6 +285,7 @@ def assemble(sections):
 
 def main():
     sections, defined, errors = parse()
+    parse_stories(sections, errors)
     entries = build_dictionary(defined, errors)
     check_collisions(entries, errors)
     check_lessons(sections, entries, errors)
@@ -213,8 +296,9 @@ def main():
     OUT_COURSE.write_text(json.dumps(course, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     lessons = [l for s in course["sections"] for m in s["modules"] for l in m["lessons"]]
     sentences = sum(len(l.get("sentences", [])) for l in lessons)
+    stories = sum(1 for l in lessons if l.get("parts"))
     print(f"{len(entries)} words ({len(defined)} from the course) -> {OUT_DICT.relative_to(ROOT)}")
-    print(f"{len(course['sections'])} sections, {len(lessons)} lessons, {sentences} sentences -> {OUT_COURSE.relative_to(ROOT)}")
+    print(f"{len(course['sections'])} sections, {len(lessons)} lessons, {sentences} sentences, {stories} stories -> {OUT_COURSE.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

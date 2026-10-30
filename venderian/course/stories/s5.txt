@@ -1,0 +1,119 @@
+section 5
+
+module 13 | community
+
+story the meeting
+keyer: vela! vedey min dunur da dali ha. = hello! today we have a community meeting.
+ana: min parka nov vola! = we want a new park!
+tomo: mi konsa. kitin luda deba. = I agree. children must play.
+keyer: sef tot konsa, min parka nov fasava. = if everyone agrees, we will make a new park.
+tot: ya! = yes!
+? what does the community want? | a new park* | a new school | a shop
+? does everyone agree? | yes* | no | only Tomo
+
+challenge story the new law
+lela: duse bonezam nov fasata. = the government made a new law.
+tomo: bonezam kwo? = what law?
+lela: parka vufan ne merfe. = the park doesn't allow dogs.
+tomo: ve pekro! vuf da mi parka liva. = that's unfair! my dog loves the park.
+lela: posdey iket bena un plaza esva. = tomorrow there will be a peaceful protest in the square.
+? what does the new law say? | no dogs in the park* | no cars in the city | no phones at school
+? what will happen tomorrow? | a peaceful protest* | an election | a party
+
+module 13.5 | big questions
+
+story the stolen bike
+tomo: biko da mi! hum biko da mi nezata! = my bike! someone stole my bike!
+gabël: tu kwo vidta? = what did you see?
+tomo: dar ki kamis rud ha. = a man who has a red shirt.
+gabël: min sa trovava. = we will find him.
+tomo: gabël biko trovata! = the police officer found the bike!
+? what was stolen? | Tomo's bike* | his phone | his bag
+? what did the man wear? | a red shirt* | a black hat | blue pants
+
+gold story the election
+lela: vedey nëki es. kwi vina? = today is the election. who wins?
+tomo: petosan un noch zosepova. = the results will appear at night.
+lela: rastëtra keyer da mi ne vina, mi kreda ke dali bon esva. = even if my leader doesn't win, I believe that the community will be good.
+tomo: vro min kun rabo, dapa bonor esva. = as long as we work together, society will be better.
+? when will the results appear? | at night* | in the morning | next week
+? what does Tomo say? | working together makes society better* | voting is boring | nobody wins
+
+module 14 | science and space
+
+story the telescope
+ana: ve noch, min stelan kel prit blutri! = tonight, we observe stars with a telescope!
+tomo: mi lëlnë vidta! = I saw a comet!
+ana: ver ka? = really?
+tomo: ya! lëlnë gran un vin esta. = yes! there was a big comet in the sky.
+ana: mi rasi es vola. mi ra krili sinang golve. = I want to be an astronaut. I would go to another galaxy.
+? what did Tomo see? | a comet* | a planet | the moon
+? where would Ana go? | to another galaxy* | to the moon | to the sea
+
+challenge story the science fair
+mestro: tomo, tu kwo kureta? = Tomo, what did you design?
+tomo: mi vihubrol ki gozar dos sol fasa kureta. = I designed a machine that makes energy from the sun.
+mestro: mol bon! ana, i tu? = very good! Ana, and you?
+ana: mi rorang da midisin gibita! = I discovered a dinosaur fossil!
+mestro: tun bosho vina! = you win a prize!
+? what did Tomo design? | a machine that uses the sun* | a robot | a rocket
+? what did Ana discover? | a dinosaur fossil* | a new planet | a volcano
+
+module 14.5 | the environment
+
+story the beach clean-up
+lela: playa mudë. pininom multa es. = the beach is dirty. there is a lot of plastic.
+tomo: min playa limpava! = we will clean the beach!
+lela: pininom ne chibumi, binu! = don't throw the plastic away, recycle it!
+tomo: eshshin i glob ode deba. = whales and fish must survive.
+lela: nun playa puro! = now the beach is clean!
+? what was on the beach? | a lot of plastic* | a whale | many shells
+? what do they do with the plastic? | recycle it* | throw it away | burn it
+
+gold story earth day
+ana: vedey dey da tera es! = today is earth day!
+tomo: min dek tal kilava. = we will plant ten trees.
+ana: talan khal puro do. = trees give clean air.
+tomo: mi zapu. sef min muda, tera odeva. = I am hopeful. if we change, the earth will survive.
+? how many trees will they plant? | ten* | two | a hundred
+? what do trees give? | clean air* | money | water
+
+module 15 | art and expression
+
+story the painter
+ana: ve kuadro mol bela! kwi sa pintata? = this picture is very beautiful! who painted it?
+bafel: mi! mi uda dos pelag trovata. = me! I found inspiration in the sea.
+ana: vethon multa! = so many colors!
+bafel: lupe ke tu sur playa es. = imagine that you are on the beach.
+ana: mi kuadro da tu kopa vola. = I want to buy your picture.
+? where did the artist find inspiration? | in the sea* | in the forest | in the city
+? what does Ana want? | to buy the picture* | to paint | to go to the beach
+
+challenge story the school play
+tomo: vedey min sur vlunni zozo. mi timë. = today we perform on the stage. I am scared.
+lela: ne timë! tu dey tot trenata. = don't be scared! you practiced every day.
+tomo: ipas mol gran. = the audience is very big.
+lela: ipas kridata i ridata! = the audience shouted and laughed!
+tomo: mi mol fela! = I am very happy!
+? where do they perform? | on the stage* | in the street | at home
+? how was the audience? | they shouted and laughed* | they slept | they left
+
+module 15.5 | your own story
+
+story sorry
+ana: tomo, pardon. mi vënëshim fasata. = Tomo, sorry. I made a mistake.
+tomo: kwo? = what?
+ana: mi nasdey da tu oblidata. mi mol tris. = I forgot your birthday. I am very sad.
+tomo: mi tu godi. sispikyi da min forë. = I forgive you. our friendship is strong.
+ana: shevan! tu vren bonesh. = thanks! you are the best friend.
+? what did Ana forget? | Tomo's birthday* | his name | his book
+? does Tomo forgive Ana? | yes* | no | not yet
+
+gold story the beginning
+ana: tomo, tu lisra vendëri thela pot! = Tomo, you can already speak Venderian!
+tomo: i tu! min multamo lernata. = and you! we learned a lot.
+ana: salong mi sago da mi un vendëri skriva. = someday I will write my story in Venderian.
+tomo: fipi! mi tu givri. = dream big! I support you.
+ana: sago da min nun raluyo! = our story starts now!
+? what will Ana write someday? | her story in Venderian* | a song | a letter
+? what does Tomo say? | dream big* | stop | go home

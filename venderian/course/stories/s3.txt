@@ -1,0 +1,122 @@
+section 3
+
+module 7 | feelings and health
+
+story at the doctor
+medik: vela! tu kwo senta? = hello! how do you feel?
+tomo: mi sika. kop da mi dola. = I am sick. my head hurts.
+medik: pilë ve yama, i un kama resta. = take this medicine, and stay in bed.
+tomo: mi skol gol deba ka? = must I go to school?
+medik: nay. sef tu un kama resta, posdey tu sana esva. = no. if you stay in bed, tomorrow you will be well.
+? what hurts? | Tomo's head* | his leg | his arm
+? what must Tomo do? | stay in bed* | go to school | run
+
+challenge story a sad day
+ana: tomo, tu kwa tris? = Tomo, why are you sad?
+tomo: mi tris, kaus vren da mi dalë golta. = I am sad because my friend went far away.
+ana: ne kwida! mi vren da tu. = don't worry! I am your friend.
+tomo: shevan, ana. = thanks, Ana.
+? why is Tomo sad? | his friend went far away* | he is sick | he lost a game
+ana: mi surpriza ra tu ha! = I have a surprise for you!
+tomo: torta! mi fela! = a cake! I am happy!
+? what was the surprise? | a cake* | a book | a dog
+
+module 7.5 | friends and stories
+
+story the good dragon
+dedo: yordo, ek drako sur bor vivata. = long ago, a dragon lived on a mountain.
+ana: drako mal esta ka? = was the dragon bad?
+dedo: nay! drako ki sur bor vivata bon esta. = no! the dragon who lived on the mountain was good.
+ana: drako kwo yamata? = what did the dragon eat?
+dedo: drako frut yamata! = the dragon ate fruit!
+? where did the dragon live? | on a mountain* | in a castle | in the sea
+? what did the dragon eat? | fruit* | people | fish
+
+gold story the letter
+lela: mi sekret ha. = I have a secret.
+ana: kwo? kiro thela! = what? please tell!
+lela: vren ki un nasho dalë viva letra ra mi mandata. = a friend who lives in a far country sent me a letter.
+ana: letra lon ka? = is the letter long?
+lela: ya. sa ra ve urba venva! = yes. she will come to this city!
+? who sent the letter? | a friend who lives far away* | Ana | her aunt
+ana: mi fela, kaus tu fela. = I am happy because you are happy.
+? what will the friend do? | come to this city* | send a gift | call Lela
+
+module 8 | hobbies and music
+
+story the concert
+tomo: posdey bandë nov un shoa luda. = tomorrow a new band plays at a concert.
+lela: mi kenë! lirari voka bela ha. = I know! the singer has a beautiful voice.
+tomo: tu ra shoa golva ka? = will you go to the concert?
+lela: ya! mi dansa goda. = yes! I like to dance.
+? who plays tomorrow? | a new band* | Tomo | a singer alone
+tomo: mi penka ke shoa mol bon esva. = I think that the concert will be very good.
+? what does Lela like? | to dance* | to draw | to sing
+
+challenge story movie night
+ana: un vechë, min ra kino golva ka? = in the evening, will we go to the cinema?
+tomo: filmo kwo? = what movie?
+ana: filmo nov ki drakon ha. = a new movie that has dragons.
+tomo: mi filmon ki drakon ha goda! = I like movies that have dragons!
+? what is the movie about? | dragons* | a farm | a castle
+ana: filmo lon, shom bon. = the movie is long, but good.
+? where will they go? | to the cinema* | to a concert | to the museum
+
+module 8.5 | games and sport
+
+story the big match
+tomo: min un stadyo es! = we are at the stadium!
+lela: fanun multa! tot krida! = so many fans! everyone shouts!
+tomo: ekipa da min rapor! = our team is faster!
+lela: kwi vina? = who wins?
+tomo: ekipa da min vinata! = our team won!
+? where are they? | at the stadium* | at school | at home
+? who won? | their team* | the other team | nobody
+
+gold story the race
+ana: vedey korso es. mi timë. = today there is a race. I am scared.
+tomo: ne timë! tu dey tot trenata. = don't be scared! you trained every day.
+ana: sef mi vina, mi mol fela esva. = if I win, I will be very happy.
+tomo: ana rapesh! ana vinata! = Ana is the fastest! Ana won!
+? who won the race? | Ana* | Tomo | Lela
+? how often did Ana train? | every day* | once | never
+
+module 9 | ideas and opinions
+
+story three languages
+lela: tu thelor kwanto thela? = how many languages do you speak?
+tomo: mi tis thelor thela, rusë, inglish i vendëri. = I speak three languages, Russian, English and Venderian.
+lela: vendëri lekhor dë inglish ka? = is Venderian easier than English?
+tomo: ya! mi penka ke vendëri lekhesh. = yes! I think that Venderian is the easiest.
+? how many languages does Tomo speak? | three* | two | one
+lela: mi konsa! = I agree!
+? what does Tomo think about Venderian? | it's the easiest* | it's hard | it's boring
+
+challenge story money and friends
+ana: mi penka ke zil vala. = I think that money is important.
+tomo: mi ne konsa. vrenan valar dë zil. = I don't agree. friends are more important than money.
+ana: mayë tu ver. = maybe you are right.
+tomo: hum ki vrenan bon ha fela. = a person who has good friends is happy.
+? what does Tomo think is more important? | friends* | money | school
+ana: tu vren honesta. = you are an honest friend.
+? what does Ana say at the start? | money is important* | friends are bad | school is boring
+
+module 9.5 | big conversations
+
+story dreams
+lela: sonyo da tu kwo? = what is your dream?
+ana: mi lirari fama es vola. = I want to be a famous singer.
+lela: mi sonyata ke mi sur mera vivata! = I dreamed that I lived on the moon!
+ana: un avenë, human sur mera vivava. = in the future, people will live on the moon.
+? what did Lela dream? | that she lived on the moon* | that she was famous | that she flew
+? what does Ana want to be? | a famous singer* | an astronaut | a doctor
+
+gold story the party
+tomo: mi tu ra festa da mi invita! = I invite you to my party!
+lela: festa kwan? = when is the party?
+tomo: dey pami, un vechë. = on Friday, in the evening.
+lela: pardon, dey pami mi okupa. = sorry, on Friday I am busy.
+tomo: ne kwida! sef tu dey sibi libër, festa dey sibi esva. = don't worry! if you are free on Sunday, the party will be on Sunday.
+lela: ya! shevan! = yes! thanks!
+? when was the party first? | Friday evening* | Sunday morning | Monday
+? why can't Lela come on Friday? | she is busy* | she is sick | she forgot

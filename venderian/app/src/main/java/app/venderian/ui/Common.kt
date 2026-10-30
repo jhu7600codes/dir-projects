@@ -14,6 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -76,6 +81,42 @@ fun HolidayBanner() {
                 Text(h.english, style = MaterialTheme.typography.bodySmall)
             }
             SpeakButton(h.greeting)
+        }
+    }
+}
+
+/**
+ * when the phone has no spanish voice: an offer to download it (venderian sounds a lot
+ * better read by one). goes away once it's there, or when dismissed.
+ */
+@Composable
+fun SpanishVoiceCard() {
+    val app = app()
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("voice", android.content.Context.MODE_PRIVATE) }
+    var dismissed by remember { mutableStateOf(prefs.getBoolean("dismissed", false)) }
+    // start text to speech so we know, and look again whenever the app comes back to the front
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle) {
+        lifecycle.currentStateFlow.collect { if (it == androidx.lifecycle.Lifecycle.State.RESUMED) app.refreshVoices() }
+    }
+    if (dismissed || app.spanishVoice != false) return
+    androidx.compose.material3.Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Text("get the spanish voice", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "venderian sounds much better read by a spanish voice: same vowels, same r. it's free and works offline.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
+                androidx.compose.material3.TextButton(onClick = {
+                    prefs.edit().putBoolean("dismissed", true).apply()
+                    dismissed = true
+                }) { Text("not now") }
+                androidx.compose.material3.FilledTonalButton(onClick = {
+                    runCatching { context.startActivity(app.spanishVoiceIntent()) }
+                }) { Text("download") }
+            }
         }
     }
 }

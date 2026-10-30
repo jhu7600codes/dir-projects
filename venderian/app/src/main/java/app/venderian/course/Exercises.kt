@@ -25,6 +25,9 @@ sealed interface Exercise {
     /** spell an english word in venderian, letter by letter */
     data class SpellLetters(val english: String, val roman: String, val tiles: List<String>, val answer: List<String>) : Exercise
 
+    /** a story: lines appear one by one, with questions about them in between */
+    data class Story(val title: String, val parts: List<StoryPart>) : Exercise
+
     /** read the script, type it in roman letters */
     data class TypeRoman(val venderian: String, val meaning: String?) : Exercise
 }
@@ -40,10 +43,13 @@ class ExerciseMaker(
     fun make(lesson: CourseLesson): List<Exercise> {
         val sources = course.sources(lesson)
         val known = course.wordsUpTo(lesson.id).mapNotNull(entries::get).filter { it.quizzable }.distinctBy { it.word }
+        // challenges and gold lessons start with their story
+        val story = if (lesson.parts.isNotEmpty()) listOf(Exercise.Story(lesson.title, lesson.parts)) else emptyList()
         return when (lesson.kind) {
             Kind.LESSON -> lessonExercises(lesson, known)
-            Kind.CHALLENGE -> review(sources, known, builds = 6, types = 3, picks = 2, matches = 1)
-            else -> review(sources, known, builds = 9, types = 4, picks = 3, matches = 2)
+            Kind.STORY -> story
+            Kind.CHALLENGE -> story + review(sources, known, builds = 6, types = 3, picks = 2, matches = 1)
+            else -> story + review(sources, known, builds = 9, types = 4, picks = 3, matches = 2)
         }
     }
 

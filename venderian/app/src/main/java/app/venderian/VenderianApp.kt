@@ -1,6 +1,7 @@
 package app.venderian
 
 import android.app.Application
+import android.content.Intent
 import android.speech.tts.TextToSpeech
 import app.venderian.convert.CmuDict
 import app.venderian.convert.Converter
@@ -18,6 +19,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.util.Locale
 
 class VenderianApp : Application() {
@@ -38,6 +42,10 @@ class VenderianApp : Application() {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var spanish = false
+
+    /** whether the phone has a spanish voice (null until text to speech has started) */
+    var spanishVoice by mutableStateOf<Boolean?>(null)
+        private set
     private var pending: (() -> Unit)? = null
 
     /** the phone's text to speech, started the first time something is said */
@@ -48,13 +56,33 @@ class VenderianApp : Application() {
         tts = TextToSpeech(this) { status ->
             ttsReady = status == TextToSpeech.SUCCESS
             if (ttsReady) {
-                val es = Locale("es", "ES")
-                spanish = (tts?.isLanguageAvailable(es) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
+                checkSpanish()
                 tts?.setSpeechRate(0.85f)
                 pending?.invoke()
                 pending = null
             }
         }
+    }
+
+    private fun checkSpanish() {
+        // a voice that's listed but not downloaded yet reports LANG_MISSING_DATA
+        spanish = (tts?.isLanguageAvailable(SPANISH) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
+        spanishVoice = spanish
+    }
+
+    /** looks again (after coming back from the voice download screen) */
+    fun refreshVoices() = withTts { checkSpanish() }
+
+    /**
+     * opens the phone's voice engine on its "install voice data" screen, where the spanish
+     * voice is one tap. apps can't download voices themselves. falls back to the text to
+     * speech settings if the engine has no such screen.
+     */
+    fun spanishVoiceIntent(): Intent {
+        val install = Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        tts?.defaultEngine?.let { install.setPackage(it) }
+        return if (install.resolveActivity(packageManager) != null) install
+        else Intent("com.android.settings.TTS_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
     /** speaks an english sound hint (letter lessons) */
@@ -66,11 +94,15 @@ class VenderianApp : Application() {
     /** says venderian (romanized) out loud, with a spanish voice if the phone has one */
     fun speakVenderian(roman: String) = withTts {
         if (spanish) {
-            tts?.language = Locale("es", "ES")
+            tts?.language = SPANISH
             tts?.speak(Speech.spanish(roman), TextToSpeech.QUEUE_FLUSH, null, "venderian")
         } else {
             tts?.language = Locale.US
             tts?.speak(Speech.english(roman), TextToSpeech.QUEUE_FLUSH, null, "venderian")
         }
+    }
+
+    companion object {
+        private val SPANISH = Locale("es", "ES")
     }
 }

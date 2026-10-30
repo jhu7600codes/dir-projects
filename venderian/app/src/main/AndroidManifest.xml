@@ -6,6 +6,10 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <!-- and its voice download screen, for the spanish voice -->
+        <intent>
+            <action android:name="android.speech.tts.engine.INSTALL_TTS_DATA" />
+        </intent>
     </queries>
 
     <application

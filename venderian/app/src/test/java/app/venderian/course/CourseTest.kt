@@ -18,8 +18,11 @@ class CourseTest {
         for (section in course.sections) {
             assertEquals(6, section.modules.size) // N and N.5
             for ((full, half) in section.modules.chunked(2).map { it[0] to it[1] }) {
-                assertEquals(List(10) { Kind.LESSON } + Kind.CHALLENGE, full.lessons.map { it.kind })
-                assertEquals(List(10) { Kind.LESSON } + Kind.GOLD, half.lessons.map { it.kind })
+                // a story in the middle, and the challenge / gold lesson starts with one too
+                val shape = List(5) { Kind.LESSON } + Kind.STORY + List(5) { Kind.LESSON }
+                assertEquals(shape + Kind.CHALLENGE, full.lessons.map { it.kind })
+                assertEquals(shape + Kind.GOLD, half.lessons.map { it.kind })
+                assertTrue(full.lessons.last().parts.isNotEmpty() && half.lessons.last().parts.isNotEmpty())
                 assertTrue(half.id == full.id + ".5")
             }
         }
@@ -39,7 +42,14 @@ class CourseTest {
         val maker = ExerciseMaker(course, dictionary, Random(1))
         for (lesson in course.lessons) {
             val exercises = maker.make(lesson)
+            if (lesson.kind == Kind.STORY) {
+                val story = exercises.single() as Exercise.Story
+                assertTrue(lesson.id, story.parts.count { it.isQuestion } >= 2)
+                story.parts.filter { it.isQuestion }.forEach { assertTrue(it.answer in it.options.indices) }
+                continue
+            }
             assertTrue("${lesson.id} has too few exercises", exercises.size >= 8)
+            if (lesson.kind != Kind.LESSON) assertTrue(exercises.first() is Exercise.Story)
             for (e in exercises) when (e) {
                 is Exercise.PickMeaning -> assertEquals(e.word.meaning, e.options[e.answer])
                 is Exercise.PickWord -> assertEquals(e.word.word, e.options[e.answer])
@@ -47,7 +57,7 @@ class CourseTest {
                 is Exercise.BuildVenderian -> assertTrue(e.tiles.containsAll(e.answer))
                 is Exercise.Match -> assertTrue("${lesson.id} match", e.pairs.size >= 3 && e.pairs.map { it.second }.distinct().size == e.pairs.size)
                 is Exercise.TypeRoman -> assertTrue(ExerciseMaker.sameText(e.venderian, e.venderian))
-                is Exercise.NewWord, is Exercise.SpellLetters -> Unit
+                is Exercise.NewWord, is Exercise.SpellLetters, is Exercise.Story -> Unit
             }
             if (lesson.kind == Kind.LESSON) {
                 val introduced = exercises.filterIsInstance<Exercise.NewWord>().map { it.word.word }

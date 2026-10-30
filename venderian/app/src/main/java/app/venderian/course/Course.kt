@@ -37,10 +37,25 @@ data class Module(val id: String, val title: String, val half: Boolean, val less
 @Serializable
 data class Sentence(val v: String, val e: String)
 
+/** one step of a story: a line someone says (who, v, e), or a question about it (q, options, answer) */
+@Serializable
+data class StoryPart(
+    val who: String = "",
+    val v: String = "",
+    val e: String = "",
+    val q: String = "",
+    val options: List<String> = emptyList(),
+    val answer: Int = -1,
+) {
+    val isQuestion get() = q.isNotEmpty()
+}
+
 object Kind {
     const val LESSON = "lesson"
     const val CHALLENGE = "challenge"
     const val GOLD = "gold"
+    /** a story in the middle of a module: a conversation with questions */
+    const val STORY = "story"
     /** made up on the spot once the course is done: a mix of earlier lessons */
     const val PRACTICE = "practice"
     /** an english sounds lesson (assets/sounds.json) */
@@ -56,6 +71,8 @@ data class CourseLesson(
     val words: List<String> = emptyList(),
     val sentences: List<Sentence> = emptyList(),
     val from: List<String> = emptyList(),
+    /** the story: a story lesson's whole content, or the one a challenge / gold lesson starts with */
+    val parts: List<StoryPart> = emptyList(),
 ) {
     /** challenges and gold lessons have hearts: three mistakes and you start over */
     val hasHearts get() = kind == Kind.CHALLENGE || kind == Kind.GOLD
