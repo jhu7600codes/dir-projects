@@ -47,7 +47,7 @@ class CourseTest {
                 is Exercise.BuildVenderian -> assertTrue(e.tiles.containsAll(e.answer))
                 is Exercise.Match -> assertTrue("${lesson.id} match", e.pairs.size >= 3 && e.pairs.map { it.second }.distinct().size == e.pairs.size)
                 is Exercise.TypeRoman -> assertTrue(ExerciseMaker.sameText(e.venderian, e.venderian))
-                is Exercise.NewWord -> Unit
+                is Exercise.NewWord, is Exercise.SpellLetters -> Unit
             }
             if (lesson.kind == Kind.LESSON) {
                 val introduced = exercises.filterIsInstance<Exercise.NewWord>().map { it.word.word }
@@ -76,5 +76,27 @@ class CourseTest {
             exercises.filterIsInstance<Exercise.BuildVenderian>().map { it.venderian }
         assertTrue(used.isNotEmpty() && used.all { it in sentences })
         assertTrue(!CourseLesson.practice.hasHearts)
+    }
+
+    @Test
+    fun `sound lessons spell english words by sound`() {
+        val sounds = SoundLessons.parse(File("src/main/assets/sounds.json").readText())
+        val maker = SoundExerciseMaker(sounds, Random(2))
+        assertTrue(sounds.lessons.size >= 15)
+        for (lesson in sounds.lessons) {
+            val exercises = maker.make(lesson)
+            assertTrue(exercises.size >= 10)
+            for (e in exercises) when (e) {
+                is Exercise.SpellLetters -> {
+                    assertEquals(Sounds.toRoman(e.answer), e.roman)
+                    assertTrue(e.tiles.containsAll(e.answer))
+                }
+                is Exercise.PickWord -> { assertEquals(e.word.word, e.options[e.answer]); assertEquals(4, e.options.distinct().size) }
+                is Exercise.PickMeaning -> assertEquals(e.word.meaning, e.options[e.answer])
+                else -> Unit
+            }
+        }
+        val pizza = sounds.lessons.flatMap { it.words }.first { it.en == "pizza" }
+        assertEquals("pitsë", pizza.roman)
     }
 }

@@ -43,6 +43,8 @@ object Kind {
     const val GOLD = "gold"
     /** made up on the spot once the course is done: a mix of earlier lessons */
     const val PRACTICE = "practice"
+    /** an english sounds lesson (assets/sounds.json) */
+    const val SOUNDS = "sounds"
 }
 
 @Serializable

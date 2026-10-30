@@ -1,0 +1,628 @@
+{
+ "lessons": [
+  {
+   "id": "snd-1",
+   "title": "sounds you know",
+   "tip": "most consonants sound just like english. one letter per sound, so a word has as many letters as sounds.",
+   "words": [
+    {
+     "en": "map",
+     "roman": "map"
+    },
+    {
+     "en": "pen",
+     "roman": "pen"
+    },
+    {
+     "en": "cat",
+     "roman": "kat"
+    },
+    {
+     "en": "dog",
+     "roman": "dog"
+    },
+    {
+     "en": "bed",
+     "roman": "bed"
+    },
+    {
+     "en": "sun",
+     "roman": "san"
+    },
+    {
+     "en": "top",
+     "roman": "tap"
+    },
+    {
+     "en": "milk",
+     "roman": "milk"
+    }
+   ]
+  },
+  {
+   "id": "snd-2",
+   "title": "long vowels",
+   "tip": "english writes the same sound many ways: ee, ea, e. venderian always writes it i. oo, ue and o in two all become u.",
+   "words": [
+    {
+     "en": "see",
+     "roman": "si"
+    },
+    {
+     "en": "tea",
+     "roman": "ti"
+    },
+    {
+     "en": "two",
+     "roman": "tu"
+    },
+    {
+     "en": "blue",
+     "roman": "blu"
+    },
+    {
+     "en": "food",
+     "roman": "fud"
+    },
+    {
+     "en": "moon",
+     "roman": "mun"
+    },
+    {
+     "en": "free",
+     "roman": "fri"
+    },
+    {
+     "en": "school",
+     "roman": "skul"
+    }
+   ]
+  },
+  {
+   "id": "snd-3",
+   "title": "ay and ey",
+   "tip": "the sound in day, rain and name is ey (e + y). the one in my, time and nice is ay (a + y).",
+   "words": [
+    {
+     "en": "day",
+     "roman": "dey"
+    },
+    {
+     "en": "name",
+     "roman": "neym"
+    },
+    {
+     "en": "play",
+     "roman": "pley"
+    },
+    {
+     "en": "rain",
+     "roman": "reyn"
+    },
+    {
+     "en": "my",
+     "roman": "may"
+    },
+    {
+     "en": "time",
+     "roman": "taym"
+    },
+    {
+     "en": "fly",
+     "roman": "flay"
+    },
+    {
+     "en": "nice",
+     "roman": "nays"
+    }
+   ]
+  },
+  {
+   "id": "snd-4",
+   "title": "ow and oy",
+   "tip": "go and home end in ow (o + w). now and house have aw (a + w). boy and toy have oy.",
+   "words": [
+    {
+     "en": "go",
+     "roman": "gow"
+    },
+    {
+     "en": "home",
+     "roman": "howm"
+    },
+    {
+     "en": "phone",
+     "roman": "fown"
+    },
+    {
+     "en": "boy",
+     "roman": "boy"
+    },
+    {
+     "en": "toy",
+     "roman": "toy"
+    },
+    {
+     "en": "now",
+     "roman": "naw"
+    },
+    {
+     "en": "house",
+     "roman": "haws"
+    },
+    {
+     "en": "cow",
+     "roman": "kaw"
+    }
+   ]
+  },
+  {
+   "id": "snd-5",
+   "title": "the lazy vowel ë",
+   "tip": "the quick uh sound at the end of banana or the start of about is ë. it's the most common vowel in english.",
+   "words": [
+    {
+     "en": "banana",
+     "roman": "bënanë"
+    },
+    {
+     "en": "sofa",
+     "roman": "sowfë"
+    },
+    {
+     "en": "pizza",
+     "roman": "pitsë"
+    },
+    {
+     "en": "panda",
+     "roman": "pandë"
+    },
+    {
+     "en": "camera",
+     "roman": "kamërë"
+    },
+    {
+     "en": "about",
+     "roman": "ëbawt"
+    },
+    {
+     "en": "again",
+     "roman": "ëgen"
+    },
+    {
+     "en": "open",
+     "roman": "owpën"
+    }
+   ]
+  },
+  {
+   "id": "snd-6",
+   "title": "r sounds",
+   "tip": "the er in water, bird and girl is ë + r. other r's are just r.",
+   "words": [
+    {
+     "en": "car",
+     "roman": "kar"
+    },
+    {
+     "en": "bird",
+     "roman": "bërd"
+    },
+    {
+     "en": "water",
+     "roman": "wotër"
+    },
+    {
+     "en": "teacher",
+     "roman": "tichër"
+    },
+    {
+     "en": "girl",
+     "roman": "gërl"
+    },
+    {
+     "en": "word",
+     "roman": "wërd"
+    },
+    {
+     "en": "door",
+     "roman": "dor"
+    },
+    {
+     "en": "her",
+     "roman": "hër"
+    }
+   ]
+  },
+  {
+   "id": "snd-7",
+   "title": "th",
+   "tip": "both th sounds, in think and in this, are written th.",
+   "words": [
+    {
+     "en": "think",
+     "roman": "thingk"
+    },
+    {
+     "en": "three",
+     "roman": "thri"
+    },
+    {
+     "en": "the",
+     "roman": "thë"
+    },
+    {
+     "en": "this",
+     "roman": "this"
+    },
+    {
+     "en": "mother",
+     "roman": "mathër"
+    },
+    {
+     "en": "bath",
+     "roman": "bath"
+    },
+    {
+     "en": "both",
+     "roman": "bowth"
+    },
+    {
+     "en": "thank",
+     "roman": "thangk"
+    }
+   ]
+  },
+  {
+   "id": "snd-8",
+   "title": "sh, ch and j",
+   "tip": "sh stays sh. ch and j both become ch: juice is chus, job is chob.",
+   "words": [
+    {
+     "en": "shop",
+     "roman": "shap"
+    },
+    {
+     "en": "fish",
+     "roman": "fish"
+    },
+    {
+     "en": "cheese",
+     "roman": "chiz"
+    },
+    {
+     "en": "chair",
+     "roman": "cher"
+    },
+    {
+     "en": "juice",
+     "roman": "chus"
+    },
+    {
+     "en": "job",
+     "roman": "chab"
+    },
+    {
+     "en": "watch",
+     "roman": "wach"
+    },
+    {
+     "en": "sure",
+     "roman": "shur"
+    }
+   ]
+  },
+  {
+   "id": "snd-9",
+   "title": "ng, y and w",
+   "tip": "the end of sing is one letter, ng. y in yes and w in we are letters too.",
+   "words": [
+    {
+     "en": "sing",
+     "roman": "sing"
+    },
+    {
+     "en": "king",
+     "roman": "king"
+    },
+    {
+     "en": "long",
+     "roman": "long"
+    },
+    {
+     "en": "yes",
+     "roman": "yes"
+    },
+    {
+     "en": "you",
+     "roman": "yu"
+    },
+    {
+     "en": "we",
+     "roman": "wi"
+    },
+    {
+     "en": "window",
+     "roman": "window"
+    },
+    {
+     "en": "song",
+     "roman": "song"
+    }
+   ]
+  },
+  {
+   "id": "snd-10",
+   "title": "silent letters",
+   "tip": "venderian has no silent letters: knife starts with n, light has no g or h, hour has no h.",
+   "words": [
+    {
+     "en": "knife",
+     "roman": "nayf"
+    },
+    {
+     "en": "write",
+     "roman": "rayt"
+    },
+    {
+     "en": "know",
+     "roman": "now"
+    },
+    {
+     "en": "light",
+     "roman": "layt"
+    },
+    {
+     "en": "night",
+     "roman": "nayt"
+    },
+    {
+     "en": "lamb",
+     "roman": "lam"
+    },
+    {
+     "en": "island",
+     "roman": "aylënd"
+    },
+    {
+     "en": "hour",
+     "roman": "awër"
+    }
+   ]
+  },
+  {
+   "id": "snd-11",
+   "title": "c, k, q and x",
+   "tip": "c is k or s by its sound. q is k + w, x is k + s. ice and six end in s.",
+   "words": [
+    {
+     "en": "cake",
+     "roman": "keyk"
+    },
+    {
+     "en": "city",
+     "roman": "siti"
+    },
+    {
+     "en": "queen",
+     "roman": "kwin"
+    },
+    {
+     "en": "box",
+     "roman": "baks"
+    },
+    {
+     "en": "kiss",
+     "roman": "kis"
+    },
+    {
+     "en": "ice",
+     "roman": "ays"
+    },
+    {
+     "en": "six",
+     "roman": "siks"
+    },
+    {
+     "en": "quick",
+     "roman": "kwik"
+    }
+   ]
+  },
+  {
+   "id": "snd-12",
+   "title": "names",
+   "tip": "names are spelled by sound like everything else. try your own name on the keyboard!",
+   "words": [
+    {
+     "en": "anna",
+     "roman": "anë"
+    },
+    {
+     "en": "max",
+     "roman": "maks"
+    },
+    {
+     "en": "sofia",
+     "roman": "sowfië"
+    },
+    {
+     "en": "david",
+     "roman": "deyvid"
+    },
+    {
+     "en": "emma",
+     "roman": "emë"
+    },
+    {
+     "en": "lucas",
+     "roman": "lukës"
+    },
+    {
+     "en": "olivia",
+     "roman": "owlivië"
+    },
+    {
+     "en": "leo",
+     "roman": "liow"
+    }
+   ]
+  },
+  {
+   "id": "snd-13",
+   "title": "countries",
+   "tip": "country names too: russia, america, china.",
+   "words": [
+    {
+     "en": "russia",
+     "roman": "rashë"
+    },
+    {
+     "en": "america",
+     "roman": "ëmerëkë"
+    },
+    {
+     "en": "china",
+     "roman": "chaynë"
+    },
+    {
+     "en": "japan",
+     "roman": "chëpan"
+    },
+    {
+     "en": "germany",
+     "roman": "chërmëni"
+    },
+    {
+     "en": "france",
+     "roman": "frans"
+    },
+    {
+     "en": "canada",
+     "roman": "kanëdë"
+    },
+    {
+     "en": "egypt",
+     "roman": "ichëpt"
+    }
+   ]
+  },
+  {
+   "id": "snd-14",
+   "title": "tech words",
+   "tip": "new words are easy: just write what you hear.",
+   "words": [
+    {
+     "en": "google",
+     "roman": "gugël"
+    },
+    {
+     "en": "laptop",
+     "roman": "laptap"
+    },
+    {
+     "en": "music",
+     "roman": "myuzik"
+    },
+    {
+     "en": "internet",
+     "roman": "intërnet"
+    },
+    {
+     "en": "video",
+     "roman": "vidiow"
+    },
+    {
+     "en": "robot",
+     "roman": "rowbat"
+    },
+    {
+     "en": "computer",
+     "roman": "këmpyutër"
+    },
+    {
+     "en": "android",
+     "roman": "androyd"
+    }
+   ]
+  },
+  {
+   "id": "snd-15",
+   "title": "long words",
+   "tip": "long words are just more sounds in a row. say them slowly.",
+   "words": [
+    {
+     "en": "chocolate",
+     "roman": "choklët"
+    },
+    {
+     "en": "elephant",
+     "roman": "elëfënt"
+    },
+    {
+     "en": "important",
+     "roman": "importënt"
+    },
+    {
+     "en": "beautiful",
+     "roman": "byutëfël"
+    },
+    {
+     "en": "together",
+     "roman": "tëgethër"
+    },
+    {
+     "en": "everything",
+     "roman": "evrithing"
+    },
+    {
+     "en": "tomorrow",
+     "roman": "tëmarow"
+    },
+    {
+     "en": "vegetable",
+     "roman": "vechtëbël"
+    }
+   ]
+  },
+  {
+   "id": "snd-16",
+   "title": "tricky ones",
+   "tip": "english spelling is wild: colonel sounds like kernel, yacht like yot. venderian doesn't care how it's spelled.",
+   "words": [
+    {
+     "en": "colonel",
+     "roman": "kërnël"
+    },
+    {
+     "en": "receipt",
+     "roman": "risit"
+    },
+    {
+     "en": "queue",
+     "roman": "kyu"
+    },
+    {
+     "en": "yacht",
+     "roman": "yat"
+    },
+    {
+     "en": "women",
+     "roman": "wimën"
+    },
+    {
+     "en": "choir",
+     "roman": "kwayër"
+    },
+    {
+     "en": "debris",
+     "roman": "dëbri"
+    },
+    {
+     "en": "wednesday",
+     "roman": "wenzdi"
+    }
+   ]
+  }
+ ]
+}

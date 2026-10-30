@@ -22,6 +22,9 @@ sealed interface Exercise {
     /** read an english sentence, build the venderian from tiles */
     data class BuildVenderian(val english: String, val venderian: String, val tiles: List<String>, val answer: List<String>) : Exercise
 
+    /** spell an english word in venderian, letter by letter */
+    data class SpellLetters(val english: String, val roman: String, val tiles: List<String>, val answer: List<String>) : Exercise
+
     /** read the script, type it in roman letters */
     data class TypeRoman(val venderian: String, val meaning: String?) : Exercise
 }

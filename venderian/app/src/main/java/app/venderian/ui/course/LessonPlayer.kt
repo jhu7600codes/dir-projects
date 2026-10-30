@@ -80,6 +80,8 @@ import app.venderian.ui.app
 import app.venderian.course.CourseLesson
 import app.venderian.course.Exercise
 import app.venderian.course.ExerciseMaker
+import app.venderian.course.SoundExerciseMaker
+import app.venderian.course.SoundLessons
 import app.venderian.course.Kind
 import app.venderian.data.Repository
 import app.venderian.ui.VText
@@ -106,7 +108,12 @@ data class PlayerState(
 
 class PlayerViewModel(private val app: VenderianApp, private val id: String) : ViewModel() {
     private val isPractice = id.startsWith(CourseLesson.PRACTICE_ID)
-    private val lesson = if (isPractice) CourseLesson.practice(id) else app.course.lesson(id)
+    private val isSounds = id.startsWith(SoundLessons.PREFIX)
+    private val lesson = when {
+        isPractice -> CourseLesson.practice(id)
+        isSounds -> app.soundLessons.lesson(id).asLesson
+        else -> app.course.lesson(id)
+    }
     private val maker = ExerciseMaker(app.course, app.lexicon.entries)
     private var sources: List<CourseLesson> = emptyList()
     val state = MutableStateFlow(PlayerState(lesson, emptyList()))
@@ -117,10 +124,14 @@ class PlayerViewModel(private val app: VenderianApp, private val id: String) : V
 
     fun startOver(showTip: Boolean = false) {
         viewModelScope.launch {
-            val queue = if (isPractice) {
-                sources = app.repository.practiceSources(lesson.practiceSection)
-                maker.practice(sources)
-            } else maker.make(lesson)
+            val queue = when {
+                isPractice -> {
+                    sources = app.repository.practiceSources(lesson.practiceSection)
+                    maker.practice(sources)
+                }
+                isSounds -> SoundExerciseMaker(app.soundLessons).make(app.soundLessons.lesson(id))
+                else -> maker.make(lesson)
+            }
             state.value = PlayerState(lesson, queue, showTip = showTip)
         }
     }
@@ -149,8 +160,11 @@ class PlayerViewModel(private val app: VenderianApp, private val id: String) : V
             s.index + 1 >= s.queue.size -> {
                 state.value = s.copy(finished = true, feedback = null)
                 viewModelScope.launch {
-                    if (isPractice) app.repository.completePractice(sources, s.mistakes)
-                    else app.repository.completeCourseLesson(lesson, s.mistakes)
+                    when {
+                        isPractice -> app.repository.completePractice(sources, s.mistakes)
+                        isSounds -> app.repository.completeSoundLesson(id, s.mistakes)
+                        else -> app.repository.completeCourseLesson(lesson, s.mistakes)
+                    }
                 }
             }
             else -> state.value = s.copy(index = s.index + 1, feedback = null)
@@ -384,7 +398,8 @@ internal fun ExerciseView(e: Exercise, locked: Boolean, onAnswer: (Boolean, Stri
 
         is Exercise.PickMeaning -> {
             var picked by remember { mutableStateOf<Int?>(null) }
-            Frame("what does this mean?", locked, picked != null, { onAnswer(picked == e.answer, e.word.meaning) }) {
+            val title = if (e.word.pos == "english word") "which english word is this?" else "what does this mean?"
+            Frame(title, locked, picked != null, { onAnswer(picked == e.answer, e.word.meaning) }) {
                 Script(e.word.word, 56)
                 Spacer(Modifier.height(20.dp))
                 e.options.forEachIndexed { i, o -> Option(o, script = false, selected = picked == i, enabled = !locked) { picked = i } }
@@ -408,6 +423,18 @@ internal fun ExerciseView(e: Exercise, locked: Boolean, onAnswer: (Boolean, Stri
         is Exercise.BuildVenderian -> Build(
             "write this in venderian", e.tiles, e.answer, locked, script = true,
             prompt = { Text(e.english, style = MaterialTheme.typography.headlineSmall) }, rightAnswer = e.venderian, onAnswer = onAnswer,
+        )
+
+        is Exercise.SpellLetters -> Build(
+            "spell it in venderian", e.tiles, e.answer, locked, script = true,
+            prompt = {
+                Column {
+                    Text("“${e.english}”", style = MaterialTheme.typography.headlineMedium)
+                    Text("by how it sounds, not how it's spelled", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            rightAnswer = "${e.roman}  (${Sounds.scriptOf(e.roman)})", onAnswer = onAnswer,
         )
 
         is Exercise.TypeRoman -> {

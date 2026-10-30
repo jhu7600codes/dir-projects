@@ -7,6 +7,7 @@ import app.venderian.convert.Converter
 import app.venderian.convert.Lexicon
 import app.venderian.convert.WordLookup
 import app.venderian.course.Course
+import app.venderian.course.SoundLessons
 import app.venderian.data.Alphabet
 import app.venderian.data.Repository
 import app.venderian.data.VenderianDb
@@ -23,6 +24,7 @@ class VenderianApp : Application() {
     val lexicon by lazy { Lexicon.parse(assets.open("dictionary.json").bufferedReader().use { it.readText() }) }
     val alphabet by lazy { Alphabet.parse(assets.open("alphabet.json").bufferedReader().use { it.readText() }) }
     val lookup by lazy { WordLookup(lexicon.entries) }
+    val soundLessons by lazy { SoundLessons.parse(assets.open("sounds.json").bufferedReader().use { it.readText() }) }
     val course by lazy { Course.parse(assets.open("course.json").bufferedReader().use { it.readText() }) }
     val repository by lazy { Repository(VenderianDb.create(this), alphabet, lexicon.entries, course) }
 

@@ -17,6 +17,7 @@ import app.venderian.VenderianApp
 import app.venderian.convert.Sounds
 import app.venderian.course.Exercise
 import app.venderian.course.ExerciseMaker
+import app.venderian.course.SoundExerciseMaker
 import app.venderian.ui.course.ExerciseView
 import app.venderian.ui.theme.VenderianTheme
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -41,7 +42,8 @@ class ExerciseScreenshotTest {
     fun exercises() {
         val app = RuntimeEnvironment.getApplication() as VenderianApp
         val maker = ExerciseMaker(app.course, app.lexicon.entries, Random(3))
-        val all = maker.make(app.course.lesson("m1-l5")) + maker.make(app.course.lesson("m4.5-gold"))
+        val all = maker.make(app.course.lesson("m1-l5")) + maker.make(app.course.lesson("m4.5-gold")) +
+            SoundExerciseMaker(app.soundLessons, Random(1)).make(app.soundLessons.lessons[4])
         val kinds = all.groupBy { it::class.simpleName }.mapValues { it.value.first() }
         var current by mutableStateOf<Exercise>(all.first())
         compose.setContent {

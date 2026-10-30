@@ -88,6 +88,9 @@ class CourseScreenshotTest {
         runBlocking { app.alphabet.lessons.forEach { app.repository.completeLesson(it) } }
         compose.mainClock.autoAdvance = false
         settle()
+        compose.onAllNodesWithText("sounds").onFirst().performClick()
+        waitFor("the lazy vowel")
+        shot("s1-sounds")
         compose.onAllNodesWithText("course").onFirst().performClick()
         waitFor("first steps")
         shot("c1-map")

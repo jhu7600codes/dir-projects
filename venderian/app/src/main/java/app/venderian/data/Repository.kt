@@ -68,7 +68,7 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
             wordsSeen = cards.count { it.kind == CardEntity.WORD },
             mastered = cards.count { it.intervalDays >= 21 },
             lessonsDone = lessons,
-            courseDone = course.size,
+            courseDone = course.count { it.startsWith("m") },
             golds = course.count { it.endsWith("-gold") },
         )
     }
@@ -149,6 +149,12 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
             db.progress().completeCourse(CourseEntity(l.id, now, if (mistakes == 0) 0 else before))
         }
         addXp(XP_PRACTICE)
+    }
+
+    /** an english sounds lesson is done (stored with the course, by its snd- id) */
+    suspend fun completeSoundLesson(id: String, mistakes: Int) {
+        db.progress().completeCourse(CourseEntity(id, System.currentTimeMillis(), mistakes))
+        addXp(XP_COURSE_LESSON)
     }
 
     suspend fun completeCourseLesson(lesson: CourseLesson, mistakes: Int) {

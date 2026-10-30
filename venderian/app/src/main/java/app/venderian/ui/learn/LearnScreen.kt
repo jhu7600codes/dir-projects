@@ -50,12 +50,22 @@ fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit, onO
     var tab by rememberSaveable { mutableStateOf<Int?>(null) }
     val shown = tab ?: if (scriptDone) 1 else 0
     Column {
-        ScreenTitle("Learn", if (shown == 0) "the venderian script, a few letters at a time" else "the language: 3 sections, 9 modules", onOpenDictionary)
+        ScreenTitle(
+            "Learn",
+            when (shown) {
+                0 -> "the venderian script, a few letters at a time"
+                1 -> "the language: 3 sections, 9 modules"
+                else -> "write any english word in venderian, by how it sounds"
+            },
+            onOpenDictionary,
+        )
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            SegmentedButton(shown == 0, { tab = 0 }, SegmentedButtonDefaults.itemShape(0, 2)) { Text("script") }
-            SegmentedButton(shown == 1, { tab = 1 }, SegmentedButtonDefaults.itemShape(1, 2)) { Text("course") }
+            SegmentedButton(shown == 0, { tab = 0 }, SegmentedButtonDefaults.itemShape(0, 3)) { Text("script") }
+            SegmentedButton(shown == 1, { tab = 1 }, SegmentedButtonDefaults.itemShape(1, 3)) { Text("course") }
+            SegmentedButton(shown == 2, { tab = 2 }, SegmentedButtonDefaults.itemShape(2, 3)) { Text("sounds") }
         }
         if (shown == 0) ScriptLessons(onOpenLesson)
+        else if (shown == 2) SoundLessonList(scriptDone, courseDone, onOpenCourse)
         else CourseMap(
             app.course, courseDone, scriptDone,
             scriptProgress = scriptLessons.size / app.alphabet.lessons.size.toFloat(),
@@ -144,6 +154,41 @@ private fun HowItWorks() {
                         "a consonant + ë gets a bar underneath, a doubled consonant gets a second headline.",
                     ).forEach { Text("· $it", style = MaterialTheme.typography.bodyMedium) }
                     VText(app.venderian.convert.Sounds.scriptOf("vela mi"), size = 30.sp, modifier = Modifier.padding(top = 4.dp))
+                }
+            }
+        }
+    }
+}
+
+/** english words in venderian letters: one lesson per tricky english sound */
+@Composable
+private fun SoundLessonList(scriptDone: Boolean, done: Set<String>, onOpen: (String) -> Unit) {
+    val lessons = app().soundLessons.lessons
+    LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
+        item {
+            Text(
+                if (scriptDone) "how to write english words (names, places, anything) in venderian letters. it's what the keyboard's \"spell by sound\" does."
+                else "learn the script first: these lessons open once all 5 script lessons are done.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(16.dp),
+            )
+        }
+        items(lessons, key = { it.id }) { lesson ->
+            Card(
+                onClick = { if (scriptDone) onOpen(lesson.id) },
+                enabled = scriptDone,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+            ) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(lesson.title, style = MaterialTheme.typography.titleMedium)
+                        Text(lesson.words.take(4).joinToString(", ") { it.en } + "…",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        VText(app.venderian.convert.Sounds.scriptOf(lesson.words.first().roman), size = 26.sp,
+                            modifier = Modifier.padding(top = 6.dp))
+                    }
+                    if (lesson.id in done) Icon(Icons.Filled.CheckCircle, "done", tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }
