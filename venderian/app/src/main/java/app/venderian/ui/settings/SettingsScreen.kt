@@ -92,10 +92,11 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
 
             Section("voice") {
+                val engineName = app.engines.firstOrNull { it.name == app.engineInUse }?.label ?: app.engineInUse
                 Text(
                     when (app.spanishVoice) {
-                        true -> "the spanish voice is installed, venderian is read with it"
-                        false -> "no spanish voice yet: venderian is read by an english voice, which sounds worse"
+                        true -> "found a spanish voice (${app.spanishName}) in $engineName, venderian is read with it"
+                        false -> "no spanish voice in ${engineName ?: "the speech engine"} yet, so venderian is read by an english voice (it sounds worse)"
                         null -> "checking the voices…"
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -106,7 +107,19 @@ fun SettingsScreen(onBack: () -> Unit) {
                     }
                     OutlinedButton(onClick = { app.speakVenderian("vela! mi vendëri thela.") }) { Text("test") }
                 }
-                Text("android doesn't let apps download voices themselves: the button opens your voice engine, pick spanish (spain) there. it works offline after.",
+                OutlinedButton(onClick = { app.refreshVoices() }, modifier = Modifier.padding(top = 4.dp)) { Text("check again") }
+                if (app.engines.size > 1) {
+                    Text("speech engine", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
+                    Text("if your spanish voice is in another app, pick it here",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(app.engine == null, { app.useEngine(null) }, label = { Text("phone default") })
+                        app.engines.forEach { e ->
+                            FilterChip(app.engine == e.name, { app.useEngine(e.name) }, label = { Text(e.label) })
+                        }
+                    }
+                }
+                Text("android doesn't let apps download voices themselves: the button opens your speech engine, pick any spanish voice there (spain is closest). it works offline after.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp))
             }

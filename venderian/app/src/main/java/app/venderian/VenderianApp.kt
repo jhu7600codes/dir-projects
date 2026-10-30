@@ -3,6 +3,7 @@ package app.venderian
 import android.app.Application
 import android.content.Intent
 import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
 import app.venderian.convert.CmuDict
 import app.venderian.convert.Converter
 import app.venderian.convert.Lexicon
@@ -50,46 +51,104 @@ class VenderianApp : Application() {
 
     private var tts: TextToSpeech? = null
     private var ttsReady = false
-    private var spanish = false
+    private val pending = mutableListOf<() -> Unit>()
+    private val ttsPrefs by lazy { getSharedPreferences("voice", MODE_PRIVATE) }
 
-    /** whether the phone has a spanish voice (null until text to speech has started) */
+    /** the spanish voice we read venderian with: any country (spain, us, mexico...), if there's one */
+    private var spanishLocale: Locale? = null
+    private var spanishVoiceObj: Voice? = null
+
+    /** whether the engine has a spanish voice (null until text to speech has started) */
     var spanishVoice by mutableStateOf<Boolean?>(null)
         private set
-    private var pending: (() -> Unit)? = null
+
+    /** which spanish was found, like "es-US", for settings */
+    var spanishName by mutableStateOf<String?>(null)
+        private set
+
+    /** the speech engines on the phone (google, samsung, huawei, xiaomi...) */
+    var engines by mutableStateOf<List<TextToSpeech.EngineInfo>>(emptyList())
+        private set
+
+    /** the engine picked in settings (a package name), or null for the phone's default */
+    var engine by mutableStateOf<String?>(null)
+        private set
+
+    /** the engine actually in use */
+    var engineInUse by mutableStateOf<String?>(null)
+        private set
 
     /** the phone's text to speech, started the first time something is said */
     private fun withTts(say: () -> Unit) {
         if (ttsReady) return say()
-        pending = say
-        if (tts != null) return
-        tts = TextToSpeech(this) { status ->
+        pending += say
+        if (tts == null) startTts()
+    }
+
+    private fun startTts() {
+        ttsReady = false
+        engine = ttsPrefs.getString("engine", null)
+        val listener = TextToSpeech.OnInitListener { status ->
             ttsReady = status == TextToSpeech.SUCCESS
-            if (ttsReady) {
-                checkSpanish()
-                tts?.setSpeechRate(0.85f)
-                pending?.invoke()
-                pending = null
+            val t = tts
+            if (ttsReady && t != null) {
+                engines = t.engines
+                engineInUse = engine ?: t.defaultEngine
+                checkSpanish(t)
+                t.setSpeechRate(0.85f)
+                pending.toList().forEach { it() }
+            } else {
+                spanishVoice = false
             }
+            pending.clear()
         }
+        tts = engine?.let { TextToSpeech(this, listener, it) } ?: TextToSpeech(this, listener)
     }
 
-    private fun checkSpanish() {
-        // a voice that's listed but not downloaded yet reports LANG_MISSING_DATA
-        spanish = (tts?.isLanguageAvailable(SPANISH) ?: TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
-        spanishVoice = spanish
+    /** starts the engine again: a voice downloaded meanwhile only shows up after a restart */
+    private fun restartTts() {
+        tts?.shutdown()
+        tts = null
+        startTts()
     }
 
-    /** looks again (after coming back from the voice download screen) */
-    fun refreshVoices() = withTts { checkSpanish() }
+    private fun checkSpanish(t: TextToSpeech) {
+        // installed spanish voices, from any country. a listed but not downloaded voice says notInstalled
+        val voices = runCatching { t.voices }.getOrNull().orEmpty().filter {
+            it.locale.language == "es" && TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED !in it.features.orEmpty()
+        }
+        // spain first (closest to venderian), offline voices before network ones
+        val voice = voices.sortedWith(compareBy({ it.locale.country != "ES" }, { it.isNetworkConnectionRequired })).firstOrNull()
+        // engines that don't list voices still answer isLanguageAvailable
+        val locale = voice?.locale ?: SPANISH_LOCALES.firstOrNull {
+            runCatching { t.isLanguageAvailable(it) }.getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
+        }
+        spanishVoiceObj = voice
+        spanishLocale = locale
+        spanishVoice = locale != null
+        spanishName = locale?.toLanguageTag()
+    }
+
+    /** looks again for a spanish voice (after coming back from the voice download screen) */
+    fun refreshVoices() {
+        if (spanishVoice == true) return
+        if (tts == null) startTts() else restartTts()
+    }
+
+    /** settings: use this engine (null for the phone's default) */
+    fun useEngine(pkg: String?) {
+        ttsPrefs.edit().putString("engine", pkg).apply()
+        restartTts()
+    }
 
     /**
-     * opens the phone's voice engine on its "install voice data" screen, where the spanish
-     * voice is one tap. apps can't download voices themselves. falls back to the text to
-     * speech settings if the engine has no such screen.
+     * opens the voice engine on its "install voice data" screen, where the spanish voice is
+     * one tap. apps can't download voices themselves. falls back to the text to speech
+     * settings if the engine has no such screen.
      */
     fun spanishVoiceIntent(): Intent {
         val install = Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        tts?.defaultEngine?.let { install.setPackage(it) }
+        engineInUse?.let { install.setPackage(it) }
         return if (install.resolveActivity(packageManager) != null) install
         else Intent("com.android.settings.TTS_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
@@ -102,8 +161,10 @@ class VenderianApp : Application() {
 
     /** says venderian (romanized) out loud, with a spanish voice if the phone has one */
     fun speakVenderian(roman: String) = withTts {
-        if (spanish) {
-            tts?.language = SPANISH
+        val locale = spanishLocale
+        if (locale != null) {
+            val voice = spanishVoiceObj
+            if (voice != null) tts?.voice = voice else tts?.language = locale
             tts?.speak(Speech.spanish(roman), TextToSpeech.QUEUE_FLUSH, null, "venderian")
         } else {
             tts?.language = Locale.US
@@ -112,6 +173,6 @@ class VenderianApp : Application() {
     }
 
     companion object {
-        private val SPANISH = Locale("es", "ES")
+        private val SPANISH_LOCALES = listOf(Locale("es", "ES"), Locale("es", "US"), Locale("es", "MX"), Locale("es"))
     }
 }
