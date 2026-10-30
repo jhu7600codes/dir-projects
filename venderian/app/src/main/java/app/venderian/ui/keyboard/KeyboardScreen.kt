@@ -76,6 +76,7 @@ fun KeyboardScreen() {
     Column(Modifier.fillMaxSize()) {
         ScreenTitle("Keyboard", "write venderian, or type english and watch it turn into venderian")
         SystemKeyboardCard()
+        RootFontCard()
         PrimaryTabRow(selectedTabIndex = tab) {
             Tab(tab == 0, { tab = 0 }, text = { Text("venderian keys") })
             Tab(tab == 1, { tab = 1 }, text = { Text("from english") })
@@ -117,6 +118,33 @@ private fun SystemKeyboardCard() {
                     TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }) { Text("settings") }
                     FilledTonalButton(onClick = { imm.showInputMethodPicker() }) { Text("switch keyboard") }
                 }
+            }
+        }
+    }
+}
+
+/** root users: the lsposed module that shows venderian in other apps */
+@Composable
+private fun RootFontCard() {
+    var open by rememberSaveable { mutableStateOf(false) }
+    Card(
+        onClick = { open = !open },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).animateContentSize(),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text("rooted? see venderian in other apps", style = MaterialTheme.typography.titleMedium)
+            if (!open) {
+                Text("tap for how (lsposed, no reboot)", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                listOf(
+                    "this app is also an lsposed module. it adds the venderian letters to the apps you pick, so script you send or get shows up as script there, while the app itself just has plain text.",
+                    "1. open lsposed, go to modules and turn on venderian",
+                    "2. tick the apps you want (telegram, whatsapp...)",
+                    "3. force-stop those apps (or swipe them away). no reboot needed",
+                    "4. on the keyboard, set the output to script",
+                    "it's experimental: if an app acts weird, untick it in lsposed and force-stop it again.",
+                ).forEach { Text(it, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp)) }
             }
         }
     }

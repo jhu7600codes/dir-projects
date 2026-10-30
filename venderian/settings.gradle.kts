@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "venderian"
 
 include(":app")
+include(":xposed-stubs")

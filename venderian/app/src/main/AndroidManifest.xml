@@ -15,6 +15,12 @@
         android:label="Venderian"
         android:supportsRtl="true"
         android:theme="@style/Theme.Venderian">
+
+        <!-- also an lsposed module (experimental, root): shows the script in apps you pick -->
+        <meta-data android:name="xposedmodule" android:value="true" />
+        <meta-data android:name="xposeddescription" android:value="shows venderian letters in the apps you pick (no reboot, just restart those apps)" />
+        <meta-data android:name="xposedminversion" android:value="93" />
+        <meta-data android:name="xposedscope" android:resource="@array/xposed_scope" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

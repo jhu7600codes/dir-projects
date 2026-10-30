@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- apps lsposed suggests for the font hook: messengers -->
+    <string-array name="xposed_scope">
+        <item>org.telegram.messenger</item>
+        <item>org.thunderdog.challegram</item>
+        <item>com.whatsapp</item>
+        <item>com.google.android.apps.messaging</item>
+        <item>com.discord</item>
+        <item>com.vkontakte.android</item>
+    </string-array>
+</resources>

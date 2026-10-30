@@ -18,6 +18,9 @@ from fontTools.svgLib.path import SVGPath
 ROOT = Path(__file__).resolve().parent.parent
 GLYPHS = ROOT / "glyphs"
 OUT = ROOT / "app/src/main/res/font/venderian.ttf"
+# letters only (no digits, punctuation or space): the lsposed font hook adds this one as a
+# fallback in other apps, where it must not change how normal text looks
+OUT_PUA = ROOT / "app/src/main/assets/venderian-pua.ttf"
 data = json.loads((ROOT / "docs/alphabet.json").read_text(encoding="utf-8"))
 
 UPM, ASCENT, DESCENT = 1000, 900, -250
@@ -62,7 +65,7 @@ def features():
     return "\n".join(lines)
 
 
-def main():
+def build(out, letters_only=False):
     order = [".notdef"]
     glyphs, metrics, cmap = {}, {}, {}
     glyphs[".notdef"], adv = notdef()
@@ -70,6 +73,8 @@ def main():
     for path in sorted(GLYPHS.glob("*.svg")):
         name = path.stem
         glyph, advance, cp = svg_glyph(path)
+        if letters_only and cp is not None and cp < 0xE000:
+            continue
         glyph.recalcBounds(None)
         order.append(name)
         glyphs[name] = glyph
@@ -92,9 +97,14 @@ def main():
     fb.setupPost()
     fb.setupHead(unitsPerEm=UPM)
     addOpenTypeFeaturesFromString(fb.font, features())
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    fb.save(OUT)
-    print(f"{len(order)} glyphs, {len(cmap)} mapped -> {OUT.relative_to(ROOT)}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fb.save(out)
+    print(f"{len(order)} glyphs, {len(cmap)} mapped -> {out.relative_to(ROOT)}")
+
+
+def main():
+    build(OUT)
+    build(OUT_PUA, letters_only=True)
 
 
 if __name__ == "__main__":
