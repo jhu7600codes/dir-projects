@@ -13,19 +13,26 @@ data class Entry(val word: String, val meaning: String, val pos: String)
  */
 class Lexicon(val entries: List<Entry>) {
     private val byEnglish: Map<String, Entry>
+    /** every entry for an english word: "work" is both rab (a job) and rabo (to work) */
+    private val allByEnglish: Map<String, List<Entry>>
     /** longest english phrase in the index, in words */
     val longestPhrase: Int
 
     init {
         val index = LinkedHashMap<String, Entry>()
+        val all = LinkedHashMap<String, MutableList<Entry>>()
         for (e in entries) {
             if (e.pos == "suffix") continue
             for (part in e.meaning.split(',')) {
                 val key = part.replace(Regex("\\(.*?\\)"), "").trim().lowercase().removePrefix("to ").trim()
-                if (key.isNotEmpty()) index.putIfAbsent(key, e)
+                if (key.isNotEmpty()) {
+                    index.putIfAbsent(key, e)
+                    all.getOrPut(key) { mutableListOf() } += e
+                }
             }
         }
         byEnglish = index
+        allByEnglish = all
         longestPhrase = index.keys.maxOf { it.split(' ').size }
     }
 
@@ -35,17 +42,19 @@ class Lexicon(val entries: List<Entry>) {
      * venderian for one english word (or phrase), already inflected, possibly several words
      * ("my" -> "da mi"). empty string means "drop it" (articles). null means unknown.
      */
-    fun translate(english: String): String? {
+    fun translate(english: String, preferVerb: Boolean = false): String? {
         val w = english.lowercase()
+        if (preferVerb) allByEnglish[w]?.firstOrNull { it.pos == "verb" }?.let { return it.word }
         if (w in DROPPED) return ""
         SPECIAL[w]?.let { return it }
         entry(w)?.let { return it.word }
         IRREGULAR_PAST[w]?.let { base -> entry(base)?.takeIf { it.pos == "verb" }?.let { return past(it.word) } }
         IRREGULAR_PLURAL[w]?.let { base -> entry(base)?.takeIf { it.pos == "noun" }?.let { return plural(it.word) } }
         for (stem in stems(w, listOf("ies" to "y", "es" to "", "s" to ""))) {
-            val e = entry(stem) ?: continue
-            if (e.pos == "noun") return plural(e.word)
-            if (e.pos == "verb") return e.word
+            // after "he" / "it" etc, "works" is the verb, otherwise it's more likely a plural
+            val options = allByEnglish[stem].orEmpty().sortedBy { if ((it.pos == "verb") == preferVerb) 0 else 1 }
+            val e = options.firstOrNull { it.pos == "noun" || it.pos == "verb" } ?: continue
+            return if (e.pos == "noun") plural(e.word) else e.word
         }
         for (stem in stems(w, listOf("ied" to "y", "ed" to "", "ed" to "e"))) {
             entry(stem)?.takeIf { it.pos == "verb" }?.let { return past(it.word) }
@@ -99,6 +108,16 @@ class Lexicon(val entries: List<Entry>) {
             "drank" to "drink", "slept" to "sleep", "ran" to "run", "sat" to "sit", "stood" to "stand",
             "found" to "find", "thought" to "think", "felt" to "feel", "wrote" to "write",
             "taught" to "teach", "bought" to "buy", "sang" to "sing", "heard" to "hear", "did" to "do",
+            "forgot" to "forget", "said" to "say", "told" to "tell", "began" to "start", "broke" to "break",
+            "brought" to "bring", "built" to "build", "caught" to "catch", "chose" to "choose", "drew" to "draw",
+            "drove" to "drive", "fell" to "fall", "fought" to "fight", "flew" to "fly", "grew" to "grow",
+            "held" to "hold", "hid" to "hide", "kept" to "keep", "led" to "lead", "left" to "leave", "lent" to "lend",
+            "lost" to "lose", "meant" to "mean", "met" to "meet", "paid" to "pay", "rode" to "ride", "sold" to "sell",
+            "sent" to "send", "spent" to "spend", "stole" to "steal", "swam" to "swim", "threw" to "throw",
+            "understood" to "understand", "woke" to "wake up", "won" to "win", "became" to "become",
+            "got" to "get", "gotten" to "get", "written" to "write", "eaten" to "eat", "seen" to "see",
+            "done" to "do", "gone" to "go", "given" to "give", "taken" to "take", "known" to "know",
+            "spoken" to "speak", "forgotten" to "forget", "chosen" to "choose", "broken" to "break",
         )
         private val IRREGULAR_PLURAL = mapOf(
             "people" to "person", "children" to "child", "men" to "man", "women" to "woman",

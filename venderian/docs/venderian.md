@@ -3,7 +3,7 @@
 venderian (native name **vendëri**, said VEN-dë-ri) is a made-up language with its own angular script. this file is the source of truth for the language. the app, the font and the converter all follow it.
 
 - glyph strokes: [`alphabet.json`](alphabet.json) (rendered as [`alphabet.svg`](alphabet.svg) by `tools/render_chart.py`)
-- dictionary: [`app/src/main/assets/dictionary.json`](../app/src/main/assets/dictionary.json), the starter words in `tools/make_dictionary.py` plus every word the course defines
+- dictionary: [`app/src/main/assets/dictionary.json`](../app/src/main/assets/dictionary.json), the starter words in `tools/make_dictionary.py` plus every word the course defines, plus the word bank in [`course/bank.txt`](../course/bank.txt) (everyday words for the dictionary and the keyboard's translate, made with `tools/make_bank.py`)
 - the course: [`course/`](../course) (3 sections, 9 modules, 180 lessons), built and checked by `tools/make_course.py`
 
 ![alphabet chart](alphabet.svg)

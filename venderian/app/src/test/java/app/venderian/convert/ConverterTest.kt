@@ -3,6 +3,7 @@ package app.venderian.convert
 import app.venderian.convert.Converter.Mode.TRANSLATE
 import app.venderian.convert.Converter.Source
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
@@ -50,8 +51,8 @@ class ConverterTest {
     @Test
     fun `translate uses the dictionary and spells the rest`() {
         assertEquals("mi sipa nami", converter.convert("I drink water", TRANSLATE).roman)
-        val r = converter.convert("I like pizza", TRANSLATE)
-        assertEquals("mi goda pitsë", r.roman)
+        val r = converter.convert("I like bookkeeper", TRANSLATE)
+        assertEquals("mi goda bukkipër", r.roman)
         assertEquals(listOf(Source.LEXICON, Source.LEXICON, Source.CMUDICT), r.pieces.map { it.source })
     }
 
@@ -71,6 +72,15 @@ class ConverterTest {
     fun `translate knows phrases`() {
         assertEquals("shevan!", converter.convert("Thank you!", TRANSLATE).roman)
         assertEquals("vela, ishe da mi ana.", converter.convert("Hello, the name of me ana.", TRANSLATE).roman.replace("anë", "ana"))
+    }
+
+    @Test
+    fun `the word bank covers everyday words`() {
+        val r = converter.convert("yes, it actually works! can we practice words even more? I forgot one word.", TRANSLATE)
+        println(r.roman)
+        val spelled = r.pieces.filter { it.source != Source.LEXICON && it.source != Source.PUNCTUATION }.map { it.english }
+        assertEquals(emptyList<String>(), spelled)
+        assertTrue(r.roman, r.roman.startsWith("ya, sa luk rabo!"))
     }
 
     @Test

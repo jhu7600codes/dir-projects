@@ -75,7 +75,12 @@ class Converter(private val dict: Pronunciations, private val lexicon: Lexicon? 
                 if (verb != null) return 2 to venderian("$word $next", Lexicon.future(verb))
             }
         }
-        val translated = lexicon.translate(word) ?: return 1 to spell(word)
+        // after a pronoun the next word is most likely its verb: "it works", not "it jobs"
+        // (looking past adverbs: "it actually works")
+        var back = at - 1
+        while (back > 0 && lexicon.entry(tokens[back].lowercase())?.pos == "adverb") back--
+        val afterSubject = tokens.getOrNull(back)?.lowercase() in SUBJECTS
+        val translated = lexicon.translate(word, preferVerb = afterSubject) ?: return 1 to spell(word)
         return 1 to translated.takeIf { it.isNotEmpty() }?.let { venderian(word, it) }
     }
 
@@ -87,6 +92,7 @@ class Converter(private val dict: Pronunciations, private val lexicon: Lexicon? 
 
     companion object {
         private val TOKEN = Regex("[A-Za-z]+(?:['’][A-Za-z]+)*|\\d+|[.,?!;:]")
+        private val SUBJECTS = setOf("i", "you", "he", "she", "it", "we", "they", "who")
         private val PUNCTUATION = mapOf(
             "." to ".", "," to ",", "?" to "?", "!" to "!", ";" to ",", ":" to ",",
         )

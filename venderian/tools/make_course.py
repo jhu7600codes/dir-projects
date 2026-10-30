@@ -32,7 +32,7 @@ OUT_DICT = ROOT / "app/src/main/assets/dictionary.json"
 # endings: (suffix, needs a stem ending in a vowel (True), consonant (False), or either (None))
 ENDINGS = {
     "n": True, "an": False, "ta": None, "va": None, "or": False, "r": True,
-    "esh": False, "sh": True, "mo": None, "i": False, "ri": True, "tal": None,
+    "esh": False, "sh": True, "mo": None, "i": False, "ri": True, "tal": None, "ve": None,
 }
 # forms that are meant to look like a plural of something else
 SAME_ON_PURPOSE = {"min", "tun", "san", "human"}
@@ -87,9 +87,25 @@ def parse():
     return sections, defined, errors
 
 
-def build_dictionary(defined, errors):
+BANK = ROOT / "course/bank.txt"
+
+
+def bank():
+    """(word, meaning, pos, where) from course/bank.txt: words the course doesn't have to teach"""
+    out = []
+    for n, line in enumerate(BANK.read_text(encoding="utf-8").splitlines(), 1):
+        if "|" not in line or line.startswith("#") or line.startswith("?"):
+            continue
+        w, m, pos = (x.strip() for x in line.split("|"))
+        out.append((w, m, pos, f"bank.txt:{n}"))
+    return out
+
+
+def build_dictionary(defined, errors, with_bank=True):
     entries = starter()
     known = {e["word"] for e in entries}
+    if with_bank:
+        defined = defined + bank()
     for word, meaning, pos, where in defined:
         if word in known:
             errors.append(f"{where}: {word} is already in the dictionary")
@@ -108,7 +124,7 @@ def build_dictionary(defined, errors):
 def check_collisions(entries, errors):
     """an ending must never turn one word into another word"""
     words = {e["word"]: e["pos"] for e in entries if e["pos"] != "suffix"}
-    forms = {"noun": ["n", "an"], "pronoun": ["n"], "verb": ["ta", "va", "ri"],
+    forms = {"noun": ["n", "an"], "pronoun": ["n"], "verb": ["ta", "va", "ri", "ve"],
              "adjective": ["or", "r", "esh", "sh", "mo", "tal"], "number": ["i"]}
     for w, pos in words.items():
         for suffix in forms.get(pos, []):
