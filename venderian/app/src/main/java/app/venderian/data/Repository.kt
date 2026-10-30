@@ -93,6 +93,38 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
     suspend fun learnedWords(): List<Entry> =
         db.cards().ids().filter { it.startsWith("${CardEntity.WORD}:") }.mapNotNull { word(it.substringAfter(':')) }
 
+    /**
+     * the lessons a practice lesson mixes: [count] finished lessons from the whole course,
+     * picked at random but leaning towards ones you made mistakes in or haven't seen in a while.
+     */
+    suspend fun practiceSources(count: Int = 4, random: kotlin.random.Random = kotlin.random.Random.Default): List<CourseLesson> {
+        val now = System.currentTimeMillis()
+        val done = db.progress().courseNow().filter { it.id.contains("-l") }
+        val pool = done.map { e ->
+            val weeks = (now - e.completedAt) / (7 * Srs.DAY_MS).toDouble()
+            e to 1.0 + 2.0 * e.mistakes + weeks
+        }.toMutableList()
+        val picked = mutableListOf<CourseLesson>()
+        while (picked.size < count && pool.isNotEmpty()) {
+            var r = random.nextDouble() * pool.sumOf { it.second }
+            val i = pool.indexOfFirst { r -= it.second; r <= 0 }.let { if (it < 0) pool.lastIndex else it }
+            picked += course.lesson(pool.removeAt(i).first.id)
+        }
+        return picked
+    }
+
+    /** a practice lesson is done: xp, and its lessons count as freshly reviewed */
+    suspend fun completePractice(sources: List<CourseLesson>, mistakes: Int) {
+        val now = System.currentTimeMillis()
+        val current = db.progress().courseNow().associateBy { it.id }
+        for (l in sources) {
+            // a clean review forgets old mistakes, a messy one keeps the lesson coming back
+            val before = current[l.id]?.mistakes ?: 0
+            db.progress().completeCourse(CourseEntity(l.id, now, if (mistakes == 0) 0 else before))
+        }
+        addXp(XP_PRACTICE)
+    }
+
     suspend fun completeCourseLesson(lesson: CourseLesson, mistakes: Int) {
         val now = System.currentTimeMillis()
         db.progress().completeCourse(CourseEntity(lesson.id, now, mistakes))
@@ -124,6 +156,7 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
         const val XP_COURSE_LESSON = 15
         const val XP_CHALLENGE = 30
         const val XP_GOLD = 50
+        const val XP_PRACTICE = 25
 
         fun today() = LocalDate.now().toEpochDay()
     }

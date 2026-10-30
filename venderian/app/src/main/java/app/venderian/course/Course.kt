@@ -41,6 +41,8 @@ object Kind {
     const val LESSON = "lesson"
     const val CHALLENGE = "challenge"
     const val GOLD = "gold"
+    /** made up on the spot once the course is done: a mix of earlier lessons */
+    const val PRACTICE = "practice"
 }
 
 @Serializable
@@ -54,5 +56,10 @@ data class CourseLesson(
     val from: List<String> = emptyList(),
 ) {
     /** challenges and gold lessons have hearts: three mistakes and you start over */
-    val hasHearts get() = kind != Kind.LESSON
+    val hasHearts get() = kind == Kind.CHALLENGE || kind == Kind.GOLD
+
+    companion object {
+        const val PRACTICE_ID = "practice"
+        val practice = CourseLesson(PRACTICE_ID, Kind.PRACTICE, "practice lesson")
+    }
 }

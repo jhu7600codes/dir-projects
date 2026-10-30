@@ -94,6 +94,9 @@ interface ProgressDao {
 
     @Query("SELECT * FROM course")
     fun course(): Flow<List<CourseEntity>>
+
+    @Query("SELECT * FROM course")
+    suspend fun courseNow(): List<CourseEntity>
 }
 
 @Database(entities = [CardEntity::class, DayEntity::class, LessonEntity::class, CourseEntity::class], version = 2)

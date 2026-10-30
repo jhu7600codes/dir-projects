@@ -63,4 +63,18 @@ class CourseTest {
         assertTrue(ExerciseMaker.sameText("kitёn", "kitën"))
         assertTrue(!ExerciseMaker.sameText("kiten", "kitën"))
     }
+
+    @Test
+    fun `practice lessons mix lessons from all over the course`() {
+        val maker = ExerciseMaker(course, dictionary, Random(7))
+        val sources = listOf("m1-l2", "m4.5-l7", "m9-l3", "m7-l9").map(course::lesson)
+        val exercises = maker.practice(sources)
+        assertTrue(exercises.size >= 12)
+        assertTrue(exercises.none { it is Exercise.NewWord })
+        val sentences = sources.flatMap { it.sentences }.map { it.v }
+        val used = exercises.filterIsInstance<Exercise.BuildEnglish>().map { it.venderian } +
+            exercises.filterIsInstance<Exercise.BuildVenderian>().map { it.venderian }
+        assertTrue(used.isNotEmpty() && used.all { it in sentences })
+        assertTrue(!CourseLesson.practice.hasHearts)
+    }
 }

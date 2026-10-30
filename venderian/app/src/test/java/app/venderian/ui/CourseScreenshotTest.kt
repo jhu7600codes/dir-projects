@@ -47,6 +47,23 @@ class CourseScreenshotTest {
     }
 
     @Test
+    fun practice() {
+        val app = RuntimeEnvironment.getApplication() as VenderianApp
+        runBlocking {
+            app.alphabet.lessons.forEach { app.repository.completeLesson(it) }
+            app.course.lessons.forEach { app.repository.completeCourseLesson(it, mistakes = 0) }
+        }
+        compose.mainClock.autoAdvance = false
+        settle()
+        compose.onAllNodesWithText("course").onFirst().performClick()
+        waitFor("start a practice lesson")
+        shot("c5-practice-card")
+        compose.onNodeWithText("start a practice lesson").performClick()
+        waitFor("check")
+        shot("c6-practice-lesson")
+    }
+
+    @Test
     fun course() {
         val app = RuntimeEnvironment.getApplication() as VenderianApp
         runBlocking { app.alphabet.lessons.forEach { app.repository.completeLesson(it) } }

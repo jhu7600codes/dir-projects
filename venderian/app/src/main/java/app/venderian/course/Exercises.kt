@@ -44,6 +44,12 @@ class ExerciseMaker(
         }
     }
 
+    /** a practice lesson: the words and sentences of [sources], from anywhere in the course */
+    fun practice(sources: List<CourseLesson>): List<Exercise> {
+        val known = course.lessons.flatMap { it.words }.mapNotNull(entries::get).filter { it.quizzable }.distinctBy { it.word }
+        return review(sources, known, builds = 8, types = 4, picks = 3, matches = 1)
+    }
+
     private fun lessonExercises(lesson: CourseLesson, known: List<Entry>): List<Exercise> {
         val newWords = lesson.words.mapNotNull(entries::get)
         val quizzable = newWords.filter { it.quizzable }

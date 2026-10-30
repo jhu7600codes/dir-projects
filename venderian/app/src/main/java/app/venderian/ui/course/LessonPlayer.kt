@@ -101,14 +101,24 @@ data class PlayerState(
 }
 
 class PlayerViewModel(private val app: VenderianApp, private val id: String) : ViewModel() {
-    private val lesson = app.course.lesson(id)
+    private val isPractice = id == CourseLesson.PRACTICE_ID
+    private val lesson = if (isPractice) CourseLesson.practice else app.course.lesson(id)
     private val maker = ExerciseMaker(app.course, app.lexicon.entries)
-    val state = MutableStateFlow(fresh())
+    private var sources: List<CourseLesson> = emptyList()
+    val state = MutableStateFlow(PlayerState(lesson, emptyList()))
 
-    private fun fresh() = PlayerState(lesson, maker.make(lesson), showTip = lesson.tip.isNotEmpty())
+    init {
+        startOver(showTip = lesson.tip.isNotEmpty())
+    }
 
-    fun startOver() {
-        state.value = fresh().copy(showTip = false)
+    fun startOver(showTip: Boolean = false) {
+        viewModelScope.launch {
+            val queue = if (isPractice) {
+                sources = app.repository.practiceSources()
+                maker.practice(sources)
+            } else maker.make(lesson)
+            state.value = PlayerState(lesson, queue, showTip = showTip)
+        }
     }
 
     fun closeTip() {
@@ -134,7 +144,10 @@ class PlayerViewModel(private val app: VenderianApp, private val id: String) : V
             s.hearts <= 0 -> state.value = s.copy(failed = true, feedback = null)
             s.index + 1 >= s.queue.size -> {
                 state.value = s.copy(finished = true, feedback = null)
-                viewModelScope.launch { app.repository.completeCourseLesson(lesson, s.mistakes) }
+                viewModelScope.launch {
+                    if (isPractice) app.repository.completePractice(sources, s.mistakes)
+                    else app.repository.completeCourseLesson(lesson, s.mistakes)
+                }
             }
             else -> state.value = s.copy(index = s.index + 1, feedback = null)
         }
@@ -162,7 +175,8 @@ fun LessonPlayer(id: String, onClose: () -> Unit) {
         }
         when {
             s.finished -> Finished(s, onClose)
-            s.failed -> Failed(onRetry = vm::startOver, onClose = onClose)
+            s.failed -> Failed(onRetry = { vm.startOver() }, onClose = onClose)
+            s.queue.isEmpty() -> Box(Modifier.weight(1f).fillMaxWidth(), Alignment.Center) { androidx.compose.material3.CircularProgressIndicator() }
             s.showTip -> Tip(s.lesson, onStart = vm::closeTip)
             else -> Box(Modifier.weight(1f)) {
                 AnimatedContent(
@@ -231,6 +245,7 @@ private fun Finished(s: PlayerState, onClose: () -> Unit) {
     val xp = when (s.lesson.kind) {
         Kind.CHALLENGE -> Repository.XP_CHALLENGE
         Kind.GOLD -> Repository.XP_GOLD
+        Kind.PRACTICE -> Repository.XP_PRACTICE
         else -> Repository.XP_COURSE_LESSON
     }
     var shown by remember { mutableStateOf(false) }
@@ -241,6 +256,7 @@ private fun Finished(s: PlayerState, onClose: () -> Unit) {
                 when (s.lesson.kind) {
                     Kind.GOLD -> "gold!"
                     Kind.CHALLENGE -> "locked in!"
+                    Kind.PRACTICE -> "still got it!"
                     else -> "lesson done!"
                 },
                 style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold,

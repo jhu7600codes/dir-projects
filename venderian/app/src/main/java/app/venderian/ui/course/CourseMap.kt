@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,8 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -50,10 +53,10 @@ import app.venderian.course.Module
 import app.venderian.course.Section
 import kotlin.math.sin
 
-private sealed interface Row {
-    data class SectionHeader(val section: Section) : Row
-    data class ModuleHeader(val module: Module) : Row
-    data class Node(val lesson: CourseLesson, val number: Int, val index: Int) : Row
+private sealed interface MapRow {
+    data class SectionHeader(val section: Section) : MapRow
+    data class ModuleHeader(val module: Module) : MapRow
+    data class Node(val lesson: CourseLesson, val number: Int, val index: Int) : MapRow
 }
 
 /**
@@ -65,13 +68,13 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
     val rows = buildList {
         var index = 0
         for (section in course.sections) {
-            add(Row.SectionHeader(section))
+            add(MapRow.SectionHeader(section))
             for (module in section.modules) {
-                add(Row.ModuleHeader(module))
+                add(MapRow.ModuleHeader(module))
                 var number = 0
                 for (lesson in module.lessons) {
                     if (lesson.kind == Kind.LESSON) number++
-                    add(Row.Node(lesson, number + if (module.half) 10 else 0, index++))
+                    add(MapRow.Node(lesson, number + if (module.half) 10 else 0, index++))
                 }
             }
         }
@@ -80,8 +83,12 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
     val state = rememberLazyListState()
     // start scrolled to where you are
     LaunchedEffect(current) {
-        val at = rows.indexOfFirst { it is Row.Node && it.index == current }
-        if (at > 2) state.scrollToItem(at - 2)
+        // the whole course done: straight to the practice lessons at the end
+        if (current >= course.lessons.size) state.scrollToItem(rows.size + if (scriptDone) 0 else 1)
+        else {
+            val at = rows.indexOfFirst { it is MapRow.Node && it.index == current }
+            if (at > 2) state.scrollToItem(at - 2)
+        }
     }
 
     LazyColumn(state = state, contentPadding = PaddingValues(bottom = 32.dp)) {
@@ -102,25 +109,53 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
         }
         items(rows, key = {
             when (it) {
-                is Row.SectionHeader -> "s${it.section.id}"
-                is Row.ModuleHeader -> "m${it.module.id}"
-                is Row.Node -> it.lesson.id
+                is MapRow.SectionHeader -> "s${it.section.id}"
+                is MapRow.ModuleHeader -> "m${it.module.id}"
+                is MapRow.Node -> it.lesson.id
             }
         }) { row ->
             when (row) {
-                is Row.SectionHeader -> SectionCard(row.section)
-                is Row.ModuleHeader -> Text(
+                is MapRow.SectionHeader -> SectionCard(row.section)
+                is MapRow.ModuleHeader -> Text(
                     "module ${row.module.id} · ${row.module.title}",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 4.dp),
                 )
-                is Row.Node -> {
+                is MapRow.Node -> {
                     val isDone = row.lesson.id in done
                     val unlocked = scriptDone && row.index <= current
                     Node(row.lesson, row.number, row.index, isDone, unlocked, row.index == current && scriptDone) {
                         if (unlocked) onOpen(row.lesson.id)
                     }
                 }
+            }
+        }
+        item(key = "practice") {
+            Practice(unlocked = current >= course.lessons.size, onStart = { onOpen(CourseLesson.PRACTICE_ID) })
+        }
+    }
+}
+
+/** after the whole course: endless practice lessons mixing every section */
+@Composable
+private fun Practice(unlocked: Boolean, onStart: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    Card(
+        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 28.dp),
+        colors = CardDefaults.cardColors(containerColor = if (unlocked) c.tertiaryContainer else c.surfaceContainerHigh),
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(if (unlocked) Icons.Filled.Refresh else Icons.Filled.Lock, null)
+                Text("  practice lessons", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+            Text(
+                if (unlocked) "each one mixes lessons from all three sections, so you don't forget. the ones you got wrong or haven't seen in a while come up more."
+                else "finish the whole course to unlock practice lessons: mixes of everything, so you don't forget.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (unlocked) {
+                Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) { Text("start a practice lesson") }
             }
         }
     }
