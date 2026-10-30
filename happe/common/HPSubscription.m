@@ -1,5 +1,4 @@
 #import "HPSubscription.h"
-#import <CFNetwork/CFNetwork.h>
 
 static NSString *HPTrim(NSString *s) {
     return [s stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -70,33 +69,15 @@ static NSData *HPBase64Decode(NSString *s) {
         completion(nil, @"Not a valid URL.");
         return;
     }
-    [self fetch:u agent:0 direct:NO firstError:nil completion:completion];
+    [self fetch:u agent:0 firstError:nil completion:completion];
 }
 
-+ (BOOL)systemProxyIsLocal {
-    NSDictionary *p = CFBridgingRelease(CFNetworkCopySystemProxySettings());
-    return [p[@"HTTPEnable"] intValue] == 1 && [p[@"HTTPProxy"] isEqual:@"127.0.0.1"];
-}
-
-// a session that ignores the system (wifi) proxy, i.e. bypasses xray
-+ (NSURLSession *)directSession {
-    static NSURLSession *s;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        NSURLSessionConfiguration *c = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-        c.connectionProxyDictionary = @{};
-        s = [NSURLSession sessionWithConfiguration:c];
-    });
-    return s;
-}
-
-+ (void)fetch:(NSURL *)u agent:(NSUInteger)agent direct:(BOOL)direct firstError:(NSString *)firstError
++ (void)fetch:(NSURL *)u agent:(NSUInteger)agent firstError:(NSString *)firstError
    completion:(void (^)(NSDictionary *, NSString *))completion {
     NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
                                                    timeoutInterval:20];
     [req setValue:self.userAgents[agent] forHTTPHeaderField:@"User-Agent"];
-    NSURLSession *session = direct ? [self directSession] : [NSURLSession sharedSession];
-    [[session dataTaskWithRequest:req completionHandler:^(NSData *data, NSURLResponse *resp, NSError *err) {
+    [[[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:^(NSData *data, NSURLResponse *resp, NSError *err) {
         NSDictionary *info = nil;
         NSString *error = nil;
         BOOL retry = NO;
@@ -128,20 +109,11 @@ static NSData *HPBase64Decode(NSString *s) {
             }
         }
         if (!info && retry && agent + 1 < self.userAgents.count) {
-            [self fetch:u agent:agent + 1 direct:direct firstError:firstError ?: error completion:completion];
+            [self fetch:u agent:agent + 1 firstError:firstError ?: error completion:completion];
             return;
         }
-        if (!info && err && !direct && [self systemProxyIsLocal]) {
-            // network error through the proxy (some providers block vpn ips):
-            // try once more straight from this network, without xray
-            [self fetch:u agent:0 direct:YES
-                firstError:[@"via proxy: " stringByAppendingString:firstError ?: error] completion:completion];
-            return;
-        }
-        if (!info && !direct && firstError) error = firstError;
-        if (!info && direct && firstError) error = [NSString stringWithFormat:@"%@; direct: %@", firstError, error];
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion(info, info ? nil : error);
+            completion(info, info ? nil : (firstError ?: error));
         });
     }] resume];
 }
