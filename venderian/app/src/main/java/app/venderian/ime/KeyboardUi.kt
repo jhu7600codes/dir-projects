@@ -30,10 +30,12 @@ import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardCapslock
 import androidx.compose.material.icons.outlined.ArrowUpward
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
@@ -127,8 +129,10 @@ private fun Strip(ime: VenderianIme) {
                 if (s.outputScript) VText(Sounds.scriptOf("vë"), size = 16.sp) else Text("abc")
             },
         )
+        IconButton(onClick = ime::sendImage, enabled = ime.imageMessage() != null) {
+            Icon(Icons.Outlined.Image, "send as image")
+        }
         if (s.layout != Layout.Venderian) {
-            Spacer(Modifier.width(6.dp))
             val pop by animateFloatAsState(if (tail.isNotBlank() || s.canUndo) 1f else 0.85f, label = "fab")
             SmallFloatingActionButton(
                 onClick = { if (s.canUndo) ime.undoTranslate() else ime.translateNow() },

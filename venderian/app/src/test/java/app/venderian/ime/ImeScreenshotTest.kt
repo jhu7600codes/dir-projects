@@ -45,6 +45,21 @@ class ImeScreenshotTest {
     }
 
     @Test
+    fun `message image`() {
+        val ime = ime()
+        val (script, length) = ime.imageMessage("\uE007\uE021 hello world")!!
+        assertEquals(11, length)
+        val bitmap = ScriptImage.render(RuntimeEnvironment.getApplication(), script, app.venderian.convert.Sounds.scriptToRoman(script))
+        java.io.File("build/outputs/roborazzi").mkdirs()
+        java.io.File("build/outputs/roborazzi/ime-4-image.png").outputStream().use {
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+        // only venderian before the cursor: that becomes the picture
+        assertEquals("\uE007\uE021 \uE00F\uE022." to 6, ime.imageMessage("hey \uE007\uE021 \uE00F\uE022."))
+        assertEquals(null, ime.imageMessage(""))
+    }
+
+    @Test
     fun `translate only takes the english after the last venderian`() {
         val ime = ime()
         assertEquals("hello world", ime.englishTail(" hello world"))

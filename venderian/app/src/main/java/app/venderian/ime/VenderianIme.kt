@@ -1,6 +1,9 @@
 package app.venderian.ime
 
+import android.content.ClipDescription
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.inputmethodservice.InputMethodService
 import android.text.InputType
 import android.view.View
@@ -9,6 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.view.inputmethod.EditorInfoCompat
+import androidx.core.view.inputmethod.InputConnectionCompat
+import androidx.core.view.inputmethod.InputContentInfoCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -237,6 +243,59 @@ class VenderianIme : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, 
             undo = null
             state = state.copy(canUndo = false)
         }
+    }
+
+    // ---- send as image ----
+
+    /**
+     * the message to turn into a picture: the english at the end (converted to script), or
+     * if there is none, the venderian at the end. returns the script and how many characters
+     * before the cursor it replaces.
+     */
+    fun imageMessage(before: String = state.before): Pair<String, Int>? {
+        val english = englishTail(before)
+        if (english.any { it in 'a'..'z' || it in 'A'..'Z' }) {
+            val c = converter ?: return null
+            val mode = if (state.translate) Converter.Mode.TRANSLATE else Converter.Mode.SOUND
+            return c.convert(english.trim(), mode).script to english.length
+        }
+        val trimmed = before.trimEnd()
+        var start = trimmed.length
+        while (start > 0 && (Sounds.isLetter(trimmed[start - 1]) || trimmed[start - 1] in " .,?!0123456789")) start--
+        while (start < trimmed.length && trimmed[start] == ' ') start++
+        val script = trimmed.substring(start)
+        if (script.none { Sounds.isLetter(it) }) return null
+        return script to before.length - start
+    }
+
+    /**
+     * sends the message as a png. apps that take images from keyboards (telegram, whatsapp,
+     * messages...) get it inline; everything else gets the share sheet.
+     */
+    fun sendImage() {
+        val ic = currentInputConnection ?: return
+        val info = currentInputEditorInfo ?: return
+        val (script, length) = imageMessage() ?: return
+        val uri = ScriptImage.save(this, ScriptImage.render(this, script, Sounds.scriptToRoman(script)))
+        val description = ClipDescription("venderian", arrayOf("image/png"))
+        val accepts = EditorInfoCompat.getContentMimeTypes(info).any { ClipDescription.compareMimeTypes("image/png", it) }
+        if (accepts) {
+            var flags = 0
+            if (Build.VERSION.SDK_INT >= 25) flags = flags or InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION
+            else grantUriPermission(info.packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            ic.deleteSurroundingText(length, 0)
+            val sent = InputConnectionCompat.commitContent(ic, info, InputContentInfoCompat(uri, description, null), flags, null)
+            if (!sent) ic.commitText(state.before.takeLast(length), 1)
+        } else {
+            val share = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(share, "send venderian").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+        dropUndo()
+        refresh()
     }
 
     fun nextKeyboard() {
