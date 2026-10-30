@@ -43,7 +43,12 @@ import app.venderian.ui.app
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit, onOpenDictionary: () -> Unit) {
+fun LearnScreen(
+    onOpenLesson: (Int) -> Unit,
+    onOpenCourse: (String) -> Unit,
+    onOpenDictionary: () -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     val app = app()
     val scriptDone by app.repository.scriptDone.collectAsState(initial = false)
     val scriptLessons by app.repository.lessonsDone.collectAsState(initial = emptySet())
@@ -60,6 +65,7 @@ fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit, onO
                 else -> "write any english word in venderian, by how it sounds"
             },
             onOpenDictionary,
+            onOpenSettings,
         )
         HolidayBanner()
         SpanishVoiceCard()

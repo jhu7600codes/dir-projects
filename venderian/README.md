@@ -34,6 +34,7 @@ built in stages:
    - **widget**: your streak with a venderian tagline that changes as it grows ("vela! ashir ra vendëri!" on day 1, "ek vek! tu heroë!" at a week...) and a word of the day from the words you've learned
    - **holidays**: the app changes color and greets you in venderian on new year, both christmases, valentine's, march 8, april fools, halloween and vendëri day (july 15)
    - **audio**: a speaker button on words and sentences, using the phone's own voice (a spanish one if there is one, it's the closest to venderian; if the phone doesn't have it, the learn tab offers to open the voice download)
+   - **settings** (gear on learn and progress): holiday themes on/off and a "try one" picker, the spanish voice (status, download, test), keyboard setup, the lsposed steps
    - **progress**: streak, xp and levels, the last 7 days, letters and words learned
 
 ## building

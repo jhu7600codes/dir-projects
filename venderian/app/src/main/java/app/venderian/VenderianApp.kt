@@ -11,6 +11,7 @@ import app.venderian.convert.WordLookup
 import app.venderian.course.Course
 import app.venderian.course.SoundLessons
 import app.venderian.data.Alphabet
+import app.venderian.data.Holiday
 import app.venderian.data.Repository
 import app.venderian.data.VenderianDb
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,14 @@ class VenderianApp : Application() {
     /** cmudict is 3 mb unpacked, so it loads in the background from app start */
     val converter = scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
         Converter(CmuDict.fromGzip(assets.open("cmudict.dat")), lexicon)
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        converter.start()
+        Holiday.enabled = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("holidays", true)
+        // the widget follows your streak
+        scope.launch { repository.progress.collect { WordWidget.refreshAll(this@VenderianApp) } }
     }
 
     private var tts: TextToSpeech? = null

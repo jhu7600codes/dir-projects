@@ -1,10 +1,15 @@
 package app.venderian.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.time.LocalDate
 import java.time.MonthDay
 
 /** days the app dresses up for: its colors change and it says something in venderian */
 enum class Holiday(
+    val title: String,
+    val date: String,
     val greeting: String,
     val english: String,
     /** primary, its container, and the background tint, as argb */
@@ -12,13 +17,13 @@ enum class Holiday(
     val container: Long,
     val background: Long,
 ) {
-    NEW_YEAR("romtal bon! yer nov fela!", "happy new year! a happy new year!", 0xFFFFD36B, 0xFF5A4300, 0xFF12131C),
-    CHRISTMAS("salmashzas bon!", "merry christmas!", 0xFFFF8A80, 0xFF1B5E20, 0xFF101A12),
-    VALENTINE("dey da liva!", "it's the day of love!", 0xFFFF8AB4, 0xFF7A1E48, 0xFF1C1116),
-    WOMENS_DAY("dey da vira! tozun!", "women's day! congratulations!", 0xFFF6B7D6, 0xFF6B2C55, 0xFF1A1218),
-    APRIL_FOOLS("vedey shakan!", "today: jokes!", 0xFF9CF27C, 0xFF7A2BB8, 0xFF161219),
-    VENDERI_DAY("dey da vendëri! fela dey!", "venderian day! a happy day!", 0xFFFFC94D, 0xFF4F378A, 0xFF15111F),
-    HALLOWEEN("pimigu! mesan ik es!", "halloween! the ghosts are here!", 0xFFFF9F43, 0xFF4A2500, 0xFF120F0C),
+    NEW_YEAR("new year", "dec 31 – jan 2", "romtal bon! yer nov fela!", "happy new year! a happy new year!", 0xFFFFD36B, 0xFF5A4300, 0xFF12131C),
+    CHRISTMAS("christmas", "dec 24–25, jan 7", "salmashzas bon!", "merry christmas!", 0xFFFF8A80, 0xFF1B5E20, 0xFF101A12),
+    VALENTINE("valentine's day", "feb 14", "dey da liva!", "it's the day of love!", 0xFFFF8AB4, 0xFF7A1E48, 0xFF1C1116),
+    WOMENS_DAY("women's day", "march 8", "dey da vira! tozun!", "women's day! congratulations!", 0xFFF6B7D6, 0xFF6B2C55, 0xFF1A1218),
+    APRIL_FOOLS("april fools", "april 1", "vedey shakan!", "today: jokes!", 0xFF9CF27C, 0xFF7A2BB8, 0xFF161219),
+    VENDERI_DAY("vendëri day", "july 15", "dey da vendëri! fela dey!", "venderian day! a happy day!", 0xFFFFC94D, 0xFF4F378A, 0xFF15111F),
+    HALLOWEEN("halloween", "oct 31", "pimigu! mesan ik es!", "halloween! the ghosts are here!", 0xFFFF9F43, 0xFF4A2500, 0xFF120F0C),
     ;
 
     companion object {
@@ -37,10 +42,13 @@ enum class Holiday(
             }
         }
 
-        /** for screenshots: pretend it's this holiday */
-        var override: Holiday? = null
+        /** "try a theme" in settings (and screenshots): pretend it's this holiday */
+        var override by mutableStateOf<Holiday?>(null)
 
-        fun today() = override ?: on(LocalDate.now())
+        /** holiday themes can be turned off in settings */
+        var enabled by mutableStateOf(true)
+
+        fun today() = if (!enabled) null else override ?: on(LocalDate.now())
     }
 }
 

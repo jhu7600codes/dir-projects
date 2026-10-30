@@ -45,14 +45,14 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun ProgressScreen() {
+fun ProgressScreen(onOpenSettings: () -> Unit) {
     val app = app()
     val p by app.repository.progress.collectAsState(initial = Progress())
     val due by app.repository.dueCount().collectAsState(initial = 0)
     val totalLetters = app.alphabet.letters.size
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        ScreenTitle("Progress")
+        ScreenTitle("Progress", onOpenSettings = onOpenSettings)
         // streak
         Card(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp),

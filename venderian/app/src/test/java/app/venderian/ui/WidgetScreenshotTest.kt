@@ -6,6 +6,9 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import app.venderian.MainActivity
 import app.venderian.VenderianApp
 import app.venderian.WordWidget
@@ -50,6 +53,15 @@ class WidgetScreenshotTest {
         view.draw(Canvas(bitmap))
         File("build/outputs/roborazzi").mkdirs()
         File("build/outputs/roborazzi/w1-widget.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
+    @Test
+    fun settings() {
+        compose.onNodeWithContentDescription("settings").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("halloween").performClick()
+        compose.waitForIdle()
+        compose.onRoot().captureRoboImage("build/outputs/roborazzi/w4-settings.png")
     }
 
     @Test

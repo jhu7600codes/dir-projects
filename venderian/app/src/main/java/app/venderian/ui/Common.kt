@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.VolumeUp
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment
@@ -43,12 +44,20 @@ inline fun <reified VM : ViewModel> appViewModel(crossinline create: (VenderianA
 }
 
 @Composable
-fun ScreenTitle(title: String, subtitle: String? = null, onOpenDictionary: (() -> Unit)? = null) {
+fun ScreenTitle(
+    title: String,
+    subtitle: String? = null,
+    onOpenDictionary: (() -> Unit)? = null,
+    onOpenSettings: (() -> Unit)? = null,
+) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
             if (onOpenDictionary != null) {
                 FilledTonalIconButton(onClick = onOpenDictionary) { Icon(Icons.AutoMirrored.Outlined.MenuBook, "dictionary") }
+            }
+            if (onOpenSettings != null) {
+                FilledTonalIconButton(onClick = onOpenSettings) { Icon(Icons.Outlined.Settings, "settings") }
             }
         }
         if (subtitle != null) {
