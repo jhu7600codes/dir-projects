@@ -2,6 +2,10 @@
 
 package app.venderian.ui.keyboard
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -38,7 +42,9 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -49,6 +55,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -65,12 +74,49 @@ fun KeyboardScreen() {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize()) {
         ScreenTitle("Keyboard", "write venderian, or type english and watch it turn into venderian")
+        SystemKeyboardCard()
         PrimaryTabRow(selectedTabIndex = tab) {
             Tab(tab == 0, { tab = 0 }, text = { Text("venderian keys") })
             Tab(tab == 1, { tab = 1 }, text = { Text("from english") })
         }
         AnimatedContent(tab, label = "tab", modifier = Modifier.weight(1f)) {
             if (it == 0) GlyphKeyboard() else EnglishInput()
+        }
+    }
+}
+
+/** setting up the venderian keyboard for every app */
+@Composable
+private fun SystemKeyboardCard() {
+    val context = LocalContext.current
+    val imm = remember { context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager }
+    // re-check when you come back from the settings screen
+    var enabled by remember { mutableStateOf(false) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle) {
+        lifecycle.currentStateFlow.collect { st ->
+            if (st == Lifecycle.State.RESUMED) enabled = imm.enabledInputMethodList.any { it.packageName == context.packageName }
+        }
+    }
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text("use it in every app", style = MaterialTheme.typography.titleMedium)
+            Text(
+                if (enabled) "the venderian keyboard is on. pick it with the keyboard button in any text box, or long-press its space bar to switch back."
+                else "turn on the venderian keyboard: qwerty with live venderian and a translate button, plus venderian glyph keys.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
+                if (!enabled) {
+                    FilledTonalButton(onClick = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }) { Text("turn on") }
+                } else {
+                    TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }) { Text("settings") }
+                    FilledTonalButton(onClick = { imm.showInputMethodPicker() }) { Text("switch keyboard") }
+                }
+            }
         }
     }
 }

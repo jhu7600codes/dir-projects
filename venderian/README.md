@@ -8,6 +8,10 @@ an android app (kotlin, jetpack compose, material 3) that teaches venderian, a m
 |---|---|---|---|---|---|---|
 | ![](docs/screenshots/learn.png) | ![](docs/screenshots/lesson.png) | ![](docs/screenshots/practice.png) | ![](docs/screenshots/quiz.png) | ![](docs/screenshots/keyboard.png) | ![](docs/screenshots/keyboard-english.png) | ![](docs/screenshots/progress.png) |
 
+| system keyboard: english | system keyboard: venderian |
+|---|---|
+| ![](docs/screenshots/ime-qwerty.png) | ![](docs/screenshots/ime-venderian.png) |
+
 built in stages:
 
 1. **language design** (done): [`docs/venderian.md`](docs/venderian.md) is the source of truth, glyph strokes are in [`docs/alphabet.json`](docs/alphabet.json), the starter dictionary is [`app/src/main/assets/dictionary.json`](app/src/main/assets/dictionary.json)
@@ -17,7 +21,8 @@ built in stages:
    - **learn**: 5 alphabet lessons grouped by letter family, stroke order animation for every letter, tap-to-hear sound hints (the phone's offline text to speech)
    - **practice**: flashcards both ways (glyph ↔ sound, word ↔ meaning) with sm-2 spaced repetition in room. finished lessons add their letters, and 8 new words show up each day
    - **quiz**: 10 questions mixing multiple choice and type-it-out (with an ë button)
-   - **keyboard**: a venderian keyboard with glyph keys, and an english box that converts live as you type (spell by sound, or translate). copy the venderian text or its romanization
+   - **system keyboard** (works in every app, turn it on from the keyboard tab): a qwerty layout with a strip that shows your english as venderian while you type, and a translate button that swaps it in (tap again to undo). a second layout has the venderian glyph keys for writing it directly. the strip switches between translate / spell by sound, and between writing the script or its romanization (other apps don't have the venderian font, so the script shows up as boxes there)
+   - **keyboard tab**: the same thing inside the app, with copy buttons
    - **progress**: streak, xp and levels, the last 7 days, letters and words learned
 
 ## building
