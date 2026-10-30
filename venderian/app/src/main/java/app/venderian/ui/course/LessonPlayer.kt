@@ -40,6 +40,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -61,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
@@ -73,6 +75,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.venderian.VenderianApp
 import app.venderian.convert.Sounds
+import app.venderian.convert.WordLookup
+import app.venderian.ui.app
 import app.venderian.course.CourseLesson
 import app.venderian.course.Exercise
 import app.venderian.course.ExerciseMaker
@@ -101,8 +105,8 @@ data class PlayerState(
 }
 
 class PlayerViewModel(private val app: VenderianApp, private val id: String) : ViewModel() {
-    private val isPractice = id == CourseLesson.PRACTICE_ID
-    private val lesson = if (isPractice) CourseLesson.practice else app.course.lesson(id)
+    private val isPractice = id.startsWith(CourseLesson.PRACTICE_ID)
+    private val lesson = if (isPractice) CourseLesson.practice(id) else app.course.lesson(id)
     private val maker = ExerciseMaker(app.course, app.lexicon.entries)
     private var sources: List<CourseLesson> = emptyList()
     val state = MutableStateFlow(PlayerState(lesson, emptyList()))
@@ -114,7 +118,7 @@ class PlayerViewModel(private val app: VenderianApp, private val id: String) : V
     fun startOver(showTip: Boolean = false) {
         viewModelScope.launch {
             val queue = if (isPractice) {
-                sources = app.repository.practiceSources()
+                sources = app.repository.practiceSources(lesson.practiceSection)
                 maker.practice(sources)
             } else maker.make(lesson)
             state.value = PlayerState(lesson, queue, showTip = showTip)
@@ -297,6 +301,61 @@ private fun Script(roman: String, size: Int = 40) {
     }
 }
 
+/**
+ * a venderian sentence where every word can be tapped for what it means, duolingo style.
+ * endings get explained too: golta is gol (to go) + -ta (past).
+ */
+@Composable
+private fun HintedSentence(roman: String) {
+    val lookup = app().lookup
+    var showRoman by remember(roman) { mutableStateOf(false) }
+    Column {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            roman.split(' ').filter { it.isNotBlank() }.forEach { token -> HintedWord(token, lookup.analyze(token)) }
+        }
+        Text(
+            if (showRoman) roman else "tap a word to see what it means · show letters",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.clickable { showRoman = !showRoman }.padding(top = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun HintedWord(token: String, hit: WordLookup.Hit?) {
+    var open by remember { mutableStateOf(false) }
+    val underline = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+    Box {
+        VText(
+            Sounds.scriptOfText(token), size = 40.sp,
+            modifier = Modifier
+                .clickable(enabled = hit != null) { open = true }
+                .drawBehind {
+                    // a dotted line under words you can tap
+                    val y = size.height - 2.dp.toPx()
+                    var x = 0f
+                    while (x < size.width) {
+                        drawLine(underline, androidx.compose.ui.geometry.Offset(x, y), androidx.compose.ui.geometry.Offset(minOf(x + 4.dp.toPx(), size.width), y), 2.dp.toPx())
+                        x += 8.dp.toPx()
+                    }
+                },
+        )
+        if (hit != null) {
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(token.trim { !it.isLetter() && it != 'ë' }.lowercase(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    // just the meaning, or the word broken into its parts when it has endings
+                    Text(if (hit.endings.isEmpty()) hit.entry.meaning else "${hit.entry.word} · ${hit.entry.meaning}",
+                        style = MaterialTheme.typography.bodyLarge)
+                    hit.endings.forEach { e ->
+                        Text("${e.word} · ${e.meaning}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun Frame(title: String, locked: Boolean, canCheck: Boolean, onCheck: () -> Unit, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
@@ -343,7 +402,7 @@ internal fun ExerciseView(e: Exercise, locked: Boolean, onAnswer: (Boolean, Stri
 
         is Exercise.BuildEnglish -> Build(
             "write this in english", e.tiles, e.answer, locked, script = false,
-            prompt = { Script(e.venderian) }, rightAnswer = e.english, onAnswer = onAnswer,
+            prompt = { HintedSentence(e.venderian) }, rightAnswer = e.english, onAnswer = onAnswer,
         )
 
         is Exercise.BuildVenderian -> Build(

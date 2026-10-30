@@ -5,6 +5,7 @@ import android.speech.tts.TextToSpeech
 import app.venderian.convert.CmuDict
 import app.venderian.convert.Converter
 import app.venderian.convert.Lexicon
+import app.venderian.convert.WordLookup
 import app.venderian.course.Course
 import app.venderian.data.Alphabet
 import app.venderian.data.Repository
@@ -21,6 +22,7 @@ class VenderianApp : Application() {
 
     val lexicon by lazy { Lexicon.parse(assets.open("dictionary.json").bufferedReader().use { it.readText() }) }
     val alphabet by lazy { Alphabet.parse(assets.open("alphabet.json").bufferedReader().use { it.readText() }) }
+    val lookup by lazy { WordLookup(lexicon.entries) }
     val course by lazy { Course.parse(assets.open("course.json").bufferedReader().use { it.readText() }) }
     val repository by lazy { Repository(VenderianDb.create(this), alphabet, lexicon.entries, course) }
 

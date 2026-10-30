@@ -2,6 +2,12 @@ package app.venderian.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -30,9 +36,14 @@ inline fun <reified VM : ViewModel> appViewModel(crossinline create: (VenderianA
 }
 
 @Composable
-fun ScreenTitle(title: String, subtitle: String? = null) {
+fun ScreenTitle(title: String, subtitle: String? = null, onOpenDictionary: (() -> Unit)? = null) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineMedium)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
+            if (onOpenDictionary != null) {
+                FilledTonalIconButton(onClick = onOpenDictionary) { Icon(Icons.AutoMirrored.Outlined.MenuBook, "dictionary") }
+            }
+        }
         if (subtitle != null) {
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

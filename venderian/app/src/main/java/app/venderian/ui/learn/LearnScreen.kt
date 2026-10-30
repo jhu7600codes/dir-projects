@@ -41,7 +41,7 @@ import app.venderian.ui.app
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit) {
+fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit, onOpenDictionary: () -> Unit) {
     val app = app()
     val scriptDone by app.repository.scriptDone.collectAsState(initial = false)
     val scriptLessons by app.repository.lessonsDone.collectAsState(initial = emptySet())
@@ -50,7 +50,7 @@ fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit) {
     var tab by rememberSaveable { mutableStateOf<Int?>(null) }
     val shown = tab ?: if (scriptDone) 1 else 0
     Column {
-        ScreenTitle("Learn", if (shown == 0) "the venderian script, a few letters at a time" else "the language: 3 sections, 9 modules")
+        ScreenTitle("Learn", if (shown == 0) "the venderian script, a few letters at a time" else "the language: 3 sections, 9 modules", onOpenDictionary)
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             SegmentedButton(shown == 0, { tab = 0 }, SegmentedButtonDefaults.itemShape(0, 2)) { Text("script") }
             SegmentedButton(shown == 1, { tab = 1 }, SegmentedButtonDefaults.itemShape(1, 2)) { Text("course") }

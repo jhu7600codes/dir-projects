@@ -57,6 +57,7 @@ private sealed interface MapRow {
     data class SectionHeader(val section: Section) : MapRow
     data class ModuleHeader(val module: Module) : MapRow
     data class Node(val lesson: CourseLesson, val number: Int, val index: Int) : MapRow
+    data class SectionPractice(val section: Section) : MapRow
 }
 
 /**
@@ -77,6 +78,7 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
                     add(MapRow.Node(lesson, number + if (module.half) 10 else 0, index++))
                 }
             }
+            add(MapRow.SectionPractice(section))
         }
     }
     val current = course.lessons.indexOfFirst { it.id !in done }.let { if (it < 0) course.lessons.size else it }
@@ -112,6 +114,7 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
                 is MapRow.SectionHeader -> "s${it.section.id}"
                 is MapRow.ModuleHeader -> "m${it.module.id}"
                 is MapRow.Node -> it.lesson.id
+                is MapRow.SectionPractice -> "ps${it.section.id}"
             }
         }) { row ->
             when (row) {
@@ -121,6 +124,16 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 4.dp),
                 )
+                is MapRow.SectionPractice -> {
+                    val all = row.section.modules.flatMap { it.lessons }
+                    Practice(
+                        title = "section ${row.section.id} practice",
+                        unlocked = all.all { it.id in done },
+                        open = "mixes lessons from section ${row.section.id}, the ones you got wrong or haven't seen in a while come up more.",
+                        locked = "finish section ${row.section.id} to unlock its practice lessons.",
+                        onStart = { onOpen(CourseLesson.sectionPracticeId(row.section.id)) },
+                    )
+                }
                 is MapRow.Node -> {
                     val isDone = row.lesson.id in done
                     val unlocked = scriptDone && row.index <= current
@@ -131,14 +144,20 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
             }
         }
         item(key = "practice") {
-            Practice(unlocked = current >= course.lessons.size, onStart = { onOpen(CourseLesson.PRACTICE_ID) })
+            Practice(
+                title = "practice everything",
+                unlocked = current >= course.lessons.size,
+                open = "each one mixes lessons from all three sections, so you don't forget. the ones you got wrong or haven't seen in a while come up more.",
+                locked = "finish the whole course to unlock practice lessons: mixes of everything, so you don't forget.",
+                onStart = { onOpen(CourseLesson.PRACTICE_ID) },
+            )
         }
     }
 }
 
 /** after the whole course: endless practice lessons mixing every section */
 @Composable
-private fun Practice(unlocked: Boolean, onStart: () -> Unit) {
+private fun Practice(title: String, unlocked: Boolean, open: String, locked: String, onStart: () -> Unit) {
     val c = MaterialTheme.colorScheme
     Card(
         Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 28.dp),
@@ -147,13 +166,9 @@ private fun Practice(unlocked: Boolean, onStart: () -> Unit) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(if (unlocked) Icons.Filled.Refresh else Icons.Filled.Lock, null)
-                Text("  practice lessons", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("  $title", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
-            Text(
-                if (unlocked) "each one mixes lessons from all three sections, so you don't forget. the ones you got wrong or haven't seen in a while come up more."
-                else "finish the whole course to unlock practice lessons: mixes of everything, so you don't forget.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Text(if (unlocked) open else locked, style = MaterialTheme.typography.bodyMedium)
             if (unlocked) {
                 Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) { Text("start a practice lesson") }
             }

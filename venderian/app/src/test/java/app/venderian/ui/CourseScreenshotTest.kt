@@ -3,6 +3,10 @@ package app.venderian.ui
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -58,9 +62,24 @@ class CourseScreenshotTest {
         compose.onAllNodesWithText("course").onFirst().performClick()
         waitFor("start a practice lesson")
         shot("c5-practice-card")
-        compose.onNodeWithText("start a practice lesson").performClick()
+        compose.onAllNodesWithText("start a practice lesson").onLast().performClick()
         waitFor("check")
         shot("c6-practice-lesson")
+    }
+
+    @Test
+    fun dictionary() {
+        compose.mainClock.autoAdvance = false
+        settle()
+        compose.onNodeWithContentDescription("dictionary").performClick()
+        waitFor("search english or venderian")
+        shot("d1-dictionary")
+        compose.onNode(hasSetTextAction()).performTextInput("dog")
+        waitFor("vuf")
+        shot("d2-search")
+        compose.onNodeWithText("vuf").performClick()
+        waitFor("practice this word")
+        shot("d3-word")
     }
 
     @Test

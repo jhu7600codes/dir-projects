@@ -58,8 +58,15 @@ data class CourseLesson(
     /** challenges and gold lessons have hearts: three mistakes and you start over */
     val hasHearts get() = kind == Kind.CHALLENGE || kind == Kind.GOLD
 
+    /** the section a section practice lesson is about, null for the whole course */
+    val practiceSection: Int? get() = id.substringAfter("$PRACTICE_ID-s", "").toIntOrNull()
+
     companion object {
         const val PRACTICE_ID = "practice"
         val practice = CourseLesson(PRACTICE_ID, Kind.PRACTICE, "practice lesson")
+
+        /** "practice" for the whole course, "practice-s2" for section 2 */
+        fun practice(id: String) = CourseLesson(id, Kind.PRACTICE, "practice lesson")
+        fun sectionPracticeId(section: Int) = "$PRACTICE_ID-s$section"
     }
 }

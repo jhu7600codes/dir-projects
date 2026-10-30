@@ -10,7 +10,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
 import app.venderian.VenderianApp
+import app.venderian.convert.Sounds
 import app.venderian.course.Exercise
 import app.venderian.course.ExerciseMaker
 import app.venderian.ui.course.ExerciseView
@@ -52,5 +56,13 @@ class ExerciseScreenshotTest {
             compose.waitForIdle()
             compose.onRoot().captureRoboImage("build/outputs/roborazzi/ex-$name.png")
         }
+        // tap a word in a sentence: its meaning pops up
+        val build = all.filterIsInstance<Exercise.BuildEnglish>().first()
+        current = build
+        compose.waitForIdle()
+        val word = build.venderian.split(' ').first()
+        compose.onAllNodesWithText(Sounds.scriptOfText(word)).onFirst().performClick()
+        compose.waitForIdle()
+        compose.onRoot().captureRoboImage("build/outputs/roborazzi/ex-hint.png")
     }
 }

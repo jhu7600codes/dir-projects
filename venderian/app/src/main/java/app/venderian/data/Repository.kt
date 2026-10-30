@@ -89,17 +89,43 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
     /** the cards to practice now: everything that's due. words get here by finishing course lessons. */
     suspend fun practiceDeck(limit: Int = 20): List<CardEntity> = db.cards().due(System.currentTimeMillis(), limit)
 
+    /** words in the practice deck */
+    val deckWords: Flow<Set<String>> = db.cards().all().map { cards ->
+        cards.filter { it.kind == CardEntity.WORD }.map { it.key }.toSet()
+    }
+
+    /** puts a word in the practice deck (from the dictionary) */
+    suspend fun addWordCard(word: String) {
+        val now = System.currentTimeMillis()
+        db.cards().insertAll(listOf(CardEntity("${CardEntity.WORD}:$word", CardEntity.WORD, dueAt = now, introducedAt = now)))
+    }
+
+    /** the first lesson that teaches a word */
+    fun lessonFor(word: String): Pair<String, CourseLesson>? {
+        for (section in course.sections) for (module in section.modules) for (lesson in module.lessons) {
+            if (word in lesson.words) return "section ${section.id} · module ${module.id} ${module.title}" to lesson
+        }
+        return null
+    }
+
     /** words from finished course lessons, for the quiz */
     suspend fun learnedWords(): List<Entry> =
         db.cards().ids().filter { it.startsWith("${CardEntity.WORD}:") }.mapNotNull { word(it.substringAfter(':')) }
 
     /**
-     * the lessons a practice lesson mixes: [count] finished lessons from the whole course,
+     * the lessons a practice lesson mixes: [count] finished lessons from the whole course (or one [section]),
      * picked at random but leaning towards ones you made mistakes in or haven't seen in a while.
      */
-    suspend fun practiceSources(count: Int = 4, random: kotlin.random.Random = kotlin.random.Random.Default): List<CourseLesson> {
+    suspend fun practiceSources(
+        section: Int? = null,
+        count: Int = 4,
+        random: kotlin.random.Random = kotlin.random.Random.Default,
+    ): List<CourseLesson> {
         val now = System.currentTimeMillis()
-        val done = db.progress().courseNow().filter { it.id.contains("-l") }
+        val inSection = section?.let { n ->
+            course.sections.first { it.id == n }.modules.flatMap { m -> m.lessons.map { it.id } }.toSet()
+        }
+        val done = db.progress().courseNow().filter { it.id.contains("-l") && (inSection == null || it.id in inSection) }
         val pool = done.map { e ->
             val weeks = (now - e.completedAt) / (7 * Srs.DAY_MS).toDouble()
             e to 1.0 + 2.0 * e.mistakes + weeks

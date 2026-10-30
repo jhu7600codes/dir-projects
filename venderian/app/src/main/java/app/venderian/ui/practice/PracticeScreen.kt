@@ -127,11 +127,11 @@ class PracticeViewModel(private val app: VenderianApp) : ViewModel() {
 }
 
 @Composable
-fun PracticeScreen() {
+fun PracticeScreen(onOpenDictionary: () -> Unit) {
     val vm = appViewModel { PracticeViewModel(it) }
     val s by vm.state.collectAsState()
     Column(Modifier.fillMaxSize()) {
-        ScreenTitle("Practice", "flashcards that come back right before you'd forget them")
+        ScreenTitle("Practice", "flashcards that come back right before you'd forget them", onOpenDictionary)
         when {
             s.loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
             s.current == null -> Finished(s, onMore = vm::load)

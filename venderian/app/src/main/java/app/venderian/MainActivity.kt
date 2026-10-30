@@ -36,6 +36,7 @@ import app.venderian.ui.keyboard.KeyboardScreen
 import app.venderian.ui.learn.LearnScreen
 import app.venderian.ui.learn.LessonScreen
 import app.venderian.ui.course.LessonPlayer
+import app.venderian.ui.dictionary.DictionaryScreen
 import app.venderian.ui.practice.PracticeScreen
 import app.venderian.ui.progress.ProgressScreen
 import app.venderian.ui.quiz.QuizScreen
@@ -89,7 +90,18 @@ private fun Root() {
             enterTransition = { fadeIn() }, exitTransition = { fadeOut() },
         ) {
             composable(Tab.Learn.route) {
-                LearnScreen(onOpenLesson = { nav.navigate("lesson/$it") }, onOpenCourse = { nav.navigate("course/$it") })
+                LearnScreen(
+                    onOpenLesson = { nav.navigate("lesson/$it") },
+                    onOpenCourse = { nav.navigate("course/$it") },
+                    onOpenDictionary = { nav.navigate("dictionary") },
+                )
+            }
+            composable(
+                "dictionary",
+                enterTransition = { slideInHorizontally { it } + fadeIn() },
+                popExitTransition = { slideOutHorizontally { it } + fadeOut() },
+            ) {
+                DictionaryScreen(onBack = { nav.popBackStack() })
             }
             composable(
                 "course/{id}",
@@ -102,7 +114,7 @@ private fun Root() {
                 enterTransition = { slideInHorizontally { it } + fadeIn() },
                 popExitTransition = { slideOutHorizontally { it } + fadeOut() },
             ) { LessonScreen(it.arguments!!.getInt("index"), onDone = { nav.popBackStack() }) }
-            composable(Tab.Practice.route) { PracticeScreen() }
+            composable(Tab.Practice.route) { PracticeScreen(onOpenDictionary = { nav.navigate("dictionary") }) }
             composable(Tab.Quiz.route) { QuizScreen() }
             composable(Tab.Keyboard.route) { KeyboardScreen() }
             composable(Tab.Progress.route) { ProgressScreen() }
