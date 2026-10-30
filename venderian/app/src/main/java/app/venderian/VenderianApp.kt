@@ -85,30 +85,50 @@ class VenderianApp : Application() {
         if (tts == null) startTts()
     }
 
+    /** what happened, for settings: "starting", "ok", "failed (code)" */
+    var ttsStatus by mutableStateOf("not started")
+        private set
+
+    /** every spanish voice the engine listed, with whether it's installed, for settings */
+    var spanishDetails by mutableStateOf("")
+        private set
+
+    private var starting = false
+
     private fun startTts() {
         ttsReady = false
+        starting = true
+        ttsStatus = "starting"
         engine = ttsPrefs.getString("engine", null)
+        // the callback can come late, after a restart made a new engine: only the newest counts
+        var created: TextToSpeech? = null
         val listener = TextToSpeech.OnInitListener { status ->
+            val t = created
+            if (t == null || t !== tts) return@OnInitListener
+            starting = false
             ttsReady = status == TextToSpeech.SUCCESS
-            val t = tts
-            if (ttsReady && t != null) {
+            if (ttsReady) {
+                ttsStatus = "ok"
                 engines = t.engines
                 engineInUse = engine ?: t.defaultEngine
                 checkSpanish(t)
                 t.setSpeechRate(0.85f)
                 pending.toList().forEach { it() }
             } else {
+                ttsStatus = "failed ($status)"
                 spanishVoice = false
             }
             pending.clear()
         }
-        tts = engine?.let { TextToSpeech(this, listener, it) } ?: TextToSpeech(this, listener)
+        created = engine?.let { TextToSpeech(this, listener, it) } ?: TextToSpeech(this, listener)
+        tts = created
     }
 
     /** starts the engine again: a voice downloaded meanwhile only shows up after a restart */
     private fun restartTts() {
-        tts?.shutdown()
+        val old = tts
         tts = null
+        old?.shutdown()
         startTts()
     }
 
@@ -123,6 +143,13 @@ class VenderianApp : Application() {
         val locale = voice?.locale ?: SPANISH_LOCALES.firstOrNull {
             runCatching { t.isLanguageAvailable(it) }.getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED) >= TextToSpeech.LANG_AVAILABLE
         }
+        spanishDetails = runCatching { t.voices }.getOrNull().orEmpty()
+            .filter { it.locale.language == "es" }
+            .groupBy { it.locale.toLanguageTag() }
+            .entries.joinToString(", ") { (tag, vs) ->
+                val installed = vs.any { TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED !in it.features.orEmpty() }
+                "$tag ${if (installed) "installed" else "not downloaded"}"
+            }.ifEmpty { "the engine lists no spanish voices" }
         spanishVoiceObj = voice
         spanishLocale = locale
         spanishVoice = locale != null
@@ -131,7 +158,8 @@ class VenderianApp : Application() {
 
     /** looks again for a spanish voice (after coming back from the voice download screen) */
     fun refreshVoices() {
-        if (spanishVoice == true) return
+        // already found, or a start is still on its way: leave it alone
+        if (spanishVoice == true || starting) return
         if (tts == null) startTts() else restartTts()
     }
 

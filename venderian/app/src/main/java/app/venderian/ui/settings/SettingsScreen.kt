@@ -108,6 +108,11 @@ fun SettingsScreen(onBack: () -> Unit) {
                     OutlinedButton(onClick = { app.speakVenderian("vela! mi vendëri thela.") }) { Text("test") }
                 }
                 OutlinedButton(onClick = { app.refreshVoices() }, modifier = Modifier.padding(top = 4.dp)) { Text("check again") }
+                Text(
+                    "details: engine ${app.engineInUse ?: "?"} · connection ${app.ttsStatus} · ${app.spanishDetails}",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
                 if (app.engines.size > 1) {
                     Text("speech engine", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
                     Text("if your spanish voice is in another app, pick it here",
