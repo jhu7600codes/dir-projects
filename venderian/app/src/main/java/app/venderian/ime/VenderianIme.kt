@@ -12,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.inputmethod.EditorInfoCompat
 import androidx.core.view.inputmethod.InputConnectionCompat
 import androidx.core.view.inputmethod.InputContentInfoCompat
@@ -52,6 +54,14 @@ class VenderianIme : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, 
     var converter by mutableStateOf<Converter?>(null)
         private set
 
+    /**
+     * room for the system's bar under the keyboard (with gesture navigation it shows a hide
+     * button and the keyboard switcher there), in px. compose's own inset padding doesn't
+     * reach an ime window, so it's read from the window directly.
+     */
+    var bottomInset by mutableStateOf(0)
+        private set
+
     /** the text the translate button replaced, so it can be undone */
     private var undo: Pair<String, String>? = null
     private var cursor = 0
@@ -80,13 +90,23 @@ class VenderianIme : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, 
             setViewTreeLifecycleOwner(this@VenderianIme)
             setViewTreeViewModelStoreOwner(this@VenderianIme)
             setViewTreeSavedStateRegistryOwner(this@VenderianIme)
+            ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+                updateBottomInset(insets)
+                insets
+            }
             setContent { VenderianTheme { KeyboardUi(this@VenderianIme) } }
         }
+    }
+
+    private fun updateBottomInset(insets: WindowInsetsCompat) {
+        val types = WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.tappableElement()
+        bottomInset = insets.getInsets(types).bottom
     }
 
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        window.window?.decorView?.rootWindowInsets?.let { updateBottomInset(WindowInsetsCompat.toWindowInsetsCompat(it)) }
         val cls = info.inputType and InputType.TYPE_MASK_CLASS
         undo = null
         cursor = info.initialSelStart.coerceAtLeast(0)

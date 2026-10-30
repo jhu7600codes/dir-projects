@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -69,7 +68,8 @@ private val KEY_HEIGHT = 50.dp
 fun KeyboardUi(ime: VenderianIme) {
     val s = ime.state
     Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 4.dp, vertical = 4.dp)) {
+        val bottom = with(androidx.compose.ui.platform.LocalDensity.current) { ime.bottomInset.toDp() }
+        Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp + bottom)) {
             Strip(ime)
             AnimatedContent(
                 targetState = if (s.numbersOnly) Layout.Symbols else s.layout,
