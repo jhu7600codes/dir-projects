@@ -18,7 +18,7 @@ cho | to jump | verb
 mishtre | to push | verb
 ape | to pull | verb
 notbi | to cut | verb
-gi | to fix | verb
+retnolu | to fix | verb
 waba | to build | verb
 kivangto | to grow | verb
 dluki | to pick | verb
@@ -30,12 +30,12 @@ mozi | to look at | verb
 shubu | to watch | verb
 nisimi | to listen | verb
 hikdi | to touch | verb
-take | to smell | verb
+neshdita | to smell | verb
 tata | to hate | verb
 kimola | to prefer | verb
 maru | to hope | verb
 klutpru | to wish | verb
-di | to expect | verb
+viba | to expect | verb
 rava | to understand | verb
 woshla | to explain | verb
 lidro | to describe | verb
@@ -47,7 +47,7 @@ venë | to cry | verb
 laro | to smile | verb
 ovlu | to lie (say what isn't true) | verb
 tamuda | to promise | verb
-na | to thank | verb
+vichi | to thank | verb
 godi | to forgive | verb
 kola | to apologize | verb
 dradi | to complain | verb
@@ -55,7 +55,7 @@ blosi | to suggest | verb
 glusa | to offer | verb
 yone | to accept | verb
 sutha | to refuse | verb
-we | to allow | verb
+merfe | to allow | verb
 pesklëga | to forbid | verb
 chagi | to wait for | verb
 chiba | to arrive | verb
@@ -86,9 +86,9 @@ trotavo | to recognize | verb
 laksha | to recommend | verb
 yatomso | to invent | verb
 gibi | to discover | verb
-në | to create | verb
+rama | to create | verb
 kure | to design | verb
-ro | to print | verb
+truge | to print | verb
 selu | to translate | verb
 dika | to post | verb
 vrepë | to download | verb
@@ -113,7 +113,7 @@ brino | to empty | verb
 dawa | to dry | verb
 dlo | to iron | verb
 ruwa | to sew | verb
-ru | to ride | verb
+pëgaka | to ride | verb
 iru | to sail | verb
 tënanma | to cross | verb
 sigë | to dive | verb
@@ -123,7 +123,7 @@ latte | to kick | verb
 nukeki | to catch | verb
 thëshi | to hit | verb
 dolme | to celebrate | verb
-de | to marry | verb
+keva | to marry | verb
 yala | to divorce | verb
 plë | to rest | verb
 resdi | to relax | verb
@@ -191,9 +191,9 @@ posmong | price | noun
 yana | bill | noun
 kudlas | receipt | noun
 adeku | wallet | noun
-la | cash | noun
+wobel | cash | noun
 lozun | bank | noun
-me | salary | noun
+thalvesas | salary | noun
 mowo | tax | noun
 ronish | phone | noun
 pasinzët | message | noun
@@ -245,7 +245,7 @@ lun | jar | noun
 veke | basket | noun
 rulehi | bucket | noun
 dresha | rope | noun
-gu | chain | noun
+chading | chain | noun
 molu | tool | noun
 welin | hammer | noun
 gesor | nail | noun
@@ -298,7 +298,7 @@ gim | police | noun
 gabël | police officer | noun
 rekping | firefighter | noun
 lake | fire truck | noun
-gë | ambulance | noun
+miko | ambulance | noun
 navo | church | noun
 cholkhoro | temple | noun
 netlet | palace | noun
@@ -348,7 +348,7 @@ wivu | medal | noun
 bosho | prize | noun
 poma | champion | noun
 letruk | animal | noun
-mole | puppy | noun
+linum | puppy | noun
 zetshelshor | kitten | noun
 thepiti | rabbit | noun
 kavas | snake | noun
@@ -360,7 +360,7 @@ varzeduk | pig | noun
 dotno | sheep | noun
 vila | goat | noun
 bëbë | donkey | noun
-bat | deer | noun
+api | deer | noun
 togo | fox | noun
 amomosh | owl | noun
 erfrave | eagle | noun
@@ -407,7 +407,7 @@ vayelë | oil | noun
 antunor | sugar | noun
 kasro | flour | noun
 yifetil | cream | noun
-son | yogurt | noun
+musurzo | yogurt | noun
 abam | ice cream | noun
 keszu | cookie | noun
 leklilë | pie | noun
@@ -431,7 +431,7 @@ nebemblo | stomach | noun
 kebir | knee | noun
 fetda | finger | noun
 lirar | toe | noun
-si | skin | noun
+nesa | skin | noun
 velna | bone | noun
 namwe | blood | noun
 glila | brain | noun
@@ -455,7 +455,7 @@ ulko | spirit | noun
 hidali | god | noun
 mesa | ghost | noun
 poshë | monster | noun
-vu | angel | noun
+kagrëkhek | angel | noun
 tlewal | devil | noun
 menisthi | legend | noun
 semulom | myth | noun
@@ -493,7 +493,7 @@ kudu | electricity | noun
 gozar | energy | noun
 vihubrol | machine | noun
 shemde | robot | noun
-fo | network | noun
+kugis | network | noun
 tora | signal | noun
 shali | power | noun
 duse | government | noun
@@ -552,8 +552,8 @@ pesërpla | rough | adjective
 soram | wet | adjective
 lales | cool | adjective
 durlavlu | fresh | adjective
-nu | rotten | adjective
-lore | ripe | adjective
+tush | rotten | adjective
+yële | ripe | adjective
 goret | raw | adjective
 rage | cooked | adjective
 ler | sour | adjective
@@ -589,7 +589,7 @@ rekame | necessary | adjective
 kitshuk | useful | adjective
 gifeng | useless | adjective
 yuriso | simple | adjective
-she | complicated | adjective
+kepë | complicated | adjective
 goru | correct | adjective
 obru | wrong | adjective
 kika | real | adjective
@@ -600,14 +600,14 @@ levem | similar | adjective
 sinang | other | adjective
 sarisuk | whole | adjective
 ita | half | adjective
-ma | single | adjective
+lapru | single | adjective
 ogis | double | adjective
 betesh | ready | adjective
 pasak | lonely | adjective
 zarka | proud | adjective
 tofo | shy | adjective
 vishdreruk | brave | adjective
-rat | lazy | adjective
+tlabëlo | lazy | adjective
 ginmer | smart | adjective
 tine | stupid | adjective
 mushbu | clever | adjective
@@ -635,21 +635,21 @@ shuk | unlucky | adjective
 dunesh | sure | adjective
 nathi | certain | adjective
 teshkir | available | adjective
-zi | main | adjective
+ovak | main | adjective
 tamu | alone | adjective
 brani | really | adverb
 luk | actually | adverb
 atgu | even | adverb
-thin | so (that's why) | adverb
+ro | so (that's why) | adverb
 gras | more | adverb
-put | less | adverb
+la | less | adverb
 niset | most | adverb
 bra | least | adverb
 lopuvu | almost | adverb
-the | already | adverb
+lisra | already | adverb
 thë | still | adverb
 alkhë | yet | adverb
-sat | just | adverb
+nor | just | adverb
 rigel | only | adverb
 rëmlikru | sometimes | adverb
 tonom | never | adverb
@@ -676,14 +676,14 @@ besh | finally | adverb
 li | enough | adverb
 re | quite | adverb
 lorlen | rather | adverb
-ta | instead | adverb
+rash | instead | adverb
 tring | either | adverb
 tivlë | neither | adverb
 vobo | both | adverb
 lolur | each | adverb
 ranu | some | adverb
 zë | any | adverb
-tar | none | adverb
+geskoshe | none | adverb
 womno | nothing | adverb
 vuvo | everything | adverb
 sosvan | something | adverb
@@ -716,15 +716,15 @@ saha | since | preposition
 alfi | against | preposition
 prong | except | preposition
 yuto | unlike | preposition
-ram | above | preposition
-push | below | preposition
+trane | above | preposition
+tokepesh | below | preposition
 teshi | outside | preposition
 ladohak | far from | preposition
 gro | instead of | preposition
 shatol | because of | preposition
 ralla | thanks to | preposition
 techeme | according to | preposition
-that | despite | preposition
+ru | despite | preposition
 bot | per | preposition
 bose | via | preposition
 ming | although | conjunction
@@ -775,3 +775,232 @@ asiler | mean (unkind) | adjective
 kasha | own | adjective
 wafak | like (similar) | preposition
 beri | watch | noun
+siga | discount | noun
+losur | sale | noun
+rokem | mall | noun
+kamaresh | size | noun
+khadish | delivery | noun
+athosh | package | noun
+fleno | refund | noun
+yeshkli | loan | noun
+inking | debt | noun
+sito | savings | noun
+ëshvlede | coin purse | noun
+rarma | shopping cart | noun
+debes | cashier | noun
+sekpo | checkout | noun
+glarol | brand | noun
+pedosshi | quality | noun
+yile | gift shop | noun
+kekë | social media | noun
+maku | follower | noun
+walën | comment | noun
+tikkin | channel | noun
+rami | stream | noun
+giwa | file | noun
+oyon | folder | noun
+shasotlush | selfie | noun
+kuvu | profile | noun
+puntilit | video game | noun
+panhong | update | noun
+achol | robot vacuum | noun
+sori | smartphone | noun
+shichaneng | tablet | noun
+noshmas | laptop | noun
+keku | printer | noun
+nulimë | data | noun
+sozising | code | noun
+samu | bug (in code) | noun
+brobung | virus | noun
+rimos | hacker | noun
+rede | privacy | noun
+hotri | costume | noun
+novuk | mask | noun
+mutu | fireworks | noun
+madok | parade | noun
+tëdla | lantern | noun
+podo | custom | noun
+mirin | dish (food) | noun
+dema | feast | noun
+eku | ceremony | noun
+rizo | wedding | noun
+nusukem | funeral | noun
+bilifi | flag | noun
+mukhash | anthem | noun
+vadogus | accent | noun
+dengfa | dialect | noun
+lëli | foreigner | noun
+zime | embassy | noun
+nëki | election | noun
+nuten | citizen | noun
+romzom | rights | noun
+thunatvush | duty | noun
+teta | volunteer | noun
+kavobu | charity | noun
+zanlë | donation | noun
+dunur | meeting | noun
+iket | protest (march) | noun
+keyer | leader | noun
+mulal | opinion | noun
+fili | debate | noun
+fepamos | speech | noun
+arar | newspaper article | noun
+woye | rumor | noun
+lëshi | experiment | noun
+elmisha | laboratory | noun
+gara | atom | noun
+tofe | cell | noun
+atgok | gravity | noun
+prit | telescope | noun
+liyem | microscope | noun
+krili | galaxy | noun
+lëlnë | comet | noun
+ungnem | moon landing | noun
+rasi | astronaut | noun
+zipo | rocket | noun
+kiteka | climate | noun
+thechu | temperature | noun
+loyu | pollution | noun
+efa | recycling | noun
+deteng | solar panel | noun
+kharo | wind turbine | noun
+tatak | ocean plastic | noun
+krikaresh | species | noun
+midisin | dinosaur | noun
+rorang | fossil | noun
+rukpavo | volcano | noun
+bartival | earthquake | noun
+lilu | flood | noun
+ritëm | drought | noun
+oma | sculpture | noun
+bosung | gallery | noun
+vetho | color | noun
+nodlëmu | canvas | noun
+naka | poetry | noun
+newa | rhyme | noun
+elë | rhythm | noun
+kheguki | melody | noun
+putamet | lyrics | noun
+fropu | style | noun
+mosho | beauty | noun
+roge | feeling | noun
+womis | imagination | noun
+uda | inspiration | noun
+pisshe | talent | noun
+devi | skill | noun
+yuku | practice (training) | noun
+var | success | noun
+febu | failure | noun
+dukel | courage | noun
+batdung | patience | noun
+danzizi | kindness (act) | noun
+inana | honesty | noun
+lamor | respect (feeling) | noun
+nirim | trust | noun
+sispikyi | friendship | noun
+kozu | relationship | noun
+teshdë | childhood | noun
+sisas | generation | noun
+kothi | nature (the world) | noun
+tunthan | universe | noun
+yatofo | reality | noun
+shaluma | possibility | noun
+katat | meaning | noun
+kranu | purpose | noun
+tase | belief | noun
+gani | to try on | verb
+gobo | to deliver | verb
+evi | to owe | verb
+plela | to invest | verb
+zibe | to save up | verb
+wangmile | to afford | verb
+meta | to comment | verb
+klaba | to stream | verb
+dashuti | to delete | verb
+rini | to install | verb
+shepi | to log in | verb
+sozano | to log out | verb
+tline | to hack | verb
+tudapa | to code | verb
+tini | to wear | verb
+desharu | to celebrate together | verb
+devo | to welcome | verb
+tildli | to greet | verb
+usmi | to explore | verb
+tabo | to experience | verb
+kekimki | to belong to | verb
+dihi | to elect | verb
+beni | to volunteer | verb
+nodusa | to donate | verb
+khashi | to organize | verb
+kakri | to debate | verb
+lusela | to convince | verb
+zache | to agree on | verb
+blutri | to observe | verb
+tulu | to experiment | verb
+tosëga | to prove | verb
+pëngmo | to research | verb
+trarba | to pollute | verb
+binu | to recycle | verb
+lesi | to waste | verb
+sashne | to disappear | verb
+zosepo | to appear | verb
+sichë | to express | verb
+zozo | to perform | verb
+tire | to compose | verb
+mumune | to sculpt | verb
+lehu | to inspire | verb
+tengro | to feel proud | verb
+fipi | to dream big | verb
+latha | to achieve | verb
+sora | digital | adjective
+ose | online | adjective
+nechel | offline | adjective
+omë | wireless | adjective
+shubing | public | adjective
+yepepa | private | adjective
+nirun | local | adjective
+wigotu | global | adjective
+notë | foreign | adjective
+garar | traditional | adjective
+ovat | cultural | adjective
+duva | religious | adjective
+nudu | political | adjective
+fonat | social | adjective
+leni | equal | adjective
+pekro | unfair | adjective
+dosham | scientific | adjective
+yum | natural | adjective
+imil | artificial | adjective
+vabok | endless | adjective
+rena | huge | adjective
+retom | rare | adjective
+lerisim | common | adjective
+kotpim | creative | adjective
+bono | artistic | adjective
+nosukho | musical | adjective
+tomom | emotional | adjective
+bena | peaceful | adjective
+ushping | violent | adjective
+zapu | hopeful | adjective
+ika | grateful | adjective
+legla | curious | adjective
+ramigo | responsible | adjective
+lëdu | independent | adjective
+lash | forever | adverb
+gok | nowadays | adverb
+gachu | recently | adverb
+salong | someday | adverb
+taza | anyway | adverb
+zo | otherwise | adverb
+ezet | therefore | adverb
+ga | however | adverb
+puthi | besides | adverb
+fri | meanwhile | adverb
+opërpas | afterwards | adverb
+khe | at least | adverb
+rak | at last | adverb
+pre | in fact | adverb
+pash | of course not | adverb
+dorak | on purpose | adverb
+met | by accident | adverb

@@ -13,8 +13,8 @@ class CourseTest {
     private val dictionary = Lexicon.parse(File("src/main/assets/dictionary.json").readText()).entries
 
     @Test
-    fun `3 sections, 3 modules each, 20 lessons + challenge + gold per module`() {
-        assertEquals(3, course.sections.size)
+    fun `5 sections, 3 modules each, 20 lessons + challenge + gold per module`() {
+        assertEquals(5, course.sections.size)
         for (section in course.sections) {
             assertEquals(6, section.modules.size) // N and N.5
             for ((full, half) in section.modules.chunked(2).map { it[0] to it[1] }) {
@@ -23,7 +23,7 @@ class CourseTest {
                 assertTrue(half.id == full.id + ".5")
             }
         }
-        assertEquals(180, course.lessons.count { it.kind == Kind.LESSON })
+        assertEquals(300, course.lessons.count { it.kind == Kind.LESSON })
     }
 
     @Test

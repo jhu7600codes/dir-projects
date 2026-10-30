@@ -4,7 +4,7 @@ venderian (native name **vendëri**, said VEN-dë-ri) is a made-up language with
 
 - glyph strokes: [`alphabet.json`](alphabet.json) (rendered as [`alphabet.svg`](alphabet.svg) by `tools/render_chart.py`)
 - dictionary: [`app/src/main/assets/dictionary.json`](../app/src/main/assets/dictionary.json), the starter words in `tools/make_dictionary.py` plus every word the course defines, plus the word bank in [`course/bank.txt`](../course/bank.txt) (everyday words for the dictionary and the keyboard's translate, made with `tools/make_bank.py`)
-- the course: [`course/`](../course) (3 sections, 9 modules, 180 lessons), built and checked by `tools/make_course.py`
+- the course: [`course/`](../course) (5 sections, 15 modules, 300 lessons), built and checked by `tools/make_course.py`
 
 ![alphabet chart](alphabet.svg)
 
@@ -215,6 +215,7 @@ leave out the subject: `supa yama!` (eat the soup!). put `kiro` (please) in fron
 | `-mo` | how it's done | `rap` → `rapmo` quickly, `bon` → `bonmo` well |
 | `-i` | first, second... | `ek` → `eki` first. days are numbered: `dey eki` is monday |
 | `-ri` | the person who does it | `lira` → `lirari` singer, `vina` → `vinari` winner |
+| `-ve` | would | `kopa` → `kopave` would buy. with `sef` and the past: `sef mi teli esta, mi kopave` (if I were rich, I would buy) |
 | `-tal` | turns an adjective into a thing | `fela` → `felatal` happiness, `ver` → `vertal` truth |
 
 `mol` (very) goes right before the word it makes stronger. clock time is `or` + number: `un or okh`, at eight o'clock.
@@ -224,6 +225,7 @@ leave out the subject: `supa yama!` (eat the soup!). put `kiro` (please) in fron
 every part of a sentence keeps its verb at the end.
 
 - `kaus` because, `sef` if, `kwan` when: `sef pluva, min un kar resta.` (if it rains, we stay home.)
+- more two-part words, all used the same way (their part first, verb at the end): `nirfung` while, `zalël` until, `ming` although, `fan` unless, `orut` so that, `ish` as soon as, `rastëtra` even if, `vro` as long as. `riblin` (whether) comes after the verb like `ke`
 - `ki` (who / which / that) describes the noun in front of it, and the description ends with its own verb: `hum ki ik viva bon.` (the person who lives here is good.)
 - `ke` (that, after think / say / know) is the one thing that comes after the verb: `mi penka ke muzik bon.` (I think that music is good.)
 

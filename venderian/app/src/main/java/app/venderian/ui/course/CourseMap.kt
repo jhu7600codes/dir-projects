@@ -147,7 +147,7 @@ fun CourseMap(course: Course, done: Set<String>, scriptDone: Boolean, scriptProg
             Practice(
                 title = "practice everything",
                 unlocked = current >= course.lessons.size,
-                open = "each one mixes lessons from all three sections, so you don't forget. the ones you got wrong or haven't seen in a while come up more.",
+                open = "each one mixes lessons from every section, so you don't forget. the ones you got wrong or haven't seen in a while come up more.",
                 locked = "finish the whole course to unlock practice lessons: mixes of everything, so you don't forget.",
                 onStart = { onOpen(CourseLesson.PRACTICE_ID) },
             )

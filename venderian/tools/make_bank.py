@@ -26,6 +26,23 @@ FORMS = {"noun": ["n", "an"], "pronoun": ["n"], "verb": ["ta", "va", "ri", "ve"]
          "adjective": ["or", "r", "esh", "sh", "mo", "tal"], "number": ["i"]}
 
 
+# words that would confuse: real english words (a learner reads "that" as english), and the
+# endings themselves ("ta" looks like the past ending -ta)
+ENGLISH = set("""a an the and or but if so as at by for from in into of off on onto out over to up with
+i me my we us our you your he him his she her it its they them their this that these those who what
+is am are was be been do did does done go went get got make made take took see saw say said tell come
+can could will would shall should may might must have has had not no yes all any some one two ten
+man men son sun bat bad bed big boy car cat cut dog dot ear eat end eye far fat few fit fun gas god
+gun hat hit hot ice kid kit law leg let lie lip lot low mad map mom net new nod nut odd old pan pen
+pet pig pin pit pot put ram ran rat red rib rid rob rod rot row rub run sad sat sea set sin sit six
+ski sky son tab tag tan tap tar tea ten tie tin tip toe top toy tub van vet war wet win won yet zoo
+push pull shed shin ship shop shot slim slip slot spin spot stem step stop such than then thin this
+thus time tone took tool tube tune turn upon vast very vote wake walk wall want warm wash wave weak
+wear week well went were west wide wife wild will wind wing wire wise wish wood word wore work worm
+wrap yard yarn year more less most mule sole lobe dune rune lone lore mole poke rope robe""".split())
+ENDINGS_LOOKALIKE = {"n", "an", "ta", "va", "or", "r", "esh", "sh", "mo", "i", "ri", "tal", "ve"}
+
+
 def pick(rng, weights):
     return rng.choices(list(weights), list(weights.values()))[0]
 
@@ -99,8 +116,12 @@ def main():
             w = make_word(rng, pos)
             if w in taken or w in taken_forms or forms(w, pos) & taken:
                 continue
-            # no one-sound words like "e", they read as just a letter
+            # no one-sound words like "e", no tiny content words, nothing that reads as english
             if len(w) < 2 or w[0] in VOWELS and len(w) < 3:
+                continue
+            if pos in ("noun", "verb", "adjective") and len(w) < 3:
+                continue
+            if w in ENGLISH or w in ENDINGS_LOOKALIKE:
                 continue
             try:
                 if not legal(w):

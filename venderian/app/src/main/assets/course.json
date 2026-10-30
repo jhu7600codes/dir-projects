@@ -6449,6 +6449,4443 @@
      ]
     }
    ]
+  },
+  {
+   "id": 4,
+   "title": "living your life",
+   "subtitle": "money, technology, travel and culture",
+   "modules": [
+    {
+     "id": "10",
+     "title": "shopping and money",
+     "half": false,
+     "lessons": [
+      {
+       "id": "m10-l1",
+       "kind": "lesson",
+       "title": "at the mall",
+       "tip": "",
+       "words": [
+        "rokem",
+        "losur",
+        "siga",
+        "posmong",
+        "kamaresh"
+       ],
+       "sentences": [
+        {
+         "v": "min ra rokem golta.",
+         "e": "we went to the mall."
+        },
+        {
+         "v": "vedey losur gran es.",
+         "e": "today there is a big sale."
+        },
+        {
+         "v": "ve kamis siga ha.",
+         "e": "this shirt has a discount."
+        },
+        {
+         "v": "posmong kwo?",
+         "e": "what is the price?"
+        },
+        {
+         "v": "kamaresh da tu kwo?",
+         "e": "what is your size?"
+        }
+       ]
+      },
+      {
+       "id": "m10-l2",
+       "kind": "lesson",
+       "title": "trying things on",
+       "tip": "",
+       "words": [
+        "gani",
+        "venne",
+        "dutlun",
+        "boni",
+        "loracho"
+       ],
+       "sentences": [
+        {
+         "v": "mi ve dutlun gani vola.",
+         "e": "I want to try on this jacket."
+        },
+        {
+         "v": "venne bela, shom karo.",
+         "e": "the dress is beautiful but expensive."
+        },
+        {
+         "v": "boni pik.",
+         "e": "the coat is small."
+        },
+        {
+         "v": "tu loracho gani ka?",
+         "e": "are you trying on a hat?"
+        },
+        {
+         "v": "ve kamaresh bonor.",
+         "e": "this size is better."
+        }
+       ]
+      },
+      {
+       "id": "m10-l3",
+       "kind": "lesson",
+       "title": "paying",
+       "tip": "",
+       "words": [
+        "wobel",
+        "vobri",
+        "debes",
+        "kudlas",
+        "adeku"
+       ],
+       "sentences": [
+        {
+         "v": "mi kel vobri paga.",
+         "e": "I pay with a bank card."
+        },
+        {
+         "v": "tu wobel ha ka?",
+         "e": "do you have cash?"
+        },
+        {
+         "v": "debes kudlas ra mi dota.",
+         "e": "the cashier gave me the receipt."
+        },
+        {
+         "v": "adeku da mi kwe es?",
+         "e": "where is my wallet?"
+        },
+        {
+         "v": "mi adeku perdata!",
+         "e": "I lost my wallet!"
+        }
+       ]
+      },
+      {
+       "id": "m10-l4",
+       "kind": "lesson",
+       "title": "shopping online",
+       "tip": "",
+       "words": [
+        "ose",
+        "kanna",
+        "khadish",
+        "athosh",
+        "chiba"
+       ],
+       "sentences": [
+        {
+         "v": "mi shun ose kannata.",
+         "e": "I ordered shoes online."
+        },
+        {
+         "v": "khadish posdey chibava.",
+         "e": "the delivery will arrive tomorrow."
+        },
+        {
+         "v": "athosh gran ik es.",
+         "e": "a big package is here."
+        },
+        {
+         "v": "athosh da mi ne chibata.",
+         "e": "my package did not arrive."
+        },
+        {
+         "v": "mi ose kopa goda.",
+         "e": "I like to buy online."
+        }
+       ]
+      },
+      {
+       "id": "m10-l5",
+       "kind": "lesson",
+       "title": "would",
+       "tip": "add -ve to a verb for \"would\": kopa (buy), kopave (would buy).",
+       "words": [
+        "-ve"
+       ],
+       "sentences": [
+        {
+         "v": "mi ve oto kopave.",
+         "e": "I would buy this car."
+        },
+        {
+         "v": "tu kwo kopave?",
+         "e": "what would you buy?"
+        },
+        {
+         "v": "sa ne golve.",
+         "e": "she would not go."
+        },
+        {
+         "v": "mi ra pelag golve.",
+         "e": "I would go to the sea."
+        },
+        {
+         "v": "min aydave.",
+         "e": "we would help."
+        }
+       ]
+      },
+      {
+       "id": "m10-l6",
+       "kind": "lesson",
+       "title": "if I were rich",
+       "tip": "sef with the past, then -ve: \"sef mi teli esta, mi kopave\", if I were rich, I would buy.",
+       "words": [
+        "teli",
+        "naske",
+        "sito",
+        "zibe"
+       ],
+       "sentences": [
+        {
+         "v": "sef mi teli esta, mi kar gran kopave.",
+         "e": "if I were rich, I would buy a big house."
+        },
+        {
+         "v": "sef tu zil hata, tu kwo fasave?",
+         "e": "if you had money, what would you do?"
+        },
+        {
+         "v": "mi zil zibe.",
+         "e": "I save up money."
+        },
+        {
+         "v": "sito da mi pik.",
+         "e": "my savings are small."
+        },
+        {
+         "v": "hum naske zil ne ha.",
+         "e": "a poor person does not have money."
+        }
+       ]
+      },
+      {
+       "id": "m10-l7",
+       "kind": "lesson",
+       "title": "jobs and money",
+       "tip": "",
+       "words": [
+        "thalvesas",
+        "pulbo",
+        "mowo",
+        "yatorët",
+        "tanë",
+        "kasha"
+       ],
+       "sentences": [
+        {
+         "v": "aba zil multa pulbo.",
+         "e": "father earns a lot of money."
+        },
+        {
+         "v": "thalvesas da ama bon.",
+         "e": "mother's salary is good."
+        },
+        {
+         "v": "min mowo paga deba.",
+         "e": "we must pay taxes."
+        },
+        {
+         "v": "tanë da tiyo gran.",
+         "e": "my uncle's company is big."
+        },
+        {
+         "v": "mi yatorët kasha ha vola.",
+         "e": "I want to have my own business."
+        }
+       ]
+      },
+      {
+       "id": "m10-l8",
+       "kind": "lesson",
+       "title": "borrowing",
+       "tip": "",
+       "words": [
+        "gifa",
+        "tomi",
+        "evi",
+        "yeshkli",
+        "inking"
+       ],
+       "sentences": [
+        {
+         "v": "kiro, zil ra mi tomi.",
+         "e": "please lend me money."
+        },
+        {
+         "v": "mi pena da tu gifa pot ka?",
+         "e": "can I borrow your pen?"
+        },
+        {
+         "v": "tu dek mon ra mi evi.",
+         "e": "you owe me ten coins."
+        },
+        {
+         "v": "inking mal.",
+         "e": "debt is bad."
+        },
+        {
+         "v": "tanë yeshkli gran ha.",
+         "e": "the company has a big loan."
+        }
+       ]
+      },
+      {
+       "id": "m10-l9",
+       "kind": "lesson",
+       "title": "spending wisely",
+       "tip": "",
+       "words": [
+        "thaknodo",
+        "lesi",
+        "wangmile",
+        "rekame",
+        "la",
+        "gras"
+       ],
+       "sentences": [
+        {
+         "v": "mi zil multa thaknodota.",
+         "e": "I spent a lot of money."
+        },
+        {
+         "v": "zil ne lesi!",
+         "e": "do not waste money!"
+        },
+        {
+         "v": "min ve oto wangmile ne pot.",
+         "e": "we cannot afford this car."
+        },
+        {
+         "v": "ve shi rekame ka?",
+         "e": "is this thing necessary?"
+        },
+        {
+         "v": "la thaknodo, gras zibe!",
+         "e": "spend less, save more!"
+        }
+       ]
+      },
+      {
+       "id": "m10-l10",
+       "kind": "lesson",
+       "title": "market day",
+       "tip": "",
+       "words": [
+        "kihi"
+       ],
+       "sentences": [
+        {
+         "v": "losur da bazar mol bon esta.",
+         "e": "the market's sale was very good."
+        },
+        {
+         "v": "mi kamis i shun kopata.",
+         "e": "I bought a shirt and shoes."
+        },
+        {
+         "v": "posmong ne karo esta.",
+         "e": "the price was not expensive."
+        },
+        {
+         "v": "mi kudlas ripë kihi.",
+         "e": "I check the receipt again."
+        },
+        {
+         "v": "posdey mi ripë kopava.",
+         "e": "tomorrow I will buy again."
+        }
+       ]
+      },
+      {
+       "id": "m10-challenge",
+       "kind": "challenge",
+       "title": "challenge",
+       "from": [
+        "m10-l1",
+        "m10-l2",
+        "m10-l3",
+        "m10-l4",
+        "m10-l5",
+        "m10-l6",
+        "m10-l7",
+        "m10-l8",
+        "m10-l9",
+        "m10-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "10.5",
+     "title": "the bank and the shop",
+     "half": true,
+     "lessons": [
+      {
+       "id": "m10.5-l1",
+       "kind": "lesson",
+       "title": "the bank",
+       "tip": "",
+       "words": [
+        "lozun",
+        "chagi"
+       ],
+       "sentences": [
+        {
+         "v": "lozun nek boteka es.",
+         "e": "the bank is next to the shop."
+        },
+        {
+         "v": "mi un lozun chagita.",
+         "e": "I waited in the bank."
+        },
+        {
+         "v": "sito da mi un lozun es.",
+         "e": "my savings are in the bank."
+        },
+        {
+         "v": "lozun vobri nov ra mi dota.",
+         "e": "the bank gave me a new bank card."
+        },
+        {
+         "v": "lozun un or pam klu.",
+         "e": "the bank closes at five o'clock."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l2",
+       "kind": "lesson",
+       "title": "selling things",
+       "tip": "",
+       "words": [
+        "puba",
+        "tanset",
+        "thun",
+        "eda",
+        "glarol",
+        "kulom"
+       ],
+       "sentences": [
+        {
+         "v": "mi biko vet pubata.",
+         "e": "I sold my old bike."
+        },
+        {
+         "v": "thun aplon puba.",
+         "e": "the seller sells apples."
+        },
+        {
+         "v": "tansetan multa ven.",
+         "e": "many customers come."
+        },
+        {
+         "v": "ve glarol kulom.",
+         "e": "this brand is popular."
+        },
+        {
+         "v": "eda zil ra thun do.",
+         "e": "the buyer gives money to the seller."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l3",
+       "kind": "lesson",
+       "title": "quality",
+       "tip": "",
+       "words": [
+        "pedosshi",
+        "durlavlu",
+        "tush",
+        "ham",
+        "goret"
+       ],
+       "sentences": [
+        {
+         "v": "pedosshi da ve kamis mal.",
+         "e": "the quality of this shirt is bad."
+        },
+        {
+         "v": "aplon durlavlu.",
+         "e": "the apples are fresh."
+        },
+        {
+         "v": "ve banan tush!",
+         "e": "this banana is rotten!"
+        },
+        {
+         "v": "torta da baba ham.",
+         "e": "grandmother's cake is delicious."
+        },
+        {
+         "v": "karnë goret ne yama!",
+         "e": "do not eat raw meat!"
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l4",
+       "kind": "lesson",
+       "title": "returns",
+       "tip": "",
+       "words": [
+        "fleno",
+        "veksabe",
+        "obru",
+        "sutha"
+       ],
+       "sentences": [
+        {
+         "v": "shun kamaresh obru ha.",
+         "e": "the shoes have the wrong size."
+        },
+        {
+         "v": "mi shun ra boteka veksabeta.",
+         "e": "I returned the shoes to the shop."
+        },
+        {
+         "v": "mi fleno vola.",
+         "e": "I want a refund."
+        },
+        {
+         "v": "boteka fleno suthata.",
+         "e": "the shop refused the refund."
+        },
+        {
+         "v": "mi angra esta.",
+         "e": "I was angry."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l5",
+       "kind": "lesson",
+       "title": "gift shopping",
+       "tip": "",
+       "words": [
+        "yile",
+        "kimola",
+        "zani"
+       ],
+       "sentences": [
+        {
+         "v": "mi dara ra ama zani deba.",
+         "e": "I have to choose a gift for mother."
+        },
+        {
+         "v": "yile ik prok es.",
+         "e": "the gift shop is near here."
+        },
+        {
+         "v": "ama galan kimola.",
+         "e": "mother prefers flowers."
+        },
+        {
+         "v": "mi buket kopava.",
+         "e": "I will buy a bouquet."
+        },
+        {
+         "v": "ama mol fela esva.",
+         "e": "mother will be very happy."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l6",
+       "kind": "lesson",
+       "title": "while",
+       "tip": "nirfung (while) works like kwan: the while part first, then the rest.",
+       "words": [
+        "nirfung"
+       ],
+       "sentences": [
+        {
+         "v": "nirfung mi kopa, vren chagi.",
+         "e": "while I shop, my friend waits."
+        },
+        {
+         "v": "nirfung ama kuka, aba platon limpa.",
+         "e": "while mother cooks, father cleans the plates."
+        },
+        {
+         "v": "nirfung min un rokem esta, pluvata.",
+         "e": "while we were at the mall, it rained."
+        },
+        {
+         "v": "nirfung tu nema, mi rabo.",
+         "e": "while you sleep, I work."
+        },
+        {
+         "v": "nirfung mi pasa, mi muzik ota.",
+         "e": "while I walk, I listen to music."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l7",
+       "kind": "lesson",
+       "title": "until",
+       "tip": "zalël (until) goes before a time, or starts its own part like nirfung.",
+       "words": [
+        "zalël",
+        "gëses"
+       ],
+       "sentences": [
+        {
+         "v": "zalël tu venva, mi chagiva.",
+         "e": "until you come, I will wait."
+        },
+        {
+         "v": "mi zalël or dek rabo.",
+         "e": "I work until ten o'clock."
+        },
+        {
+         "v": "zalël vechë, min un parka ludata.",
+         "e": "until the evening, we played in the park."
+        },
+        {
+         "v": "zalël losur, mi ne kopava.",
+         "e": "until the sale, I will not buy."
+        },
+        {
+         "v": "boteka zalël noch gëses.",
+         "e": "the shop is open until night."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l8",
+       "kind": "lesson",
+       "title": "the shopping basket",
+       "tip": "",
+       "words": [
+        "lun",
+        "pepa",
+        "pushkuk",
+        "kasro",
+        "antunor",
+        "guplu",
+        "keszu",
+        "vashingvi"
+       ],
+       "sentences": [
+        {
+         "v": "mi pepa da mikh vola.",
+         "e": "I want a bottle of milk."
+        },
+        {
+         "v": "lun da guplu sur tabla es.",
+         "e": "a jar of jam is on the table."
+        },
+        {
+         "v": "pushkuk da keszu kopa!",
+         "e": "buy a box of cookies!"
+        },
+        {
+         "v": "ama kasro i antunor kopata.",
+         "e": "mother bought flour and sugar."
+        },
+        {
+         "v": "torta kasro i antunor vashingvi.",
+         "e": "a cake needs flour and sugar."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l9",
+       "kind": "lesson",
+       "title": "so that",
+       "tip": "orut (so that) says why: \"mi zibe, orut mi kopa pot\", I save so that I can buy.",
+       "words": [
+        "orut",
+        "kisni",
+        "nidi",
+        "pisu"
+       ],
+       "sentences": [
+        {
+         "v": "mi zil zibe, orut mi biko kopa pot.",
+         "e": "I save money so that I can buy a bike."
+        },
+        {
+         "v": "mi kisni, orut mi un prova nidi.",
+         "e": "I study so that I succeed in the test."
+        },
+        {
+         "v": "ama lista skri, orut sa ne oblida.",
+         "e": "mother writes a list so that she does not forget."
+        },
+        {
+         "v": "min pisu, orut min ne tarda.",
+         "e": "we hurry so that we are not late."
+        },
+        {
+         "v": "aba trena, orut sa forër es.",
+         "e": "father trains so that he is stronger."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-l10",
+       "kind": "lesson",
+       "title": "a smart shopper",
+       "tip": "",
+       "words": [
+        "kidusok",
+        "damo",
+        "khosh"
+       ],
+       "sentences": [
+        {
+         "v": "mi zil kidusok thaknodo.",
+         "e": "I spend money carefully."
+        },
+        {
+         "v": "posmongan damo!",
+         "e": "compare the prices!"
+        },
+        {
+         "v": "sef posmong karo, zalël losur chagi!",
+         "e": "if the price is expensive, wait until the sale!"
+        },
+        {
+         "v": "mi khosh zibeta.",
+         "e": "I saved a lot."
+        },
+        {
+         "v": "nun mi sito gran ha.",
+         "e": "now I have big savings."
+        }
+       ]
+      },
+      {
+       "id": "m10.5-gold",
+       "kind": "gold",
+       "title": "gold lesson",
+       "from": [
+        "m10-l1",
+        "m10-l2",
+        "m10-l3",
+        "m10-l4",
+        "m10-l5",
+        "m10-l6",
+        "m10-l7",
+        "m10-l8",
+        "m10-l9",
+        "m10-l10",
+        "m10.5-l1",
+        "m10.5-l2",
+        "m10.5-l3",
+        "m10.5-l4",
+        "m10.5-l5",
+        "m10.5-l6",
+        "m10.5-l7",
+        "m10.5-l8",
+        "m10.5-l9",
+        "m10.5-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "11",
+     "title": "technology",
+     "half": false,
+     "lessons": [
+      {
+       "id": "m11-l1",
+       "kind": "lesson",
+       "title": "my phone",
+       "tip": "",
+       "words": [
+        "ronish",
+        "sori",
+        "zacha",
+        "leleleng",
+        "shitle",
+        "tedas"
+       ],
+       "sentences": [
+        {
+         "v": "mi ronish nov ha.",
+         "e": "I have a new phone."
+        },
+        {
+         "v": "zacha da ronish da mi tedas.",
+         "e": "my phone's battery is empty."
+        },
+        {
+         "v": "leleleng da mi kwe es?",
+         "e": "where is my charger?"
+        },
+        {
+         "v": "ronish shitle!",
+         "e": "turn on the phone!"
+        },
+        {
+         "v": "sori da sesa karo.",
+         "e": "my sister's smartphone is expensive."
+        }
+       ]
+      },
+      {
+       "id": "m11-l2",
+       "kind": "lesson",
+       "title": "messages",
+       "tip": "",
+       "words": [
+        "pasinzët",
+        "mure",
+        "vakeng",
+        "kurdlu"
+       ],
+       "sentences": [
+        {
+         "v": "mi pasinzët ra vren mureta.",
+         "e": "I texted a message to my friend."
+        },
+        {
+         "v": "mi vakeng nov kurdluta.",
+         "e": "I received a new email."
+        },
+        {
+         "v": "tu pasinzët da mi ridëta ka?",
+         "e": "did you read my message?"
+        },
+        {
+         "v": "mi vakeng ra mestro mandava.",
+         "e": "I will send an email to the teacher."
+        },
+        {
+         "v": "vren ne repata.",
+         "e": "my friend did not answer."
+        }
+       ]
+      },
+      {
+       "id": "m11-l3",
+       "kind": "lesson",
+       "title": "websites and apps",
+       "tip": "",
+       "words": [
+        "kumin",
+        "benësh",
+        "lanse",
+        "zushoshya",
+        "pashashta",
+        "kitshuk"
+       ],
+       "sentences": [
+        {
+         "v": "mi kumin nov trovata.",
+         "e": "I found a new website."
+        },
+        {
+         "v": "ve benësh mol kitshuk.",
+         "e": "this app is very useful."
+        },
+        {
+         "v": "lanse da tu ne thela!",
+         "e": "do not tell your password!"
+        },
+        {
+         "v": "mi un reto zushoshya.",
+         "e": "I search on the internet."
+        },
+        {
+         "v": "sur ve pashashta!",
+         "e": "click on this!"
+        }
+       ]
+      },
+      {
+       "id": "m11-l4",
+       "kind": "lesson",
+       "title": "social media",
+       "tip": "",
+       "words": [
+        "kekë",
+        "maku",
+        "walën",
+        "dika",
+        "kuvu",
+        "yepepa"
+       ],
+       "sentences": [
+        {
+         "v": "sesa da mi kekë mol goda.",
+         "e": "my sister likes social media a lot."
+        },
+        {
+         "v": "mi foto nov dikata.",
+         "e": "I posted a new photo."
+        },
+        {
+         "v": "tu makun multa ha ka?",
+         "e": "do you have many followers?"
+        },
+        {
+         "v": "walën da tu bon esta.",
+         "e": "your comment was good."
+        },
+        {
+         "v": "kuvu da mi yepepa.",
+         "e": "my profile is private."
+        }
+       ]
+      },
+      {
+       "id": "m11-l5",
+       "kind": "lesson",
+       "title": "videos",
+       "tip": "",
+       "words": [
+        "rami",
+        "klaba",
+        "tikkin",
+        "dine",
+        "murwa",
+        "shubu"
+       ],
+       "sentences": [
+        {
+         "v": "mi video nov dineta.",
+         "e": "I filmed a new video."
+        },
+        {
+         "v": "tikkin da mi dek maku ha.",
+         "e": "my channel has ten followers."
+        },
+        {
+         "v": "lirari vedey klabava.",
+         "e": "the singer will stream today."
+        },
+        {
+         "v": "min rami kun shubuta.",
+         "e": "we watched the stream together."
+        },
+        {
+         "v": "mi lir da mi murwa vola.",
+         "e": "I want to record my song."
+        }
+       ]
+      },
+      {
+       "id": "m11-l6",
+       "kind": "lesson",
+       "title": "files",
+       "tip": "",
+       "words": [
+        "noshmas",
+        "giwa",
+        "oyon",
+        "dashuti",
+        "rini",
+        "panhong",
+        "tiku"
+       ],
+       "sentences": [
+        {
+         "v": "mi giwa un oyon tiku.",
+         "e": "I put the file in the folder."
+        },
+        {
+         "v": "giwa da mi ne dashuti!",
+         "e": "do not delete my file!"
+        },
+        {
+         "v": "mi benësh nov rinita.",
+         "e": "I installed a new app."
+        },
+        {
+         "v": "noshmas da aba vet i lenë.",
+         "e": "father's laptop is old and slow."
+        },
+        {
+         "v": "kompu panhong vola.",
+         "e": "the computer wants an update."
+        }
+       ]
+      },
+      {
+       "id": "m11-l7",
+       "kind": "lesson",
+       "title": "when tech breaks",
+       "tip": "",
+       "words": [
+        "samu",
+        "brobung",
+        "retnolu",
+        "velle",
+        "shupi"
+       ],
+       "sentences": [
+        {
+         "v": "kompu da mi brobung ha.",
+         "e": "my computer has a virus."
+        },
+        {
+         "v": "ronish da mi velleta.",
+         "e": "my phone broke."
+        },
+        {
+         "v": "teknik ronish retnoluta.",
+         "e": "the engineer fixed the phone."
+        },
+        {
+         "v": "benësh samu multa ha.",
+         "e": "the app has many bugs."
+        },
+        {
+         "v": "ripë shupi!",
+         "e": "try again!"
+        }
+       ]
+      },
+      {
+       "id": "m11-l8",
+       "kind": "lesson",
+       "title": "coding",
+       "tip": "",
+       "words": [
+        "sozising",
+        "tudapa",
+        "kemi",
+        "shemde",
+        "waba"
+       ],
+       "sentences": [
+        {
+         "v": "mi tudapa lerna.",
+         "e": "I am learning to code."
+        },
+        {
+         "v": "kemi sozising skri.",
+         "e": "the programmer writes code."
+        },
+        {
+         "v": "sozising da mi rabo!",
+         "e": "my code works!"
+        },
+        {
+         "v": "min shemde pik wabata.",
+         "e": "we built a small robot."
+        },
+        {
+         "v": "shemde da min sur tabla pasa.",
+         "e": "our robot walks on the table."
+        }
+       ]
+      },
+      {
+       "id": "m11-l9",
+       "kind": "lesson",
+       "title": "staying safe online",
+       "tip": "",
+       "words": [
+        "rede",
+        "rimos",
+        "tline",
+        "hoshzir"
+       ],
+       "sentences": [
+        {
+         "v": "rede vala.",
+         "e": "privacy is important."
+        },
+        {
+         "v": "rimos kumin tlineta.",
+         "e": "a hacker hacked the website."
+        },
+        {
+         "v": "lanse lon i khar fasa!",
+         "e": "make a long and hard password!"
+        },
+        {
+         "v": "sef lanse da tu lekh, rimos tu tline pot.",
+         "e": "if your password is easy, a hacker can hack you."
+        },
+        {
+         "v": "mi un reto hoshzir senta.",
+         "e": "I feel safe on the internet."
+        }
+       ]
+      },
+      {
+       "id": "m11-l10",
+       "kind": "lesson",
+       "title": "a day online",
+       "tip": "",
+       "words": [
+        "utho"
+       ],
+       "sentences": [
+        {
+         "v": "un matin, mi pasinzëtan ridë.",
+         "e": "in the morning, I read messages."
+        },
+        {
+         "v": "un medey, mi video shubu.",
+         "e": "at lunch, I watch a video."
+        },
+        {
+         "v": "un vechë, mi foto dika.",
+         "e": "in the evening, I post a photo."
+        },
+        {
+         "v": "shom un noch, ronish utho!",
+         "e": "but at night, turn off the phone!"
+        },
+        {
+         "v": "ronish utho i nema.",
+         "e": "turn off the phone and sleep."
+        }
+       ]
+      },
+      {
+       "id": "m11-challenge",
+       "kind": "challenge",
+       "title": "challenge",
+       "from": [
+        "m11-l1",
+        "m11-l2",
+        "m11-l3",
+        "m11-l4",
+        "m11-l5",
+        "m11-l6",
+        "m11-l7",
+        "m11-l8",
+        "m11-l9",
+        "m11-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "11.5",
+     "title": "news and media",
+     "half": true,
+     "lessons": [
+      {
+       "id": "m11.5-l1",
+       "kind": "lesson",
+       "title": "television and papers",
+       "tip": "",
+       "words": [
+        "savosh",
+        "rekul",
+        "lushtumon",
+        "hafi"
+       ],
+       "sentences": [
+        {
+         "v": "aba lushtumon dey tot ridë.",
+         "e": "father reads the newspaper every day."
+        },
+        {
+         "v": "savosh ne bon.",
+         "e": "the television is not good."
+        },
+        {
+         "v": "hafi ve sago skrita.",
+         "e": "a journalist wrote this story."
+        },
+        {
+         "v": "ama rekul kopata.",
+         "e": "mother bought a magazine."
+        },
+        {
+         "v": "min un vechë savosh shubu.",
+         "e": "we watch television in the evening."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l2",
+       "kind": "lesson",
+       "title": "radio and headphones",
+       "tip": "",
+       "words": [
+        "monhachum",
+        "botero",
+        "damfo",
+        "nisimi",
+        "odo"
+       ],
+       "sentences": [
+        {
+         "v": "mi damfo nov ha.",
+         "e": "I have new headphones."
+        },
+        {
+         "v": "mi muzik kel damfo nisimi.",
+         "e": "I listen to music with headphones."
+        },
+        {
+         "v": "dedo monhachum vet ha.",
+         "e": "grandfather has an old radio."
+        },
+        {
+         "v": "botero mol odo.",
+         "e": "the speaker is very loud."
+        },
+        {
+         "v": "un oto, min monhachum nisimi.",
+         "e": "in the car, we listen to the radio."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l3",
+       "kind": "lesson",
+       "title": "rumors",
+       "tip": "",
+       "words": [
+        "woye",
+        "mulal",
+        "kika",
+        "pelo",
+        "lute"
+       ],
+       "sentences": [
+        {
+         "v": "ve woye ne ver.",
+         "e": "this rumor is not true."
+        },
+        {
+         "v": "nova pelo multa un reto es.",
+         "e": "there is a lot of fake news on the internet."
+        },
+        {
+         "v": "nova ripë kihi!",
+         "e": "check the news again!"
+        },
+        {
+         "v": "ve foto kika ka?",
+         "e": "is this photo real?"
+        },
+        {
+         "v": "mulal da mi lute.",
+         "e": "my opinion is different."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l4",
+       "kind": "lesson",
+       "title": "although",
+       "tip": "ming (although) is another two-part word: the although part first.",
+       "words": [
+        "ming"
+       ],
+       "sentences": [
+        {
+         "v": "ming pluva, min ra parka golva.",
+         "e": "although it rains, we will go to the park."
+        },
+        {
+         "v": "ming sa fatiga, sa rabo.",
+         "e": "although she is tired, she works."
+        },
+        {
+         "v": "ming ve ronish karo, mi sa kopava.",
+         "e": "although this phone is expensive, I will buy it."
+        },
+        {
+         "v": "ming mi kisnita, prova khar esta.",
+         "e": "although I studied, the test was hard."
+        },
+        {
+         "v": "ming tu pik, tu forë.",
+         "e": "although you are small, you are strong."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l5",
+       "kind": "lesson",
+       "title": "unless",
+       "tip": "fan (unless) also starts its own part.",
+       "words": [
+        "fan",
+        "kaso"
+       ],
+       "sentences": [
+        {
+         "v": "fan tu pisu, tu tarda esva.",
+         "e": "unless you hurry, you will be late."
+        },
+        {
+         "v": "fan pluva, min sur playa luda.",
+         "e": "unless it rains, we play on the beach."
+        },
+        {
+         "v": "fan tu lanse kenë, tu kaso ne pot.",
+         "e": "unless you know the password, you cannot enter."
+        },
+        {
+         "v": "fan ronish zacha ha, sa ne rabo.",
+         "e": "unless the phone has battery, it does not work."
+        },
+        {
+         "v": "mi ne golva, fan tu golva.",
+         "e": "I will not go unless you go."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l6",
+       "kind": "lesson",
+       "title": "games online",
+       "tip": "",
+       "words": [
+        "puntilit",
+        "lutlozon",
+        "bëbash",
+        "kava",
+        "sishu"
+       ],
+       "sentences": [
+        {
+         "v": "min puntilit kun luda.",
+         "e": "we play a video game together."
+        },
+        {
+         "v": "tu ekipa da min kava ka?",
+         "e": "will you join our team?"
+        },
+        {
+         "v": "bëbash da mi granor dë bëbash da tu.",
+         "e": "my score is bigger than your score."
+        },
+        {
+         "v": "lutlozonan multa un reto es.",
+         "e": "there are many players on the internet."
+        },
+        {
+         "v": "ve ludo mol sishu.",
+         "e": "this game is very exciting."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l7",
+       "kind": "lesson",
+       "title": "selfies",
+       "tip": "",
+       "words": [
+        "shasotlush",
+        "mukpra",
+        "laro",
+        "poshna",
+        "vater"
+       ],
+       "sentences": [
+        {
+         "v": "mi shasotlush fasata.",
+         "e": "I took a selfie."
+        },
+        {
+         "v": "laro!",
+         "e": "smile!"
+        },
+        {
+         "v": "foton da tu ra mi poshna!",
+         "e": "show me your photos!"
+        },
+        {
+         "v": "mukpra foton bela fasa.",
+         "e": "the photographer takes beautiful photos."
+        },
+        {
+         "v": "shasotlush da sesa vater.",
+         "e": "my sister's selfie is funny."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l8",
+       "kind": "lesson",
+       "title": "whether",
+       "tip": "riblin (whether) comes after verbs like know, ask and wonder, like ke does.",
+       "words": [
+        "riblin",
+        "masoplo"
+       ],
+       "sentences": [
+        {
+         "v": "mi ne kenë riblin sa venva.",
+         "e": "I do not know whether she will come."
+        },
+        {
+         "v": "mi kweta riblin tu libër.",
+         "e": "I ask whether you are free."
+        },
+        {
+         "v": "sa ne kenë riblin ve ver.",
+         "e": "she does not know whether this is true."
+        },
+        {
+         "v": "tu kenë riblin bus tarda ka?",
+         "e": "do you know whether the bus is late?"
+        },
+        {
+         "v": "mi masoplo riblin mi gol deba.",
+         "e": "I wonder whether I must go."
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l9",
+       "kind": "lesson",
+       "title": "too much screen",
+       "tip": "",
+       "words": [
+        "mengpa",
+        "plë",
+        "resdi",
+        "etera",
+        "teshi"
+       ],
+       "sentences": [
+        {
+         "v": "tu ronish khosh mengpa.",
+         "e": "you use the phone a lot."
+        },
+        {
+         "v": "visan da tu plë vola.",
+         "e": "your eyes want rest."
+        },
+        {
+         "v": "ronish utho i resdi!",
+         "e": "turn off the phone and relax!"
+        },
+        {
+         "v": "teshi gol i etera!",
+         "e": "go outside and breathe!"
+        },
+        {
+         "v": "la ronish, gras sol!",
+         "e": "less phone, more sun!"
+        }
+       ]
+      },
+      {
+       "id": "m11.5-l10",
+       "kind": "lesson",
+       "title": "tech and me",
+       "tip": "",
+       "words": [
+        "vuvo"
+       ],
+       "sentences": [
+        {
+         "v": "mi ronish, noshmas i damfo ha.",
+         "e": "I have a phone, a laptop and headphones."
+        },
+        {
+         "v": "reto rekame, shom ne vuvo.",
+         "e": "the internet is necessary, but it is not everything."
+        },
+        {
+         "v": "mi penka ke kompun kitshuk.",
+         "e": "I think that computers are useful."
+        },
+        {
+         "v": "ming mi kekë goda, mi vrenan kika kimola.",
+         "e": "although I like social media, I prefer real friends."
+        },
+        {
+         "v": "ronish utho i vren da tu vizita!",
+         "e": "turn off the phone and visit your friend!"
+        }
+       ]
+      },
+      {
+       "id": "m11.5-gold",
+       "kind": "gold",
+       "title": "gold lesson",
+       "from": [
+        "m11-l1",
+        "m11-l2",
+        "m11-l3",
+        "m11-l4",
+        "m11-l5",
+        "m11-l6",
+        "m11-l7",
+        "m11-l8",
+        "m11-l9",
+        "m11-l10",
+        "m11.5-l1",
+        "m11.5-l2",
+        "m11.5-l3",
+        "m11.5-l4",
+        "m11.5-l5",
+        "m11.5-l6",
+        "m11.5-l7",
+        "m11.5-l8",
+        "m11.5-l9",
+        "m11.5-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "12",
+     "title": "travel and culture",
+     "half": false,
+     "lessons": [
+      {
+       "id": "m12-l1",
+       "kind": "lesson",
+       "title": "passports",
+       "tip": "",
+       "words": [
+        "fimeno",
+        "opit",
+        "onbat",
+        "lëli",
+        "zime",
+        "notë",
+        "tënanma"
+       ],
+       "sentences": [
+        {
+         "v": "mi fimeno nov ha.",
+         "e": "I have a new passport."
+        },
+        {
+         "v": "tu opit vashingvi ka?",
+         "e": "do you need a visa?"
+        },
+        {
+         "v": "min onbat tënanmata.",
+         "e": "we crossed the border."
+        },
+        {
+         "v": "un nasho notë, mi lëli.",
+         "e": "in a foreign country, I am a foreigner."
+        },
+        {
+         "v": "zime da nasho da min ik es.",
+         "e": "our country's embassy is here."
+        }
+       ]
+      },
+      {
+       "id": "m12-l2",
+       "kind": "lesson",
+       "title": "the flight",
+       "tip": "",
+       "words": [
+        "asovu",
+        "sone",
+        "vazar",
+        "redu",
+        "lete"
+       ],
+       "sentences": [
+        {
+         "v": "asovu da min tarda.",
+         "e": "our flight is late."
+        },
+        {
+         "v": "sone da mi gran i lete.",
+         "e": "my luggage is big and heavy."
+        },
+        {
+         "v": "vazar da mi nek vindë es.",
+         "e": "my seat is next to the window."
+        },
+        {
+         "v": "avyon un or tis chibava.",
+         "e": "the airplane will arrive at three o'clock."
+        },
+        {
+         "v": "redu kwe es?",
+         "e": "where is the exit?"
+        }
+       ]
+      },
+      {
+       "id": "m12-l3",
+       "kind": "lesson",
+       "title": "new languages",
+       "tip": "",
+       "words": [
+        "vadogus",
+        "dengfa",
+        "selu",
+        "rava",
+        "sinang",
+        "ranu"
+       ],
+       "sentences": [
+        {
+         "v": "mi thelor da ve nasho ne rava.",
+         "e": "I do not understand the language of this country."
+        },
+        {
+         "v": "kiro, ve selu!",
+         "e": "please translate this!"
+        },
+        {
+         "v": "vadogus da tu bela.",
+         "e": "your accent is beautiful."
+        },
+        {
+         "v": "ik human dengfa sinang thela.",
+         "e": "here people speak another dialect."
+        },
+        {
+         "v": "mi thelan ranu kenë.",
+         "e": "I know some words."
+        }
+       ]
+      },
+      {
+       "id": "m12-l4",
+       "kind": "lesson",
+       "title": "local food",
+       "tip": "",
+       "words": [
+        "mirin",
+        "nirun",
+        "luthu",
+        "ler",
+        "napa",
+        "balung",
+        "avim"
+       ],
+       "sentences": [
+        {
+         "v": "mirin nirun mol ham.",
+         "e": "the local dish is very delicious."
+        },
+        {
+         "v": "ve mirin luthu.",
+         "e": "this dish is spicy."
+        },
+        {
+         "v": "mi balung kel karnë yama.",
+         "e": "I eat rice with meat."
+        },
+        {
+         "v": "avim ler.",
+         "e": "the lemon is sour."
+        },
+        {
+         "v": "mi napa kimola.",
+         "e": "I prefer salad."
+        }
+       ]
+      },
+      {
+       "id": "m12-l5",
+       "kind": "lesson",
+       "title": "customs",
+       "tip": "",
+       "words": [
+        "podo",
+        "lolivo",
+        "garar",
+        "noshsom",
+        "shelmi",
+        "hotri"
+       ],
+       "sentences": [
+        {
+         "v": "ik podon lute.",
+         "e": "here the customs are different."
+        },
+        {
+         "v": "lolivo da ve nasho vet.",
+         "e": "the tradition of this country is old."
+        },
+        {
+         "v": "min noshsom nirun shelmi deba.",
+         "e": "we must respect the local culture."
+        },
+        {
+         "v": "hotri garar mol bela.",
+         "e": "the traditional costume is very beautiful."
+        },
+        {
+         "v": "mi noshsoman multa lerna vola.",
+         "e": "I want to learn many cultures."
+        }
+       ]
+      },
+      {
+       "id": "m12-l6",
+       "kind": "lesson",
+       "title": "greetings",
+       "tip": "",
+       "words": [
+        "tildli",
+        "devo",
+        "ashir",
+        "vichi",
+        "yovi"
+       ],
+       "sentences": [
+        {
+         "v": "ik human kel khan tildli.",
+         "e": "here people greet with the hand."
+        },
+        {
+         "v": "ashir!",
+         "e": "welcome!"
+        },
+        {
+         "v": "human da ve urba mi devota.",
+         "e": "the people of this city welcomed me."
+        },
+        {
+         "v": "tu yovi es deba.",
+         "e": "you must be polite."
+        },
+        {
+         "v": "mi tot vichita.",
+         "e": "I thanked everyone."
+        }
+       ]
+      },
+      {
+       "id": "m12-l7",
+       "kind": "lesson",
+       "title": "festivals",
+       "tip": "",
+       "words": [
+        "sopu",
+        "madok",
+        "mutu",
+        "tëdla",
+        "dolme",
+        "chati"
+       ],
+       "sentences": [
+        {
+         "v": "vedey sopu gran es.",
+         "e": "today there is a big festival."
+        },
+        {
+         "v": "madok un vilë pasa.",
+         "e": "the parade walks in the street."
+        },
+        {
+         "v": "un noch, mutu bela esta.",
+         "e": "at night, the fireworks were beautiful."
+        },
+        {
+         "v": "kitin tëdlan chati.",
+         "e": "the children hold lanterns."
+        },
+        {
+         "v": "tot kun dolme.",
+         "e": "everyone celebrates together."
+        }
+       ]
+      },
+      {
+       "id": "m12-l8",
+       "kind": "lesson",
+       "title": "exploring",
+       "tip": "",
+       "words": [
+        "usmi",
+        "dlima",
+        "unu",
+        "sorus",
+        "kutim"
+       ],
+       "sentences": [
+        {
+         "v": "min kutim usmita.",
+         "e": "we explored the island."
+        },
+        {
+         "v": "unu lon, shom bela esta.",
+         "e": "the journey was long but beautiful."
+        },
+        {
+         "v": "sorus urba ra min poshnata.",
+         "e": "the guide showed us the city."
+        },
+        {
+         "v": "ve dlima sishu esta!",
+         "e": "this adventure was exciting!"
+        },
+        {
+         "v": "mi dlima nov vola.",
+         "e": "I want a new adventure."
+        }
+       ]
+      },
+      {
+       "id": "m12-l9",
+       "kind": "lesson",
+       "title": "wild places",
+       "tip": "",
+       "words": [
+        "puvu",
+        "darite",
+        "lada",
+        "letruk",
+        "owon",
+        "odrek",
+        "tate"
+       ],
+       "sentences": [
+        {
+         "v": "puvu kal i darite.",
+         "e": "the desert is hot and dry."
+        },
+        {
+         "v": "lada letrukan multa ha.",
+         "e": "the jungle has many animals."
+        },
+        {
+         "v": "owon gran i odo.",
+         "e": "the waterfall is big and loud."
+        },
+        {
+         "v": "min un odrek kasota.",
+         "e": "we entered a cave."
+        },
+        {
+         "v": "tate granor dë pelag.",
+         "e": "the ocean is bigger than the sea."
+        }
+       ]
+      },
+      {
+       "id": "m12-l10",
+       "kind": "lesson",
+       "title": "a postcard",
+       "tip": "",
+       "words": [
+        "lëbë"
+       ],
+       "sentences": [
+        {
+         "v": "vela dos kutim!",
+         "e": "hello from the island!"
+        },
+        {
+         "v": "klima kal i sol shina.",
+         "e": "the weather is hot and the sun shines."
+        },
+        {
+         "v": "mi mirinan nov yamata.",
+         "e": "I ate new dishes."
+        },
+        {
+         "v": "human lëbë.",
+         "e": "the people are friendly."
+        },
+        {
+         "v": "mi tu ne oblida!",
+         "e": "I do not forget you!"
+        }
+       ]
+      },
+      {
+       "id": "m12-challenge",
+       "kind": "challenge",
+       "title": "challenge",
+       "from": [
+        "m12-l1",
+        "m12-l2",
+        "m12-l3",
+        "m12-l4",
+        "m12-l5",
+        "m12-l6",
+        "m12-l7",
+        "m12-l8",
+        "m12-l9",
+        "m12-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "12.5",
+     "title": "festivals and traditions",
+     "half": true,
+     "lessons": [
+      {
+       "id": "m12.5-l1",
+       "kind": "lesson",
+       "title": "a wedding",
+       "tip": "",
+       "words": [
+        "rizo",
+        "keva",
+        "eku",
+        "dema"
+       ],
+       "sentences": [
+        {
+         "v": "tiya da mi kevava.",
+         "e": "my aunt will get married."
+        },
+        {
+         "v": "rizo un primë esva.",
+         "e": "the wedding will be in spring."
+        },
+        {
+         "v": "eku bela esta.",
+         "e": "the ceremony was beautiful."
+        },
+        {
+         "v": "apre eku, dema gran esta.",
+         "e": "after the ceremony, there was a big feast."
+        },
+        {
+         "v": "tot dansata.",
+         "e": "everyone danced."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l2",
+       "kind": "lesson",
+       "title": "national day",
+       "tip": "",
+       "words": [
+        "bilifi",
+        "mukhash",
+        "vlëmen",
+        "nuten"
+       ],
+       "sentences": [
+        {
+         "v": "bilifi da nasho da min blu i alba.",
+         "e": "our country's flag is blue and white."
+        },
+        {
+         "v": "human mukhash lira.",
+         "e": "the people sing the anthem."
+        },
+        {
+         "v": "un vlëmen, bilifin multa es.",
+         "e": "in town, there are many flags."
+        },
+        {
+         "v": "mi nuten da ve nasho.",
+         "e": "I am a citizen of this country."
+        },
+        {
+         "v": "vedey dey vala da nasho.",
+         "e": "today is an important day of the country."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l3",
+       "kind": "lesson",
+       "title": "costumes",
+       "tip": "",
+       "words": [
+        "novuk",
+        "wigo",
+        "ulet",
+        "venesh"
+       ],
+       "sentences": [
+        {
+         "v": "kitin hotrin vesta.",
+         "e": "the children put on costumes."
+        },
+        {
+         "v": "novuk da tu venesh!",
+         "e": "your mask is scary!"
+        },
+        {
+         "v": "mi kel hotri da drako wigota.",
+         "e": "I dressed in a dragon costume."
+        },
+        {
+         "v": "hotri da bro ulet.",
+         "e": "my brother's costume is weird."
+        },
+        {
+         "v": "tot ridata.",
+         "e": "everyone laughed."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l4",
+       "kind": "lesson",
+       "title": "legends",
+       "tip": "",
+       "words": [
+        "menisthi",
+        "semulom",
+        "mesa",
+        "poshë",
+        "thunpo",
+        "lebis"
+       ],
+       "sentences": [
+        {
+         "v": "menisthi thunpo lebis ve urba thela.",
+         "e": "an ancient legend tells about this city."
+        },
+        {
+         "v": "dedo semuloman thela.",
+         "e": "grandfather tells myths."
+        },
+        {
+         "v": "tu mesan kreda ka?",
+         "e": "do you believe in ghosts?"
+        },
+        {
+         "v": "poshë un odrek viva.",
+         "e": "a monster lives in the cave."
+        },
+        {
+         "v": "ve sago ne kika.",
+         "e": "this story is not real."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l5",
+       "kind": "lesson",
+       "title": "holiday treats",
+       "tip": "",
+       "words": [
+        "leklilë",
+        "abam",
+        "yifetil",
+        "tëkire"
+       ],
+       "sentences": [
+        {
+         "v": "baba leklilë tëkire.",
+         "e": "grandmother bakes a pie."
+        },
+        {
+         "v": "kitin keszun yama.",
+         "e": "the children eat cookies."
+        },
+        {
+         "v": "un somër, min abam yama.",
+         "e": "in summer, we eat ice cream."
+        },
+        {
+         "v": "leklilë kel yifetil mol ham.",
+         "e": "pie with cream is very delicious."
+        },
+        {
+         "v": "mi keszun ra vesin dota.",
+         "e": "I gave cookies to the neighbor."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l6",
+       "kind": "lesson",
+       "title": "faith and respect",
+       "tip": "",
+       "words": [
+        "kibi",
+        "navo",
+        "cholkhoro",
+        "duva",
+        "lamor"
+       ],
+       "sentences": [
+        {
+         "v": "un ve urba, navo i cholkhoro es.",
+         "e": "in this city, there is a church and a temple."
+        },
+        {
+         "v": "human kibin lute ha.",
+         "e": "people have different religions."
+        },
+        {
+         "v": "min lamor ra tot do deba.",
+         "e": "we must give respect to everyone."
+        },
+        {
+         "v": "dedo duva.",
+         "e": "grandfather is religious."
+        },
+        {
+         "v": "cholkhoro vet i silen.",
+         "e": "the temple is old and quiet."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l7",
+       "kind": "lesson",
+       "title": "gifts and thanks",
+       "tip": "",
+       "words": [
+        "glusa",
+        "yone",
+        "ika",
+        "rugetë"
+       ],
+       "sentences": [
+        {
+         "v": "sa dara ra mi glusata.",
+         "e": "she offered me a gift."
+        },
+        {
+         "v": "mi dara yoneta.",
+         "e": "I accepted the gift."
+        },
+        {
+         "v": "mi mol ika.",
+         "e": "I am very grateful."
+        },
+        {
+         "v": "shevan, tu mol rugetë!",
+         "e": "thank you, you are very generous!"
+        },
+        {
+         "v": "mi tu vichi.",
+         "e": "I thank you."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l8",
+       "kind": "lesson",
+       "title": "as soon as",
+       "tip": "ish (as soon as) starts its own part too.",
+       "words": [
+        "ish",
+        "evute",
+        "raluyo"
+       ],
+       "sentences": [
+        {
+         "v": "ish mi chiba, mi tu evuteva.",
+         "e": "as soon as I arrive, I will call you."
+        },
+        {
+         "v": "ish sol shina, min golva.",
+         "e": "as soon as the sun shines, we will go."
+        },
+        {
+         "v": "ish festa raluyo, tot dansa.",
+         "e": "as soon as the party starts, everyone dances."
+        },
+        {
+         "v": "ish tu tasko fini, tu luda pot.",
+         "e": "as soon as you finish the homework, you can play."
+        },
+        {
+         "v": "ish dur gëses, kitin kura.",
+         "e": "as soon as the door is open, the children run."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l9",
+       "kind": "lesson",
+       "title": "travel memories",
+       "tip": "",
+       "words": [
+        "ara",
+        "tote"
+       ],
+       "sentences": [
+        {
+         "v": "mi dlima da mi rekorda.",
+         "e": "I remember my adventure."
+        },
+        {
+         "v": "foton memon bela do.",
+         "e": "photos give beautiful memories."
+        },
+        {
+         "v": "un ara, min multamo vayata.",
+         "e": "in the past, we traveled a lot."
+        },
+        {
+         "v": "mi ra kutim ripë golve.",
+         "e": "I would go to the island again."
+        },
+        {
+         "v": "ve unu bonesh da tote da mi esta.",
+         "e": "this journey was the best of my life."
+        }
+       ]
+      },
+      {
+       "id": "m12.5-l10",
+       "kind": "lesson",
+       "title": "home again",
+       "tip": "",
+       "words": [
+        "tamchin"
+       ],
+       "sentences": [
+        {
+         "v": "un fin, min ra kar tornata.",
+         "e": "in the end, we came back home."
+        },
+        {
+         "v": "nasho da mi bonesh.",
+         "e": "my country is the best."
+        },
+        {
+         "v": "shom mi nashon sinang liva.",
+         "e": "but I love other countries."
+        },
+        {
+         "v": "noshsoman multa mol tamchin.",
+         "e": "many cultures are very interesting."
+        },
+        {
+         "v": "yer pros, min ripë vayava!",
+         "e": "next year, we will travel again!"
+        }
+       ]
+      },
+      {
+       "id": "m12.5-gold",
+       "kind": "gold",
+       "title": "gold lesson",
+       "from": [
+        "m12-l1",
+        "m12-l2",
+        "m12-l3",
+        "m12-l4",
+        "m12-l5",
+        "m12-l6",
+        "m12-l7",
+        "m12-l8",
+        "m12-l9",
+        "m12-l10",
+        "m12.5-l1",
+        "m12.5-l2",
+        "m12.5-l3",
+        "m12.5-l4",
+        "m12.5-l5",
+        "m12.5-l6",
+        "m12.5-l7",
+        "m12.5-l8",
+        "m12.5-l9",
+        "m12.5-l10"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "title": "speaking freely",
+   "subtitle": "society, science, art and your own story",
+   "modules": [
+    {
+     "id": "13",
+     "title": "community",
+     "half": false,
+     "lessons": [
+      {
+       "id": "m13-l1",
+       "kind": "lesson",
+       "title": "my town",
+       "tip": "",
+       "words": [
+        "limangvar",
+        "dali",
+        "kechanu"
+       ],
+       "sentences": [
+        {
+         "v": "mi un vlëmen pik viva.",
+         "e": "I live in a small town."
+        },
+        {
+         "v": "dali da min lëbë.",
+         "e": "our community is friendly."
+        },
+        {
+         "v": "baba un limangvar viva.",
+         "e": "grandmother lives in a village."
+        },
+        {
+         "v": "ve kechanu bonesh da vlëmen.",
+         "e": "this is the best place in town."
+        },
+        {
+         "v": "boteka nirun pik i bela.",
+         "e": "the local shop is small and beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m13-l2",
+       "kind": "lesson",
+       "title": "helping out",
+       "tip": "",
+       "words": [
+        "teta",
+        "beni",
+        "kavobu",
+        "nodusa",
+        "zanlë"
+       ],
+       "sentences": [
+        {
+         "v": "mi un kavobu beni.",
+         "e": "I volunteer at a charity."
+        },
+        {
+         "v": "tetan multa ayda.",
+         "e": "many volunteers help."
+        },
+        {
+         "v": "min kamisan vet nodusata.",
+         "e": "we donated old shirts."
+        },
+        {
+         "v": "zanlë da tu vala.",
+         "e": "your donation is important."
+        },
+        {
+         "v": "mi ayda goda, kaus felatal do.",
+         "e": "I like to help because it gives happiness."
+        }
+       ]
+      },
+      {
+       "id": "m13-l3",
+       "kind": "lesson",
+       "title": "meetings",
+       "tip": "",
+       "words": [
+        "dunur",
+        "khashi",
+        "keyer",
+        "fili",
+        "zache"
+       ],
+       "sentences": [
+        {
+         "v": "vedey dunur da dali es.",
+         "e": "today there is a community meeting."
+        },
+        {
+         "v": "keyer dunur khashita.",
+         "e": "the leader organized the meeting."
+        },
+        {
+         "v": "tot mulal da sa thelata.",
+         "e": "everyone said their opinion."
+        },
+        {
+         "v": "fili lon esta.",
+         "e": "the debate was long."
+        },
+        {
+         "v": "un fin, min zacheta.",
+         "e": "in the end, we agreed."
+        }
+       ]
+      },
+      {
+       "id": "m13-l4",
+       "kind": "lesson",
+       "title": "town rules",
+       "tip": "",
+       "words": [
+        "bonezam",
+        "merfe",
+        "pesklëga",
+        "gim",
+        "gabël",
+        "sepe"
+       ],
+       "sentences": [
+        {
+         "v": "bonezam vala.",
+         "e": "the law is important."
+        },
+        {
+         "v": "gim ik sepe ne merfe.",
+         "e": "the police do not allow parking here."
+        },
+        {
+         "v": "parka vufan merfe.",
+         "e": "the park allows dogs."
+        },
+        {
+         "v": "skol ronishan pesklëga.",
+         "e": "the school forbids phones."
+        },
+        {
+         "v": "gabël human ayda.",
+         "e": "the police officer helps people."
+        }
+       ]
+      },
+      {
+       "id": "m13-l5",
+       "kind": "lesson",
+       "title": "voting",
+       "tip": "",
+       "words": [
+        "nëki",
+        "riri",
+        "dihi",
+        "mafalak",
+        "duse",
+        "wusa"
+       ],
+       "sentences": [
+        {
+         "v": "posdey nëki esva.",
+         "e": "tomorrow there will be an election."
+        },
+        {
+         "v": "aba i ama riri.",
+         "e": "father and mother vote."
+        },
+        {
+         "v": "human mafalak nov dihita.",
+         "e": "the people elected a new president."
+        },
+        {
+         "v": "duse reglan nov fasa.",
+         "e": "the government makes new rules."
+        },
+        {
+         "v": "kwan mi wusava, mi ririva.",
+         "e": "when I grow up, I will vote."
+        }
+       ]
+      },
+      {
+       "id": "m13-l6",
+       "kind": "lesson",
+       "title": "rights and duties",
+       "tip": "",
+       "words": [
+        "romzom",
+        "thunatvush",
+        "leni",
+        "nabranuk",
+        "liluk"
+       ],
+       "sentences": [
+        {
+         "v": "human tot romzom ha.",
+         "e": "all people have rights."
+        },
+        {
+         "v": "human tot leni.",
+         "e": "all people are equal."
+        },
+        {
+         "v": "nuten thunatvushan ha.",
+         "e": "a citizen has duties."
+        },
+        {
+         "v": "nabranuk i liluk vala.",
+         "e": "freedom and justice are important."
+        },
+        {
+         "v": "min romzoman da sinang shelmi deba.",
+         "e": "we must respect the rights of others."
+        }
+       ]
+      },
+      {
+       "id": "m13-l7",
+       "kind": "lesson",
+       "title": "protests",
+       "tip": "",
+       "words": [
+        "iket",
+        "pota",
+        "alfi",
+        "givri",
+        "pekro",
+        "bena"
+       ],
+       "sentences": [
+        {
+         "v": "human alfi bonezam nov pota.",
+         "e": "people protest against the new law."
+        },
+        {
+         "v": "iket un plaza esta.",
+         "e": "the protest was in the square."
+        },
+        {
+         "v": "ve bonezam pekro.",
+         "e": "this law is unfair."
+        },
+        {
+         "v": "mi iket givri.",
+         "e": "I support the protest."
+        },
+        {
+         "v": "iket bena esta.",
+         "e": "the protest was peaceful."
+        }
+       ]
+      },
+      {
+       "id": "m13-l8",
+       "kind": "lesson",
+       "title": "guests and strangers",
+       "tip": "",
+       "words": [
+        "krazan",
+        "lattang",
+        "kiblar"
+       ],
+       "sentences": [
+        {
+         "v": "krazan un vilë mi kwetata.",
+         "e": "a stranger in the street asked me."
+        },
+        {
+         "v": "min vedey lattangan ha.",
+         "e": "we have guests today."
+        },
+        {
+         "v": "kiblar bon lattangan devo.",
+         "e": "a good host welcomes guests."
+        },
+        {
+         "v": "vesinan kun yama.",
+         "e": "the neighbors eat together."
+        },
+        {
+         "v": "krazan vren nov esta.",
+         "e": "the stranger was a new friend."
+        }
+       ]
+      },
+      {
+       "id": "m13-l9",
+       "kind": "lesson",
+       "title": "jobs in town",
+       "tip": "",
+       "words": [
+        "rekping",
+        "nelishu",
+        "taka",
+        "bimni",
+        "kila",
+        "tukhu",
+        "tudi"
+       ],
+       "sentences": [
+        {
+         "v": "rekping human salva.",
+         "e": "the firefighter saves people."
+        },
+        {
+         "v": "nelishu un taka rabo.",
+         "e": "the nurse works in the hospital."
+        },
+        {
+         "v": "bimni leguman kila.",
+         "e": "the farmer plants vegetables."
+        },
+        {
+         "v": "tukhu tudi nov waba.",
+         "e": "the builder builds a new building."
+        },
+        {
+         "v": "rab tot vala.",
+         "e": "every job is important."
+        }
+       ]
+      },
+      {
+       "id": "m13-l10",
+       "kind": "lesson",
+       "title": "a better town",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "sef min kun rabo, dali bonor esva.",
+         "e": "if we work together, the community will be better."
+        },
+        {
+         "v": "mi teta es vola.",
+         "e": "I want to be a volunteer."
+        },
+        {
+         "v": "vesinan ayda!",
+         "e": "help the neighbors!"
+        },
+        {
+         "v": "ming min lute, min leni.",
+         "e": "although we are different, we are equal."
+        },
+        {
+         "v": "dali da min fela esva.",
+         "e": "our community will be happy."
+        }
+       ]
+      },
+      {
+       "id": "m13-challenge",
+       "kind": "challenge",
+       "title": "challenge",
+       "from": [
+        "m13-l1",
+        "m13-l2",
+        "m13-l3",
+        "m13-l4",
+        "m13-l5",
+        "m13-l6",
+        "m13-l7",
+        "m13-l8",
+        "m13-l9",
+        "m13-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "13.5",
+     "title": "big questions",
+     "half": true,
+     "lessons": [
+      {
+       "id": "m13.5-l1",
+       "kind": "lesson",
+       "title": "rich and poor",
+       "tip": "",
+       "words": [
+        "dapa",
+        "shali",
+        "mobë",
+        "vëlvro"
+       ],
+       "sentences": [
+        {
+         "v": "un dapa, human teli i naske es.",
+         "e": "in society, there are rich and poor people."
+        },
+        {
+         "v": "shali multa un khanan da teli es.",
+         "e": "a lot of power is in the hands of the rich."
+        },
+        {
+         "v": "mi penka ke ve pekro.",
+         "e": "I think that this is unfair."
+        },
+        {
+         "v": "sef human tot vëlvrota, dapa bonor esve.",
+         "e": "if everyone shared, society would be better."
+        },
+        {
+         "v": "mobë vrenan, tot leni.",
+         "e": "among friends, everyone is equal."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l2",
+       "kind": "lesson",
+       "title": "crime and justice",
+       "tip": "",
+       "words": [
+        "boku",
+        "neza",
+        "rinush",
+        "dlukasi",
+        "zim",
+        "pasho"
+       ],
+       "sentences": [
+        {
+         "v": "boku mal.",
+         "e": "crime is bad."
+        },
+        {
+         "v": "dar zil nezata.",
+         "e": "a man stole money."
+        },
+        {
+         "v": "gim sa trovata.",
+         "e": "the police found him."
+        },
+        {
+         "v": "dlukasi i zim un pasho rabo.",
+         "e": "the judge and the lawyer work in court."
+        },
+        {
+         "v": "sa ra rinush golta.",
+         "e": "he went to prison."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l3",
+       "kind": "lesson",
+       "title": "right and wrong",
+       "tip": "",
+       "words": [
+        "goru",
+        "ebel"
+       ],
+       "sentences": [
+        {
+         "v": "ve regla ekwa ka?",
+         "e": "is this rule fair?"
+        },
+        {
+         "v": "mi penka ke sa obru.",
+         "e": "I think that it is wrong."
+        },
+        {
+         "v": "ebel da tu kwo?",
+         "e": "what is your reason?"
+        },
+        {
+         "v": "mulal da tu goru.",
+         "e": "your opinion is correct."
+        },
+        {
+         "v": "tot ebel ha.",
+         "e": "everyone has a reason."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l4",
+       "kind": "lesson",
+       "title": "speeches",
+       "tip": "",
+       "words": [
+        "fepamos",
+        "lusela",
+        "sichë",
+        "kakri"
+       ],
+       "sentences": [
+        {
+         "v": "keyer fepamos lon fasata.",
+         "e": "the leader gave a long speech."
+        },
+        {
+         "v": "sa human lusela shupita.",
+         "e": "she tried to convince the people."
+        },
+        {
+         "v": "mi mulal da mi sichë vola.",
+         "e": "I want to express my opinion."
+        },
+        {
+         "v": "min un skol kakri.",
+         "e": "we debate at school."
+        },
+        {
+         "v": "fepamos da sa mi luselata.",
+         "e": "her speech convinced me."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l5",
+       "kind": "lesson",
+       "title": "what happened?",
+       "tip": "",
+       "words": [
+        "arar",
+        "gaksi",
+        "petos",
+        "zosepo",
+        "sosvan",
+        "vra"
+       ],
+       "sentences": [
+        {
+         "v": "kwo gaksita?",
+         "e": "what happened?"
+        },
+        {
+         "v": "hafi arar lebis nëki skrita.",
+         "e": "a journalist wrote an article about the election."
+        },
+        {
+         "v": "petosan vedey zosepova.",
+         "e": "the results will appear today."
+        },
+        {
+         "v": "sosvan gran gaksita.",
+         "e": "something big happened."
+        },
+        {
+         "v": "vra lebis sa thela.",
+         "e": "everybody talks about it."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l6",
+       "kind": "lesson",
+       "title": "helping the world",
+       "tip": "",
+       "words": [
+        "wigotu",
+        "ramigo"
+       ],
+       "sentences": [
+        {
+         "v": "min ramigo ra mundo.",
+         "e": "we are responsible for the world."
+        },
+        {
+         "v": "kavobu wigotu human naske ayda.",
+         "e": "a global charity helps poor people."
+        },
+        {
+         "v": "mi zil pik nodusata.",
+         "e": "I donated a little money."
+        },
+        {
+         "v": "shin pik multamo ayda pot.",
+         "e": "small things can help a lot."
+        },
+        {
+         "v": "tot sosvan fasa pot.",
+         "e": "everyone can do something."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l7",
+       "kind": "lesson",
+       "title": "old and new",
+       "tip": "",
+       "words": [
+        "sasru",
+        "fozas",
+        "gahu"
+       ],
+       "sentences": [
+        {
+         "v": "baba lolivon goda.",
+         "e": "grandmother likes traditions."
+        },
+        {
+         "v": "kitin shin sasru goda.",
+         "e": "children like modern things."
+        },
+        {
+         "v": "dapa sempo muda.",
+         "e": "society always changes."
+        },
+        {
+         "v": "fozas ne mal.",
+         "e": "change is not bad."
+        },
+        {
+         "v": "ve gahu un nasho da min.",
+         "e": "this is normal in our country."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l8",
+       "kind": "lesson",
+       "title": "even if",
+       "tip": "rastëtra (even if) starts its own part, like sef.",
+       "words": [
+        "rastëtra"
+       ],
+       "sentences": [
+        {
+         "v": "rastëtra tu ne kreda, sa ver.",
+         "e": "even if you do not believe it, it is true."
+        },
+        {
+         "v": "rastëtra pluva, mi golva.",
+         "e": "even if it rains, I will go."
+        },
+        {
+         "v": "rastëtra sa naske, sa rugetë.",
+         "e": "even if he is poor, he is generous."
+        },
+        {
+         "v": "rastëtra ve khar, min nidiva.",
+         "e": "even if this is hard, we will succeed."
+        },
+        {
+         "v": "rastëtra tot ridava, mi lirava.",
+         "e": "even if everyone laughs, I will sing."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l9",
+       "kind": "lesson",
+       "title": "as long as",
+       "tip": "vro (as long as) starts its own part too.",
+       "words": [
+        "vro",
+        "loli"
+       ],
+       "sentences": [
+        {
+         "v": "vro min kun es, min forë.",
+         "e": "as long as we are together, we are strong."
+        },
+        {
+         "v": "vro tu trena, tu loli.",
+         "e": "as long as you practice, you improve."
+        },
+        {
+         "v": "vro sol shina, kitin teshi luda.",
+         "e": "as long as the sun shines, the children play outside."
+        },
+        {
+         "v": "vro tu honesta, mi tu fida.",
+         "e": "as long as you are honest, I trust you."
+        },
+        {
+         "v": "vro mi viva, mi tu livava.",
+         "e": "as long as I live, I will love you."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-l10",
+       "kind": "lesson",
+       "title": "your opinion",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "mi penka ke human tot leni.",
+         "e": "I think that all people are equal."
+        },
+        {
+         "v": "ming min lute, min shelmi deba.",
+         "e": "although we are different, we must respect."
+        },
+        {
+         "v": "mulal da tu vala.",
+         "e": "your opinion is important."
+        },
+        {
+         "v": "kiro, mulal da tu sichë!",
+         "e": "please express your opinion!"
+        },
+        {
+         "v": "vro min thela, min lerna.",
+         "e": "as long as we talk, we learn."
+        }
+       ]
+      },
+      {
+       "id": "m13.5-gold",
+       "kind": "gold",
+       "title": "gold lesson",
+       "from": [
+        "m13-l1",
+        "m13-l2",
+        "m13-l3",
+        "m13-l4",
+        "m13-l5",
+        "m13-l6",
+        "m13-l7",
+        "m13-l8",
+        "m13-l9",
+        "m13-l10",
+        "m13.5-l1",
+        "m13.5-l2",
+        "m13.5-l3",
+        "m13.5-l4",
+        "m13.5-l5",
+        "m13.5-l6",
+        "m13.5-l7",
+        "m13.5-l8",
+        "m13.5-l9",
+        "m13.5-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "14",
+     "title": "science and space",
+     "half": false,
+     "lessons": [
+      {
+       "id": "m14-l1",
+       "kind": "lesson",
+       "title": "science class",
+       "tip": "",
+       "words": [
+        "dozim",
+        "gino",
+        "vute",
+        "bowo",
+        "elmisha"
+       ],
+       "sentences": [
+        {
+         "v": "mi dozim goda.",
+         "e": "I like science."
+        },
+        {
+         "v": "gino tote kisni.",
+         "e": "biology studies life."
+        },
+        {
+         "v": "vute un elmisha es.",
+         "e": "chemistry is in the laboratory."
+        },
+        {
+         "v": "bowo khar, shom tamchin.",
+         "e": "physics is hard but interesting."
+        },
+        {
+         "v": "min un elmisha rabo.",
+         "e": "we work in the laboratory."
+        }
+       ]
+      },
+      {
+       "id": "m14-l2",
+       "kind": "lesson",
+       "title": "experiments",
+       "tip": "",
+       "words": [
+        "lëshi",
+        "tulu",
+        "blutri",
+        "tosëga",
+        "pangkhe"
+       ],
+       "sentences": [
+        {
+         "v": "min lëshi fasa.",
+         "e": "we do an experiment."
+        },
+        {
+         "v": "mi nami blutri.",
+         "e": "I observe the water."
+        },
+        {
+         "v": "petos tamchin esta.",
+         "e": "the result was interesting."
+        },
+        {
+         "v": "pangkhe ideya da sa tosëgata.",
+         "e": "the scientist proved her idea."
+        },
+        {
+         "v": "sef tu tulu, tu lerna.",
+         "e": "if you experiment, you learn."
+        }
+       ]
+      },
+      {
+       "id": "m14-l3",
+       "kind": "lesson",
+       "title": "tiny things",
+       "tip": "",
+       "words": [
+        "gara",
+        "tofe",
+        "liyem",
+        "milur",
+        "vapu"
+       ],
+       "sentences": [
+        {
+         "v": "vuvo garan ha.",
+         "e": "everything has atoms."
+        },
+        {
+         "v": "vapu tofen multa ha.",
+         "e": "the body has many cells."
+        },
+        {
+         "v": "mi tofen kel liyem blutri.",
+         "e": "I observe cells with a microscope."
+        },
+        {
+         "v": "gara mol milur.",
+         "e": "an atom is very tiny."
+        },
+        {
+         "v": "liyem shin milur poshna.",
+         "e": "a microscope shows tiny things."
+        }
+       ]
+      },
+      {
+       "id": "m14-l4",
+       "kind": "lesson",
+       "title": "space",
+       "tip": "",
+       "words": [
+        "tunthan",
+        "krili",
+        "prit",
+        "lëlnë",
+        "atgok",
+        "vabok"
+       ],
+       "sentences": [
+        {
+         "v": "tunthan vabok.",
+         "e": "the universe is endless."
+        },
+        {
+         "v": "tera un krili gran es.",
+         "e": "the earth is in a big galaxy."
+        },
+        {
+         "v": "mi stelan kel prit blutri.",
+         "e": "I observe stars with a telescope."
+        },
+        {
+         "v": "lëlnë un vin esta!",
+         "e": "there was a comet in the sky!"
+        },
+        {
+         "v": "atgok min sur tera chati.",
+         "e": "gravity holds us on the earth."
+        }
+       ]
+      },
+      {
+       "id": "m14-l5",
+       "kind": "lesson",
+       "title": "astronauts",
+       "tip": "",
+       "words": [
+        "rasi",
+        "zipo",
+        "ungnem",
+        "latha"
+       ],
+       "sentences": [
+        {
+         "v": "rasi ra kosmo ala.",
+         "e": "the astronaut flies to space."
+        },
+        {
+         "v": "zipo mol rap.",
+         "e": "the rocket is very fast."
+        },
+        {
+         "v": "ungnem yordo esta.",
+         "e": "the moon landing was long ago."
+        },
+        {
+         "v": "human sosvan gran lathata.",
+         "e": "people achieved something big."
+        },
+        {
+         "v": "mi rasi es vola!",
+         "e": "I want to be an astronaut!"
+        }
+       ]
+      },
+      {
+       "id": "m14-l6",
+       "kind": "lesson",
+       "title": "dinosaurs",
+       "tip": "",
+       "words": [
+        "midisin",
+        "rorang",
+        "gibi"
+       ],
+       "sentences": [
+        {
+         "v": "midisinan yordo vivata.",
+         "e": "dinosaurs lived long ago."
+        },
+        {
+         "v": "pangkhe rorang nov gibita.",
+         "e": "a scientist discovered a new fossil."
+        },
+        {
+         "v": "ve midisin granor dë elefan esta.",
+         "e": "this dinosaur was bigger than an elephant."
+        },
+        {
+         "v": "nun midisinan ne es.",
+         "e": "now there are no dinosaurs."
+        },
+        {
+         "v": "mi rorangan un muzë vidta.",
+         "e": "I saw fossils in the museum."
+        }
+       ]
+      },
+      {
+       "id": "m14-l7",
+       "kind": "lesson",
+       "title": "our restless planet",
+       "tip": "",
+       "words": [
+        "rukpavo",
+        "bartival",
+        "lilu",
+        "ritëm",
+        "lonat",
+        "fotho"
+       ],
+       "sentences": [
+        {
+         "v": "rukpavo lonat.",
+         "e": "the volcano is dangerous."
+        },
+        {
+         "v": "predey bartival esta.",
+         "e": "yesterday there was an earthquake."
+        },
+        {
+         "v": "apre fotho multa, lilu esta.",
+         "e": "after a lot of rain, there was a flood."
+        },
+        {
+         "v": "un somër, ritëm es.",
+         "e": "in summer, there is a drought."
+        },
+        {
+         "v": "human kun ayda.",
+         "e": "people help together."
+        }
+       ]
+      },
+      {
+       "id": "m14-l8",
+       "kind": "lesson",
+       "title": "inventions",
+       "tip": "",
+       "words": [
+        "yatomso",
+        "fodas",
+        "vihubrol",
+        "kudu",
+        "gozar"
+       ],
+       "sentences": [
+        {
+         "v": "fodas vihubrol nov yatomsota.",
+         "e": "the inventor invented a new machine."
+        },
+        {
+         "v": "kudu mol kitshuk.",
+         "e": "electricity is very useful."
+        },
+        {
+         "v": "vihubrol gozar vashingvi.",
+         "e": "the machine needs energy."
+        },
+        {
+         "v": "mi sosvan nov yatomso vola.",
+         "e": "I want to invent something new."
+        },
+        {
+         "v": "kwi kompu yatomsota?",
+         "e": "who invented the computer?"
+        }
+       ]
+      },
+      {
+       "id": "m14-l9",
+       "kind": "lesson",
+       "title": "why?",
+       "tip": "",
+       "words": [
+        "pëngmo"
+       ],
+       "sentences": [
+        {
+         "v": "mi masoplo kwa vin blu.",
+         "e": "I wonder why the sky is blue."
+        },
+        {
+         "v": "pangkhen pëngmo.",
+         "e": "scientists research."
+        },
+        {
+         "v": "dozim ebelan poshna.",
+         "e": "science shows the reasons."
+        },
+        {
+         "v": "mi tunthan rava vola.",
+         "e": "I want to understand the universe."
+        },
+        {
+         "v": "kwesto bon sempo vala.",
+         "e": "a good question is always important."
+        }
+       ]
+      },
+      {
+       "id": "m14-l10",
+       "kind": "lesson",
+       "title": "the science fair",
+       "tip": "",
+       "words": [
+        "kure",
+        "bosho",
+        "zarka"
+       ],
+       "sentences": [
+        {
+         "v": "vedey sopu da dozim es.",
+         "e": "today there is a science festival."
+        },
+        {
+         "v": "mi shemde pik kureta.",
+         "e": "I designed a small robot."
+        },
+        {
+         "v": "shemde da mi bosho vinata!",
+         "e": "my robot won a prize!"
+        },
+        {
+         "v": "mestro mol zarka esta.",
+         "e": "the teacher was very proud."
+        },
+        {
+         "v": "posdey mi lëshi nov fasava.",
+         "e": "tomorrow I will do a new experiment."
+        }
+       ]
+      },
+      {
+       "id": "m14-challenge",
+       "kind": "challenge",
+       "title": "challenge",
+       "from": [
+        "m14-l1",
+        "m14-l2",
+        "m14-l3",
+        "m14-l4",
+        "m14-l5",
+        "m14-l6",
+        "m14-l7",
+        "m14-l8",
+        "m14-l9",
+        "m14-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "14.5",
+     "title": "the environment",
+     "half": true,
+     "lessons": [
+      {
+       "id": "m14.5-l1",
+       "kind": "lesson",
+       "title": "climate",
+       "tip": "",
+       "words": [
+        "kiteka",
+        "thechu",
+        "domu",
+        "kothi"
+       ],
+       "sentences": [
+        {
+         "v": "kiteka muda.",
+         "e": "the climate is changing."
+        },
+        {
+         "v": "thechu domu.",
+         "e": "the temperature increases."
+        },
+        {
+         "v": "somëran kalor esva.",
+         "e": "summers will be hotter."
+        },
+        {
+         "v": "kothi vala.",
+         "e": "nature is important."
+        },
+        {
+         "v": "min kothi garda deba.",
+         "e": "we must protect nature."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l2",
+       "kind": "lesson",
+       "title": "pollution",
+       "tip": "",
+       "words": [
+        "loyu",
+        "trarba",
+        "morlan",
+        "tatak",
+        "urliper"
+       ],
+       "sentences": [
+        {
+         "v": "loyu ra kothi mal.",
+         "e": "pollution is bad for nature."
+        },
+        {
+         "v": "oton morlan multa do.",
+         "e": "cars give a lot of smoke."
+        },
+        {
+         "v": "tanë gran ruma trarba.",
+         "e": "a big company pollutes the river."
+        },
+        {
+         "v": "tatak multa un tate es.",
+         "e": "there is a lot of plastic in the ocean."
+        },
+        {
+         "v": "min la urliper mengpa deba.",
+         "e": "we must use less gas."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l3",
+       "kind": "lesson",
+       "title": "recycling",
+       "tip": "",
+       "words": [
+        "efa",
+        "binu",
+        "chibumi",
+        "pininom"
+       ],
+       "sentences": [
+        {
+         "v": "mi pepan binu.",
+         "e": "I recycle bottles."
+        },
+        {
+         "v": "resto ne chibumi, binu!",
+         "e": "do not throw away trash, recycle!"
+        },
+        {
+         "v": "pininom yeran multa resta.",
+         "e": "plastic stays for many years."
+        },
+        {
+         "v": "efa kitshuk.",
+         "e": "recycling is useful."
+        },
+        {
+         "v": "un skol, min papir i pininom binu.",
+         "e": "at school, we recycle paper and plastic."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l4",
+       "kind": "lesson",
+       "title": "clean energy",
+       "tip": "",
+       "words": [
+        "deteng",
+        "kharo"
+       ],
+       "sentences": [
+        {
+         "v": "deteng gozar dos sol fasa.",
+         "e": "a solar panel makes energy from the sun."
+        },
+        {
+         "v": "kharo gozar dos khal fasa.",
+         "e": "a wind turbine makes energy from the wind."
+        },
+        {
+         "v": "kar da min deteng ha.",
+         "e": "our house has a solar panel."
+        },
+        {
+         "v": "gozar puro vala.",
+         "e": "clean energy is important."
+        },
+        {
+         "v": "avenë da gozar puro bon.",
+         "e": "the future of clean energy is good."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l5",
+       "kind": "lesson",
+       "title": "animals in danger",
+       "tip": "",
+       "words": [
+        "krikaresh",
+        "sashne",
+        "ode",
+        "eshshi",
+        "notbi"
+       ],
+       "sentences": [
+        {
+         "v": "krikareshan multa sashne.",
+         "e": "many species disappear."
+        },
+        {
+         "v": "eshshin un tate ode deba.",
+         "e": "whales must survive in the ocean."
+        },
+        {
+         "v": "lada sashne, kaus human talan notbi.",
+         "e": "the jungle disappears because people cut trees."
+        },
+        {
+         "v": "min letrukan garda deba.",
+         "e": "we must protect animals."
+        },
+        {
+         "v": "sef min ne ayda, krikareshan sashneva.",
+         "e": "if we do not help, species will disappear."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l6",
+       "kind": "lesson",
+       "title": "wasting less",
+       "tip": "",
+       "words": [
+        "kishum"
+       ],
+       "sentences": [
+        {
+         "v": "nami ne lesi!",
+         "e": "do not waste water!"
+        },
+        {
+         "v": "kwan tu rum redu, lampan utho!",
+         "e": "when you leave the room, turn off the lamps!"
+        },
+        {
+         "v": "mi yamë ne lesi.",
+         "e": "I do not waste food."
+        },
+        {
+         "v": "la kopa, gras binu.",
+         "e": "buy less, recycle more."
+        },
+        {
+         "v": "kudu kishummo mengpa!",
+         "e": "use electricity wisely!"
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l7",
+       "kind": "lesson",
+       "title": "trees",
+       "tip": "",
+       "words": [
+        "males",
+        "bili"
+       ],
+       "sentences": [
+        {
+         "v": "min talan kila.",
+         "e": "we plant trees."
+        },
+        {
+         "v": "talan khal puro do.",
+         "e": "trees give clean air."
+        },
+        {
+         "v": "males dos talan ven.",
+         "e": "wood comes from trees."
+        },
+        {
+         "v": "silva ra kothi vala.",
+         "e": "the forest is important for nature."
+        },
+        {
+         "v": "bili verdë un gardo es.",
+         "e": "there is green grass in the garden."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l8",
+       "kind": "lesson",
+       "title": "what I can do",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "mi kel biko ra skol gol pot.",
+         "e": "I can go to school by bike."
+        },
+        {
+         "v": "mi pininom la mengpa pot.",
+         "e": "I can use less plastic."
+        },
+        {
+         "v": "mi talan kila pot.",
+         "e": "I can plant trees."
+        },
+        {
+         "v": "mi vrenan lebis kothi dosha pot.",
+         "e": "I can teach friends about nature."
+        },
+        {
+         "v": "tot sosvan fasa pot.",
+         "e": "everyone can do something."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l9",
+       "kind": "lesson",
+       "title": "hope for the earth",
+       "tip": "",
+       "words": [
+        "hiru",
+        "zapu"
+       ],
+       "sentences": [
+        {
+         "v": "mi hiru ha.",
+         "e": "I have hope."
+        },
+        {
+         "v": "mi zapu.",
+         "e": "I am hopeful."
+        },
+        {
+         "v": "sef min muda, tera odeva.",
+         "e": "if we change, the earth will survive."
+        },
+        {
+         "v": "avenë un khanan da min es.",
+         "e": "the future is in our hands."
+        },
+        {
+         "v": "min kun mundo garda pot.",
+         "e": "together we can protect the world."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-l10",
+       "kind": "lesson",
+       "title": "earth day",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "vedey dey da tera es.",
+         "e": "today is earth day."
+        },
+        {
+         "v": "min un parka resto limpata.",
+         "e": "we cleaned trash in the park."
+        },
+        {
+         "v": "min dek tal kilata.",
+         "e": "we planted ten trees."
+        },
+        {
+         "v": "tot fela i zarka esta.",
+         "e": "everyone was happy and proud."
+        },
+        {
+         "v": "tera da min bela.",
+         "e": "our earth is beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m14.5-gold",
+       "kind": "gold",
+       "title": "gold lesson",
+       "from": [
+        "m14-l1",
+        "m14-l2",
+        "m14-l3",
+        "m14-l4",
+        "m14-l5",
+        "m14-l6",
+        "m14-l7",
+        "m14-l8",
+        "m14-l9",
+        "m14-l10",
+        "m14.5-l1",
+        "m14.5-l2",
+        "m14.5-l3",
+        "m14.5-l4",
+        "m14.5-l5",
+        "m14.5-l6",
+        "m14.5-l7",
+        "m14.5-l8",
+        "m14.5-l9",
+        "m14.5-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "15",
+     "title": "art and expression",
+     "half": false,
+     "lessons": [
+      {
+       "id": "m15-l1",
+       "kind": "lesson",
+       "title": "painting",
+       "tip": "",
+       "words": [
+        "ashok",
+        "nodlëmu",
+        "vetho",
+        "dadarfëm",
+        "takmarvak",
+        "ukhis"
+       ],
+       "sentences": [
+        {
+         "v": "ashok sur nodlëmu pinta.",
+         "e": "the painter paints on a canvas."
+        },
+        {
+         "v": "vethon multa ra mi do!",
+         "e": "give me many colors!"
+        },
+        {
+         "v": "dadarfëm da mi ukhis.",
+         "e": "my brush is thin."
+        },
+        {
+         "v": "kuadro takmarvak bela.",
+         "e": "the colorful picture is beautiful."
+        },
+        {
+         "v": "vetho favo da tu kwo?",
+         "e": "what is your favorite color?"
+        }
+       ]
+      },
+      {
+       "id": "m15-l2",
+       "kind": "lesson",
+       "title": "galleries",
+       "tip": "",
+       "words": [
+        "bosung",
+        "ratal",
+        "oma",
+        "mumune",
+        "bafel"
+       ],
+       "sentences": [
+        {
+         "v": "min ra bosung golta.",
+         "e": "we went to the gallery."
+        },
+        {
+         "v": "ratal gran un plaza es.",
+         "e": "a big statue is in the square."
+        },
+        {
+         "v": "bafel oma nov mumuneta.",
+         "e": "the artist sculpted a new sculpture."
+        },
+        {
+         "v": "kuadron un bosung thunpo.",
+         "e": "the pictures in the gallery are ancient."
+        },
+        {
+         "v": "mi bafel es vola.",
+         "e": "I want to be an artist."
+        }
+       ]
+      },
+      {
+       "id": "m15-l3",
+       "kind": "lesson",
+       "title": "creativity",
+       "tip": "",
+       "words": [
+        "kotpim",
+        "womis",
+        "uda",
+        "lupe",
+        "rama"
+       ],
+       "sentences": [
+        {
+         "v": "kitin mol kotpim.",
+         "e": "children are very creative."
+        },
+        {
+         "v": "womis da tu gran!",
+         "e": "your imagination is big!"
+        },
+        {
+         "v": "mi uda dos kothi trova.",
+         "e": "I find inspiration in nature."
+        },
+        {
+         "v": "lupe ke tu ala pot!",
+         "e": "imagine that you can fly!"
+        },
+        {
+         "v": "mi sosvan bela rama vola.",
+         "e": "I want to create something beautiful."
+        }
+       ]
+      },
+      {
+       "id": "m15-l4",
+       "kind": "lesson",
+       "title": "instruments",
+       "tip": "",
+       "words": [
+        "lanang",
+        "daso",
+        "bibim",
+        "kheguki",
+        "elë"
+       ],
+       "sentences": [
+        {
+         "v": "sesa lanang luda.",
+         "e": "my sister plays the piano."
+        },
+        {
+         "v": "mi bibim luda goda.",
+         "e": "I like to play the drum."
+        },
+        {
+         "v": "kheguki da ve lir bela.",
+         "e": "the melody of this song is beautiful."
+        },
+        {
+         "v": "elë rap.",
+         "e": "the rhythm is fast."
+        },
+        {
+         "v": "tu daso luda pot ka?",
+         "e": "can you play the violin?"
+        }
+       ]
+      },
+      {
+       "id": "m15-l5",
+       "kind": "lesson",
+       "title": "writing songs",
+       "tip": "",
+       "words": [
+        "putamet",
+        "newa",
+        "tire",
+        "roge"
+       ],
+       "sentences": [
+        {
+         "v": "mi lir nov tire.",
+         "e": "I compose a new song."
+        },
+        {
+         "v": "putamet da mi lebis vren.",
+         "e": "my lyrics are about a friend."
+        },
+        {
+         "v": "ve thelan newa ha.",
+         "e": "these words have a rhyme."
+        },
+        {
+         "v": "liran rogen sichë.",
+         "e": "songs express feelings."
+        },
+        {
+         "v": "mi lir da mi ra tu lirava.",
+         "e": "I will sing my song for you."
+        }
+       ]
+      },
+      {
+       "id": "m15-l6",
+       "kind": "lesson",
+       "title": "the theater",
+       "tip": "",
+       "words": [
+        "dil",
+        "vlunni",
+        "biflik",
+        "ipas",
+        "zozo"
+       ],
+       "sentences": [
+        {
+         "v": "min ra dil golta.",
+         "e": "we went to the theater."
+        },
+        {
+         "v": "biflikan sur vlunni zozo.",
+         "e": "the actors perform on the stage."
+        },
+        {
+         "v": "ipas gran esta.",
+         "e": "the audience was big."
+        },
+        {
+         "v": "ipas kridata i ridata.",
+         "e": "the audience shouted and laughed."
+        },
+        {
+         "v": "mi biflik es vola.",
+         "e": "I want to be an actor."
+        }
+       ]
+      },
+      {
+       "id": "m15-l7",
+       "kind": "lesson",
+       "title": "poetry",
+       "tip": "",
+       "words": [
+        "naka",
+        "emkat",
+        "esal",
+        "zimar",
+        "mosho"
+       ],
+       "sentences": [
+        {
+         "v": "esal emkat bela skrita.",
+         "e": "the poet wrote a beautiful poem."
+        },
+        {
+         "v": "naka mosho ha.",
+         "e": "poetry has beauty."
+        },
+        {
+         "v": "mi emkat lebis pelag skrita.",
+         "e": "I wrote a poem about the sea."
+        },
+        {
+         "v": "zimar da nasho da min vet.",
+         "e": "the literature of our country is old."
+        },
+        {
+         "v": "ve emkat kwo signa?",
+         "e": "what does this poem mean?"
+        }
+       ]
+      },
+      {
+       "id": "m15-l8",
+       "kind": "lesson",
+       "title": "talent and practice",
+       "tip": "",
+       "words": [
+        "pisshe",
+        "devi",
+        "yuku",
+        "batdung",
+        "fupang",
+        "li"
+       ],
+       "sentences": [
+        {
+         "v": "sa pisshe gran ha.",
+         "e": "she has a big talent."
+        },
+        {
+         "v": "devi yuku vashingvi.",
+         "e": "skill needs practice."
+        },
+        {
+         "v": "batdung vala.",
+         "e": "patience is important."
+        },
+        {
+         "v": "sef tu dey tot trena, tu loli.",
+         "e": "if you practice every day, you improve."
+        },
+        {
+         "v": "pisshe fupang yuku ne li.",
+         "e": "talent without practice is not enough."
+        }
+       ]
+      },
+      {
+       "id": "m15-l9",
+       "kind": "lesson",
+       "title": "feelings in art",
+       "tip": "",
+       "words": [
+        "decha",
+        "tomom",
+        "banung",
+        "zerda",
+        "venë"
+       ],
+       "sentences": [
+        {
+         "v": "ve kuadro roge gran ha.",
+         "e": "this picture has a big feeling."
+        },
+        {
+         "v": "muzik dechan sichë.",
+         "e": "music expresses emotions."
+        },
+        {
+         "v": "ve lir mol tomom.",
+         "e": "this song is very emotional."
+        },
+        {
+         "v": "banung i zerda un arta es.",
+         "e": "there is joy and sadness in art."
+        },
+        {
+         "v": "kwan mi ve lir ota, mi venë.",
+         "e": "when I hear this song, I cry."
+        }
+       ]
+      },
+      {
+       "id": "m15-l10",
+       "kind": "lesson",
+       "title": "the art show",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "vedey shoa da arta es.",
+         "e": "today there is an art show."
+        },
+        {
+         "v": "kuadron da mi un bosung es!",
+         "e": "my pictures are in the gallery!"
+        },
+        {
+         "v": "human multa venta.",
+         "e": "many people came."
+        },
+        {
+         "v": "tot kuadron da mi godata.",
+         "e": "everyone liked my pictures."
+        },
+        {
+         "v": "mi mol zarka.",
+         "e": "I am very proud."
+        }
+       ]
+      },
+      {
+       "id": "m15-challenge",
+       "kind": "challenge",
+       "title": "challenge",
+       "from": [
+        "m15-l1",
+        "m15-l2",
+        "m15-l3",
+        "m15-l4",
+        "m15-l5",
+        "m15-l6",
+        "m15-l7",
+        "m15-l8",
+        "m15-l9",
+        "m15-l10"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "15.5",
+     "title": "your own story",
+     "half": true,
+     "lessons": [
+      {
+       "id": "m15.5-l1",
+       "kind": "lesson",
+       "title": "childhood",
+       "tip": "",
+       "words": [
+        "teshdë",
+        "zupro",
+        "lëdak"
+       ],
+       "sentences": [
+        {
+         "v": "mi un urba pik zuprota.",
+         "e": "I was born in a small city."
+        },
+        {
+         "v": "teshdë da mi fela esta.",
+         "e": "my childhood was happy."
+        },
+        {
+         "v": "kwan mi lëdak esta, mi multamo ludata.",
+         "e": "when I was young, I played a lot."
+        },
+        {
+         "v": "mi un ferma wusata.",
+         "e": "I grew up on a farm."
+        },
+        {
+         "v": "mi teshdë da mi rekorda.",
+         "e": "I remember my childhood."
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l2",
+       "kind": "lesson",
+       "title": "friendship",
+       "tip": "",
+       "words": [
+        "sispikyi",
+        "kozu",
+        "nirim",
+        "godi",
+        "kola",
+        "lash"
+       ],
+       "sentences": [
+        {
+         "v": "sispikyi valar dë zil.",
+         "e": "friendship is more important than money."
+        },
+        {
+         "v": "nirim un sispikyi rekame.",
+         "e": "trust is necessary in a friendship."
+        },
+        {
+         "v": "vren da mi kolata i mi sa godita.",
+         "e": "my friend apologized and I forgave him."
+        },
+        {
+         "v": "kozu da min forë.",
+         "e": "our relationship is strong."
+        },
+        {
+         "v": "sispikyi lash resta.",
+         "e": "friendship stays forever."
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l3",
+       "kind": "lesson",
+       "title": "courage",
+       "tip": "",
+       "words": [
+        "dukel",
+        "vishdreruk",
+        "museng",
+        "otbek"
+       ],
+       "sentences": [
+        {
+         "v": "dukel vala.",
+         "e": "courage is important."
+        },
+        {
+         "v": "mi otbek, shom mi gol.",
+         "e": "I am nervous, but I go."
+        },
+        {
+         "v": "hum vishdreruk museng ha, shom sa gol.",
+         "e": "a brave person has fear, but she goes."
+        },
+        {
+         "v": "ming mi timë esta, mi nidita.",
+         "e": "although I was scared, I succeeded."
+        },
+        {
+         "v": "museng ne vabok.",
+         "e": "fear is not endless."
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l4",
+       "kind": "lesson",
+       "title": "mistakes",
+       "tip": "",
+       "words": [
+        "vënëshim",
+        "febu",
+        "var",
+        "kopayo",
+        "koklo",
+        "puchuso"
+       ],
+       "sentences": [
+        {
+         "v": "vënëshim ne mal.",
+         "e": "a mistake is not bad."
+        },
+        {
+         "v": "mi kopayota, shom mi koklota.",
+         "e": "I failed, but I continued."
+        },
+        {
+         "v": "dos febu, min lerna.",
+         "e": "from failure, we learn."
+        },
+        {
+         "v": "var batdung vashingvi.",
+         "e": "success needs patience."
+        },
+        {
+         "v": "ne puchuso!",
+         "e": "do not stop!"
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l5",
+       "kind": "lesson",
+       "title": "meaning",
+       "tip": "",
+       "words": [
+        "kranu",
+        "katat",
+        "tase",
+        "maru"
+       ],
+       "sentences": [
+        {
+         "v": "katat da tote kwo?",
+         "e": "what is the meaning of life?"
+        },
+        {
+         "v": "tot kranu kasha ha.",
+         "e": "everyone has their own purpose."
+        },
+        {
+         "v": "mi maru ke mi ayda pot.",
+         "e": "I hope that I can help."
+        },
+        {
+         "v": "tase da mi forë.",
+         "e": "my belief is strong."
+        },
+        {
+         "v": "tote dara.",
+         "e": "life is a gift."
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l6",
+       "kind": "lesson",
+       "title": "your future",
+       "tip": "",
+       "words": [
+        "salong",
+        "fipi",
+        "klutpru"
+       ],
+       "sentences": [
+        {
+         "v": "salong mi sonyo da mi lathava.",
+         "e": "someday I will achieve my dream."
+        },
+        {
+         "v": "fipi!",
+         "e": "dream big!"
+        },
+        {
+         "v": "mi klutpru ke tot fela.",
+         "e": "I wish that everyone is happy."
+        },
+        {
+         "v": "avenë da tu bela esva.",
+         "e": "your future will be beautiful."
+        },
+        {
+         "v": "tu sosvan gran latha pot.",
+         "e": "you can achieve something big."
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l7",
+       "kind": "lesson",
+       "title": "thank you",
+       "tip": "",
+       "words": [
+        "danzizi",
+        "inana"
+       ],
+       "sentences": [
+        {
+         "v": "mi ra folka da mi ika.",
+         "e": "I am grateful to my family."
+        },
+        {
+         "v": "mi mestro da mi vichi.",
+         "e": "I thank my teacher."
+        },
+        {
+         "v": "danzizi pik mundo muda pot.",
+         "e": "a small kindness can change the world."
+        },
+        {
+         "v": "inana i lamor vala.",
+         "e": "honesty and respect are important."
+        },
+        {
+         "v": "shevan ra tot!",
+         "e": "thanks to everyone!"
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l8",
+       "kind": "lesson",
+       "title": "your story",
+       "tip": "",
+       "words": [
+        "lidro",
+        "woshla",
+        "popa",
+        "sarwu"
+       ],
+       "sentences": [
+        {
+         "v": "tot sago ha.",
+         "e": "everyone has a story."
+        },
+        {
+         "v": "sago da tu ra mi sarwu!",
+         "e": "tell me your story!"
+        },
+        {
+         "v": "mi tote da mi lidro.",
+         "e": "I describe my life."
+        },
+        {
+         "v": "kiro, ve woshla.",
+         "e": "please explain this."
+        },
+        {
+         "v": "sa popata ke sago da sa lon.",
+         "e": "she said that her story is long."
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l9",
+       "kind": "lesson",
+       "title": "everything together",
+       "tip": "",
+       "words": [],
+       "sentences": [
+        {
+         "v": "sef mi ripë kiti esta, mi gras ludave.",
+         "e": "if I were a child again, I would play more."
+        },
+        {
+         "v": "ming tote khar, tote bela.",
+         "e": "although life is hard, life is beautiful."
+        },
+        {
+         "v": "nirfung tu viva, lerna!",
+         "e": "while you live, learn!"
+        },
+        {
+         "v": "vro tu sonya, tu nidi pot.",
+         "e": "as long as you dream, you can succeed."
+        },
+        {
+         "v": "rastëtra tu kopayo, koklo!",
+         "e": "even if you fail, continue!"
+        }
+       ]
+      },
+      {
+       "id": "m15.5-l10",
+       "kind": "lesson",
+       "title": "the last lesson",
+       "tip": "",
+       "words": [
+        "lisra"
+       ],
+       "sentences": [
+        {
+         "v": "tu vendëri lisra kenë.",
+         "e": "you already know Venderian."
+        },
+        {
+         "v": "nun tu thela, skri i rava pot.",
+         "e": "now you can speak, write and understand."
+        },
+        {
+         "v": "sago da tu un vendëri skri!",
+         "e": "write your story in Venderian!"
+        },
+        {
+         "v": "vendëri sempo un kor da tu esva.",
+         "e": "Venderian will always be in your heart."
+        },
+        {
+         "v": "dano, vren. shevan!",
+         "e": "goodbye, friend. thank you!"
+        }
+       ]
+      },
+      {
+       "id": "m15.5-gold",
+       "kind": "gold",
+       "title": "gold lesson",
+       "from": [
+        "m15-l1",
+        "m15-l2",
+        "m15-l3",
+        "m15-l4",
+        "m15-l5",
+        "m15-l6",
+        "m15-l7",
+        "m15-l8",
+        "m15-l9",
+        "m15-l10",
+        "m15.5-l1",
+        "m15.5-l2",
+        "m15.5-l3",
+        "m15.5-l4",
+        "m15.5-l5",
+        "m15.5-l6",
+        "m15.5-l7",
+        "m15.5-l8",
+        "m15.5-l9",
+        "m15.5-l10"
+       ]
+      }
+     ]
+    }
+   ]
   }
  ]
 }

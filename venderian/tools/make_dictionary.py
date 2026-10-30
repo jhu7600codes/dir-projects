@@ -28,6 +28,7 @@ ne|not (before the verb)|particle
 da|of, belonging to|particle
 -ta|past tense (verb suffix)|suffix
 -va|future tense (verb suffix)|suffix
+-ve|would (verb suffix): golve, would go|suffix
 -an|plural after a consonant (noun suffix)|suffix
 -n|plural after a vowel (noun suffix)|suffix
 -or|more (after a consonant): gran, granor|suffix

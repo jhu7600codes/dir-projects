@@ -54,7 +54,7 @@ fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit, onO
             "Learn",
             when (shown) {
                 0 -> "the venderian script, a few letters at a time"
-                1 -> "the language: 3 sections, 9 modules"
+                1 -> "the language: ${app.course.sections.size} sections, ${app.course.sections.sumOf { it.modules.size } / 2} modules"
                 else -> "write any english word in venderian, by how it sounds"
             },
             onOpenDictionary,

@@ -95,6 +95,11 @@
   "pos": "suffix"
  },
  {
+  "word": "-ve",
+  "meaning": "would (verb suffix): golve, would go",
+  "pos": "suffix"
+ },
+ {
   "word": "-an",
   "meaning": "plural after a consonant (noun suffix)",
   "pos": "suffix"
@@ -2690,7 +2695,7 @@
   "pos": "verb"
  },
  {
-  "word": "gi",
+  "word": "retnolu",
   "meaning": "to fix",
   "pos": "verb"
  },
@@ -2750,7 +2755,7 @@
   "pos": "verb"
  },
  {
-  "word": "take",
+  "word": "neshdita",
   "meaning": "to smell",
   "pos": "verb"
  },
@@ -2775,7 +2780,7 @@
   "pos": "verb"
  },
  {
-  "word": "di",
+  "word": "viba",
   "meaning": "to expect",
   "pos": "verb"
  },
@@ -2835,7 +2840,7 @@
   "pos": "verb"
  },
  {
-  "word": "na",
+  "word": "vichi",
   "meaning": "to thank",
   "pos": "verb"
  },
@@ -2875,7 +2880,7 @@
   "pos": "verb"
  },
  {
-  "word": "we",
+  "word": "merfe",
   "meaning": "to allow",
   "pos": "verb"
  },
@@ -3030,7 +3035,7 @@
   "pos": "verb"
  },
  {
-  "word": "në",
+  "word": "rama",
   "meaning": "to create",
   "pos": "verb"
  },
@@ -3040,7 +3045,7 @@
   "pos": "verb"
  },
  {
-  "word": "ro",
+  "word": "truge",
   "meaning": "to print",
   "pos": "verb"
  },
@@ -3165,7 +3170,7 @@
   "pos": "verb"
  },
  {
-  "word": "ru",
+  "word": "pëgaka",
   "meaning": "to ride",
   "pos": "verb"
  },
@@ -3215,7 +3220,7 @@
   "pos": "verb"
  },
  {
-  "word": "de",
+  "word": "keva",
   "meaning": "to marry",
   "pos": "verb"
  },
@@ -3555,7 +3560,7 @@
   "pos": "noun"
  },
  {
-  "word": "la",
+  "word": "wobel",
   "meaning": "cash",
   "pos": "noun"
  },
@@ -3565,7 +3570,7 @@
   "pos": "noun"
  },
  {
-  "word": "me",
+  "word": "thalvesas",
   "meaning": "salary",
   "pos": "noun"
  },
@@ -3825,7 +3830,7 @@
   "pos": "noun"
  },
  {
-  "word": "gu",
+  "word": "chading",
   "meaning": "chain",
   "pos": "noun"
  },
@@ -4090,7 +4095,7 @@
   "pos": "noun"
  },
  {
-  "word": "gë",
+  "word": "miko",
   "meaning": "ambulance",
   "pos": "noun"
  },
@@ -4340,7 +4345,7 @@
   "pos": "noun"
  },
  {
-  "word": "mole",
+  "word": "linum",
   "meaning": "puppy",
   "pos": "noun"
  },
@@ -4400,7 +4405,7 @@
   "pos": "noun"
  },
  {
-  "word": "bat",
+  "word": "api",
   "meaning": "deer",
   "pos": "noun"
  },
@@ -4635,7 +4640,7 @@
   "pos": "noun"
  },
  {
-  "word": "son",
+  "word": "musurzo",
   "meaning": "yogurt",
   "pos": "noun"
  },
@@ -4755,7 +4760,7 @@
   "pos": "noun"
  },
  {
-  "word": "si",
+  "word": "nesa",
   "meaning": "skin",
   "pos": "noun"
  },
@@ -4875,7 +4880,7 @@
   "pos": "noun"
  },
  {
-  "word": "vu",
+  "word": "kagrëkhek",
   "meaning": "angel",
   "pos": "noun"
  },
@@ -5065,7 +5070,7 @@
   "pos": "noun"
  },
  {
-  "word": "fo",
+  "word": "kugis",
   "meaning": "network",
   "pos": "noun"
  },
@@ -5360,12 +5365,12 @@
   "pos": "adjective"
  },
  {
-  "word": "nu",
+  "word": "tush",
   "meaning": "rotten",
   "pos": "adjective"
  },
  {
-  "word": "lore",
+  "word": "yële",
   "meaning": "ripe",
   "pos": "adjective"
  },
@@ -5545,7 +5550,7 @@
   "pos": "adjective"
  },
  {
-  "word": "she",
+  "word": "kepë",
   "meaning": "complicated",
   "pos": "adjective"
  },
@@ -5600,7 +5605,7 @@
   "pos": "adjective"
  },
  {
-  "word": "ma",
+  "word": "lapru",
   "meaning": "single",
   "pos": "adjective"
  },
@@ -5635,7 +5640,7 @@
   "pos": "adjective"
  },
  {
-  "word": "rat",
+  "word": "tlabëlo",
   "meaning": "lazy",
   "pos": "adjective"
  },
@@ -5775,7 +5780,7 @@
   "pos": "adjective"
  },
  {
-  "word": "zi",
+  "word": "ovak",
   "meaning": "main",
   "pos": "adjective"
  },
@@ -5800,7 +5805,7 @@
   "pos": "adverb"
  },
  {
-  "word": "thin",
+  "word": "ro",
   "meaning": "so (that's why)",
   "pos": "adverb"
  },
@@ -5810,7 +5815,7 @@
   "pos": "adverb"
  },
  {
-  "word": "put",
+  "word": "la",
   "meaning": "less",
   "pos": "adverb"
  },
@@ -5830,7 +5835,7 @@
   "pos": "adverb"
  },
  {
-  "word": "the",
+  "word": "lisra",
   "meaning": "already",
   "pos": "adverb"
  },
@@ -5845,7 +5850,7 @@
   "pos": "adverb"
  },
  {
-  "word": "sat",
+  "word": "nor",
   "meaning": "just",
   "pos": "adverb"
  },
@@ -5980,7 +5985,7 @@
   "pos": "adverb"
  },
  {
-  "word": "ta",
+  "word": "rash",
   "meaning": "instead",
   "pos": "adverb"
  },
@@ -6015,7 +6020,7 @@
   "pos": "adverb"
  },
  {
-  "word": "tar",
+  "word": "geskoshe",
   "meaning": "none",
   "pos": "adverb"
  },
@@ -6180,12 +6185,12 @@
   "pos": "preposition"
  },
  {
-  "word": "ram",
+  "word": "trane",
   "meaning": "above",
   "pos": "preposition"
  },
  {
-  "word": "push",
+  "word": "tokepesh",
   "meaning": "below",
   "pos": "preposition"
  },
@@ -6220,7 +6225,7 @@
   "pos": "preposition"
  },
  {
-  "word": "that",
+  "word": "ru",
   "meaning": "despite",
   "pos": "preposition"
  },
@@ -6473,5 +6478,1150 @@
   "word": "beri",
   "meaning": "watch",
   "pos": "noun"
+ },
+ {
+  "word": "siga",
+  "meaning": "discount",
+  "pos": "noun"
+ },
+ {
+  "word": "losur",
+  "meaning": "sale",
+  "pos": "noun"
+ },
+ {
+  "word": "rokem",
+  "meaning": "mall",
+  "pos": "noun"
+ },
+ {
+  "word": "kamaresh",
+  "meaning": "size",
+  "pos": "noun"
+ },
+ {
+  "word": "khadish",
+  "meaning": "delivery",
+  "pos": "noun"
+ },
+ {
+  "word": "athosh",
+  "meaning": "package",
+  "pos": "noun"
+ },
+ {
+  "word": "fleno",
+  "meaning": "refund",
+  "pos": "noun"
+ },
+ {
+  "word": "yeshkli",
+  "meaning": "loan",
+  "pos": "noun"
+ },
+ {
+  "word": "inking",
+  "meaning": "debt",
+  "pos": "noun"
+ },
+ {
+  "word": "sito",
+  "meaning": "savings",
+  "pos": "noun"
+ },
+ {
+  "word": "ëshvlede",
+  "meaning": "coin purse",
+  "pos": "noun"
+ },
+ {
+  "word": "rarma",
+  "meaning": "shopping cart",
+  "pos": "noun"
+ },
+ {
+  "word": "debes",
+  "meaning": "cashier",
+  "pos": "noun"
+ },
+ {
+  "word": "sekpo",
+  "meaning": "checkout",
+  "pos": "noun"
+ },
+ {
+  "word": "glarol",
+  "meaning": "brand",
+  "pos": "noun"
+ },
+ {
+  "word": "pedosshi",
+  "meaning": "quality",
+  "pos": "noun"
+ },
+ {
+  "word": "yile",
+  "meaning": "gift shop",
+  "pos": "noun"
+ },
+ {
+  "word": "kekë",
+  "meaning": "social media",
+  "pos": "noun"
+ },
+ {
+  "word": "maku",
+  "meaning": "follower",
+  "pos": "noun"
+ },
+ {
+  "word": "walën",
+  "meaning": "comment",
+  "pos": "noun"
+ },
+ {
+  "word": "tikkin",
+  "meaning": "channel",
+  "pos": "noun"
+ },
+ {
+  "word": "rami",
+  "meaning": "stream",
+  "pos": "noun"
+ },
+ {
+  "word": "giwa",
+  "meaning": "file",
+  "pos": "noun"
+ },
+ {
+  "word": "oyon",
+  "meaning": "folder",
+  "pos": "noun"
+ },
+ {
+  "word": "shasotlush",
+  "meaning": "selfie",
+  "pos": "noun"
+ },
+ {
+  "word": "kuvu",
+  "meaning": "profile",
+  "pos": "noun"
+ },
+ {
+  "word": "puntilit",
+  "meaning": "video game",
+  "pos": "noun"
+ },
+ {
+  "word": "panhong",
+  "meaning": "update",
+  "pos": "noun"
+ },
+ {
+  "word": "achol",
+  "meaning": "robot vacuum",
+  "pos": "noun"
+ },
+ {
+  "word": "sori",
+  "meaning": "smartphone",
+  "pos": "noun"
+ },
+ {
+  "word": "shichaneng",
+  "meaning": "tablet",
+  "pos": "noun"
+ },
+ {
+  "word": "noshmas",
+  "meaning": "laptop",
+  "pos": "noun"
+ },
+ {
+  "word": "keku",
+  "meaning": "printer",
+  "pos": "noun"
+ },
+ {
+  "word": "nulimë",
+  "meaning": "data",
+  "pos": "noun"
+ },
+ {
+  "word": "sozising",
+  "meaning": "code",
+  "pos": "noun"
+ },
+ {
+  "word": "samu",
+  "meaning": "bug (in code)",
+  "pos": "noun"
+ },
+ {
+  "word": "brobung",
+  "meaning": "virus",
+  "pos": "noun"
+ },
+ {
+  "word": "rimos",
+  "meaning": "hacker",
+  "pos": "noun"
+ },
+ {
+  "word": "rede",
+  "meaning": "privacy",
+  "pos": "noun"
+ },
+ {
+  "word": "hotri",
+  "meaning": "costume",
+  "pos": "noun"
+ },
+ {
+  "word": "novuk",
+  "meaning": "mask",
+  "pos": "noun"
+ },
+ {
+  "word": "mutu",
+  "meaning": "fireworks",
+  "pos": "noun"
+ },
+ {
+  "word": "madok",
+  "meaning": "parade",
+  "pos": "noun"
+ },
+ {
+  "word": "tëdla",
+  "meaning": "lantern",
+  "pos": "noun"
+ },
+ {
+  "word": "podo",
+  "meaning": "custom",
+  "pos": "noun"
+ },
+ {
+  "word": "mirin",
+  "meaning": "dish (food)",
+  "pos": "noun"
+ },
+ {
+  "word": "dema",
+  "meaning": "feast",
+  "pos": "noun"
+ },
+ {
+  "word": "eku",
+  "meaning": "ceremony",
+  "pos": "noun"
+ },
+ {
+  "word": "rizo",
+  "meaning": "wedding",
+  "pos": "noun"
+ },
+ {
+  "word": "nusukem",
+  "meaning": "funeral",
+  "pos": "noun"
+ },
+ {
+  "word": "bilifi",
+  "meaning": "flag",
+  "pos": "noun"
+ },
+ {
+  "word": "mukhash",
+  "meaning": "anthem",
+  "pos": "noun"
+ },
+ {
+  "word": "vadogus",
+  "meaning": "accent",
+  "pos": "noun"
+ },
+ {
+  "word": "dengfa",
+  "meaning": "dialect",
+  "pos": "noun"
+ },
+ {
+  "word": "lëli",
+  "meaning": "foreigner",
+  "pos": "noun"
+ },
+ {
+  "word": "zime",
+  "meaning": "embassy",
+  "pos": "noun"
+ },
+ {
+  "word": "nëki",
+  "meaning": "election",
+  "pos": "noun"
+ },
+ {
+  "word": "nuten",
+  "meaning": "citizen",
+  "pos": "noun"
+ },
+ {
+  "word": "romzom",
+  "meaning": "rights",
+  "pos": "noun"
+ },
+ {
+  "word": "thunatvush",
+  "meaning": "duty",
+  "pos": "noun"
+ },
+ {
+  "word": "teta",
+  "meaning": "volunteer",
+  "pos": "noun"
+ },
+ {
+  "word": "kavobu",
+  "meaning": "charity",
+  "pos": "noun"
+ },
+ {
+  "word": "zanlë",
+  "meaning": "donation",
+  "pos": "noun"
+ },
+ {
+  "word": "dunur",
+  "meaning": "meeting",
+  "pos": "noun"
+ },
+ {
+  "word": "iket",
+  "meaning": "protest (march)",
+  "pos": "noun"
+ },
+ {
+  "word": "keyer",
+  "meaning": "leader",
+  "pos": "noun"
+ },
+ {
+  "word": "mulal",
+  "meaning": "opinion",
+  "pos": "noun"
+ },
+ {
+  "word": "fili",
+  "meaning": "debate",
+  "pos": "noun"
+ },
+ {
+  "word": "fepamos",
+  "meaning": "speech",
+  "pos": "noun"
+ },
+ {
+  "word": "arar",
+  "meaning": "newspaper article",
+  "pos": "noun"
+ },
+ {
+  "word": "woye",
+  "meaning": "rumor",
+  "pos": "noun"
+ },
+ {
+  "word": "lëshi",
+  "meaning": "experiment",
+  "pos": "noun"
+ },
+ {
+  "word": "elmisha",
+  "meaning": "laboratory",
+  "pos": "noun"
+ },
+ {
+  "word": "gara",
+  "meaning": "atom",
+  "pos": "noun"
+ },
+ {
+  "word": "tofe",
+  "meaning": "cell",
+  "pos": "noun"
+ },
+ {
+  "word": "atgok",
+  "meaning": "gravity",
+  "pos": "noun"
+ },
+ {
+  "word": "prit",
+  "meaning": "telescope",
+  "pos": "noun"
+ },
+ {
+  "word": "liyem",
+  "meaning": "microscope",
+  "pos": "noun"
+ },
+ {
+  "word": "krili",
+  "meaning": "galaxy",
+  "pos": "noun"
+ },
+ {
+  "word": "lëlnë",
+  "meaning": "comet",
+  "pos": "noun"
+ },
+ {
+  "word": "ungnem",
+  "meaning": "moon landing",
+  "pos": "noun"
+ },
+ {
+  "word": "rasi",
+  "meaning": "astronaut",
+  "pos": "noun"
+ },
+ {
+  "word": "zipo",
+  "meaning": "rocket",
+  "pos": "noun"
+ },
+ {
+  "word": "kiteka",
+  "meaning": "climate",
+  "pos": "noun"
+ },
+ {
+  "word": "thechu",
+  "meaning": "temperature",
+  "pos": "noun"
+ },
+ {
+  "word": "loyu",
+  "meaning": "pollution",
+  "pos": "noun"
+ },
+ {
+  "word": "efa",
+  "meaning": "recycling",
+  "pos": "noun"
+ },
+ {
+  "word": "deteng",
+  "meaning": "solar panel",
+  "pos": "noun"
+ },
+ {
+  "word": "kharo",
+  "meaning": "wind turbine",
+  "pos": "noun"
+ },
+ {
+  "word": "tatak",
+  "meaning": "ocean plastic",
+  "pos": "noun"
+ },
+ {
+  "word": "krikaresh",
+  "meaning": "species",
+  "pos": "noun"
+ },
+ {
+  "word": "midisin",
+  "meaning": "dinosaur",
+  "pos": "noun"
+ },
+ {
+  "word": "rorang",
+  "meaning": "fossil",
+  "pos": "noun"
+ },
+ {
+  "word": "rukpavo",
+  "meaning": "volcano",
+  "pos": "noun"
+ },
+ {
+  "word": "bartival",
+  "meaning": "earthquake",
+  "pos": "noun"
+ },
+ {
+  "word": "lilu",
+  "meaning": "flood",
+  "pos": "noun"
+ },
+ {
+  "word": "ritëm",
+  "meaning": "drought",
+  "pos": "noun"
+ },
+ {
+  "word": "oma",
+  "meaning": "sculpture",
+  "pos": "noun"
+ },
+ {
+  "word": "bosung",
+  "meaning": "gallery",
+  "pos": "noun"
+ },
+ {
+  "word": "vetho",
+  "meaning": "color",
+  "pos": "noun"
+ },
+ {
+  "word": "nodlëmu",
+  "meaning": "canvas",
+  "pos": "noun"
+ },
+ {
+  "word": "naka",
+  "meaning": "poetry",
+  "pos": "noun"
+ },
+ {
+  "word": "newa",
+  "meaning": "rhyme",
+  "pos": "noun"
+ },
+ {
+  "word": "elë",
+  "meaning": "rhythm",
+  "pos": "noun"
+ },
+ {
+  "word": "kheguki",
+  "meaning": "melody",
+  "pos": "noun"
+ },
+ {
+  "word": "putamet",
+  "meaning": "lyrics",
+  "pos": "noun"
+ },
+ {
+  "word": "fropu",
+  "meaning": "style",
+  "pos": "noun"
+ },
+ {
+  "word": "mosho",
+  "meaning": "beauty",
+  "pos": "noun"
+ },
+ {
+  "word": "roge",
+  "meaning": "feeling",
+  "pos": "noun"
+ },
+ {
+  "word": "womis",
+  "meaning": "imagination",
+  "pos": "noun"
+ },
+ {
+  "word": "uda",
+  "meaning": "inspiration",
+  "pos": "noun"
+ },
+ {
+  "word": "pisshe",
+  "meaning": "talent",
+  "pos": "noun"
+ },
+ {
+  "word": "devi",
+  "meaning": "skill",
+  "pos": "noun"
+ },
+ {
+  "word": "yuku",
+  "meaning": "practice (training)",
+  "pos": "noun"
+ },
+ {
+  "word": "var",
+  "meaning": "success",
+  "pos": "noun"
+ },
+ {
+  "word": "febu",
+  "meaning": "failure",
+  "pos": "noun"
+ },
+ {
+  "word": "dukel",
+  "meaning": "courage",
+  "pos": "noun"
+ },
+ {
+  "word": "batdung",
+  "meaning": "patience",
+  "pos": "noun"
+ },
+ {
+  "word": "danzizi",
+  "meaning": "kindness (act)",
+  "pos": "noun"
+ },
+ {
+  "word": "inana",
+  "meaning": "honesty",
+  "pos": "noun"
+ },
+ {
+  "word": "lamor",
+  "meaning": "respect (feeling)",
+  "pos": "noun"
+ },
+ {
+  "word": "nirim",
+  "meaning": "trust",
+  "pos": "noun"
+ },
+ {
+  "word": "sispikyi",
+  "meaning": "friendship",
+  "pos": "noun"
+ },
+ {
+  "word": "kozu",
+  "meaning": "relationship",
+  "pos": "noun"
+ },
+ {
+  "word": "teshdë",
+  "meaning": "childhood",
+  "pos": "noun"
+ },
+ {
+  "word": "sisas",
+  "meaning": "generation",
+  "pos": "noun"
+ },
+ {
+  "word": "kothi",
+  "meaning": "nature (the world)",
+  "pos": "noun"
+ },
+ {
+  "word": "tunthan",
+  "meaning": "universe",
+  "pos": "noun"
+ },
+ {
+  "word": "yatofo",
+  "meaning": "reality",
+  "pos": "noun"
+ },
+ {
+  "word": "shaluma",
+  "meaning": "possibility",
+  "pos": "noun"
+ },
+ {
+  "word": "katat",
+  "meaning": "meaning",
+  "pos": "noun"
+ },
+ {
+  "word": "kranu",
+  "meaning": "purpose",
+  "pos": "noun"
+ },
+ {
+  "word": "tase",
+  "meaning": "belief",
+  "pos": "noun"
+ },
+ {
+  "word": "gani",
+  "meaning": "to try on",
+  "pos": "verb"
+ },
+ {
+  "word": "gobo",
+  "meaning": "to deliver",
+  "pos": "verb"
+ },
+ {
+  "word": "evi",
+  "meaning": "to owe",
+  "pos": "verb"
+ },
+ {
+  "word": "plela",
+  "meaning": "to invest",
+  "pos": "verb"
+ },
+ {
+  "word": "zibe",
+  "meaning": "to save up",
+  "pos": "verb"
+ },
+ {
+  "word": "wangmile",
+  "meaning": "to afford",
+  "pos": "verb"
+ },
+ {
+  "word": "meta",
+  "meaning": "to comment",
+  "pos": "verb"
+ },
+ {
+  "word": "klaba",
+  "meaning": "to stream",
+  "pos": "verb"
+ },
+ {
+  "word": "dashuti",
+  "meaning": "to delete",
+  "pos": "verb"
+ },
+ {
+  "word": "rini",
+  "meaning": "to install",
+  "pos": "verb"
+ },
+ {
+  "word": "shepi",
+  "meaning": "to log in",
+  "pos": "verb"
+ },
+ {
+  "word": "sozano",
+  "meaning": "to log out",
+  "pos": "verb"
+ },
+ {
+  "word": "tline",
+  "meaning": "to hack",
+  "pos": "verb"
+ },
+ {
+  "word": "tudapa",
+  "meaning": "to code",
+  "pos": "verb"
+ },
+ {
+  "word": "tini",
+  "meaning": "to wear",
+  "pos": "verb"
+ },
+ {
+  "word": "desharu",
+  "meaning": "to celebrate together",
+  "pos": "verb"
+ },
+ {
+  "word": "devo",
+  "meaning": "to welcome",
+  "pos": "verb"
+ },
+ {
+  "word": "tildli",
+  "meaning": "to greet",
+  "pos": "verb"
+ },
+ {
+  "word": "usmi",
+  "meaning": "to explore",
+  "pos": "verb"
+ },
+ {
+  "word": "tabo",
+  "meaning": "to experience",
+  "pos": "verb"
+ },
+ {
+  "word": "kekimki",
+  "meaning": "to belong to",
+  "pos": "verb"
+ },
+ {
+  "word": "dihi",
+  "meaning": "to elect",
+  "pos": "verb"
+ },
+ {
+  "word": "beni",
+  "meaning": "to volunteer",
+  "pos": "verb"
+ },
+ {
+  "word": "nodusa",
+  "meaning": "to donate",
+  "pos": "verb"
+ },
+ {
+  "word": "khashi",
+  "meaning": "to organize",
+  "pos": "verb"
+ },
+ {
+  "word": "kakri",
+  "meaning": "to debate",
+  "pos": "verb"
+ },
+ {
+  "word": "lusela",
+  "meaning": "to convince",
+  "pos": "verb"
+ },
+ {
+  "word": "zache",
+  "meaning": "to agree on",
+  "pos": "verb"
+ },
+ {
+  "word": "blutri",
+  "meaning": "to observe",
+  "pos": "verb"
+ },
+ {
+  "word": "tulu",
+  "meaning": "to experiment",
+  "pos": "verb"
+ },
+ {
+  "word": "tosëga",
+  "meaning": "to prove",
+  "pos": "verb"
+ },
+ {
+  "word": "pëngmo",
+  "meaning": "to research",
+  "pos": "verb"
+ },
+ {
+  "word": "trarba",
+  "meaning": "to pollute",
+  "pos": "verb"
+ },
+ {
+  "word": "binu",
+  "meaning": "to recycle",
+  "pos": "verb"
+ },
+ {
+  "word": "lesi",
+  "meaning": "to waste",
+  "pos": "verb"
+ },
+ {
+  "word": "sashne",
+  "meaning": "to disappear",
+  "pos": "verb"
+ },
+ {
+  "word": "zosepo",
+  "meaning": "to appear",
+  "pos": "verb"
+ },
+ {
+  "word": "sichë",
+  "meaning": "to express",
+  "pos": "verb"
+ },
+ {
+  "word": "zozo",
+  "meaning": "to perform",
+  "pos": "verb"
+ },
+ {
+  "word": "tire",
+  "meaning": "to compose",
+  "pos": "verb"
+ },
+ {
+  "word": "mumune",
+  "meaning": "to sculpt",
+  "pos": "verb"
+ },
+ {
+  "word": "lehu",
+  "meaning": "to inspire",
+  "pos": "verb"
+ },
+ {
+  "word": "tengro",
+  "meaning": "to feel proud",
+  "pos": "verb"
+ },
+ {
+  "word": "fipi",
+  "meaning": "to dream big",
+  "pos": "verb"
+ },
+ {
+  "word": "latha",
+  "meaning": "to achieve",
+  "pos": "verb"
+ },
+ {
+  "word": "sora",
+  "meaning": "digital",
+  "pos": "adjective"
+ },
+ {
+  "word": "ose",
+  "meaning": "online",
+  "pos": "adjective"
+ },
+ {
+  "word": "nechel",
+  "meaning": "offline",
+  "pos": "adjective"
+ },
+ {
+  "word": "omë",
+  "meaning": "wireless",
+  "pos": "adjective"
+ },
+ {
+  "word": "shubing",
+  "meaning": "public",
+  "pos": "adjective"
+ },
+ {
+  "word": "yepepa",
+  "meaning": "private",
+  "pos": "adjective"
+ },
+ {
+  "word": "nirun",
+  "meaning": "local",
+  "pos": "adjective"
+ },
+ {
+  "word": "wigotu",
+  "meaning": "global",
+  "pos": "adjective"
+ },
+ {
+  "word": "notë",
+  "meaning": "foreign",
+  "pos": "adjective"
+ },
+ {
+  "word": "garar",
+  "meaning": "traditional",
+  "pos": "adjective"
+ },
+ {
+  "word": "ovat",
+  "meaning": "cultural",
+  "pos": "adjective"
+ },
+ {
+  "word": "duva",
+  "meaning": "religious",
+  "pos": "adjective"
+ },
+ {
+  "word": "nudu",
+  "meaning": "political",
+  "pos": "adjective"
+ },
+ {
+  "word": "fonat",
+  "meaning": "social",
+  "pos": "adjective"
+ },
+ {
+  "word": "leni",
+  "meaning": "equal",
+  "pos": "adjective"
+ },
+ {
+  "word": "pekro",
+  "meaning": "unfair",
+  "pos": "adjective"
+ },
+ {
+  "word": "dosham",
+  "meaning": "scientific",
+  "pos": "adjective"
+ },
+ {
+  "word": "yum",
+  "meaning": "natural",
+  "pos": "adjective"
+ },
+ {
+  "word": "imil",
+  "meaning": "artificial",
+  "pos": "adjective"
+ },
+ {
+  "word": "vabok",
+  "meaning": "endless",
+  "pos": "adjective"
+ },
+ {
+  "word": "rena",
+  "meaning": "huge",
+  "pos": "adjective"
+ },
+ {
+  "word": "retom",
+  "meaning": "rare",
+  "pos": "adjective"
+ },
+ {
+  "word": "lerisim",
+  "meaning": "common",
+  "pos": "adjective"
+ },
+ {
+  "word": "kotpim",
+  "meaning": "creative",
+  "pos": "adjective"
+ },
+ {
+  "word": "bono",
+  "meaning": "artistic",
+  "pos": "adjective"
+ },
+ {
+  "word": "nosukho",
+  "meaning": "musical",
+  "pos": "adjective"
+ },
+ {
+  "word": "tomom",
+  "meaning": "emotional",
+  "pos": "adjective"
+ },
+ {
+  "word": "bena",
+  "meaning": "peaceful",
+  "pos": "adjective"
+ },
+ {
+  "word": "ushping",
+  "meaning": "violent",
+  "pos": "adjective"
+ },
+ {
+  "word": "zapu",
+  "meaning": "hopeful",
+  "pos": "adjective"
+ },
+ {
+  "word": "ika",
+  "meaning": "grateful",
+  "pos": "adjective"
+ },
+ {
+  "word": "legla",
+  "meaning": "curious",
+  "pos": "adjective"
+ },
+ {
+  "word": "ramigo",
+  "meaning": "responsible",
+  "pos": "adjective"
+ },
+ {
+  "word": "lëdu",
+  "meaning": "independent",
+  "pos": "adjective"
+ },
+ {
+  "word": "lash",
+  "meaning": "forever",
+  "pos": "adverb"
+ },
+ {
+  "word": "gok",
+  "meaning": "nowadays",
+  "pos": "adverb"
+ },
+ {
+  "word": "gachu",
+  "meaning": "recently",
+  "pos": "adverb"
+ },
+ {
+  "word": "salong",
+  "meaning": "someday",
+  "pos": "adverb"
+ },
+ {
+  "word": "taza",
+  "meaning": "anyway",
+  "pos": "adverb"
+ },
+ {
+  "word": "zo",
+  "meaning": "otherwise",
+  "pos": "adverb"
+ },
+ {
+  "word": "ezet",
+  "meaning": "therefore",
+  "pos": "adverb"
+ },
+ {
+  "word": "ga",
+  "meaning": "however",
+  "pos": "adverb"
+ },
+ {
+  "word": "puthi",
+  "meaning": "besides",
+  "pos": "adverb"
+ },
+ {
+  "word": "fri",
+  "meaning": "meanwhile",
+  "pos": "adverb"
+ },
+ {
+  "word": "opërpas",
+  "meaning": "afterwards",
+  "pos": "adverb"
+ },
+ {
+  "word": "khe",
+  "meaning": "at least",
+  "pos": "adverb"
+ },
+ {
+  "word": "rak",
+  "meaning": "at last",
+  "pos": "adverb"
+ },
+ {
+  "word": "pre",
+  "meaning": "in fact",
+  "pos": "adverb"
+ },
+ {
+  "word": "pash",
+  "meaning": "of course not",
+  "pos": "adverb"
+ },
+ {
+  "word": "dorak",
+  "meaning": "on purpose",
+  "pos": "adverb"
+ },
+ {
+  "word": "met",
+  "meaning": "by accident",
+  "pos": "adverb"
  }
 ]
