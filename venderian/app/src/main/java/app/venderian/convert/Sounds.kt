@@ -60,6 +60,10 @@ object Sounds {
     fun scriptOf(roman: String): String =
         roman.split(' ').joinToString(" ") { toScript(parseRoman(it.replace("-", ""))) }
 
+    /** a romanized sentence to script, keeping spaces and punctuation: "vela, ana!" */
+    fun scriptOfText(text: String): String =
+        Regex("[a-zë]+(?:'[a-zë]+)*").replace(text.lowercase()) { toScript(parseRoman(it.value)) }
+
     /** venderian text back to romanization. non-letters (spaces, digits, punctuation) pass through. */
     fun scriptToRoman(script: String): String = buildString {
         var run = mutableListOf<String>()

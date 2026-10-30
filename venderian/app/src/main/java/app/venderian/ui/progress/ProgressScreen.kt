@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.venderian.course.Kind
 import app.venderian.data.Progress
 import app.venderian.data.Repository
 import app.venderian.ui.ScreenTitle
@@ -94,11 +95,16 @@ fun ProgressScreen() {
         }
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Stat("course lessons", "${p.courseDone} / ${app.course.lessons.size}", Modifier.weight(1f))
+            Stat("gold", "${p.golds} / ${app.course.lessons.count { it.kind == Kind.GOLD }}", Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Stat("mastered", "${p.mastered}", Modifier.weight(1f))
             Stat("due now", "$due", Modifier.weight(1f))
         }
         Text(
-            "xp: lesson ${Repository.XP_LESSON}, flashcard ${Repository.XP_REVIEW}, quiz answer ${Repository.XP_QUIZ_RIGHT}",
+            "xp: script lesson ${Repository.XP_LESSON}, course lesson ${Repository.XP_COURSE_LESSON}, challenge ${Repository.XP_CHALLENGE}, gold ${Repository.XP_GOLD}, flashcard ${Repository.XP_REVIEW}, quiz answer ${Repository.XP_QUIZ_RIGHT}",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(16.dp),

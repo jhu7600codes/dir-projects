@@ -95,39 +95,54 @@ class QuizViewModel(private val app: VenderianApp) : ViewModel() {
         start()
     }
 
+    /**
+     * only asks about what you've learned: letters from finished script lessons, words from
+     * finished course lessons, and reading practice with words made of letters you know.
+     */
     fun start() = viewModelScope.launch {
         val done = app.repository.lessonsDone.first()
         val alphabet = app.alphabet
         // letters from finished lessons, or the first lesson if none are finished yet
         val letters = alphabet.lessons.filter { it.index in done }.flatMap { it.letters }
             .ifEmpty { alphabet.lessons.first().letters }
-        val allLetters = alphabet.letters
-        val words = app.repository.cardWords
+        val letterIds = letters.map { it.id }.toSet()
+        val learned = app.repository.learnedWords()
+        // words you can read with the letters you know (no meanings: that's for the course)
+        val readable = app.repository.cardWords.filter { w ->
+            w.word.length in 2..6 && Sounds.parseRoman(w.word).all { it in letterIds }
+        }
 
         fun <T> pick(right: T, pool: List<T>): Pair<List<T>, Int> {
             val opts = (pool.distinct().filter { it != right }.shuffled().take(3) + right).shuffled()
             return opts to opts.indexOf(right)
         }
+        val letterPool = (if (letters.size >= 4) letters else alphabet.letters)
 
+        val kinds = buildList {
+            add(0); add(1)
+            if (readable.isNotEmpty()) add(2)
+            if (learned.size >= 4) { add(3); add(4) }
+        }
         val qs = List(10) { n ->
-            when (n % 5) {
+            when (kinds[n % kinds.size]) {
                 0 -> letters.random().let { l ->
-                    val (opts, i) = pick(l.roman, allLetters.map { it.roman })
+                    val (opts, i) = pick(l.roman, letterPool.map { it.roman })
                     Question.Choice("what sound is this?", l.glyph.toString(), true, opts, i, script = false)
                 }
                 1 -> letters.random().let { l ->
-                    val (opts, i) = pick(l.glyph.toString(), allLetters.map { it.glyph.toString() })
+                    val (opts, i) = pick(l.glyph.toString(), letterPool.map { it.glyph.toString() })
                     Question.Choice("which letter says “${l.roman}”?", l.roman, false, opts, i, script = true)
                 }
-                2 -> words.random().let { w ->
-                    val (opts, i) = pick(w.meaning, words.map { it.meaning })
+                2 -> readable.random().let { w ->
+                    Question.Typed("read it: type what this says", Sounds.scriptOf(w.word), true, w.word)
+                }
+                3 -> learned.random().let { w ->
+                    val (opts, i) = pick(w.meaning, learned.map { it.meaning })
                     Question.Choice("what does this mean?", Sounds.scriptOf(w.word), true, opts, i, script = false)
                 }
-                3 -> words.random().let { w ->
-                    Question.Typed("type it in venderian (roman letters)", w.meaning, false, w.word)
-                }
-                else -> words.filter { it.word.length <= 6 }.random().let { w ->
-                    Question.Typed("read it: type what this says", Sounds.scriptOf(w.word), true, w.word)
+                else -> learned.random().let { w ->
+                    val (opts, i) = pick(Sounds.scriptOf(w.word), learned.map { Sounds.scriptOf(it.word) })
+                    Question.Choice("which one is “${w.meaning}”?", w.meaning, false, opts, i, script = true)
                 }
             }
         }

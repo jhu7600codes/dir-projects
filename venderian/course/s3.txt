@@ -1,0 +1,300 @@
+section 3 | talking for real | feelings, stories, hobbies and big ideas
+
+module 7 | feelings and health
+
+lesson feelings
+new: senta
++ angra | angry | adjective
++ timë | afraid, scared | adjective
++ seren | calm | adjective
+mi fela senta. = I feel happy.
+tu kwa tris? = why are you sad?
+aba angra. = father is angry.
+kiti un noch timë. = the child is scared at night.
+ama seren. = mother is calm.
+
+lesson because
++ kaus | because | conjunction
+tip: kaus (because) starts a second part of the sentence. every part keeps its verb at the end.
+mi tris, kaus vren da mi dalë. = I am sad because my friend is far away.
+sa fela, kaus sa dara ha. = she is happy because she has a gift.
+min ne golta, kaus pluvata. = we did not go because it rained.
+tu kwa angra? = why are you angry?
+kaus mi ludo perdata. = because I lost the game.
+
+lesson the body
+new: kop, vis, mun, kor
++ pedë | foot, leg | noun
++ braso | arm | noun
++ naso | nose | noun
++ dola | to hurt | verb
+kop da mi dola. = my head hurts.
+mi dor braso i dor pedë ha. = I have two arms and two legs.
+kiti visan bela ha. = the child has beautiful eyes.
+pedë da tu dola ka? = does your leg hurt?
+naso da vuf frid. = the dog's nose is cold.
+
+lesson at the doctor
++ sika | sick | adjective
++ pilë | pill, medicine | noun
++ sana | healthy, well | adjective
++ resta | to stay | verb
+mi sika. = I am sick.
+medik mi ayda. = the doctor helps me.
+pilë yama! = take the medicine!
+posdey tu sana esva. = tomorrow you will be well.
+mi un kama resta deba. = I have to stay in bed.
+
+lesson if
++ sef | if | conjunction
+tip: sef (if) works like kaus: the if part comes first and ends with its verb, then the rest.
+sef tu sika, ra medik gol. = if you are sick, go to the doctor.
+sef pluva, min un kar resta. = if it rains, we stay at home.
+sef mi kron ha, mi tu aydava. = if I have time, I will help you.
+sef sol shina, min ra pelag golva. = if the sun shines, we will go to the sea.
+sef tu fela, mi fela. = if you are happy, I am happy.
+
+module 7.5 | friends and stories
+
+lesson friends
++ fida | to trust | verb
++ rida | to laugh | verb
+vren bonesh da mi ana. = my best friend is Ana.
+min kun ridata. = we laughed together.
+mi vren da mi fida. = I trust my friend.
+tu vrenan multa ha ka? = do you have many friends?
+vrenan bon ayda. = good friends help.
+
+lesson when
+tip: kwan is also "when" in the middle of a sentence: the when part comes first.
+kwan mi pik esta, mi un ferma vivata. = when I was small, I lived on a farm.
+kwan tu venva, min kun yamava. = when you come, we will eat together.
+kwan pluva, mish un kar resta. = when it rains, the cat stays at home.
+kwan sa fela, sa lira. = when she is happy, she sings.
+kwan dedo ven, kitin fela. = when grandfather comes, the children are happy.
+
+lesson once upon a time
++ yordo | long ago | adverb
++ rey | king | noun
++ kastë | castle | noun
++ drako | dragon | noun
+yordo, ek rey un kastë vivata. = long ago, a king lived in a castle.
+drako gran ra kastë venta. = a big dragon came to the castle.
+rey timë esta. = the king was scared.
+drako rey ne yamata. = the dragon did not eat the king.
+drako i rey vrenan esta! = the dragon and the king were friends!
+
+lesson who and that
++ ki | who, which, that (describes the noun before it) | particle
+tip: ki starts a description of the noun before it, and the description ends with its own verb: "hum ki ik viva", the person who lives here.
+hum ki ik viva bon. = the person who lives here is good.
+mi vren ki vendëri thela ha. = I have a friend who speaks Venderian.
+kitë ki tu predey kopata mol bon. = the book that you bought yesterday is very good.
+drako ki un bor viva gran. = the dragon that lives on the mountain is big.
+hum ki mi aydata medik. = the person who helped me is a doctor.
+
+lesson the end of the story
++ sempo | always | adverb
+un fin, tot felamo vivata. = in the end, everyone lived happily.
+ve sago bonesh. = this story is the best.
+ve sago ripë thela! = tell this story again!
+mi sagon ki drakon ha goda. = I like stories that have dragons.
+kitin sago tot otata. = the children heard the whole story.
+
+module 8 | hobbies and music
+
+lesson hobbies
++ hobi | hobby | noun
++ dansa | to dance | verb
++ pinta | to draw, to paint | verb
++ gitar | guitar | noun
+hobi da tu kwo? = what is your hobby?
+mi pinta goda. = I like to draw.
+sa gitar luda. = she plays the guitar.
+min un festa dansata. = we danced at the party.
+tu dansa pot ka? = can you dance?
+
+lesson music
++ bandë | band | noun
++ shoa | show, concert | noun
++ voka | voice | noun
+mi muzik ota goda. = I like to listen to music.
+bandë ve vechë luda. = the band plays this evening.
+lirari voka bela ha. = the singer has a beautiful voice.
+min ra shoa golva. = we will go to the concert.
+ve lir mol fela. = this song is very happy.
+
+lesson I think that
+new: kenë
++ ke | that (I think that...) | conjunction
+tip: ke is the one thing that comes after the verb: "mi penka ke ...", I think that ... the part after ke has its own verb at the end.
+mi penka ke muzik bon. = I think that music is good.
+sa thelata ke sa posdey venva. = she said that she will come tomorrow.
+mi kenë ke tu gitar luda pot. = I know that you can play the guitar.
+tu penka ke ve lir bela ka? = do you think that this song is beautiful?
+min otata ke bandë nov. = we heard that the band is new.
+
+lesson sports
++ sporta | sport | noun
++ bal | ball | noun
++ ekipa | team | noun
++ vina | to win | verb
+tu sporta goda ka? = do you like sports?
+kitin bal luda. = the children play ball.
+ekipa da min vinata! = our team won!
+ekipa da san perdata. = their team lost.
+posdey min vinava. = tomorrow we will win.
+
+lesson games
++ regla | rule | noun
++ vez | turn (in a game) | noun
+reglan da ludo kwo? = what are the rules of the game?
+vez da tu! = it is your turn!
+ludari bonesh vina. = the best player wins.
+ve ludo lekhor dë vo. = this game is easier than that one.
+mi ludo ripë luda vola. = I want to play the game again.
+
+module 8.5 | games and sport
+
+lesson at the stadium
++ stadyo | stadium | noun
++ fanu | fan (of a team) | noun
++ krida | to shout | verb
+min un stadyo esta. = we were at the stadium.
+fanun multa kridata. = many fans shouted.
+ekipa da mi rapmo kurata. = my team ran fast.
+tu stadyo goda ka? = do you like the stadium?
+un fin, fanun fela esta. = in the end, the fans were happy.
+
+lesson training
++ trena | to train, to practice | verb
+mi dey tot trena. = I train every day.
+sa forër dë mi. = she is stronger than me.
+trena khar, shom bon. = training is hard but good.
+sef tu trena, tu vinava. = if you train, you will win.
+medik thelata ke mi trena deba. = the doctor said that I have to train.
+
+lesson board games
+new: kwi
++ shakh | chess | noun
++ karta | card | noun
++ kubo | dice | noun
++ lansa | to throw | verb
+dedo shakh bonmo luda. = grandfather plays chess well.
+min kartan luda. = we play cards.
+kubo lansa! = throw the dice!
+shakh ne lekh. = chess is not easy.
+kwi vinata? = who won?
+
+lesson winning and losing
++ ekwa | fair | adjective
+vinari mol fela esta. = the winner was very happy.
+perda ne mal. = losing is not bad.
+ludo ekwa esta. = the game was fair.
+kwan tu perda, tu lerna. = when you lose, you learn.
+min kun vinata. = we won together.
+
+lesson the big game
+vedey ludo gran es. = today there is a big game.
+ekipa da mi trenata i trenata. = my team trained and trained.
+mi penka ke min vinava. = I think that we will win.
+un fin, ekipa da min vinata! = in the end, our team won!
+ve dey bonesh da yer esta. = this was the best day of the year.
+
+module 9 | ideas and opinions
+
+lesson opinions
+new: ver, fal
++ ideya | idea | noun
++ kreda | to believe | verb
+ve ideya bon. = this idea is good.
+mi kreda ke ve ver. = I believe that this is true.
+tu kwo penka? = what do you think?
+sa thelata ke ve fal. = she said that this is false.
+ideya da tu mol bon. = your idea is very good.
+
+lesson agreeing
++ konsa | to agree | verb
++ rasa | reason | noun
++ mayë | maybe | adverb
+mi kel tu konsa. = I agree with you.
+mi ne konsa. = I do not agree.
+mayë tu ver. = maybe you are right.
+rasa da tu kwo? = what is your reason?
+mi konsa, kaus ve ideya bon. = I agree because this idea is good.
+
+lesson big words
+new: -tal
++ vala | important | adjective
+tip: add -tal to an adjective to make it a thing: fela (happy), felatal (happiness).
+felatal mol vala. = happiness is very important.
+vertal sempo bon. = the truth is always good.
+libërtal vala. = freedom is important.
+mi belatal da pelag liva. = I love the beauty of the sea.
+bontal un kor viva. = goodness lives in the heart.
+
+lesson the world
++ mundo | world | noun
++ pazo | peace | noun
++ gera | war | noun
++ avenë | future | noun
+mundo gran i bela. = the world is big and beautiful.
+human tot pazo vola. = all people want peace.
+gera mal. = war is bad.
+avenë da mundo un khanan da min es. = the future of the world is in our hands.
+mi mundo tot vaya vola. = I want to travel the whole world.
+
+lesson languages
+new: thelor, thel
++ inglish | English (the language) | name
++ rusë | Russian (the language) | name
++ signa | to mean | verb
+mi tis thelor thela. = I speak three languages.
+vendëri lekhor dë inglish. = Venderian is easier than English.
+tu rusë thela pot ka? = can you speak Russian?
+ve thel kwo signa? = what does this word mean?
+lerna thelor nov khar, shom bon. = learning a new language is hard but good.
+
+module 9.5 | big conversations
+
+lesson dreams
++ sonyo | dream | noun
++ sonya | to dream | verb
++ fama | famous | adjective
+mi sonyo gran ha. = I have a big dream.
+un noch, mi sonyata ke mi alata. = at night, I dreamed that I flew.
+sonyo da tu kwo? = what is your dream?
+mi lirari fama es vola. = I want to be a famous singer.
+sef tu kreda, sonyo da tu ver esva. = if you believe, your dream will come true.
+
+lesson memories
++ memo | memory | noun
++ rekorda | to remember | verb
++ oblida | to forget | verb
+mi dey eki da skol rekorda. = I remember the first day of school.
+mi memon bela multa ha. = I have many beautiful memories.
+tu ishe da mi oblidata ka? = did you forget my name?
+kwan mi kiti esta, mi un noch timë esta. = when I was a child, I was scared at night.
+memo da dedo sempo un kor da mi es. = the memory of grandfather is always in my heart.
+
+lesson the future
++ muda | to change | verb
+mundo muda. = the world is changing.
+un avenë, human sur mera vivava. = in the future, people will live on the moon.
+mi penka ke avenë bon esva. = I think that the future will be good.
+tu un avenë kwo fasava? = what will you do in the future?
+mi muda pot. = I can change.
+
+lesson a real conversation
+vela! tu kwu? = hello! how are you?
+mi bon, shevan. i tu? = I am good, thanks. and you?
+mi mol fela, kaus mi vendëri lerna. = I am very happy because I am learning Venderian.
+tu bonmo thela! = you speak well!
+shevan! mi dey tot trena. = thanks! I practice every day.
+
+lesson you made it
+nun tu vendëri thela pot. = now you can speak Venderian.
+tu multamo lernata. = you learned a lot.
+dey tot trena, i ne oblida! = practice every day, and do not forget!
+vendëri thelor belash. = Venderian is the most beautiful language.
+dano, vren! = goodbye, friend!

@@ -1,0 +1,195 @@
+"""builds the course from course/s*.txt into app/src/main/assets/course.json, and the full
+dictionary (starter words + every word the course defines) into dictionary.json.
+
+course file format:
+  section N | title | subtitle
+  module N | title            (module N.5 for the second half)
+  lesson title
+  new: word, word, -suffix    words taught here (already in the dictionary)
+  + word | meaning | pos      a new word, taught here
+  tip: text                   a grammar note shown before the lesson
+  venderian = english         a sentence
+
+it checks that every word in a sentence was taught in this lesson or an earlier one (with
+endings like -an, -ta, -or only once those endings were taught), that endings attach the
+right way (-n after a vowel, -an after a consonant...), that new words follow the sound
+rules, and that no ending turns one word into another word. a challenge is added after
+every module N, and a gold lesson after every module N.5."""
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from make_dictionary import VOWELS, legal, phonemes, starter  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent.parent
+COURSE = ROOT / "course"
+OUT_COURSE = ROOT / "app/src/main/assets/course.json"
+OUT_DICT = ROOT / "app/src/main/assets/dictionary.json"
+
+# endings: (suffix, needs a stem ending in a vowel (True), consonant (False), or either (None))
+ENDINGS = {
+    "n": True, "an": False, "ta": None, "va": None, "or": False, "r": True,
+    "esh": False, "sh": True, "mo": None, "i": False, "ri": True, "tal": None,
+}
+# forms that are meant to look like a plural of something else
+SAME_ON_PURPOSE = {"min", "tun", "san", "human"}
+PUNCT = re.compile(r"[.,!?]")
+
+
+def ends_in_vowel(word):
+    return phonemes(word)[-1] in VOWELS
+
+
+def parse():
+    sections, errors = [], []
+    defined = []  # (word, meaning, pos) defined by the course
+    for path in sorted(COURSE.glob("s*.txt")):
+        section = module = lesson = None
+        for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            line = raw.split("#")[0].strip() if not raw.strip().startswith("+") else raw.strip()
+            if not line:
+                continue
+            where = f"{path.name}:{n}"
+            if line.startswith("section "):
+                num, title, subtitle = (x.strip() for x in line[len("section "):].split("|"))
+                section = {"id": int(num), "title": title, "subtitle": subtitle, "modules": []}
+                sections.append(section)
+            elif line.startswith("module "):
+                num, title = (x.strip() for x in line[len("module "):].split("|"))
+                module = {"id": num, "title": title, "half": num.endswith(".5"), "lessons": []}
+                section["modules"].append(module)
+            elif line.startswith("lesson "):
+                lesson = {"title": line[len("lesson "):].strip(), "tip": "", "words": [], "sentences": [], "where": where}
+                module["lessons"].append(lesson)
+            elif line.startswith("new:"):
+                lesson["words"] += [w.strip() for w in line[4:].split(",") if w.strip()]
+            elif line.startswith("+"):
+                word, meaning, pos = (x.strip() for x in line[1:].split("|"))
+                lesson["words"].append(word)
+                defined.append((word, meaning, pos, where))
+            elif line.startswith("tip:"):
+                lesson["tip"] = line[4:].strip()
+            elif " = " in line:
+                v, e = (x.strip() for x in line.split(" = ", 1))
+                lesson["sentences"].append({"v": v, "e": e, "where": where})
+            else:
+                errors.append(f"{where}: can't read: {line}")
+    return sections, defined, errors
+
+
+def build_dictionary(defined, errors):
+    entries = starter()
+    known = {e["word"] for e in entries}
+    for word, meaning, pos, where in defined:
+        if word in known:
+            errors.append(f"{where}: {word} is already in the dictionary")
+            continue
+        try:
+            ok = pos == "name" or legal(word)
+        except ValueError as e:
+            ok, _ = False, errors.append(f"{where}: {e}")
+        if not ok:
+            errors.append(f"{where}: {word} breaks the sound rules")
+        known.add(word)
+        entries.append({"word": word, "meaning": meaning, "pos": pos})
+    return entries
+
+
+def check_collisions(entries, errors):
+    """an ending must never turn one word into another word"""
+    words = {e["word"]: e["pos"] for e in entries if e["pos"] != "suffix"}
+    forms = {"noun": ["n", "an"], "pronoun": ["n"], "verb": ["ta", "va", "ri"],
+             "adjective": ["or", "r", "esh", "sh", "mo", "tal"], "number": ["i"]}
+    for w, pos in words.items():
+        for suffix in forms.get(pos, []):
+            needs_vowel = ENDINGS[suffix]
+            if needs_vowel is not None and needs_vowel != ends_in_vowel(w):
+                continue
+            form = w + suffix
+            if form in words and form not in SAME_ON_PURPOSE and not (pos == "pronoun" and w in ("ve", "vo")):
+                errors.append(f"{w} + -{suffix} = {form}, which is already a word ({words[form]})")
+
+
+def word_ok(token, known, endings, depth=0):
+    if token in known:
+        return True
+    if depth >= 3:
+        return False
+    for suffix in sorted(endings, key=len, reverse=True):
+        if token.endswith(suffix) and len(token) > len(suffix):
+            stem = token[: -len(suffix)]
+            needs_vowel = ENDINGS[suffix]
+            try:
+                fits = needs_vowel is None or needs_vowel == ends_in_vowel(stem)
+            except ValueError:
+                continue
+            if fits and word_ok(stem, known, endings, depth + 1):
+                return True
+    return False
+
+
+def check_lessons(sections, entries, errors):
+    dictionary = {e["word"] for e in entries}
+    known, endings = set(), set()
+    for section in sections:
+        for module in section["modules"]:
+            for lesson in module["lessons"]:
+                for w in lesson["words"]:
+                    if w not in dictionary:
+                        errors.append(f"{lesson['where']}: {w} is not in the dictionary")
+                    if w.startswith("-"):
+                        endings.add(w[1:])
+                    else:
+                        known.add(w)
+                if not lesson["sentences"]:
+                    errors.append(f"{lesson['where']}: lesson has no sentences")
+                for s in lesson["sentences"]:
+                    for token in PUNCT.sub(" ", s["v"]).lower().split():
+                        if not word_ok(token, known, endings):
+                            errors.append(f"{s['where']}: '{token}' wasn't taught yet ({s['v']})")
+
+
+def assemble(sections):
+    """lesson ids, plus a challenge after module N and a gold lesson after module N.5"""
+    out = []
+    for section in sections:
+        sec = {k: section[k] for k in ("id", "title", "subtitle")} | {"modules": []}
+        first_half = []
+        for module in section["modules"]:
+            lessons = []
+            for i, lesson in enumerate(module["lessons"], 1):
+                lessons.append({
+                    "id": f"m{module['id']}-l{i}", "kind": "lesson", "title": lesson["title"], "tip": lesson["tip"],
+                    "words": lesson["words"], "sentences": [{"v": s["v"], "e": s["e"]} for s in lesson["sentences"]],
+                })
+            if not module["half"]:
+                first_half = [l["id"] for l in lessons]
+                lessons.append({"id": f"m{module['id']}-challenge", "kind": "challenge", "title": "challenge", "from": first_half})
+            else:
+                own = [l["id"] for l in lessons]
+                lessons.append({"id": f"m{module['id']}-gold", "kind": "gold", "title": "gold lesson", "from": first_half + own})
+            sec["modules"].append({"id": module["id"], "title": module["title"], "half": module["half"], "lessons": lessons})
+        out.append(sec)
+    return {"sections": out}
+
+
+def main():
+    sections, defined, errors = parse()
+    entries = build_dictionary(defined, errors)
+    check_collisions(entries, errors)
+    check_lessons(sections, entries, errors)
+    if errors:
+        sys.exit("\n".join(errors))
+    course = assemble(sections)
+    OUT_DICT.write_text(json.dumps(entries, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    OUT_COURSE.write_text(json.dumps(course, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    lessons = [l for s in course["sections"] for m in s["modules"] for l in m["lessons"]]
+    sentences = sum(len(l.get("sentences", [])) for l in lessons)
+    print(f"{len(entries)} words ({len(defined)} from the course) -> {OUT_DICT.relative_to(ROOT)}")
+    print(f"{len(course['sections'])} sections, {len(lessons)} lessons, {sentences} sentences -> {OUT_COURSE.relative_to(ROOT)}")
+
+
+if __name__ == "__main__":
+    main()

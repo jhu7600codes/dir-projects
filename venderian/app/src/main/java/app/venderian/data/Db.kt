@@ -11,6 +11,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import app.venderian.srs.SrsState
 import kotlinx.coroutines.flow.Flow
 
@@ -41,6 +43,10 @@ data class DayEntity(@PrimaryKey val epochDay: Long, val xp: Int)
 
 @Entity(tableName = "lessons")
 data class LessonEntity(@PrimaryKey val lesson: Int, val completedAt: Long)
+
+/** a finished course lesson (lesson, challenge or gold), by its id in course.json */
+@Entity(tableName = "course")
+data class CourseEntity(@PrimaryKey val id: String, val completedAt: Long, val mistakes: Int)
 
 @Dao
 interface CardDao {
@@ -82,15 +88,28 @@ interface ProgressDao {
 
     @Query("SELECT * FROM lessons")
     fun lessons(): Flow<List<LessonEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun completeCourse(lesson: CourseEntity)
+
+    @Query("SELECT * FROM course")
+    fun course(): Flow<List<CourseEntity>>
 }
 
-@Database(entities = [CardEntity::class, DayEntity::class, LessonEntity::class], version = 1)
+@Database(entities = [CardEntity::class, DayEntity::class, LessonEntity::class, CourseEntity::class], version = 2)
 abstract class VenderianDb : RoomDatabase() {
     abstract fun cards(): CardDao
     abstract fun progress(): ProgressDao
 
     companion object {
+        /** 2: the course */
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `course` (`id` TEXT NOT NULL, `completedAt` INTEGER NOT NULL, `mistakes` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+            }
+        }
+
         fun create(context: Context) =
-            Room.databaseBuilder(context, VenderianDb::class.java, "venderian.db").build()
+            Room.databaseBuilder(context, VenderianDb::class.java, "venderian.db").addMigrations(MIGRATION_1_2).build()
     }
 }

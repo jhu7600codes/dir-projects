@@ -1,6 +1,9 @@
 package app.venderian.data
 
 import app.venderian.convert.Entry
+import app.venderian.course.Course
+import app.venderian.course.CourseLesson
+import app.venderian.course.Kind
 import app.venderian.srs.Grade
 import app.venderian.srs.Srs
 import app.venderian.srs.Streaks
@@ -8,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
-import java.time.ZoneId
 
 data class Progress(
     val totalXp: Int = 0,
@@ -22,6 +24,8 @@ data class Progress(
     /** cards whose interval has grown to 3 weeks or more */
     val mastered: Int = 0,
     val lessonsDone: Set<Int> = emptySet(),
+    val courseDone: Int = 0,
+    val golds: Int = 0,
 ) {
     /** 100 xp a level, each level a little longer than the last */
     val level: Int get() = generateSequence(1) { it + 1 }.first { xpFor(it + 1) > totalXp }
@@ -32,7 +36,7 @@ data class Progress(
     }
 }
 
-class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words: List<Entry>) {
+class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words: List<Entry>, val course: Course) {
 
     /** words that can be flashcards / quiz questions (not suffixes) */
     val cardWords: List<Entry> = words.filter { it.pos != "suffix" }
@@ -42,9 +46,15 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
 
     val lessonsDone: Flow<Set<Int>> = db.progress().lessons().map { list -> list.map { it.lesson }.toSet() }
 
+    /** ids of finished course lessons */
+    val courseDone: Flow<Set<String>> = db.progress().course().map { list -> list.map { it.id }.toSet() }
+
+    /** the course needs the whole script first */
+    val scriptDone: Flow<Boolean> = lessonsDone.map { done -> alphabet.lessons.all { it.index in done } }
+
     fun dueCount(now: Long = System.currentTimeMillis()) = db.cards().dueCount(now)
 
-    val progress: Flow<Progress> = combine(db.progress().days(), db.cards().all(), lessonsDone) { days, cards, lessons ->
+    val progress: Flow<Progress> = combine(db.progress().days(), db.cards().all(), lessonsDone, courseDone) { days, cards, lessons, course ->
         val today = today()
         val active = days.filter { it.xp > 0 }.map { it.epochDay }.toSet()
         val byDay = days.associate { it.epochDay to it.xp }
@@ -58,6 +68,8 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
             wordsSeen = cards.count { it.kind == CardEntity.WORD },
             mastered = cards.count { it.intervalDays >= 21 },
             lessonsDone = lessons,
+            courseDone = course.size,
+            golds = course.count { it.endsWith("-gold") },
         )
     }
 
@@ -74,26 +86,23 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
         addXp(XP_LESSON)
     }
 
-    /**
-     * the cards to practice now: everything due, plus up to [NEW_WORDS_PER_DAY] new words a day,
-     * taken from the dictionary in order (it starts with the most useful words).
-     */
-    suspend fun practiceDeck(limit: Int = 20): List<CardEntity> {
+    /** the cards to practice now: everything that's due. words get here by finishing course lessons. */
+    suspend fun practiceDeck(limit: Int = 20): List<CardEntity> = db.cards().due(System.currentTimeMillis(), limit)
+
+    /** words from finished course lessons, for the quiz */
+    suspend fun learnedWords(): List<Entry> =
+        db.cards().ids().filter { it.startsWith("${CardEntity.WORD}:") }.mapNotNull { word(it.substringAfter(':')) }
+
+    suspend fun completeCourseLesson(lesson: CourseLesson, mistakes: Int) {
         val now = System.currentTimeMillis()
-        val startOfDay = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val newToday = db.cards().introducedSince(CardEntity.WORD, startOfDay)
-        val room = (NEW_WORDS_PER_DAY - newToday).coerceAtLeast(0)
-        if (room > 0) {
-            val known = db.cards().ids().toSet()
-            val fresh = cardWords.asSequence()
-                .map { "${CardEntity.WORD}:${it.word}" }
-                .filter { it !in known }
-                .take(room)
-                .map { CardEntity(it, CardEntity.WORD, dueAt = now, introducedAt = now) }
-                .toList()
-            db.cards().insertAll(fresh)
-        }
-        return db.cards().due(now, limit)
+        db.progress().completeCourse(CourseEntity(lesson.id, now, mistakes))
+        val newWords = lesson.words.filter { word(it) != null }
+        db.cards().insertAll(newWords.map { CardEntity("${CardEntity.WORD}:$it", CardEntity.WORD, dueAt = now, introducedAt = now) })
+        addXp(when (lesson.kind) {
+            Kind.CHALLENGE -> XP_CHALLENGE
+            Kind.GOLD -> XP_GOLD
+            else -> XP_COURSE_LESSON
+        })
     }
 
     suspend fun review(card: CardEntity, grade: Grade): CardEntity {
@@ -112,7 +121,9 @@ class Repository(private val db: VenderianDb, val alphabet: Alphabet, val words:
         const val XP_REVIEW = 2
         const val XP_REVIEW_MISS = 1
         const val XP_QUIZ_RIGHT = 5
-        const val NEW_WORDS_PER_DAY = 8
+        const val XP_COURSE_LESSON = 15
+        const val XP_CHALLENGE = 30
+        const val XP_GOLD = 50
 
         fun today() = LocalDate.now().toEpochDay()
     }

@@ -105,6 +105,46 @@
   "pos": "suffix"
  },
  {
+  "word": "-or",
+  "meaning": "more (after a consonant): gran, granor",
+  "pos": "suffix"
+ },
+ {
+  "word": "-r",
+  "meaning": "more (after a vowel): bela, belar",
+  "pos": "suffix"
+ },
+ {
+  "word": "-esh",
+  "meaning": "most (after a consonant): gran, granesh",
+  "pos": "suffix"
+ },
+ {
+  "word": "-sh",
+  "meaning": "most (after a vowel): bela, belash",
+  "pos": "suffix"
+ },
+ {
+  "word": "-mo",
+  "meaning": "turns an adjective into how something is done: rap, rapmo (quickly)",
+  "pos": "suffix"
+ },
+ {
+  "word": "-i",
+  "meaning": "turns a number into first, second...: ek, eki",
+  "pos": "suffix"
+ },
+ {
+  "word": "-ri",
+  "meaning": "the person who does it: lira, lirari (singer)",
+  "pos": "suffix"
+ },
+ {
+  "word": "-tal",
+  "meaning": "turns an adjective into a thing: fela, felatal (happiness)",
+  "pos": "suffix"
+ },
+ {
   "word": "i",
   "meaning": "and",
   "pos": "conjunction"
@@ -282,11 +322,6 @@
  {
   "word": "ruma",
   "meaning": "river",
-  "pos": "noun"
- },
- {
-  "word": "sheva",
-  "meaning": "sea",
   "pos": "noun"
  },
  {
@@ -525,7 +560,7 @@
   "pos": "verb"
  },
  {
-  "word": "sen",
+  "word": "vid",
   "meaning": "to see",
   "pos": "verb"
  },
@@ -888,5 +923,970 @@
   "word": "tam",
   "meaning": "also, too",
   "pos": "adverb"
+ },
+ {
+  "word": "ana",
+  "meaning": "Ana (a name)",
+  "pos": "name"
+ },
+ {
+  "word": "tomo",
+  "meaning": "Tomo (a name)",
+  "pos": "name"
+ },
+ {
+  "word": "bro",
+  "meaning": "brother",
+  "pos": "noun"
+ },
+ {
+  "word": "sesa",
+  "meaning": "sister",
+  "pos": "noun"
+ },
+ {
+  "word": "baba",
+  "meaning": "grandmother",
+  "pos": "noun"
+ },
+ {
+  "word": "dedo",
+  "meaning": "grandfather",
+  "pos": "noun"
+ },
+ {
+  "word": "vespa",
+  "meaning": "dinner",
+  "pos": "noun"
+ },
+ {
+  "word": "festa",
+  "meaning": "party, holiday",
+  "pos": "noun"
+ },
+ {
+  "word": "dara",
+  "meaning": "gift",
+  "pos": "noun"
+ },
+ {
+  "word": "sago",
+  "meaning": "story",
+  "pos": "noun"
+ },
+ {
+  "word": "vechë",
+  "meaning": "evening",
+  "pos": "noun"
+ },
+ {
+  "word": "kun",
+  "meaning": "together",
+  "pos": "adverb"
+ },
+ {
+  "word": "kafa",
+  "meaning": "coffee",
+  "pos": "noun"
+ },
+ {
+  "word": "chay",
+  "meaning": "tea",
+  "pos": "noun"
+ },
+ {
+  "word": "aplo",
+  "meaning": "apple",
+  "pos": "noun"
+ },
+ {
+  "word": "banan",
+  "meaning": "banana",
+  "pos": "noun"
+ },
+ {
+  "word": "frut",
+  "meaning": "fruit",
+  "pos": "noun"
+ },
+ {
+  "word": "sava",
+  "meaning": "sweet",
+  "pos": "adjective"
+ },
+ {
+  "word": "bazar",
+  "meaning": "market",
+  "pos": "noun"
+ },
+ {
+  "word": "kosta",
+  "meaning": "to cost",
+  "pos": "verb"
+ },
+ {
+  "word": "kwanto",
+  "meaning": "how much, how many",
+  "pos": "adverb"
+ },
+ {
+  "word": "mon",
+  "meaning": "coin",
+  "pos": "noun"
+ },
+ {
+  "word": "kuka",
+  "meaning": "to cook",
+  "pos": "verb"
+ },
+ {
+  "word": "supa",
+  "meaning": "soup",
+  "pos": "noun"
+ },
+ {
+  "word": "salë",
+  "meaning": "salt",
+  "pos": "noun"
+ },
+ {
+  "word": "matin",
+  "meaning": "morning",
+  "pos": "noun"
+ },
+ {
+  "word": "pran",
+  "meaning": "breakfast",
+  "pos": "noun"
+ },
+ {
+  "word": "ovo",
+  "meaning": "egg",
+  "pos": "noun"
+ },
+ {
+  "word": "kukin",
+  "meaning": "kitchen",
+  "pos": "noun"
+ },
+ {
+  "word": "tabla",
+  "meaning": "table",
+  "pos": "noun"
+ },
+ {
+  "word": "nash",
+  "meaning": "knife",
+  "pos": "noun"
+ },
+ {
+  "word": "plato",
+  "meaning": "plate",
+  "pos": "noun"
+ },
+ {
+  "word": "amar",
+  "meaning": "bitter",
+  "pos": "adjective"
+ },
+ {
+  "word": "salo",
+  "meaning": "salty",
+  "pos": "adjective"
+ },
+ {
+  "word": "gusta",
+  "meaning": "to taste",
+  "pos": "verb"
+ },
+ {
+  "word": "yamik",
+  "meaning": "hungry",
+  "pos": "adjective"
+ },
+ {
+  "word": "satë",
+  "meaning": "full (not hungry)",
+  "pos": "adjective"
+ },
+ {
+  "word": "torta",
+  "meaning": "cake",
+  "pos": "noun"
+ },
+ {
+  "word": "rum",
+  "meaning": "room",
+  "pos": "noun"
+ },
+ {
+  "word": "kama",
+  "meaning": "bed",
+  "pos": "noun"
+ },
+ {
+  "word": "stul",
+  "meaning": "chair",
+  "pos": "noun"
+ },
+ {
+  "word": "gris",
+  "meaning": "gray",
+  "pos": "adjective"
+ },
+ {
+  "word": "roza",
+  "meaning": "pink",
+  "pos": "adjective"
+ },
+ {
+  "word": "nër",
+  "meaning": "under",
+  "pos": "preposition"
+ },
+ {
+  "word": "nek",
+  "meaning": "next to",
+  "pos": "preposition"
+ },
+ {
+  "word": "ante",
+  "meaning": "in front of, before",
+  "pos": "preposition"
+ },
+ {
+  "word": "pos",
+  "meaning": "behind",
+  "pos": "preposition"
+ },
+ {
+  "word": "lampa",
+  "meaning": "lamp",
+  "pos": "noun"
+ },
+ {
+  "word": "kloza",
+  "meaning": "closet",
+  "pos": "noun"
+ },
+ {
+  "word": "leva",
+  "meaning": "to get up",
+  "pos": "verb"
+ },
+ {
+  "word": "lava",
+  "meaning": "to wash",
+  "pos": "verb"
+ },
+ {
+  "word": "dentë",
+  "meaning": "tooth",
+  "pos": "noun"
+ },
+ {
+  "word": "mestro",
+  "meaning": "teacher",
+  "pos": "noun"
+ },
+ {
+  "word": "vendëri",
+  "meaning": "Venderian (the language)",
+  "pos": "name"
+ },
+ {
+  "word": "bano",
+  "meaning": "bath",
+  "pos": "noun"
+ },
+ {
+  "word": "apre",
+  "meaning": "after",
+  "pos": "preposition"
+ },
+ {
+  "word": "fin",
+  "meaning": "end",
+  "pos": "noun"
+ },
+ {
+  "word": "vilë",
+  "meaning": "street",
+  "pos": "noun"
+ },
+ {
+  "word": "oto",
+  "meaning": "car",
+  "pos": "noun"
+ },
+ {
+  "word": "tren",
+  "meaning": "train",
+  "pos": "noun"
+ },
+ {
+  "word": "boteka",
+  "meaning": "shop",
+  "pos": "noun"
+ },
+ {
+  "word": "parka",
+  "meaning": "park",
+  "pos": "noun"
+ },
+ {
+  "word": "kafë",
+  "meaning": "café",
+  "pos": "noun"
+ },
+ {
+  "word": "muzë",
+  "meaning": "museum",
+  "pos": "noun"
+ },
+ {
+  "word": "hotel",
+  "meaning": "hotel",
+  "pos": "noun"
+ },
+ {
+  "word": "vaya",
+  "meaning": "to travel",
+  "pos": "verb"
+ },
+ {
+  "word": "nasho",
+  "meaning": "country",
+  "pos": "noun"
+ },
+ {
+  "word": "mapa",
+  "meaning": "map",
+  "pos": "noun"
+ },
+ {
+  "word": "bagë",
+  "meaning": "bag",
+  "pos": "noun"
+ },
+ {
+  "word": "lev",
+  "meaning": "left",
+  "pos": "adjective"
+ },
+ {
+  "word": "dreta",
+  "meaning": "right (not left)",
+  "pos": "adjective"
+ },
+ {
+  "word": "latë",
+  "meaning": "side",
+  "pos": "noun"
+ },
+ {
+  "word": "rekto",
+  "meaning": "straight ahead",
+  "pos": "adverb"
+ },
+ {
+  "word": "prok",
+  "meaning": "near",
+  "pos": "adjective"
+ },
+ {
+  "word": "dalë",
+  "meaning": "far",
+  "pos": "adjective"
+ },
+ {
+  "word": "minut",
+  "meaning": "minute",
+  "pos": "noun"
+ },
+ {
+  "word": "or",
+  "meaning": "hour, o'clock",
+  "pos": "noun"
+ },
+ {
+  "word": "perda",
+  "meaning": "to lose, to get lost",
+  "pos": "verb"
+ },
+ {
+  "word": "ripë",
+  "meaning": "again",
+  "pos": "adverb"
+ },
+ {
+  "word": "foto",
+  "meaning": "photo",
+  "pos": "noun"
+ },
+ {
+  "word": "pelag",
+  "meaning": "sea",
+  "pos": "noun"
+ },
+ {
+  "word": "nuba",
+  "meaning": "cloud",
+  "pos": "noun"
+ },
+ {
+  "word": "klima",
+  "meaning": "weather",
+  "pos": "noun"
+ },
+ {
+  "word": "pluva",
+  "meaning": "to rain",
+  "pos": "verb"
+ },
+ {
+  "word": "neva",
+  "meaning": "to snow",
+  "pos": "verb"
+ },
+ {
+  "word": "lago",
+  "meaning": "lake",
+  "pos": "noun"
+ },
+ {
+  "word": "silva",
+  "meaning": "forest",
+  "pos": "noun"
+ },
+ {
+  "word": "dë",
+  "meaning": "than",
+  "pos": "particle"
+ },
+ {
+  "word": "kaval",
+  "meaning": "horse",
+  "pos": "noun"
+ },
+ {
+  "word": "uso",
+  "meaning": "bear",
+  "pos": "noun"
+ },
+ {
+  "word": "vulka",
+  "meaning": "wolf",
+  "pos": "noun"
+ },
+ {
+  "word": "ala",
+  "meaning": "to fly",
+  "pos": "verb"
+ },
+ {
+  "word": "sezon",
+  "meaning": "season",
+  "pos": "noun"
+ },
+ {
+  "word": "primë",
+  "meaning": "spring",
+  "pos": "noun"
+ },
+ {
+  "word": "somër",
+  "meaning": "summer",
+  "pos": "noun"
+ },
+ {
+  "word": "otno",
+  "meaning": "autumn",
+  "pos": "noun"
+ },
+ {
+  "word": "hiver",
+  "meaning": "winter",
+  "pos": "noun"
+ },
+ {
+  "word": "ferma",
+  "meaning": "farm",
+  "pos": "noun"
+ },
+ {
+  "word": "kova",
+  "meaning": "cow",
+  "pos": "noun"
+ },
+ {
+  "word": "pulo",
+  "meaning": "chicken",
+  "pos": "noun"
+ },
+ {
+  "word": "kampo",
+  "meaning": "field",
+  "pos": "noun"
+ },
+ {
+  "word": "garda",
+  "meaning": "to protect",
+  "pos": "verb"
+ },
+ {
+  "word": "resto",
+  "meaning": "trash",
+  "pos": "noun"
+ },
+ {
+  "word": "puro",
+  "meaning": "clean",
+  "pos": "adjective"
+ },
+ {
+  "word": "mudë",
+  "meaning": "dirty",
+  "pos": "adjective"
+ },
+ {
+  "word": "lasa",
+  "meaning": "to leave, to let",
+  "pos": "verb"
+ },
+ {
+  "word": "piknik",
+  "meaning": "picnic",
+  "pos": "noun"
+ },
+ {
+  "word": "shina",
+  "meaning": "to shine",
+  "pos": "verb"
+ },
+ {
+  "word": "matë",
+  "meaning": "math",
+  "pos": "noun"
+ },
+ {
+  "word": "histo",
+  "meaning": "history",
+  "pos": "noun"
+ },
+ {
+  "word": "muzik",
+  "meaning": "music",
+  "pos": "noun"
+ },
+ {
+  "word": "arta",
+  "meaning": "art",
+  "pos": "noun"
+ },
+ {
+  "word": "pot",
+  "meaning": "can",
+  "pos": "verb"
+ },
+ {
+  "word": "deba",
+  "meaning": "must, to have to",
+  "pos": "verb"
+ },
+ {
+  "word": "klasë",
+  "meaning": "class, classroom",
+  "pos": "noun"
+ },
+ {
+  "word": "pena",
+  "meaning": "pen",
+  "pos": "noun"
+ },
+ {
+  "word": "papir",
+  "meaning": "paper",
+  "pos": "noun"
+ },
+ {
+  "word": "panël",
+  "meaning": "board",
+  "pos": "noun"
+ },
+ {
+  "word": "tasko",
+  "meaning": "homework, task",
+  "pos": "noun"
+ },
+ {
+  "word": "fini",
+  "meaning": "to finish",
+  "pos": "verb"
+ },
+ {
+  "word": "prova",
+  "meaning": "test",
+  "pos": "noun"
+ },
+ {
+  "word": "medik",
+  "meaning": "doctor",
+  "pos": "noun"
+ },
+ {
+  "word": "vek",
+  "meaning": "week",
+  "pos": "noun"
+ },
+ {
+  "word": "plan",
+  "meaning": "plan",
+  "pos": "noun"
+ },
+ {
+  "word": "mesë",
+  "meaning": "month",
+  "pos": "noun"
+ },
+ {
+  "word": "pros",
+  "meaning": "next",
+  "pos": "adjective"
+ },
+ {
+  "word": "pasë",
+  "meaning": "last (before this one)",
+  "pos": "adjective"
+ },
+ {
+  "word": "okupa",
+  "meaning": "busy",
+  "pos": "adjective"
+ },
+ {
+  "word": "libër",
+  "meaning": "free (not busy)",
+  "pos": "adjective"
+ },
+ {
+  "word": "angra",
+  "meaning": "angry",
+  "pos": "adjective"
+ },
+ {
+  "word": "timë",
+  "meaning": "afraid, scared",
+  "pos": "adjective"
+ },
+ {
+  "word": "seren",
+  "meaning": "calm",
+  "pos": "adjective"
+ },
+ {
+  "word": "kaus",
+  "meaning": "because",
+  "pos": "conjunction"
+ },
+ {
+  "word": "pedë",
+  "meaning": "foot, leg",
+  "pos": "noun"
+ },
+ {
+  "word": "braso",
+  "meaning": "arm",
+  "pos": "noun"
+ },
+ {
+  "word": "naso",
+  "meaning": "nose",
+  "pos": "noun"
+ },
+ {
+  "word": "dola",
+  "meaning": "to hurt",
+  "pos": "verb"
+ },
+ {
+  "word": "sika",
+  "meaning": "sick",
+  "pos": "adjective"
+ },
+ {
+  "word": "pilë",
+  "meaning": "pill, medicine",
+  "pos": "noun"
+ },
+ {
+  "word": "sana",
+  "meaning": "healthy, well",
+  "pos": "adjective"
+ },
+ {
+  "word": "resta",
+  "meaning": "to stay",
+  "pos": "verb"
+ },
+ {
+  "word": "sef",
+  "meaning": "if",
+  "pos": "conjunction"
+ },
+ {
+  "word": "fida",
+  "meaning": "to trust",
+  "pos": "verb"
+ },
+ {
+  "word": "rida",
+  "meaning": "to laugh",
+  "pos": "verb"
+ },
+ {
+  "word": "yordo",
+  "meaning": "long ago",
+  "pos": "adverb"
+ },
+ {
+  "word": "rey",
+  "meaning": "king",
+  "pos": "noun"
+ },
+ {
+  "word": "kastë",
+  "meaning": "castle",
+  "pos": "noun"
+ },
+ {
+  "word": "drako",
+  "meaning": "dragon",
+  "pos": "noun"
+ },
+ {
+  "word": "ki",
+  "meaning": "who, which, that (describes the noun before it)",
+  "pos": "particle"
+ },
+ {
+  "word": "sempo",
+  "meaning": "always",
+  "pos": "adverb"
+ },
+ {
+  "word": "hobi",
+  "meaning": "hobby",
+  "pos": "noun"
+ },
+ {
+  "word": "dansa",
+  "meaning": "to dance",
+  "pos": "verb"
+ },
+ {
+  "word": "pinta",
+  "meaning": "to draw, to paint",
+  "pos": "verb"
+ },
+ {
+  "word": "gitar",
+  "meaning": "guitar",
+  "pos": "noun"
+ },
+ {
+  "word": "bandë",
+  "meaning": "band",
+  "pos": "noun"
+ },
+ {
+  "word": "shoa",
+  "meaning": "show, concert",
+  "pos": "noun"
+ },
+ {
+  "word": "voka",
+  "meaning": "voice",
+  "pos": "noun"
+ },
+ {
+  "word": "ke",
+  "meaning": "that (I think that...)",
+  "pos": "conjunction"
+ },
+ {
+  "word": "sporta",
+  "meaning": "sport",
+  "pos": "noun"
+ },
+ {
+  "word": "bal",
+  "meaning": "ball",
+  "pos": "noun"
+ },
+ {
+  "word": "ekipa",
+  "meaning": "team",
+  "pos": "noun"
+ },
+ {
+  "word": "vina",
+  "meaning": "to win",
+  "pos": "verb"
+ },
+ {
+  "word": "regla",
+  "meaning": "rule",
+  "pos": "noun"
+ },
+ {
+  "word": "vez",
+  "meaning": "turn (in a game)",
+  "pos": "noun"
+ },
+ {
+  "word": "stadyo",
+  "meaning": "stadium",
+  "pos": "noun"
+ },
+ {
+  "word": "fanu",
+  "meaning": "fan (of a team)",
+  "pos": "noun"
+ },
+ {
+  "word": "krida",
+  "meaning": "to shout",
+  "pos": "verb"
+ },
+ {
+  "word": "trena",
+  "meaning": "to train, to practice",
+  "pos": "verb"
+ },
+ {
+  "word": "shakh",
+  "meaning": "chess",
+  "pos": "noun"
+ },
+ {
+  "word": "karta",
+  "meaning": "card",
+  "pos": "noun"
+ },
+ {
+  "word": "kubo",
+  "meaning": "dice",
+  "pos": "noun"
+ },
+ {
+  "word": "lansa",
+  "meaning": "to throw",
+  "pos": "verb"
+ },
+ {
+  "word": "ekwa",
+  "meaning": "fair",
+  "pos": "adjective"
+ },
+ {
+  "word": "ideya",
+  "meaning": "idea",
+  "pos": "noun"
+ },
+ {
+  "word": "kreda",
+  "meaning": "to believe",
+  "pos": "verb"
+ },
+ {
+  "word": "konsa",
+  "meaning": "to agree",
+  "pos": "verb"
+ },
+ {
+  "word": "rasa",
+  "meaning": "reason",
+  "pos": "noun"
+ },
+ {
+  "word": "mayë",
+  "meaning": "maybe",
+  "pos": "adverb"
+ },
+ {
+  "word": "vala",
+  "meaning": "important",
+  "pos": "adjective"
+ },
+ {
+  "word": "mundo",
+  "meaning": "world",
+  "pos": "noun"
+ },
+ {
+  "word": "pazo",
+  "meaning": "peace",
+  "pos": "noun"
+ },
+ {
+  "word": "gera",
+  "meaning": "war",
+  "pos": "noun"
+ },
+ {
+  "word": "avenë",
+  "meaning": "future",
+  "pos": "noun"
+ },
+ {
+  "word": "inglish",
+  "meaning": "English (the language)",
+  "pos": "name"
+ },
+ {
+  "word": "rusë",
+  "meaning": "Russian (the language)",
+  "pos": "name"
+ },
+ {
+  "word": "signa",
+  "meaning": "to mean",
+  "pos": "verb"
+ },
+ {
+  "word": "sonyo",
+  "meaning": "dream",
+  "pos": "noun"
+ },
+ {
+  "word": "sonya",
+  "meaning": "to dream",
+  "pos": "verb"
+ },
+ {
+  "word": "fama",
+  "meaning": "famous",
+  "pos": "adjective"
+ },
+ {
+  "word": "memo",
+  "meaning": "memory",
+  "pos": "noun"
+ },
+ {
+  "word": "rekorda",
+  "meaning": "to remember",
+  "pos": "verb"
+ },
+ {
+  "word": "oblida",
+  "meaning": "to forget",
+  "pos": "verb"
+ },
+ {
+  "word": "muda",
+  "meaning": "to change",
+  "pos": "verb"
  }
 ]

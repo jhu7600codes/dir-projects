@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoStories
@@ -33,6 +35,7 @@ import androidx.navigation.navArgument
 import app.venderian.ui.keyboard.KeyboardScreen
 import app.venderian.ui.learn.LearnScreen
 import app.venderian.ui.learn.LessonScreen
+import app.venderian.ui.course.LessonPlayer
 import app.venderian.ui.practice.PracticeScreen
 import app.venderian.ui.progress.ProgressScreen
 import app.venderian.ui.quiz.QuizScreen
@@ -85,7 +88,14 @@ private fun Root() {
             nav, Tab.Learn.route, Modifier.padding(padding),
             enterTransition = { fadeIn() }, exitTransition = { fadeOut() },
         ) {
-            composable(Tab.Learn.route) { LearnScreen(onOpenLesson = { nav.navigate("lesson/$it") }) }
+            composable(Tab.Learn.route) {
+                LearnScreen(onOpenLesson = { nav.navigate("lesson/$it") }, onOpenCourse = { nav.navigate("course/$it") })
+            }
+            composable(
+                "course/{id}",
+                enterTransition = { slideInVertically { it } + fadeIn() },
+                popExitTransition = { slideOutVertically { it } + fadeOut() },
+            ) { LessonPlayer(it.arguments!!.getString("id")!!, onClose = { nav.popBackStack() }) }
             composable(
                 "lesson/{index}",
                 arguments = listOf(navArgument("index") { type = NavType.IntType }),

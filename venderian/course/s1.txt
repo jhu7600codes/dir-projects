@@ -1,0 +1,328 @@
+# section 1. format: see tools/make_course.py
+# "new:" lists words taught in the lesson (from the dictionary or defined with "+").
+# "+ word | meaning | pos" defines a new word. "venderian = english" is a sentence.
+
+section 1 | first steps | family, food and home
+
+module 1 | family!
+
+lesson hello
+new: vela, dano, ya, nay, mi, tu, ka
++ ana | Ana (a name) | name
++ tomo | Tomo (a name) | name
+tip: there is no word for am / is / are in the present. "mi ana" just means "I am Ana". ka at the very end turns a sentence into a yes/no question.
+vela! = hello!
+vela, ana! = hello, Ana!
+mi ana. = I am Ana.
+tu tomo ka? = are you Tomo?
+ya, mi tomo. = yes, I am Tomo.
+nay, mi ana. = no, I am Ana.
+dano, tomo! = goodbye, Tomo!
+
+lesson mother and father
+new: ama, aba, da, ve, vo
+tip: da means "of", and it comes after the thing: "ama da mi" is "mother of me", so "my mother".
+ve ama da mi. = this is my mother.
+vo aba da mi. = that is my father.
+ve aba da tu ka? = is this your father?
+ya, ve aba da mi. = yes, this is my father.
+vo ama da ana. = that is Ana's mother.
+
+lesson brothers and sisters
+new: sa, ha, i, kiti
++ bro | brother | noun
++ sesa | sister | noun
+tip: the verb always goes last. "mi bro ha" is "I brother have". sa means he, she and it.
+mi bro i sesa ha. = I have a brother and a sister.
+sa sesa da tomo. = she is Tomo's sister.
+sa kiti. = he is a child.
+tu sesa ha ka? = do you have a sister?
+nay, mi bro ha. = no, I have a brother.
+
+lesson more than one
+new: -n, -an, min, tun, san, dor, tis
+tip: plural: add -n after a vowel (kiti, kitin) and -an after a consonant. after a number the noun stays as it is: dor bro, two brothers.
+mi dor bro ha. = I have two brothers.
+san kitin. = they are children.
+min sesan. = we are sisters.
+tun bron ka? = are you brothers?
+sa tis kiti ha. = she has three children.
+
+lesson my family
+new: folka, ek, gran, pik, vet
++ baba | grandmother | noun
++ dedo | grandfather | noun
+tip: adjectives come after the noun. with no verb they make the whole sentence: "folka gran" is "the family is big".
+folka da mi gran. = my family is big.
+mi ek sesa ha. = I have one sister.
+baba i dedo vet. = grandmother and grandfather are old.
+bro da mi pik. = my brother is small.
+folka da tu pik ka? = is your family small?
+
+module 1.5 | family traditions
+
+lesson at home
+new: kar, un, viva, ik, lë, kwe
+tip: little words like un (in) go before the noun: "un kar", in the house. question words sit where the answer goes.
+mi un kar viva. = I live in a house.
+baba ik viva. = grandmother lives here.
+min un kar gran viva. = we live in a big house.
+tu kwe viva? = where do you live?
+san lë viva. = they live there.
+
+lesson dinner together
+new: yama, sipa, yamë, nami, tot, ne
++ vespa | dinner | noun
+tip: ne (not) goes right before the verb. tot after a noun means all of it: "folka tot", the whole family.
+folka da mi vespa yama. = my family eats dinner.
+folka tot vespa yama. = the whole family eats dinner.
+aba nami sipa. = father drinks water.
+kiti yamë ne yama. = the child does not eat the food.
+tu nami sipa ka? = do you drink water?
+
+lesson holidays
+new: do, ra, fela, liva
++ festa | party, holiday | noun
++ dara | gift | noun
+tip: ra means "to": you give something ra someone.
+ama dara ra mi do. = mother gives a gift to me.
+mi dara ra baba do. = I give a gift to grandmother.
+tot fela. = everyone is happy.
+min festan liva. = we love parties.
+kiti fela ka? = is the child happy?
+
+lesson old stories
+new: thela, ota, multa
++ sago | story | noun
++ vechë | evening | noun
+dedo sago thela. = grandfather tells a story.
+kitin sago ota. = the children hear the story.
+un vechë, baba sagon thela. = in the evening, grandmother tells stories.
+dedo sagon multa ha. = grandfather has many stories.
+tu sago ota ka? = do you hear the story?
+
+lesson we love each other
+new: ishe, goda, vren, bon, mol
++ kun | together | adverb
+tip: mol (very) goes right before the word it makes stronger.
+ishe da mi ana. = my name is Ana.
+min kun yama. = we eat together.
+folka da mi mol bon. = my family is very good.
+mi vren da tu goda. = I like your friend.
+tu folka da tu liva ka? = do you love your family?
+
+module 2 | food
+
+lesson hungry
+new: bren, mikh, vola, kwo
++ kafa | coffee | noun
++ chay | tea | noun
+mi bren vola. = I want bread.
+tu kwo vola? = what do you want?
+sa mikh sipa. = he drinks milk.
+min chay vola. = we want tea.
+aba kafa sipa ka? = does father drink coffee?
+
+lesson fruit
+new: rud, gel, verdë
++ aplo | apple | noun
++ banan | banana | noun
++ frut | fruit | noun
++ sava | sweet | adjective
+aplo rud. = the apple is red.
+banan gel. = the banana is yellow.
+frut sava. = the fruit is sweet.
+mi aplo verdë goda. = I like the green apple.
+tu bananan goda ka? = do you like bananas?
+
+lesson numbers
+new: kav, pam, shel, sib, okh, nir, dek, zen, es
+tip: es (to be) also means "there is / there are". numbers go before the noun.
+ik pam banan es. = there are five bananas here.
+lë dek aplo es. = there are ten apples there.
+dor i tis pam. = two and three is five.
+baba okh kiti ha. = grandmother has eight children.
+min sib frut yama. = we eat seven fruits.
+
+lesson at the market
+new: kopa, zil
++ bazar | market | noun
++ kosta | to cost | verb
++ kwanto | how much, how many | adverb
++ mon | coin | noun
+mi un bazar es. = I am at the market.
+mi aplon kopa. = I buy apples.
+aplo kwanto kosta? = how much does the apple cost?
+aplo dor mon kosta. = the apple costs two coins.
+nay, mi zil ne ha. = no, I do not have money.
+
+lesson cooking
+new: fasa, kal, frid
++ kuka | to cook | verb
++ supa | soup | noun
++ salë | salt | noun
+ama supa kuka. = mother cooks soup.
+supa kal. = the soup is hot.
+nami frid. = the water is cold.
+aba bren fasa. = father makes bread.
+supa salë ne ha. = the soup has no salt.
+
+module 2.5 | cooking and meals
+
+lesson breakfast
+new: o
++ matin | morning | noun
++ pran | breakfast | noun
++ ovo | egg | noun
+un matin, mi pran yama. = in the morning, I eat breakfast.
+mi dor ovo yama. = I eat two eggs.
+tu kafa o chay vola? = do you want coffee or tea?
+kitin mikh sipa. = the children drink milk.
+pran bon. = breakfast is good.
+
+lesson in the kitchen
+new: sur
++ kukin | kitchen | noun
++ tabla | table | noun
++ nash | knife | noun
++ plato | plate | noun
+plato sur tabla es. = the plate is on the table.
+nash un kukin es. = the knife is in the kitchen.
+ama un kukin kuka. = mother cooks in the kitchen.
+platon kwe es? = where are the plates?
+platon sur tabla. = the plates are on the table.
+
+lesson tastes
+new: mal
++ amar | bitter | adjective
++ salo | salty | adjective
++ gusta | to taste | verb
+kafa amar. = coffee is bitter.
+supa mol salo. = the soup is very salty.
+mi supa gusta. = I taste the soup.
+frut sava i bon. = the fruit is sweet and good.
+ve yamë mal ka? = is this food bad?
+
+lesson please and thank you
+new: kiro, shevan
+tip: to tell someone to do something, leave out tu: just say the object and the verb. put kiro (please) in front to be nice.
+kiro, nami ra mi do. = please give water to me.
+shevan! = thank you!
+kiro, bren ra baba do. = please give bread to grandmother.
+supa yama! = eat the soup!
+kafa ne sipa! = do not drink the coffee!
+
+lesson a family dinner
++ yamik | hungry | adjective
++ satë | full (not hungry) | adjective
++ torta | cake | noun
+mi yamik. = I am hungry.
+tu yamik ka? = are you hungry?
+nay, mi satë. = no, I am full.
+ama torta fasa. = mother makes a cake.
+folka tot torta goda. = the whole family likes the cake.
+
+module 3 | home
+
+lesson rooms
+new: dur, vindë, bela
++ rum | room | noun
++ kama | bed | noun
++ stul | chair | noun
+kar da mi tis rum ha. = my house has three rooms.
+kama un rum es. = the bed is in the room.
+stul pik. = the chair is small.
+dur kwe es? = where is the door?
+vindë gran i bela. = the window is big and beautiful.
+
+lesson colors
+new: blu, alba, mog, mish, vuf
++ gris | gray | adjective
++ roza | pink | adjective
+dur blu. = the door is blue.
+kama da mi alba. = my bed is white.
+stul mog. = the chair is black.
+mish gris sur kama es. = the gray cat is on the bed.
+vuf da mi ne roza. = my dog is not pink.
+
+lesson doing things
+new: apra, klu, seda, sta, nema
+dur apra! = open the door!
+kiro, vindë klu. = please close the window.
+mi sur stul seda. = I sit on the chair.
+kiti un kama nema. = the child sleeps in the bed.
+vuf ne seda. = the dog does not sit.
+
+lesson where is it?
+new: tal, kitë
++ nër | under | preposition
++ nek | next to | preposition
++ ante | in front of, before | preposition
++ pos | behind | preposition
+vuf nër tabla es. = the dog is under the table.
+stul nek kama es. = the chair is next to the bed.
+mish pos dur es. = the cat is behind the door.
+kar ante tal es. = the house is in front of the tree.
+kitë kwe es? = where is the book?
+
+lesson my room
+new: shom, lum
++ lampa | lamp | noun
++ kloza | closet | noun
+tip: with no verb, ne goes before the adjective: "lum ne bon", the light is not good.
+rum da mi pik shom bela. = my room is small but beautiful.
+lampa sur tabla es. = the lamp is on the table.
+lum ne bon. = the light is not good.
+kitën multa un kloza es. = there are many books in the closet.
+mi rum da mi liva. = I love my room.
+
+module 3.5 | daily routine
+
+lesson morning
+new: khan, gol, kwan
++ leva | to get up | verb
++ lava | to wash | verb
++ dentë | tooth | noun
+mi un matin leva. = I get up in the morning.
+mi khanan lava. = I wash my hands.
+kiti dentën lava. = the child washes their teeth.
+tu kwan leva? = when do you get up?
+aba kafa sipa i gol. = father drinks coffee and goes.
+
+lesson time words
+new: nun, vedey, posdey, predey, dey, noch, tris
+nun mi yamik. = now I am hungry.
+vedey dey bon. = today is a good day.
+posdey min ra baba gol. = tomorrow we go to grandmother.
+un noch, mi nema. = at night, I sleep.
+predey ama tris. = yesterday mother was sad.
+
+lesson at school
+new: skol, lerna, ridë, skri
++ mestro | teacher | noun
++ vendëri | Venderian (the language) | name
+mi un skol lerna. = I learn at school.
+mestro kitë ridë. = the teacher reads a book.
+kitin skri. = the children write.
+tu vendëri lerna ka? = are you learning Venderian?
+ya, mi vendëri lerna. = yes, I am learning Venderian.
+
+lesson evening
+new: luda, lira, lir, ludo
++ bano | bath | noun
+tip: want, like and can go after the other verb: "mi nema vola" is "I want to sleep".
+un vechë, min ludo luda. = in the evening, we play a game.
+ama lir lira. = mother sings a song.
+kiti un bano es. = the child is in the bath.
+tu ludon goda ka? = do you like games?
+mi nema vola. = I want to sleep.
+
+lesson my day
+new: rabo, rab, kwu
++ apre | after | preposition
++ fin | end | noun
+aba un dey rabo. = father works during the day.
+apre skol, mi ludo luda. = after school, I play a game.
+ante vespa, min khanan lava. = before dinner, we wash our hands.
+un fin da dey, mi nema. = at the end of the day, I sleep.
+dey da tu kwu? = how is your day?

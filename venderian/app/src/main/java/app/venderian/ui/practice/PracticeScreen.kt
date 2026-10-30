@@ -222,7 +222,7 @@ private fun Finished(s: PracticeState, onMore: () -> Unit) {
     ) {
         if (s.reviewed == 0) {
             Text("nothing due right now", style = MaterialTheme.typography.headlineSmall)
-            Text("finish a lesson to add letters, new words show up every day", textAlign = TextAlign.Center,
+            Text("finish script lessons to add letters, and course lessons to add words", textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             Text("done for now!", style = MaterialTheme.typography.headlineSmall)

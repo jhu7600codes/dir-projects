@@ -1,5 +1,5 @@
-"""builds app/src/main/assets/dictionary.json from the word list below and checks
-every word against the phonotactics in docs/venderian.md. run it after editing."""
+"""the starter word list and the phonotactics check. make_course.py adds the course's
+words and writes app/src/main/assets/dictionary.json; running this runs that."""
 import json
 import re
 import sys
@@ -30,6 +30,14 @@ da|of, belonging to|particle
 -va|future tense (verb suffix)|suffix
 -an|plural after a consonant (noun suffix)|suffix
 -n|plural after a vowel (noun suffix)|suffix
+-or|more (after a consonant): gran, granor|suffix
+-r|more (after a vowel): bela, belar|suffix
+-esh|most (after a consonant): gran, granesh|suffix
+-sh|most (after a vowel): bela, belash|suffix
+-mo|turns an adjective into how something is done: rap, rapmo (quickly)|suffix
+-i|turns a number into first, second...: ek, eki|suffix
+-ri|the person who does it: lira, lirari (singer)|suffix
+-tal|turns an adjective into a thing: fela, felatal (happiness)|suffix
 i|and|conjunction
 o|or|conjunction
 shom|but|conjunction
@@ -66,7 +74,6 @@ stel|star|noun
 vin|sky|noun
 bor|mountain|noun
 ruma|river|noun
-sheva|sea|noun
 tal|tree|noun
 filo|leaf|noun
 pira|stone|noun
@@ -114,7 +121,7 @@ es|to be|verb
 ha|to have|verb
 gol|to go|verb
 ven|to come|verb
-sen|to see|verb
+vid|to see|verb
 ota|to hear|verb
 thela|to speak|verb
 kenë|to know|verb
@@ -239,7 +246,8 @@ def legal(word):
     return True
 
 
-def main():
+def starter():
+    """the starter dictionary as (word, meaning, pos), checked"""
     entries, seen, bad = [], set(), []
     for line in WORDS.strip().splitlines():
         word, meaning, pos = (x.strip() for x in line.split("|"))
@@ -251,10 +259,13 @@ def main():
         entries.append({"word": word, "meaning": meaning, "pos": pos})
     if bad:
         sys.exit("\n".join(bad))
-    out = ROOT / "app/src/main/assets/dictionary.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(entries, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    print(f"{len(entries)} words -> {out.relative_to(ROOT)}")
+    return entries
+
+
+def main():
+    # the dictionary also holds the course's words, so make_course.py writes it
+    import make_course
+    make_course.main()
 
 
 if __name__ == "__main__":

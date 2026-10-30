@@ -32,18 +32,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.venderian.ui.ScreenTitle
+import app.venderian.ui.course.CourseMap
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import app.venderian.ui.VText
 import app.venderian.ui.app
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun LearnScreen(onOpenLesson: (Int) -> Unit) {
+fun LearnScreen(onOpenLesson: (Int) -> Unit, onOpenCourse: (String) -> Unit) {
+    val app = app()
+    val scriptDone by app.repository.scriptDone.collectAsState(initial = false)
+    val scriptLessons by app.repository.lessonsDone.collectAsState(initial = emptySet())
+    val courseDone by app.repository.courseDone.collectAsState(initial = emptySet())
+    // the course once the script is done, the script before that
+    var tab by rememberSaveable { mutableStateOf<Int?>(null) }
+    val shown = tab ?: if (scriptDone) 1 else 0
+    Column {
+        ScreenTitle("Learn", if (shown == 0) "the venderian script, a few letters at a time" else "the language: 3 sections, 9 modules")
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SegmentedButton(shown == 0, { tab = 0 }, SegmentedButtonDefaults.itemShape(0, 2)) { Text("script") }
+            SegmentedButton(shown == 1, { tab = 1 }, SegmentedButtonDefaults.itemShape(1, 2)) { Text("course") }
+        }
+        if (shown == 0) ScriptLessons(onOpenLesson)
+        else CourseMap(
+            app.course, courseDone, scriptDone,
+            scriptProgress = scriptLessons.size / app.alphabet.lessons.size.toFloat(),
+            onOpen = onOpenCourse,
+        )
+    }
+}
+
+@Composable
+private fun ScriptLessons(onOpenLesson: (Int) -> Unit) {
     val app = app()
     val alphabet = app.alphabet
     val done by app.repository.lessonsDone.collectAsState(initial = emptySet())
     val next = alphabet.lessons.firstOrNull { it.index !in done }?.index
 
     LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
-        item { ScreenTitle("Learn", "the venderian script, a few letters at a time") }
         item { HowItWorks() }
         items(alphabet.lessons, key = { it.index }) { lesson ->
             val isDone = lesson.index in done

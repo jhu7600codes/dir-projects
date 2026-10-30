@@ -1,0 +1,325 @@
+section 2 | out in the world | the city, nature, school and work
+
+module 4 | city and travel
+
+lesson the city
+new: urba, zor, rap, lenë
++ vilë | street | noun
++ oto | car | noun
++ tren | train | noun
+urba gran i bela. = the city is big and beautiful.
+oton multa un vilë es. = there are many cars on the street.
+mi un urba viva. = I live in the city.
+tren rap. = the train is fast.
+oto da aba lenë. = father's car is slow.
+
+lesson yesterday
+new: -ta, ven, pasa, dos, kel
+tip: past tense: add -ta to the verb. gol (go) becomes golta (went). kel means with, and also "by" for travel.
+predey mi ra urba golta. = yesterday I went to the city.
+min ra skol pasata. = we walked to school.
+sa dos urba venta. = she came from the city.
+tu kel tren golta ka? = did you go by train?
+nay, mi kel oto golta. = no, I went by car.
+
+lesson places
++ boteka | shop | noun
++ parka | park | noun
++ kafë | café | noun
++ muzë | museum | noun
++ hotel | hotel | noun
+boteka nek parka es. = the shop is next to the park.
+min un kafë seda. = we sit in the café.
+mi ra muzë gol vola. = I want to go to the museum.
+hotel kwe es? = where is the hotel?
+predey san un parka ludata. = yesterday they played in the park.
+
+lesson travel
+new: nov, kwa
++ vaya | to travel | verb
++ nasho | country | noun
++ mapa | map | noun
++ bagë | bag | noun
+mi vaya goda. = I like to travel.
+san ra nasho nov vayata. = they traveled to a new country.
+mapa da tu kwe es? = where is your map?
+bagë da mi mol gran. = my bag is very big.
+tu kwa vaya? = why do you travel?
+
+lesson tomorrow
+new: -va, bor
+tip: future tense: add -va to the verb. gol becomes golva (will go).
+posdey mi ra bor golva. = tomorrow I will go to the mountain.
+min kel tren vayava. = we will travel by train.
+sa ra hotel venva. = he will come to the hotel.
+tu kwan golva? = when will you go?
+mi ne golva. = I will not go.
+
+module 4.5 | directions
+
+lesson left and right
++ lev | left | adjective
++ dreta | right (not left) | adjective
++ latë | side | noun
++ rekto | straight ahead | adverb
+boteka un latë lev es. = the shop is on the left side.
+hotel un latë dreta es. = the hotel is on the right side.
+rekto gol! = go straight ahead!
+ra lev gol! = go left!
+muzë rekto es. = the museum is straight ahead.
+
+lesson asking the way
+new: kweta, repa, ayda, hum
++ prok | near | adjective
++ dalë | far | adjective
+mi hum kwetata. = I asked a person.
+parka prok ka? = is the park near?
+nay, parka dalë. = no, the park is far.
+sa ne repata. = she did not answer.
+kiro, mi ayda! = please help me!
+
+lesson how far
+new: lon
++ minut | minute | noun
++ or | hour, o'clock | noun
+muzë dek minut dalë. = the museum is ten minutes away.
+min ek or pasata. = we walked for one hour.
+kwanto minut? = how many minutes?
+zor lon. = the road is long.
+tren dor or golva. = the train will go for two hours.
+
+lesson getting lost
+new: trova
++ perda | to lose, to get lost | verb
++ ripë | again | adverb
+mi un urba perdata. = I got lost in the city.
+mi hotel ne trovata. = I did not find the hotel.
+vren da mi mi trovata. = my friend found me.
+mapa ripë ridë! = read the map again!
+min ne perdava. = we will not get lost.
+
+lesson a trip
++ foto | photo | noun
++ pelag | sea | noun
+min ra pelag vayata. = we traveled to the sea.
+mi foton multa fasata. = I took many photos.
+pelag blu i bela. = the sea is blue and beautiful.
+posdey min ra kar golva. = tomorrow we will go home.
+tu foton da mi goda ka? = do you like my photos?
+
+module 5 | nature and weather
+
+lesson the sky
+new: sol, mera, stel, vin
++ nuba | cloud | noun
+sol un vin es. = the sun is in the sky.
+un noch, stelan multa es. = at night, there are many stars.
+mera bela. = the moon is beautiful.
+nuban gris. = the clouds are gray.
+vedey nuba ne es. = there is no cloud today.
+
+lesson weather
+new: khal, forë
++ klima | weather | noun
++ pluva | to rain | verb
++ neva | to snow | verb
+tip: weather verbs have no subject: "pluva" alone means "it rains".
+klima vedey kwu? = how is the weather today?
+vedey pluva. = it rains today.
+predey nevata. = yesterday it snowed.
+khal mol forë. = the wind is very strong.
+posdey kal esva. = tomorrow it will be hot.
+
+lesson nature
+new: filo, gala, ruma, tera
++ lago | lake | noun
++ silva | forest | noun
+silva talan multa ha. = the forest has many trees.
+ruma ra lago gol. = the river goes to the lake.
+filon verdë. = the leaves are green.
+gala rud nek tal es. = a red flower is next to the tree.
+bor gran i alba. = the mountain is big and white.
+
+lesson bigger and best
+new: -or, -r, -esh, -sh
++ dë | than | particle
+tip: add -or (-r after a vowel) for "more": gran, granor. add -esh (-sh after a vowel) for "most": granesh. "than" is dë.
+bor granor dë kar. = the mountain is bigger than the house.
+ruma lonor dë zor. = the river is longer than the road.
+ve gala belar dë vo. = this flower is more beautiful than that one.
+sol granesh. = the sun is the biggest.
+ve lago belash. = this lake is the most beautiful.
+
+lesson animals
+new: pita, glob
++ kaval | horse | noun
++ uso | bear | noun
++ vulka | wolf | noun
++ ala | to fly | verb
+pitan un vin ala. = the birds fly in the sky.
+glob un nami viva. = the fish lives in the water.
+kaval rapor dë vuf. = the horse is faster than the dog.
+uso un silva viva. = the bear lives in the forest.
+vulka granor dë mish. = the wolf is bigger than the cat.
+
+module 5.5 | seasons and animals
+
+lesson seasons
+new: yer
++ sezon | season | noun
++ primë | spring | noun
++ somër | summer | noun
++ otno | autumn | noun
++ hiver | winter | noun
+un hiver, neva. = it snows in winter.
+un somër, min ra pelag gol. = in summer, we go to the sea.
+otno filon rud ha. = autumn has red leaves.
+primë bela. = spring is beautiful.
+yer kav sezon ha. = a year has four seasons.
+
+lesson on the farm
+new: kura
++ ferma | farm | noun
++ kova | cow | noun
++ pulo | chicken | noun
++ kampo | field | noun
+dedo un ferma viva. = grandfather lives on a farm.
+kova mikh do. = the cow gives milk.
+pulon ovon do. = the chickens give eggs.
+kavalan un kampo kura. = the horses run in the field.
+ferma da dedo gran. = grandfather's farm is big.
+
+lesson how you do it
+new: -mo
+tip: add -mo to an adjective to say how something is done: rap (fast), rapmo (quickly).
+kaval rapmo kura. = the horse runs quickly.
+uso lenëmo pasa. = the bear walks slowly.
+pita belamo lira. = the bird sings beautifully.
+tu bonmo thela. = you speak well.
+kiti felamo ludata. = the child played happily.
+
+lesson caring for nature
++ garda | to protect | verb
++ resto | trash | noun
++ puro | clean | adjective
++ mudë | dirty | adjective
++ lasa | to leave, to let | verb
+min tera garda. = we protect the earth.
+ruma puro. = the river is clean.
+lago mudë. = the lake is dirty.
+resto un silva ne lasa! = do not leave trash in the forest!
+posdey min ruma puro fasava. = tomorrow we will make the river clean.
+
+lesson a day outside
++ piknik | picnic | noun
++ shina | to shine | verb
+vedey sol shina. = today the sun is shining.
+min piknik un parka fasata. = we had a picnic in the park.
+kitin felamo ludata. = the children played happily.
+un vechë, pluvata. = in the evening, it rained.
+ve dey belash esta. = this was the most beautiful day.
+
+module 6 | school and work
+
+lesson subjects
+new: khar, lekh
++ matë | math | noun
++ histo | history | noun
++ muzik | music | noun
++ arta | art | noun
+mi matë lerna. = I study math.
+tu histo goda ka? = do you like history?
+arta mol bela. = art is very beautiful.
+matë khar. = math is hard.
+muzik lekh. = music is easy.
+
+lesson can, must, want
++ pot | can | verb
++ deba | must, to have to | verb
+tip: can (pot), must (deba) and want (vola) come after the main verb, and they take the -ta or -va: "mi gol potta", I could go.
+mi lira pot. = I can sing.
+tu matë lerna deba. = you must study math.
+sa nema vola. = she wants to sleep.
+mi vendëri thela pot. = I can speak Venderian.
+predey mi ne gol potta. = yesterday I could not go.
+
+lesson the classroom
++ klasë | class, classroom | noun
++ pena | pen | noun
++ papir | paper | noun
++ panël | board | noun
+mestro sur panël skri. = the teacher writes on the board.
+mi pena i papir ha. = I have a pen and paper.
+klasë da min gran. = our class is big.
+kiro, kitën da tun apra! = please open your books!
+papir ne ik es. = the paper is not here.
+
+lesson first, second, third
+new: -i
+tip: add -i to a number for first, second...: ek, eki. clock time is or + the number: "un or okh", at eight o'clock.
+ve dey eki da skol. = this is the first day of school.
+mi kitë tisi ridë. = I read the third book.
+skol un or okh apra. = school opens at eight o'clock.
+or kwo? = what time is it?
+or dek. = it is ten o'clock.
+
+lesson homework
++ tasko | homework, task | noun
++ fini | to finish | verb
++ prova | test | noun
+mi tasko fasa deba. = I have to do homework.
+tu tasko finita ka? = did you finish the homework?
+posdey prova esva. = tomorrow there will be a test.
+prova khar esta. = the test was hard.
+mi tasko apre vespa finiva. = I will finish the homework after dinner.
+
+module 6.5 | time and plans
+
+lesson jobs
+new: -ri
++ medik | doctor | noun
+tip: add -ri to a verb for the person who does it: lira (sing), lirari (singer).
+mi lirari esva. = I will be a singer.
+aba da mi kukari. = my father is a cook.
+medik human ayda. = the doctor helps people.
+tu kwo rab ha? = what job do you have?
+ama da mi medik. = my mother is a doctor.
+
+lesson days of the week
++ vek | week | noun
+tip: the days are numbered: dey eki (first day) is monday, dey sibi (seventh day) is sunday.
+vek sib dey ha. = a week has seven days.
+dey eki, mi skol gol. = on Monday, I go to school.
+dey pami, min festa fasava. = on Friday, we will have a party.
+dey sibi, mi nema. = on Sunday, I sleep.
+vedey dey kwo? = what day is it today?
+
+lesson plans
+new: penka
++ plan | plan | noun
++ mesë | month | noun
++ pros | next | adjective
++ pasë | last (before this one) | adjective
+mi plan ha. = I have a plan.
+vek pros, min vayava. = next week, we will travel.
+mesë pasë, mi multamo rabota. = last month, I worked a lot.
+plan da tu kwo? = what is your plan?
+yer pros, mi ra skol nov golva. = next year, I will go to a new school.
+
+lesson busy and free
+new: kron
++ okupa | busy | adjective
++ libër | free (not busy) | adjective
+mi vedey okupa. = I am busy today.
+tu posdey libër ka? = are you free tomorrow?
+mi kron ne ha. = I do not have time.
+sa kron multa ha. = she has a lot of time.
+apre rab, mi libër. = after work, I am free.
+
+lesson a busy week
+tip: ve (this) and vo (that) go before the noun, like numbers: ve vek, this week.
+dey eki, mi prova ha. = on Monday, I have a test.
+dey dori, mi muzik lerna. = on Tuesday, I study music.
+dey tisi, mi kel vren ludava. = on Wednesday, I will play with a friend.
+ve vek, mi mol okupa. = this week, I am very busy.
+shom dey sibi, mi libër. = but on Sunday, I am free.
