@@ -1,0 +1,9 @@
+Package: com.jhu7600.slidetounlock
+Name: SlideToUnlock
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: brings the ios 9 slide to unlock back on ios 10, 1:1 with your finger
+Maintainer: jhu7600
+Author: jhu7600
+Section: Tweaks
+Depends: mobilesubstrate, firmware (>= 10.0), firmware (<< 11.0)
