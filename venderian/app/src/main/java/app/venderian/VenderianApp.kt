@@ -67,7 +67,7 @@ class VenderianApp : Application() {
         private set
 
     /** the speech engines on the phone (google, samsung, huawei, xiaomi...) */
-    var engines by mutableStateOf<List<TextToSpeech.EngineInfo>>(emptyList())
+    var engines by mutableStateOf<List<Pair<String, String>>>(emptyList())
         private set
 
     /** the engine picked in settings (a package name), or null for the phone's default */
@@ -94,40 +94,82 @@ class VenderianApp : Application() {
         private set
 
     private var starting = false
+    private var generation = 0
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
 
-    private fun startTts() {
+    /** the speech engines installed, as (package, name), read from the system (works even if one won't start) */
+    private fun installedEngines(): List<Pair<String, String>> =
+        packageManager.queryIntentServices(Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE), 0).map {
+            it.serviceInfo.packageName to it.loadLabel(packageManager).toString()
+        }.distinctBy { it.first }
+
+    /**
+     * starts the speech engine. [tryNext] is the list of engines still to try if this one
+     * fails or never answers (the default first, then every other installed one).
+     */
+    private fun startTts(tryNext: List<String>? = null) {
         ttsReady = false
         starting = true
-        ttsStatus = "starting"
+        engines = installedEngines()
         engine = ttsPrefs.getString("engine", null)
-        // the callback can come late, after a restart made a new engine: only the newest counts
-        var created: TextToSpeech? = null
+        val candidates = tryNext ?: (listOfNotNull(engine) + engines.map { it.first }).distinct()
+        val pkg = candidates.firstOrNull()
+        ttsStatus = "starting ${pkg ?: "default"}"
+        // only the newest engine's answer counts: an old one can still answer after a restart,
+        // and a failing engine can answer before its constructor even returns
+        val gen = ++generation
+        var answered = false
         val listener = TextToSpeech.OnInitListener { status ->
-            val t = created
-            if (t == null || t !== tts) return@OnInitListener
-            starting = false
-            ttsReady = status == TextToSpeech.SUCCESS
-            if (ttsReady) {
-                ttsStatus = "ok"
-                engines = t.engines
-                engineInUse = engine ?: t.defaultEngine
-                checkSpanish(t)
-                t.setSpeechRate(0.85f)
-                pending.toList().forEach { it() }
-            } else {
-                ttsStatus = "failed ($status)"
-                spanishVoice = false
+            main.post {
+                if (gen != generation || answered) return@post
+                answered = true
+                onTtsReady(status, pkg, candidates.drop(1))
             }
-            pending.clear()
         }
-        created = engine?.let { TextToSpeech(this, listener, it) } ?: TextToSpeech(this, listener)
-        tts = created
+        tts = if (pkg != null) TextToSpeech(this, listener, pkg) else TextToSpeech(this, listener)
+        // some engines never answer at all: give up after a while and try the next one
+        main.postDelayed({
+            if (gen == generation && !answered) {
+                answered = true
+                onTtsReady(TextToSpeech.ERROR, pkg, candidates.drop(1), timedOut = true)
+            }
+        }, 8_000)
+    }
+
+    private fun onTtsReady(status: Int, pkg: String?, rest: List<String>, timedOut: Boolean = false) {
+        val t = tts ?: return
+        if (status == TextToSpeech.SUCCESS) {
+            starting = false
+            ttsReady = true
+            ttsStatus = "ok"
+            engineInUse = pkg ?: t.defaultEngine
+            checkSpanish(t)
+            t.setSpeechRate(0.85f)
+            pending.toList().forEach { it() }
+            pending.clear()
+            return
+        }
+        val why = if (timedOut) "no answer" else "failed ($status)"
+        if (rest.isNotEmpty()) {
+            // this engine won't start: try the next installed one
+            t.shutdown()
+            tts = null
+            ttsStatus = "${pkg ?: "default"} $why, trying ${rest.first()}"
+            startTts(rest)
+            return
+        }
+        starting = false
+        ttsStatus = "${pkg ?: "default"} $why"
+        spanishVoice = false
+        spanishDetails = "no speech engine would start"
+        pending.clear()
     }
 
     /** starts the engine again: a voice downloaded meanwhile only shows up after a restart */
     private fun restartTts() {
         val old = tts
         tts = null
+        generation++
         old?.shutdown()
         startTts()
     }

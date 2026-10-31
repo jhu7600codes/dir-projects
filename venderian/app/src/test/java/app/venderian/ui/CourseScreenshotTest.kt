@@ -89,7 +89,7 @@ class CourseScreenshotTest {
         compose.mainClock.autoAdvance = false
         settle()
         compose.onAllNodesWithText("sounds").onFirst().performClick()
-        waitFor("the lazy vowel")
+        waitFor("long vowels")
         shot("s1-sounds")
         compose.onAllNodesWithText("course").onFirst().performClick()
         waitFor("first steps")

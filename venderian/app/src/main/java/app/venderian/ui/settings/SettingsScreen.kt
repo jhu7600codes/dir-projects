@@ -92,7 +92,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             }
 
             Section("voice") {
-                val engineName = app.engines.firstOrNull { it.name == app.engineInUse }?.label ?: app.engineInUse
+                val engineName = app.engines.firstOrNull { it.first == app.engineInUse }?.second ?: app.engineInUse
                 Text(
                     when (app.spanishVoice) {
                         true -> "found a spanish voice (${app.spanishName}) in $engineName, venderian is read with it"
@@ -113,14 +113,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),
                 )
-                if (app.engines.size > 1) {
+                if (app.engines.isNotEmpty()) {
                     Text("speech engine", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
                     Text("if your spanish voice is in another app, pick it here",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(app.engine == null, { app.useEngine(null) }, label = { Text("phone default") })
                         app.engines.forEach { e ->
-                            FilterChip(app.engine == e.name, { app.useEngine(e.name) }, label = { Text(e.label) })
+                            FilterChip(app.engine == e.first, { app.useEngine(e.first) }, label = { Text(e.second) })
                         }
                     }
                 }
