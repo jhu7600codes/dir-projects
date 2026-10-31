@@ -1,0 +1,10 @@
+Package: com.jhu7600.ninels10
+Name: NineLS10
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: the ios 9 lock screen on ios 10. backport of NineLS by Minh Ton.
+Maintainer: jhu7600
+Author: jhu7600, Minh Ton
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader, firmware (>= 10.0), firmware (<< 11.0)
+Conflicts: com.jhu7600.nineunlock10, com.jhu7600.slidetounlock

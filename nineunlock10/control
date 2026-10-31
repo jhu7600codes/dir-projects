@@ -1,0 +1,10 @@
+Package: com.jhu7600.nineunlock10
+Name: NineUnlock10
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: ios 9 style slide to unlock on ios 10. backport of NineUnlock by Minh Ton.
+Maintainer: jhu7600
+Author: jhu7600, Minh Ton
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader, firmware (>= 10.0), firmware (<< 11.0)
+Conflicts: com.jhu7600.ninels10, com.jhu7600.slidetounlock
