@@ -355,4 +355,7 @@
     <string name="session_lost">Инстанс yt2009 забыл ваш вход (скорее всего, он перезапускался). Войдите снова.</string>
     <string name="loading_account">Загрузка аккаунта…</string>
     <string name="account_unreachable">Этот инстанс не может достучаться до вашего аккаунта YouTube. Нажмите, чтобы войти снова или выбрать другой инстанс</string>
+    <string name="continue_watching">Продолжить просмотр</string>
+    <string name="ends_at">Закончится в %s</string>
+    <string name="clock_24h">24-часовой формат времени</string>
 </resources>

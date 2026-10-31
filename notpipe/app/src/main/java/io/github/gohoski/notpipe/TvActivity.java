@@ -20,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -30,6 +31,7 @@ import io.github.gohoski.notpipe.api.Manager;
 import io.github.gohoski.notpipe.api.Metadata;
 import io.github.gohoski.notpipe.api.Yt2009Account;
 import io.github.gohoski.notpipe.data.VideoInfo;
+import io.github.gohoski.notpipe.ui.TvRows;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.Feeds;
 import io.github.gohoski.notpipe.util.ImageLoader;
@@ -43,10 +45,15 @@ import io.github.gohoski.notpipe.util.LocalLibrary;
  */
 
 public class TvActivity extends Activity implements InstancesUpdater.OnInstancesUpdatedListener {
-    private static final int SEARCH = 0, RECOMMENDED = 1, POPULAR = 2, SUBSCRIPTIONS = 3, SHORTS = 4,
-            HISTORY = 5, LIBRARY = 6, SETTINGS = 7;
-    private static final int[] MENU_TITLES = {R.string.search, R.string.recommended_for_you, R.string.popular,
+    /** Home is the recommendations (rows), like YouTube's own TV app */
+    private static final int HOME = 0, SEARCH = 1, POPULAR = 2, SUBSCRIPTIONS = 3, SHORTS = 4,
+            HISTORY = 5, LIBRARY = 6, SETTINGS = 7, RECOMMENDED = -2;
+    private static final int[] MENU_TITLES = {R.string.home, R.string.search, R.string.popular,
             R.string.subscriptions, R.string.shorts, R.string.history, R.string.library, R.string.settings};
+    private static final int[] MENU_ICONS = {R.drawable.nav_home, android.R.drawable.ic_menu_search,
+            android.R.drawable.ic_menu_compass, R.drawable.nav_subs,
+            R.drawable.nav_shorts, android.R.drawable.ic_menu_recent_history, R.drawable.nav_library,
+            android.R.drawable.ic_menu_preferences};
     private static final int SECTION_LOAD_DELAY = 400;
 
     private Context context;
@@ -60,6 +67,17 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
     private String lastQuery = "";
     private LoadTask loadTask;
     private boolean isDestroyedFlag = false;
+    private TvRows rows;
+    private boolean rowsLoaded = false;
+
+    private final Runnable clockTick = new Runnable() {
+        @Override
+        public void run() {
+            TextView clock = (TextView) findViewById(R.id.tv_clock);
+            if (clock != null) clock.setText(io.github.gohoski.notpipe.util.PlayerExtras.formatClock(context, new java.util.Date()));
+            handler.postDelayed(this, 10000);
+        }
+    };
 
     private final Runnable loadPending = new Runnable() {
         @Override
@@ -82,11 +100,20 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
         grid.setAdapter(adapter);
 
         menu.setAdapter(new MenuAdapter());
+        rows = new TvRows(this, (LinearLayout) findViewById(R.id.tv_rows), R.id.tv_menu, new TvRows.Listener() {
+            public void onCardFocused(VideoInfo video) {
+                ((TextView) findViewById(R.id.tv_focus_title)).setText(video.title);
+                String meta = video.channel == null ? "" : video.channel;
+                if (video.views > 0) meta += " · " + getString(R.string.views, Utils.formatNumber(context, video.views));
+                ((TextView) findViewById(R.id.tv_focus_meta)).setText(meta);
+            }
+        });
         menu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 // Sections that open another screen only open on click, the rest preview while moving
                 if (position == SEARCH || position == SHORTS || position == LIBRARY || position == SETTINGS) return;
+                if (position == currentSection) return;
                 pendingSection = position;
                 handler.removeCallbacks(loadPending);
                 handler.postDelayed(loadPending, SECTION_LOAD_DELAY);
@@ -112,6 +139,10 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
                     case SETTINGS:
                         startActivity(new Intent(context, SettingsActivity.class));
                         break;
+                    case HOME:
+                        if (position != currentSection) showSection(position);
+                        rows.focusFirstCard();
+                        break;
                     default:
                         if (position != currentSection) showSection(position);
                         if (!videos.isEmpty()) grid.requestFocus();
@@ -129,8 +160,7 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
             }
         });
 
-        int start = Yt2009Account.getInstance().isSignedIn() || !LocalLibrary.getInstance().getHistory().isEmpty()
-                ? RECOMMENDED : POPULAR;
+        int start = HOME;
         menu.setSelection(start);
         menu.requestFocus();
         if (InstancesUpdater.isUpdateDue()) {
@@ -150,6 +180,21 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
         if (section < 0) return;
         currentSection = section;
         ((BaseAdapter) menu.getAdapter()).notifyDataSetChanged();
+        boolean home = section == HOME;
+        findViewById(R.id.tv_rows_scroll).setVisibility(home ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tv_focus_info).setVisibility(home ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tv_section).setVisibility(home ? View.GONE : View.VISIBLE);
+        grid.setVisibility(home ? View.GONE : View.VISIBLE);
+        if (home) {
+            if (loadTask != null) loadTask.cancel(true);
+            findViewById(R.id.tv_empty).setVisibility(View.GONE);
+            findViewById(R.id.tv_loading).setVisibility(View.GONE);
+            if (!rowsLoaded) {
+                rowsLoaded = true;
+                rows.load();
+            }
+            return;
+        }
         ((TextView) findViewById(R.id.tv_section)).setText(section == SEARCH
                 ? getString(R.string.search) + ": " + lastQuery : getString(MENU_TITLES[section]));
         if (loadTask != null) loadTask.cancel(true);
@@ -201,16 +246,28 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
             showSearch();
             return true;
         }
-        if (keyCode == KeyEvent.KEYCODE_BACK && grid.hasFocus()) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && (grid.hasFocus() || findViewById(R.id.tv_rows).hasFocus())) {
             menu.requestFocus();
+            return true;
+        }
+        // From the menu into the Home rows (the grid is hidden there, so default focus search finds nothing)
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && menu.hasFocus() && currentSection == HOME && rows.focusFirstCard()) {
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        handler.removeCallbacks(clockTick);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        handler.removeCallbacks(clockTick);
+        handler.post(clockTick);
         adapter.notifyDataSetChanged();
     }
 
@@ -226,6 +283,7 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
         isDestroyedFlag = true;
         handler.removeCallbacks(loadPending);
         if (loadTask != null) loadTask.cancel(true);
+        rows.cancel();
         if (isFinishing()) ImageLoader.clearCache();
     }
 
@@ -303,11 +361,24 @@ public class TvActivity extends Activity implements InstancesUpdater.OnInstances
             TextView item = convertView instanceof TextView ? (TextView) convertView : new TextView(context);
             int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14, getResources().getDisplayMetrics());
             item.setPadding(padding * 2, padding, padding, padding);
-            item.setTextSize(20);
+            item.setTextSize(18);
+            item.setSingleLine(true);
+            item.setEllipsize(android.text.TextUtils.TruncateAt.END);
             boolean current = position == currentSection;
             item.setTextColor(current ? 0xFF33B5E5 : 0xFFFFFFFF);
             item.setTypeface(null, current ? Typeface.BOLD : Typeface.NORMAL);
             item.setText(MENU_TITLES[position]);
+            int icon = MENU_ICONS[position];
+            if (icon != 0) {
+                android.graphics.drawable.Drawable d = getResources().getDrawable(icon).mutate();
+                d.setColorFilter(current ? 0xFF33B5E5 : 0xFFFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                int size = padding * 2;
+                d.setBounds(0, 0, size, size);
+                item.setCompoundDrawables(d, null, null, null);
+            } else {
+                item.setCompoundDrawables(null, null, null, null);
+            }
+            item.setCompoundDrawablePadding(padding);
             return item;
         }
     }

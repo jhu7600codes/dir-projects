@@ -64,6 +64,15 @@ public class SettingsActivity extends Activity implements InstancesUpdater.OnIns
         asyncUriChk = (CheckBox) findViewById(R.id.async_uri_chk);
         fullscreenRotateChk = (CheckBox) findViewById(R.id.fullscreen_rotate_chk);
 
+        CheckBox clockChk = (CheckBox) findViewById(R.id.clock_24h_chk);
+        clockChk.setChecked(io.github.gohoski.notpipe.util.PlayerExtras.is24HourClock());
+        clockChk.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                io.github.gohoski.notpipe.util.PlayerExtras.setEnabled(io.github.gohoski.notpipe.util.PlayerExtras.KEY_24H, isChecked);
+            }
+        });
+
         CheckBox basicModeChk = (CheckBox) findViewById(R.id.basic_mode_chk);
         basicModeChk.setChecked(io.github.gohoski.notpipe.util.PlayerExtras.isBasicMode());
         applyBasicMode(basicModeChk.isChecked());

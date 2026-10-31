@@ -36,6 +36,7 @@ public class PlayerExtras {
     public static final String KEY_SPEED = "speed";
     public static final String KEY_AUTO_PIP = "auto_pip";
     public static final String KEY_BASIC_MODE = "basic_mode";
+    public static final String KEY_24H = "clock_24h";
 
     private PlayerExtras() {}
 
@@ -55,6 +56,17 @@ public class PlayerExtras {
     /** Basic mode (on by default) hides technical details like instance names */
     public static boolean isBasicMode() {
         return isEnabled(KEY_BASIC_MODE);
+    }
+
+    /** @return true if clocks (TV home, TV player) should use 24-hour time instead of the system format */
+    public static boolean is24HourClock() {
+        return prefs().getBoolean(KEY_24H, false);
+    }
+
+    /** Formats a time for the TV clocks: 24-hour when that setting is on, otherwise like the system */
+    public static String formatClock(Context context, java.util.Date date) {
+        if (is24HourClock()) return new java.text.SimpleDateFormat("HH:mm").format(date);
+        return android.text.format.DateFormat.getTimeFormat(context).format(date);
     }
 
     public static String getShortsQuality() {

@@ -61,7 +61,10 @@ public class PlayerControls {
     private final SeekBar seekBar;
     private final TextView position, duration, speedButton, qualityButton, gestureLabel;
     private final Handler handler = new Handler();
-    private final TextView moreVideosButton, titleText, channelText;
+    private final TextView moreVideosButton, titleText, channelText, clockText, endsText;
+    private final LinearLayout clockBlock, topButtons;
+    private boolean tvMode = false;
+    private float playbackSpeed = 1f;
     private final LinearLayout titleBlock;
     private final android.widget.ProgressBar buffering;
     private final LinearLayout moreVideos, moreRow;
@@ -144,6 +147,27 @@ public class PlayerControls {
             public void onClick(View v) { host().onMore(); scheduleHide(); }
         }));
         overlay.addView(top, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.RIGHT));
+        topButtons = top;
+
+        // TV mode, top right: the time now and when the video will end, only while the controls show
+        clockBlock = new LinearLayout(activity);
+        clockBlock.setOrientation(LinearLayout.VERTICAL);
+        clockBlock.setGravity(Gravity.RIGHT);
+        clockBlock.setPadding(dp(8), dp(10), dp(20), 0);
+        clockText = new TextView(activity);
+        clockText.setTextColor(Color.WHITE);
+        clockText.setTextSize(20);
+        clockText.setTypeface(null, Typeface.BOLD);
+        clockText.setShadowLayer(3, 0, 0, Color.BLACK);
+        endsText = new TextView(activity);
+        endsText.setTextColor(0xFFCCCCCC);
+        endsText.setTextSize(13);
+        endsText.setShadowLayer(3, 0, 0, Color.BLACK);
+        clockBlock.addView(clockText);
+        clockBlock.addView(endsText);
+        clockBlock.setVisibility(View.GONE);
+        overlay.addView(clockBlock, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.RIGHT));
 
         // Top left, full screen only: video title and channel, like YouTube
@@ -321,7 +345,16 @@ public class PlayerControls {
         }
     }
 
+    /**
+     * TV: the top right shows the clock and when the video will end instead of the quick settings
+     * (which a remote can't reach anyway).
+     */
+    public void setTvMode(boolean tv) {
+        tvMode = tv;
+    }
+
     public void setSpeed(float speed) {
+        playbackSpeed = speed > 0 ? speed : 1f;
         speedButton.setText((speed == (int) speed ? String.valueOf((int) speed) : String.valueOf(speed)) + "x");
     }
 
@@ -344,6 +377,10 @@ public class PlayerControls {
     public void show() {
         if (!enabled) return;
         updatePlayIcon();
+        boolean showClock = tvMode && host().isFullscreen();
+        clockBlock.setVisibility(showClock ? View.VISIBLE : View.GONE);
+        topButtons.setVisibility(showClock ? View.GONE : View.VISIBLE);
+        if (showClock) updateClock();
         boolean fullscreen = host().isFullscreen() && titleText.length() > 0;
         titleBlock.setVisibility(fullscreen ? View.VISIBLE : View.GONE);
         if (fullscreen) {
@@ -389,6 +426,8 @@ public class PlayerControls {
         title.setPadding(0, dp(4), 0, 0);
         card.addView(title);
         card.setClickable(true);
+        card.setFocusable(true);
+        card.setPadding(dp(4), dp(4), dp(4), dp(4));
         card.setBackgroundResource(R.drawable.tv_focus);
         card.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -430,6 +469,32 @@ public class PlayerControls {
         handler.postDelayed(hideRunnable, HIDE_DELAY);
     }
 
+    /** Play/pause from a remote: also shows the controls so you see what happened */
+    public void remoteTogglePlay() {
+        if (!enabled) return;
+        togglePlay();
+        show();
+    }
+
+    /** Seek from a remote's left/right or rewind/fast-forward keys */
+    public void remoteSeek(int deltaMs) {
+        if (!enabled) return;
+        seekBy(deltaMs);
+        show();
+    }
+
+    /** @return true while the "More videos" row is open (the D-pad then moves between its cards) */
+    public boolean isMoreVideosOpen() {
+        return moreVideos.getVisibility() == View.VISIBLE;
+    }
+
+    /** Opens "More videos" and puts the remote's focus on its first card */
+    public void openMoreVideosForRemote() {
+        if (host().getRelatedVideos().isEmpty()) return;
+        showMoreVideos();
+        if (moreRow.getChildCount() > 0) moreRow.getChildAt(0).requestFocus();
+    }
+
     private void togglePlay() {
         try {
             if (video.isPlaying()) {
@@ -463,7 +528,26 @@ public class PlayerControls {
         updateProgress();
     }
 
+    /** "21:04" and "Ends at 21:37", from what's left of the video at the current speed */
+    private void updateClock() {
+        if (clockBlock.getVisibility() != View.VISIBLE) return;
+        long now = System.currentTimeMillis();
+        clockText.setText(io.github.gohoski.notpipe.util.PlayerExtras.formatClock(activity, new java.util.Date(now)));
+        try {
+            int left = video.getDuration() - video.getCurrentPosition();
+            if (video.getDuration() > 0 && left > 0) {
+                endsText.setText(activity.getString(R.string.ends_at,
+                        io.github.gohoski.notpipe.util.PlayerExtras.formatClock(activity,
+                                new java.util.Date(now + (long) (left / playbackSpeed)))));
+                endsText.setVisibility(View.VISIBLE);
+                return;
+            }
+        } catch (Exception ignored) {}
+        endsText.setVisibility(View.GONE);
+    }
+
     private void updateProgress() {
+        updateClock();
         if (dragging) return;
         try {
             int pos = video.getCurrentPosition(), dur = video.getDuration();

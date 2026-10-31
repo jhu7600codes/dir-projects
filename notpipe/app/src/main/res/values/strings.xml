@@ -332,4 +332,7 @@
     <string name="session_lost">The yt2009 instance forgot your login (it probably restarted). Please sign in again.</string>
     <string name="loading_account">Loading your account…</string>
     <string name="account_unreachable">This instance can\'t reach your YouTube account. Tap to sign in again, or pick another instance</string>
+    <string name="continue_watching">Continue watching</string>
+    <string name="ends_at">Ends at %s</string>
+    <string name="clock_24h">24-hour clock</string>
 </resources>

@@ -31,6 +31,13 @@
                 android:paddingBottom="16dp"
                 android:text="@string/basic_mode_desc"/>
 
+            <CheckBox
+                android:id="@+id/clock_24h_chk"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="8dp"
+                android:text="@string/clock_24h"/>
+
             <TextView
                 android:id="@+id/instances_title"
                 android:layout_width="fill_parent"

@@ -65,6 +65,7 @@ import io.github.gohoski.notpipe.ui.PlayerControls;
 import io.github.gohoski.notpipe.ui.VideoActions;
 import io.github.gohoski.notpipe.ui.VideoAdapter;
 import io.github.gohoski.notpipe.util.ChannelIconResolver;
+import io.github.gohoski.notpipe.util.Compat;
 import io.github.gohoski.notpipe.util.ImageLoader;
 import io.github.gohoski.notpipe.util.LocalLibrary;
 import io.github.gohoski.notpipe.util.PlayerExtras;
@@ -142,6 +143,8 @@ public class VideoActivity extends Activity {
         }
     };
     private int watchtimeTicks = 0;
+    /** On TV the video plays full screen right away and the remote drives the player */
+    private boolean isTv = false;
     /** 400 ms ticks without progress before a stalled stream is reopened (6 s) */
     private static final int STALL_TICKS = 15;
     private int stallTicks = 0;
@@ -234,6 +237,15 @@ public class VideoActivity extends Activity {
         setupClickListeners();
         setupScrollHandler();
         setupPlayerExtras();
+        isTv = Compat.isTelevision(this);
+        if (isTv && controls != null) controls.setTvMode(true);
+        if (isTv && videoFrame != null) {
+            videoFrame.post(new Runnable() {
+                public void run() {
+                    if (!isFullscreenMode && !isFinishing()) enterFullscreenByConfig();
+                }
+            });
+        }
 
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE && !isTablet()) {
             enterFullscreenMode();
@@ -961,8 +973,65 @@ public class VideoActivity extends Activity {
         }
     }
 
+    /**
+     * TV remotes: OK/play-pause toggles, left/right and rewind/fast-forward seek 10 s, up shows the
+     * controls, down opens "More videos", next/previous switch videos.
+     * @return true if the key was used
+     */
+    private boolean handleRemoteKey(int keyCode, android.view.KeyEvent event) {
+        if (controls == null || !videoPrepared) return false;
+        if (controls.isMoreVideosOpen()) {
+            if (keyCode == android.view.KeyEvent.KEYCODE_BACK || keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
+                controls.closeMoreVideos();
+                return true;
+            }
+            return false;
+        }
+        switch (keyCode) {
+            case android.view.KeyEvent.KEYCODE_DPAD_CENTER:
+            case android.view.KeyEvent.KEYCODE_ENTER:
+            case android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+            case android.view.KeyEvent.KEYCODE_SPACE:
+                controls.remoteTogglePlay();
+                return true;
+            case 126: // KEYCODE_MEDIA_PLAY (API 11)
+                if (!videoView.isPlaying()) controls.remoteTogglePlay();
+                return true;
+            case 127: // KEYCODE_MEDIA_PAUSE (API 11)
+                if (videoView.isPlaying()) controls.remoteTogglePlay();
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_LEFT:
+            case android.view.KeyEvent.KEYCODE_MEDIA_REWIND:
+                controls.remoteSeek(-10000);
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_RIGHT:
+            case android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
+                controls.remoteSeek(10000);
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_UP:
+                controls.show();
+                return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_DOWN:
+                controls.openMoreVideosForRemote();
+                return true;
+            case android.view.KeyEvent.KEYCODE_MEDIA_NEXT:
+                playNext(true);
+                return true;
+            case android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                playPrevious();
+                return true;
+        }
+        return false;
+    }
+
     @Override
     public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
+        if (isTv && isFullscreenMode && handleRemoteKey(keyCode, event)) return true;
+        if (isTv && keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            // On TV the player is the whole page, so back leaves the video instead of just full screen
+            finish();
+            return true;
+        }
         if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
             if (isFullscreenMode) {
                 leaveFullscreen();
