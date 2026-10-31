@@ -114,9 +114,10 @@ static void setOnLockscreen(BOOL v) {
         [stu setChevronStyle:stuChevron ? 1 : 0];
 
         // the shimmer color lives on a sublayer, guard it so a layout change can't crash springboard
-        NSArray *outer = stu.layer.sublayers;
-        if (outer.count > 0 && outer[0].sublayers.count > 2) {
-            outer[0].sublayers[2].backgroundColor = [colorFromHex(stuColor) colorWithAlphaComponent:0.65].CGColor;
+        NSArray<CALayer *> *outer = stu.layer.sublayers;
+        NSArray<CALayer *> *inner = outer.count > 0 ? outer[0].sublayers : nil;
+        if (inner.count > 2) {
+            inner[2].backgroundColor = [colorFromHex(stuColor) colorWithAlphaComponent:0.65].CGColor;
         }
 
         [stu hide];

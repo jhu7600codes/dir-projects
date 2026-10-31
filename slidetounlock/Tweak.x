@@ -5,6 +5,8 @@
 #import <UIKit/UIKit.h>
 
 @interface SBDashBoardViewController : UIViewController
+- (NSArray *)stu_scrollViewsIn:(UIView *)root;
+- (void)stu_handlePan:(UIPanGestureRecognizer *)pan;
 @end
 
 @interface SBLockScreenManager : NSObject

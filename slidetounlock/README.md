@@ -8,6 +8,10 @@ ios 9 style slide to unlock for ios 10 (10.0 - 10.3.x), jailbroken.
 - "press home to unlock" becomes "slide to unlock"
 - swipe left (camera) and vertical swipes still work, swipe right replaces the today view
 
+## install
+
+grab the deb from [`dist/`](dist) and install it with filza or `dpkg -i`, then respring.
+
 ## build
 
 needs [theos](https://theos.dev) with an ios 10 sdk:

@@ -13,6 +13,10 @@ the original targets the ios 13/14 CoverSheet classes (`CS*`), none of which exi
 
 dropped since ios 10 doesn't have them: home bar / quick actions hiding and the NineMusic hooks. cephei and libcolorpicker were dropped too, the color is a hex text field.
 
+## install
+
+grab the deb from [`dist/`](dist) and install it with filza or `dpkg -i`, then respring. it's built for armv7 + arm64, ios 10.0 - 10.3.x.
+
 ## build
 
 ```

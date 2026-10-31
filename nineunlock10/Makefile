@@ -7,6 +7,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = NineUnlock10
 NineUnlock10_FILES = Tweak.x
 NineUnlock10_CFLAGS = -fobjc-arc
+NineUnlock10_LDFLAGS = -Wl,-U,_objc_msgSend_stret
 NineUnlock10_FRAMEWORKS = UIKit AudioToolbox
 
 include $(THEOS_MAKE_PATH)/tweak.mk

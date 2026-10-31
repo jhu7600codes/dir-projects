@@ -7,6 +7,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = NineLS10
 NineLS10_FILES = Tweak.x
 NineLS10_CFLAGS = -fobjc-arc
+NineLS10_LDFLAGS = -Wl,-U,_objc_msgSend_stret
 NineLS10_FRAMEWORKS = UIKit AudioToolbox
 NineLS10_PRIVATE_FRAMEWORKS = MediaRemote
 

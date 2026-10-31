@@ -15,6 +15,10 @@ the original targets the ios 13/14 CoverSheet classes (`CS*`, `MRU*`, notificati
 
 dropped since ios 10 doesn't have them: notification grouping fixes, dnd banner hiding, home bar / face id / quick actions hiding, light/dark mode, moving the media controls around (the stock ios 10 player stays). cephei and libcolorpicker were dropped too, the color is a hex text field.
 
+## install
+
+grab the deb from [`dist/`](dist) and install it with filza or `dpkg -i`, then respring. it's built for armv7 + arm64, ios 10.0 - 10.3.x.
+
 ## build
 
 ```
