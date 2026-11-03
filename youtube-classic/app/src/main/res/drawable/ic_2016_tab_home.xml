@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <!-- The 2016-era tab strip (see MainActivity2016) uses plain solid
+         silhouettes tinted in code, not separate outline/filled drawable
+         pairs like the 2018-2019 bottom nav does - that matches how the
+         real assets work: a single alpha-mask PNG, ~40% black when
+         unselected and solid red when selected (confirmed against
+         ic_tab_home.png from a real YouTube v6.0.13 (2015-2016) APK
+         teardown - same house silhouette as the modern app, just always
+         solid rather than switching to an outline). -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z" />
+</vector>

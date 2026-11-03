@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Overrides media3-ui's own drawable of this exact name (an alias to
+     exo_ic_play_circle_filled - a solid circle with a triangle *cut out*
+     of it, baked into one path). PlayerControlView's Java sets
+     R.drawable.exo_styled_controls_play/_pause on @id/exo_play_pause
+     itself on every state change, ignoring whatever android:src this
+     layout gives that ImageButton - so tinting that baked-in circle
+     black (to sit on our own white circle background, matching a real
+     screenshot) rendered as an inverted black-circle-with-white-holes
+     button instead of the intended white-circle-black-glyph one. AGP's
+     resource merger lets an app module's drawable of the same name
+     override a library's, so this and exo_styled_controls_pause.xml
+     replace the two "combined circle + glyph" originals with a plain
+     glyph - our own bg_circle_white background supplies the circle
+     instead, and app:tint on the ImageButton in player_control_view.xml
+     colors this the same way it would any other icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp" android:height="32dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M8,5v14l11,-7z" />
+</vector>

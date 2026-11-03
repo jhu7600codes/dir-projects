@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one legitimately-rounded rect in the whole UI: the little duration
+     chip YouTube overlays on the bottom-right corner of a thumbnail. The
+     thumbnail itself stays a hard-edged rectangle - see item_video.xml. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#CC000000" />
+    <corners android:radius="2dp" />
+</shape>

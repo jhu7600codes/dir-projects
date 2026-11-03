@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pulled from screenshots of the 2018-2019 Android YouTube app: white
+         chrome, black text, red only as an accent (selected tab, subscribe
+         button, live/progress indicators) - not the solid-red 2017 top bar.
+         This is the light (default) palette; values-night/colors.xml
+         overrides the tokens that actually change for dark mode - the app
+         is DayNight (see themes.xml), it just defaults to this look. -->
+    <!-- #CD201F, not a flat #FF0000 - confirmed against color/youtube_red in
+         a real YouTube 14.34.54 APK's compiled resources (aapt's resource
+         dump), not eyeballed off a screenshot. -->
+    <color name="yt_red">#CD201F</color>
+    <color name="yt_red_dark">#A61B1A</color>
+    <color name="yt_white">#FFFFFF</color>
+    <color name="yt_black">#0F0F0F</color>
+    <color name="yt_text_primary">#0F0F0F</color>
+    <color name="yt_text_secondary">#606060</color>
+    <color name="yt_text_tertiary">#909090</color>
+    <color name="yt_divider">#E5E5E5</color>
+    <color name="yt_surface">#FFFFFF</color>
+    <color name="yt_background">#FFFFFF</color>
+    <color name="yt_chip_background">#F2F2F2</color>
+    <color name="yt_nav_unselected">#606060</color>
+    <color name="yt_icon">#0F0F0F</color>
+    <color name="yt_scrubber_played">#FF0000</color>
+    <color name="yt_scrubber_buffered">#CCCCCC</color>
+    <color name="yt_scrubber_background">#4DFFFFFF</color>
+    <color name="sponsorblock_segment">#00D400</color>
+    <color name="yt_player_background">#000000</color>
+    <color name="yt_status_bar">#FFFFFF</color>
+
+    <!-- MainActivity2016's palette - the solid-red top bar era, before the
+         Sept-2016 white/bottom-nav redesign (see MainActivity2016's kdoc).
+         #DD0000 is color/red from a real YouTube v6.0.13 (2015-2016) APK's
+         compiled resources, not eyeballed off a screenshot. -->
+    <color name="yt_2016_red">#DD0000</color>
+    <color name="yt_2016_status_bar">#B71C1C</color>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Real ic_tab_library.png asset, pulled directly from a YouTube 14.34.54
+     APK teardown (drawable-mdpi-v4) - a plain black folder silhouette, no
+     play triangle. It's a single fixed-color asset in the real app (not a
+     per-state pair), so tinting is applied here via a <bitmap> wrapper
+     rather than baking color into a traced vector. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/asset_tab_library"
+    android:tint="@color/yt_red" />

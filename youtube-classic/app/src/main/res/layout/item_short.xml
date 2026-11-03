@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- Backdrop thumbnail, always visible - the PlayerView on top of it is
+         only shown (and only has a player attached) for whichever item is
+         currently centered on screen; every other item just shows this. -->
+    <ImageView
+        android:id="@+id/thumbnail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:use_controller="false"
+        app:resize_mode="fit"
+        android:visibility="gone" />
+
+    <!-- Bottom scrim + channel/title, matching the classic (2021-era)
+         Shorts overlay: darkest right at the screen edge behind the text,
+         fading to fully transparent going up into the video. (The gradient
+         previously had start/end swapped, which put the dark band 180dp
+         *above* the bottom edge instead of at it - the hard line the app
+         icon aside, that's the "shadow" seen mid-screen on a real device.) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/scrim_bottom" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:paddingEnd="72dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/channelAvatar"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@color/yt_chip_background"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/channelName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                tools:text="Channel name" />
+
+            <Button
+                android:id="@+id/subscribeButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_marginStart="10dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingHorizontal="10dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:strokeColor="@android:color/white"
+                android:text="@string/subscribe"
+                android:textColor="@android:color/white"
+                android:textSize="11sp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@android:color/white"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="13sp"
+            tools:text="Short video title goes here" />
+
+    </LinearLayout>
+
+    <!-- Right-side action rail: plain icon + count stacked underneath, no
+         circular button backgrounds - matching the classic Shorts rail
+         rather than a generic media-player button row. -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="12dp">
+
+        <ImageButton
+            android:id="@+id/likeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@drawable/ic_thumb_up"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/action_more" />
+
+        <!-- Gone by default: the feed response this screen is built from
+             (see InnertubeFeedClient) doesn't carry a per-item like count,
+             only the full stream-info call the player screen makes does -
+             shown only on the rare item where one turns up rather than
+             faked. -->
+        <TextView
+            android:id="@+id/likeCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="24K"
+            tools:visibility="visible" />
+
+        <ImageButton
+            android:id="@+id/dislikeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@drawable/ic_thumb_down"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/action_more" />
+
+        <ImageButton
+            android:id="@+id/commentButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@drawable/ic_comment"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/comments_header" />
+
+        <!-- Same reasoning as likeCount above - no per-item comment count
+             in the feed response, so this stays hidden rather than fake. -->
+        <TextView
+            android:id="@+id/commentCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="312"
+            tools:visibility="visible" />
+
+        <ImageButton
+            android:id="@+id/shareButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@drawable/ic_share"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/action_more" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/pauseOverlayIcon"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_play_arrow"
+        android:visibility="gone"
+        android:contentDescription="@null" />
+
+</FrameLayout>

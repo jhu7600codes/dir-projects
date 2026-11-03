@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <!-- Real tab icons are a single alpha-mask PNG tinted red/gray by
+         selection state, not two different shapes (outline vs filled) -
+         confirmed via a real APK teardown: no separate "selected" asset
+         exists at all, and ic_tab_home.png itself is one plain white
+         silhouette. Selected/unselected here share this exact path with
+         ic_tab_home_unselected.xml, just recolored, matching that. -->
+    <path
+        android:fillColor="@color/yt_red"
+        android:pathData="M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z" />
+</vector>

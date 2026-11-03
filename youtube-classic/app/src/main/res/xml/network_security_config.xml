@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Everything this app talks to (YouTube scraping/innertube endpoints,
+         video/audio CDN hosts, the SponsorBlock API) is HTTPS-only. -->
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

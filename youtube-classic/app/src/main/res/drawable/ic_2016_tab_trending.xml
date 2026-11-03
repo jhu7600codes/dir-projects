@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <!-- Same bare flame silhouette as the modern app's Trending icon -
+         confirmed identical between a 2015-2016 (v6.0.13) and a 2019
+         (14.34.54) APK teardown, so this era doesn't need its own traced
+         shape, just the era-appropriate tint handling in MainActivity2016. -->
+    <group android:translateX="6" android:translateY="4">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M6,0 C4,2.5 2,4.5 2,7 C2,9.2 3.8,11 6,11 C8.2,11 10,9.2 10,7 C10,5.5 9.3,4.2 8.3,3.2 C8.1,4.3 7.6,5 6.9,5.3 C7.2,3.3 6.8,1.5 6,0 Z" />
+    </group>
+</vector>

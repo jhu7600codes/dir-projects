@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme tokens, matching the real app's actual dark palette
+         (added after the 2019 UI this app otherwise recreates, but the
+         request was for the chrome to follow the system theme like any
+         modern app, not to stay pinned to 2019's light-only look). Red
+         stays the same accent in both themes - only surfaces/text change. -->
+    <color name="yt_white">#0F0F0F</color>
+    <color name="yt_black">#F1F1F1</color>
+    <color name="yt_text_primary">#F1F1F1</color>
+    <color name="yt_text_secondary">#AAAAAA</color>
+    <color name="yt_text_tertiary">#717171</color>
+    <color name="yt_divider">#383838</color>
+    <color name="yt_surface">#212121</color>
+    <color name="yt_background">#0F0F0F</color>
+    <color name="yt_chip_background">#272727</color>
+    <color name="yt_nav_unselected">#AAAAAA</color>
+    <color name="yt_icon">#F1F1F1</color>
+    <color name="yt_scrubber_buffered">#5A5A5A</color>
+    <color name="yt_status_bar">#0F0F0F</color>
+</resources>

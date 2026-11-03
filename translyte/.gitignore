@@ -1,0 +1,19 @@
+# Copyrighted binary and regeneratable build output - never commit these.
+*.apk
+*.apk.idsig
+*.apkm
+*.part
+*.tar
+apktool.jar
+*.keystore
+# Any apktool-decoded tree (v14_decoded/, v15_decoded/, ...) - a versioned
+# pattern here would silently miss the next base version, as v15_decoded/
+# briefly did before this glob replaced the old hardcoded v14_decoded/ entry.
+v*_decoded/
+verify_extract/
+verify2/
+verify3/
+new_dex_extract/
+orig_dex_extract/
+dist/
+vanced_apkm_build/

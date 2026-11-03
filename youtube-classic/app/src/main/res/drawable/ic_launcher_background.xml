@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fallback layer behind the adaptive icon foreground. The foreground PNG
+     is full-bleed (no transparent margin) so this rarely peeks through, but
+     the gradient is sampled from the source icon's top/bottom red so any
+     sliver the launcher mask reveals still matches. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="#E62922"
+        android:endColor="#C01017" />
+</shape>

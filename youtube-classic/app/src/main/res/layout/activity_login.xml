@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/yt_background"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/yt_white"
+        app:title="@string/sign_in"
+        app:titleTextColor="@color/yt_text_primary"
+        app:navigationIcon="@drawable/ic_close"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    <ProgressBar
+        android:id="@+id/loginProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:indeterminate="true"
+        android:progressTint="@color/yt_red" />
+
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Google actively blocks embedded WebView sign-in past a certain
+         point, no matter how the WebView is configured - this is the
+         guaranteed-to-work fallback: paste the Cookie header value from an
+         already-signed-in browser tab (e.g. via devtools' Network panel, or
+         a "cookies.txt" export extension), same approach yt-dlp's
+         cookie import option relies on. -->
+    <TextView
+        android:id="@+id/pasteCookieLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:text="@string/paste_cookie_link"
+        android:textColor="@color/yt_red"
+        android:textSize="13sp" />
+
+</LinearLayout>
