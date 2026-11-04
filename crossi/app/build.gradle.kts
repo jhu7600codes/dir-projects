@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "dev.jhu.crossi"
-        minSdk = 26
+        minSdk = 21
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
@@ -27,6 +27,8 @@ android {
     }
 
     compileOptions {
+        // java.time (dailies, streaks) on android 5-7
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -63,6 +65,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.appcompat)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
