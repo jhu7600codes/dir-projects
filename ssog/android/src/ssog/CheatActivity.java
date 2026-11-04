@@ -3,15 +3,16 @@ package ssog;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,7 +60,8 @@ public class CheatActivity extends Activity {
         hint.setPadding(0, dp(4), 0, dp(12));
         list.addView(hint);
 
-        Switch gold = new Switch(this);
+        // CheckBox, Switch is android 4.0+
+        CheckBox gold = new CheckBox(this);
         gold.setText("infinite gold (refills after every purchase)");
         gold.setTextSize(16);
         gold.setPadding(0, dp(8), 0, dp(8));
@@ -75,7 +77,7 @@ public class CheatActivity extends Activity {
         for (final String[] b : BUTTONS) {
             Button button = new Button(this);
             button.setText(b[1]);
-            button.setAllCaps(false);
+            noCaps(button);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -91,7 +93,7 @@ public class CheatActivity extends Activity {
 
         Button play = new Button(this);
         play.setText("back to the game");
-        play.setAllCaps(false);
+        noCaps(play);
         play.setTypeface(Typeface.DEFAULT_BOLD);
         play.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,7 +127,7 @@ public class CheatActivity extends Activity {
         row.addView(input, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         Button button = new Button(this);
         button.setText(label);
-        button.setAllCaps(false);
+        noCaps(button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -176,6 +178,13 @@ public class CheatActivity extends Activity {
             return new String(data, "UTF-8").contains("infinite_gold=1");
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    // buttons are only all caps from 4.0 on, and setAllCaps doesn't exist before that
+    private static void noCaps(Button button) {
+        if (Build.VERSION.SDK_INT >= 14) {
+            button.setAllCaps(false);
         }
     }
 

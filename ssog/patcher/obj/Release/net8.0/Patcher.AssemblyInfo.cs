@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Patcher")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3ac92bfa8b37f5f8b50091b8d11fc6cf670dccca")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a0ba7e3a7c06dff13330dd41cf68d9f57b14a5f5")]
 [assembly: System.Reflection.AssemblyProductAttribute("Patcher")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Patcher")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

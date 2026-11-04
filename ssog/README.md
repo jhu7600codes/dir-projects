@@ -5,7 +5,7 @@ Patches for jhu's Subway Surfers 1.0 build (`com.kiloo.subwaysurf.og`, the one f
 ## What it changes
 
 - **Daily challenge works offline.** The game used to fetch the daily word from `hoodrunner.kiloo.com`, which is gone. The word now comes from a fixed list in `patch/SsogDaily.cs`. It's picked by the UTC date, so it stays the same all day and changes at midnight UTC, and you see every word once before any repeats.
-- **Cheat menu.** Long-press the game icon, then tap **Cheats**. It has:
+- **Cheat menu.** Long-press the game icon, then tap **Cheats**. Below Android 7.1 there's no long-press menu, so you get a second **SS Cheats** icon in the app drawer instead (it's hidden on 7.1+). It has:
   - infinite gold (a toggle that refills after every purchase) and max gold now
   - unlock all characters, max all upgrades
   - +10 hoverboards, +5 of each headstart, +5 mystery boxes
@@ -21,7 +21,7 @@ Patches for jhu's Subway Surfers 1.0 build (`com.kiloo.subwaysurf.og`, the one f
   - `ForceSync` picks the day's word from the list
   - `Start` applies cheats first
   - a new `OnApplicationPause` applies cheats and resyncs the daily word when the game comes back
-- `android/` holds the cheat menu, a plain `Activity` in its own process, plus the static shortcut. The menu only writes `ssog_actions.txt` and `ssog_settings.txt` into the app's files folders, and the game reads them through `Application.persistentDataPath`.
+- `android/` holds the cheat menu, a plain `Activity` in its own process, plus the static shortcut. It goes into the main `classes.dex` as smali, since Dalvik can't load a second dex by itself, and it only uses APIs that work back to Android 2.2, like the original game. Below 7.1 it shows up as its own launcher icon through an `activity-alias`, enabled by `@bool/ssog_cheat_icon` (false in `values-v25`). The menu only writes `ssog_actions.txt` and `ssog_settings.txt` into the app's files folders, and the game reads them through `Application.persistentDataPath`.
 
 ## Building
 

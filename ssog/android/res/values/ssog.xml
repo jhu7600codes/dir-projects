@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ssog_cheats">Cheats</string>
+    <string name="ssog_cheats_icon">SS Cheats</string>
+    <!-- below 7.1 there's no long-press menu, so the cheats get their own icon -->
+    <bool name="ssog_cheat_icon">true</bool>
+    <style name="SsogTheme" parent="@android:style/Theme.Black" />
+</resources>
