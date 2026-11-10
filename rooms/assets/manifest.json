@@ -377,15 +377,11 @@
    }
   },
   "a150_face": {
-   "path": "res://assets/local/textures/a150_face.png",
+   "path": "res://assets/art/a150.png",
    "placeholder": {
     "kind": "face",
     "color": "#e8d040",
     "style": "smile"
-   },
-   "source": {
-    "wiki": "r-rooms",
-    "file": "Starimagecrop.png"
    }
   },
   "a220_face": {
