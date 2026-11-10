@@ -345,7 +345,7 @@
    }
   },
   "headlights_face": {
-   "path": "res://assets/local/textures/headlights_face.png",
+   "path": "res://assets/art/headlights.png",
    "placeholder": {
     "kind": "face",
     "color": "#fff3c0",
