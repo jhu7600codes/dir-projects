@@ -179,15 +179,11 @@
    }
   },
   "a200_face": {
-   "path": "res://assets/local/textures/a200_face.png",
+   "path": "res://assets/art/a200.png",
    "placeholder": {
     "kind": "face",
     "color": "#ffffff",
     "style": "scribble"
-   },
-   "source": {
-    "wiki": "r-rooms",
-    "file": "A-200-6.png"
    }
   },
   "trim": {

@@ -67,6 +67,10 @@ func glow_texture(key: String) -> Texture2D:
 	if _cache.has(ck):
 		return _cache[ck]
 	var src := texture(key)
+	# our own art (assets/art) already has clean edges: show it as drawn, no faded ring
+	if str(entry("textures", key).get("path", "")).begins_with("res://assets/art/"):
+		_cache[ck] = src
+		return src
 	var img := src.get_image()
 	if img == null:
 		return src
