@@ -62,8 +62,8 @@ func _ready() -> void:
 	v.add_child(_list)
 	var sr := HBoxContainer.new()
 	sr.add_theme_constant_override("separation", 10)
-	sr.add_child(UIKit.button("start: the offices", func(): Net.host_start("offices"), 18))
-	sr.add_child(UIKit.button("start: the wires", func(): Net.host_start("wires"), 18))
+	sr.add_child(UIKit.button("start: The Offices", func(): Net.host_start("offices"), 18))
+	sr.add_child(UIKit.button("start: The Wires", func(): Net.host_start("wires"), 18))
 	var pr := HBoxContainer.new()
 	pr.add_theme_constant_override("separation", 10)
 	for mg in Game.MINIGAMES:

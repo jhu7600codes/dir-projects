@@ -8,8 +8,8 @@ extends Control
 signal closed
 
 const FLOORS := [
-	["offices", "the offices", "the endless office. A-000 to A-1000. hide, run, survive.", "res://assets/branding/floor_offices.png"],
-	["wires", "the wires", "the maintenance floor under the office. 50 doors, no timer. flip every breaker, power the elevator and ride it up.", "res://assets/branding/floor_wires.png"],
+	["offices", "The Offices", "the endless office. A-000 to A-1000. hide, run, survive.", "res://assets/branding/floor_offices.png"],
+	["wires", "The Wires", "the maintenance floor under the office. 50 doors, no timer. flip every breaker, power the elevator and ride it up.", "res://assets/branding/floor_wires.png"],
 ]
 
 var admin := false

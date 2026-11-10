@@ -446,7 +446,7 @@ func _bus() -> void:
 	if not await wait(3.4): return
 	fade(true, 1.2)
 	if not await wait(1.4): return
-	say("home. the complex. your flat is on floor 150.", 3.4)
+	say("home. The Complex. your flat is on floor 150.", 3.4)
 	if not await wait(3.6): return
 	_finish()
 
