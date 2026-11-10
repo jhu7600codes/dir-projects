@@ -273,7 +273,7 @@ func _physics_process(delta: float) -> void:
 			inventory.batteries -= 1
 			inventory.changed.emit()
 			ch = 100.0
-			notify("starhelp took a battery")
+			notify("skyhelp took a battery")
 		Save.data.starhelp_charge = maxf(0.0, ch)
 	if _speed_boost > 0.0:
 		_speed_boost -= delta
@@ -508,7 +508,8 @@ func owns(item: String) -> bool:
 
 func select_item(item: String) -> void:
 	if not owns(item):
-		notify(Loc.t("you don't have " + ("any " if item in ["bandage", "vitamins"] else "a ") + item + ("s" if item == "bandage" else "")))
+		var shown: String = {"stardevice": "skydevice", "starjug": "skyjug", "starhelp": "skyhelp"}.get(item, item)
+		notify(Loc.t("you don't have " + ("any " if item in ["bandage", "vitamins"] else "a ") + shown + ("s" if item == "bandage" else "")))
 		return
 	selected = item
 	# lights only shine while you hold them
@@ -544,7 +545,7 @@ func use_item() -> void:
 		"stardevice":
 			Save.data.stardevice_on = not bool(Save.data.get("stardevice_on", true))
 			Save.write()
-			notify(Loc.t("stardevice " + ("on" if Save.data.stardevice_on else "off")))
+			notify(Loc.t("skydevice " + ("on" if Save.data.stardevice_on else "off")))
 		"starjug":
 			if int(Save.data.get("starjug", 0)) > 0:
 				Save.data.starjug = int(Save.data.starjug) - 1
@@ -552,16 +553,16 @@ func use_item() -> void:
 				heal(20.0)
 				give_star(40.0, 30.0)
 				Game.play_ui("vitamins")
-				notify(Loc.t("starlight. %d sips left") % int(Save.data.starjug))
+				notify(Loc.t("skylight. %d sips left") % int(Save.data.starjug))
 		"starhelp":
 			if inventory.batteries > 0:
 				inventory.batteries -= 1
 				inventory.changed.emit()
 				give_star(25.0, 20.0)
 				Game.play_ui("vitamins")
-				notify("starhelp: shield up (used a battery)")
+				notify("skyhelp: shield up (used a battery)")
 			else:
-				notify("the starhelp needs a battery")
+				notify("the skyhelp needs a battery")
 	# used the last one: go back to something you still have
 	if not owns(selected):
 		cycle_item(-1)

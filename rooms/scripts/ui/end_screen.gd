@@ -61,7 +61,7 @@ func setup(kind: String, cause := "") -> void:
 			v.add_child(UIKit.label("the fresh air feels weird after all those rooms.", 17))
 			if Game.starhelp_new:
 				Game.starhelp_new = false
-				v.add_child(UIKit.label("★ you got the STARHELP. it's yours for every run now (7)", 17, Color(0.6, 0.8, 1.0)))
+				v.add_child(UIKit.label("you got the SKYHELP. it's yours for every run now (7)", 17, Color(0.6, 0.8, 1.0)))
 		"wires":
 			v.add_child(UIKit.label("the lights come back on", 30, UIKit.ACCENT))
 			var t := UIKit.label("one floor at a time, all the way up. the elevator hums. you can hear keyboards up there, and people talking.", 17)
