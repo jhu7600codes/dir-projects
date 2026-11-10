@@ -470,6 +470,22 @@
     "color": "#e8e0f0",
     "style": "dots"
    }
+  },
+  "w10_outlet": {
+   "path": "res://assets/art/w10.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#e6e0d1",
+    "style": "dots"
+   }
+  },
+  "w10_outlet_live": {
+   "path": "res://assets/art/w10_live.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#e6e0d1",
+    "style": "dots"
+   }
   }
  },
  "sounds": {

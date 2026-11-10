@@ -8,12 +8,13 @@ extends Entity
 const RULES := {"trigger": "manual", "floor": "wires", "group": "w10"}
 const DAMAGE := 25.0
 const LUNGE_SPEED := 13.0
+const CURVE_CHANCE := 0.15  # now and then a lunge swings around in an arc instead of a line
 
 var room_n := 0
 var endless := 0.0  # the w-10 minigame: seconds since it started, things speed up
 var follow := false  # "charge your phone": comes along through every door instead of guarding one room
 var _next := 2.0
-var _outlets: Array = []  # [sprite, light, state, timer, target]
+var _outlets: Array = []  # [sprite, light, state, timer, target, curve]
 static var _tex: Texture2D
 
 
@@ -55,7 +56,7 @@ func _spawn_outlet() -> void:
 			continue
 		var s := Sprite3D.new()
 		s.texture = outlet_texture()
-		s.pixel_size = 0.35 / 64.0
+		s.pixel_size = 0.35 / float(s.texture.get_height())
 		s.shaded = false
 		s.transparent = true
 		s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -72,7 +73,7 @@ func _spawn_outlet() -> void:
 		au.unit_size = 4.0
 		s.add_child(au)
 		au.play()
-		_outlets.append([s, l, "charge", 1.1, Vector3.ZERO])
+		_outlets.append([s, l, "charge", 1.1, Vector3.ZERO, {}])
 		return
 
 
@@ -92,27 +93,58 @@ func _tick(o: Array, delta: float) -> void:
 			o[2] = "lunge"
 			o[4] = player.head_position()
 			o[3] = 2.0
+			s.modulate = Color.WHITE
+			# the electricity only comes on when it goes for you
+			if Assets.has_real("textures", "w10_outlet_live"):
+				s.texture = Assets.texture("w10_outlet_live")
+			if randf() < CURVE_CHANCE:
+				var p0: Vector3 = s.global_position
+				var to0: Vector3 = o[4] - p0
+				var side := to0.cross(Vector3.UP).normalized() * randf_range(2.5, 4.0) * (1.0 if randf() < 0.5 else -1.0)
+				o[5] = {"p0": p0, "c": p0 + to0 * 0.5 + side, "t": o[4], "u": 0.0, "len": to0.length() * 1.3}
 			var au := AudioStreamPlayer3D.new()
 			au.stream = Assets.sound("w10_lunge")
 			au.bus = "SFX"
 			s.add_child(au)
 			au.play()
 	elif o[2] == "lunge":
-		var to: Vector3 = o[4] - s.global_position
 		var step := LUNGE_SPEED * (1.0 + minf(endless, 180.0) / 360.0) * delta
+		var cv: Dictionary = o[5]
+		if not cv.is_empty() and cv.u < 1.0:
+			# along the arc: a curve from where it was, bent out to one side, to where you stood
+			cv.u = minf(1.0, cv.u + step / maxf(0.1, cv.len))
+			var u: float = cv.u
+			var before: Vector3 = s.global_position
+			s.global_position = (1.0 - u) * (1.0 - u) * cv.p0 + 2.0 * (1.0 - u) * u * cv.c + u * u * cv.t
+			if u >= 1.0:
+				# off the end of the arc: keep flying the way it was going
+				o[4] = s.global_position + (s.global_position - before).normalized() * 3.0
+			_check_hit(o)
+			if o[3] <= 0.0 and is_instance_valid(s):
+				_remove(o)
+			return
+		var to: Vector3 = o[4] - s.global_position
 		# keeps flying past the spot you were at, so it can't turn to follow you
 		var dir := to.normalized() if to.length() > 0.05 else Vector3.ZERO
 		s.global_position += dir * step
 		if to.length() < step:
 			o[4] = s.global_position + dir * 3.0
-		if s.global_position.distance_to(player.head_position()) < 0.8 and not player.dead:
-			hit_player = true
-			Game.death_details["w10"] = "lunged"
-			player.take_damage(DAMAGE, "w10")
-			_remove(o)
+		if _check_hit(o):
 			return
 		if o[3] <= 0.0:
 			_remove(o)
+
+
+## it got you: true if it hit (and is gone)
+func _check_hit(o: Array) -> bool:
+	var s: Sprite3D = o[0]
+	if is_instance_valid(s) and s.global_position.distance_to(player.head_position()) < 0.8 and not player.dead:
+		hit_player = true
+		Game.death_details["w10"] = "lunged"
+		player.take_damage(DAMAGE, "w10")
+		_remove(o)
+		return true
+	return false
 
 
 func _remove(o: Array) -> void:
@@ -124,6 +156,9 @@ func _remove(o: Array) -> void:
 ## a little universal outlet drawn in code: off-white plate, three slots, a round hole
 static func outlet_texture() -> Texture2D:
 	if _tex:
+		return _tex
+	if Assets.has_real("textures", "w10_outlet"):
+		_tex = Assets.texture("w10_outlet")
 		return _tex
 	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
