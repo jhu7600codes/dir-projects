@@ -178,18 +178,6 @@
     "file": "A-90bNew.png"
    }
   },
-  "a120_face": {
-   "path": "res://assets/local/textures/a120_face.png",
-   "placeholder": {
-    "kind": "face",
-    "color": "#f2f2ff",
-    "style": "scribble"
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-120_IDLE.png"
-   }
-  },
   "a200_face": {
    "path": "res://assets/local/textures/a200_face.png",
    "placeholder": {
@@ -437,6 +425,38 @@
     "kind": "sign",
     "color": "#ff0000",
     "style": "stop"
+   }
+  },
+  "a120_face": {
+   "path": "res://assets/art/a120_1.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#f2f2ff",
+    "style": "scribble"
+   }
+  },
+  "a120_face_2": {
+   "path": "res://assets/art/a120_2.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#f2f2ff",
+    "style": "scribble"
+   }
+  },
+  "a120_face_3": {
+   "path": "res://assets/art/a120_3.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#f2f2ff",
+    "style": "scribble"
+   }
+  },
+  "a120_face_4": {
+   "path": "res://assets/art/a120_4.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#f2f2ff",
+    "style": "scribble"
    }
   }
  },

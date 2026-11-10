@@ -15,6 +15,10 @@ var _dark_room: RoomBase = null
 var rebounds := 0
 var max_rebounds := 0
 var _blink_t := 0.0
+var _frames: Array[Texture2D] = []
+var _frame_i := 0
+var _frame_t := 0.0
+const FRAME_TIME := 0.12  # how long each scribble frame stays
 
 
 func begin() -> void:
@@ -40,6 +44,8 @@ func begin() -> void:
 				if player and player.get_parent().has_method("set_blackout"):
 					player.get_parent().set_blackout(true))
 	setup_look("a120_face", Color(0.85, 0.85, 1.0), 2.4)
+	for k in ["a120_face", "a120_face_2", "a120_face_3", "a120_face_4"]:
+		_frames.append(Assets.glow_texture(k))
 	set_visible_body(false)
 	after(_head_start(), func():
 		set_visible_body(true)
@@ -80,6 +86,12 @@ func _head_start() -> float:
 func _process(delta: float) -> void:
 	if is_frozen() or sprite == null or not moving:
 		return
+	# the scribbles boil: it redraws itself a few times a second
+	_frame_t -= delta
+	if _frame_t <= 0.0 and not _frames.is_empty():
+		_frame_t = FRAME_TIME
+		_frame_i = (_frame_i + 1) % _frames.size()
+		set_sprite_texture(sprite, _frames[_frame_i])
 	# it flickers in and out of sight while it moves
 	_blink_t -= delta
 	if _blink_t <= 0.0:
