@@ -369,7 +369,7 @@
    }
   },
   "a25_face": {
-   "path": "res://assets/local/textures/a25_face.png",
+   "path": "res://assets/art/a25.png",
    "placeholder": {
     "kind": "face",
     "color": "#8c4dff",
@@ -465,6 +465,14 @@
     "kind": "face",
     "color": "#2f6bff",
     "style": "wide"
+   }
+  },
+  "a25_eye": {
+   "path": "res://assets/art/a25_eye.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#e8e0f0",
+    "style": "dots"
    }
   }
  },

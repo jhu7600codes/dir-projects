@@ -17,6 +17,11 @@ var _t := 0.0
 var _unseen := 0.0
 var sprite: Sprite3D
 var _hum: AudioStreamPlayer3D
+## the eye in the middle: only there while it pulls you. look back at it and it swells
+## up and fades away
+var _eye: Sprite3D
+var _eye_k := 0.0       # 0 gone .. 1 fully there
+var _eye_leaving := false
 
 
 func begin() -> void:
@@ -30,8 +35,13 @@ func begin() -> void:
 	var p: Vector3 = pts[clampi(pts.size() / 2, 0, pts.size() - 1)]
 	global_position = p + Vector3(randf_range(-1.0, 1.0), -0.2, randf_range(-1.0, 1.0))
 	sprite = make_sprite("a25_face", 2.0)
-	sprite.texture = _swirl()
-	sprite.material_override.albedo_texture = sprite.texture
+	if not Assets.has_real("textures", "a25_face"):
+		sprite.texture = _swirl()
+		sprite.material_override.albedo_texture = sprite.texture
+	_eye = make_sprite("a25_eye", 0.75)
+	_eye.sorting_offset = 0.5  # always drawn over the spiral
+	(_eye.material_override as StandardMaterial3D).vertex_color_use_as_albedo = true  # so it can fade
+	_eye.modulate.a = 0.0
 	var l := OmniLight3D.new()
 	l.light_color = Color(0.55, 0.3, 1.0)
 	l.light_energy = 2.5
@@ -52,15 +62,23 @@ func _physics_process(delta: float) -> void:
 		return
 	if player.hidden:
 		_unseen = 0.0
+		_eye_fade(delta, false)
 		return
 	if _looked_at():
 		_unseen = 0.0
 		_hum.pitch_scale = 1.0
+		_eye_fade(delta, true)
 		return
 	_unseen += delta
 	if _unseen < GRACE:
+		_eye_fade(delta, false)
 		return
 	_hum.pitch_scale = 1.4
+	# pulling: the eye opens
+	_eye_leaving = false
+	_eye_k = minf(1.0, _eye_k + delta * 2.5)
+	_eye.scale = Vector3.ONE * lerpf(0.6, 1.0, _ease(_eye_k))
+	_eye.modulate.a = _ease(_eye_k)
 	var to: Vector3 = global_position - player.global_position
 	to.y = 0.0
 	if to.length() < 0.9:
@@ -69,6 +87,22 @@ func _physics_process(delta: float) -> void:
 		player.take_damage(999, "a25")
 		return
 	player.move_and_collide(to.normalized() * PULL * delta)
+
+
+## the eye goes away: swelling up first when you look right at it, otherwise just fading
+func _eye_fade(delta: float, looked: bool) -> void:
+	if _eye_k <= 0.0:
+		return
+	if looked:
+		_eye_leaving = true
+	_eye_k = maxf(0.0, _eye_k - delta * 2.0)
+	var e := _ease(_eye_k)
+	_eye.modulate.a = e
+	_eye.scale = Vector3.ONE * (lerpf(1.9, 1.0, e) if _eye_leaving else lerpf(0.6, 1.0, e))
+
+
+static func _ease(k: float) -> float:
+	return k * k * (3.0 - 2.0 * k)
 
 
 func _looked_at() -> bool:
