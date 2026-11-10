@@ -353,7 +353,7 @@
    }
   },
   "billboard_face": {
-   "path": "res://assets/local/textures/billboard_face.png",
+   "path": "res://assets/art/billboard.png",
    "placeholder": {
     "kind": "face",
     "color": "#ff3a5c",
