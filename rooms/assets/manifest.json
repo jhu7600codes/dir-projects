@@ -71,39 +71,27 @@
    }
   },
   "a60_face_1": {
-   "path": "res://assets/local/textures/a60_face_1.png",
+   "path": "res://assets/art/a60_1.png",
    "placeholder": {
     "kind": "face",
     "color": "#e01818",
     "style": "wide"
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-60_DOORS.png"
    }
   },
   "a60_face_2": {
-   "path": "res://assets/local/textures/a60_face_2.png",
+   "path": "res://assets/art/a60_2.png",
    "placeholder": {
     "kind": "face",
     "color": "#c01010",
     "style": "dots"
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "Creepyface1.png"
    }
   },
   "a60_face_3": {
-   "path": "res://assets/local/textures/a60_face_3.png",
+   "path": "res://assets/art/a60_3.png",
    "placeholder": {
     "kind": "face",
     "color": "#ff3020",
     "style": "smile"
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "Creepyface2.png"
    }
   },
   "a60b_face": {
