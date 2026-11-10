@@ -361,7 +361,7 @@
    }
   },
   "a70_face": {
-   "path": "res://assets/local/textures/a70_face.png",
+   "path": "res://assets/art/a70.png",
    "placeholder": {
     "kind": "face",
     "color": "#8a8f99",

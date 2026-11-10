@@ -232,7 +232,8 @@ func _mimic_look() -> void:
 	q.mesh = qm
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = Assets.texture("a70_face")
-	m.albedo_color = Color(0.2, 0.2, 0.22, 0.07)
+	# the art is already dark: just keep it faint, easy to miss
+	m.albedo_color = Color(1, 1, 1, 0.15) if Assets.has_real("textures", "a70_face") else Color(0.2, 0.2, 0.22, 0.07)
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	q.material_override = m
