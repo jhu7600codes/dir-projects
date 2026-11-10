@@ -127,51 +127,35 @@
    }
   },
   "a90b_face": {
-   "path": "res://assets/local/textures/a90b_face.webp",
+   "path": "res://assets/art/a90b_face.png",
    "placeholder": {
     "kind": "face",
     "color": "#c8c8c8",
     "style": "dots"
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "A90bNormalState.webp"
    }
   },
   "a90b_halt": {
-   "path": "res://assets/local/textures/a90b_halt.png",
+   "path": "res://assets/art/a90b_halt.png",
    "placeholder": {
     "kind": "sign",
     "color": "#d01010",
     "style": "stop"
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "A90bHalt.png"
    }
   },
   "a90b_proceed": {
-   "path": "res://assets/local/textures/a90b_proceed.webp",
+   "path": "res://assets/art/a90b_proceed.png",
    "placeholder": {
     "kind": "sign",
     "color": "#1aa040",
     "style": "proceed"
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "A90bProceed.webp"
    }
   },
   "a90b_attack": {
-   "path": "res://assets/local/textures/a90b_attack.png",
+   "path": "res://assets/art/a90b_attack.png",
    "placeholder": {
     "kind": "face",
     "color": "#909090",
     "style": "wide"
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "A-90bNew.png"
    }
   },
   "a200_face": {
