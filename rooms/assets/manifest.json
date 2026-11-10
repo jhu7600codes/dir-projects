@@ -226,13 +226,6 @@
     "file": "A-200-6.png"
    }
   },
-  "star_marker": {
-   "path": "res://assets/local/textures/star.png",
-   "placeholder": {
-    "kind": "star",
-    "color": "#ffffff"
-   }
-  },
   "trim": {
    "path": "res://assets/local/textures/trim.png",
    "placeholder": {
@@ -453,6 +446,13 @@
     "kind": "face",
     "color": "#2a2420",
     "style": "smile"
+   }
+  },
+  "star_marker": {
+   "path": "res://assets/art/sky_marker.png",
+   "placeholder": {
+    "kind": "star",
+    "color": "#ffffff"
    }
   }
  },

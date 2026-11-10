@@ -122,16 +122,16 @@ func _icon(it: String, c: Vector2) -> void:
 		"stardevice":
 			draw_rect(Rect2(c + Vector2(-11, -14), Vector2(22, 28)), Color(0.12, 0.13, 0.18))
 			draw_rect(Rect2(c + Vector2(-8, -11), Vector2(16, 13)), Color(0.15, 0.3, 0.5))
-			_star(c + Vector2(0, -4), 5.0, Color(0.7, 0.88, 1.0))
+			_cloud(c + Vector2(0, -4), 5.0, Color.WHITE)
 			draw_circle(c + Vector2(0, 8), 3, Color(0.6, 0.8, 1.0) if Save.data.get("stardevice_on", true) else Color(0.3, 0.3, 0.3))
 		"starjug":
 			draw_colored_polygon(PackedVector2Array([c + Vector2(-5, -15), c + Vector2(5, -15), c + Vector2(5, -9), c + Vector2(11, -4), c + Vector2(11, 14), c + Vector2(-11, 14), c + Vector2(-11, -4), c + Vector2(-5, -9)]), Color(0.55, 0.7, 0.9, 0.55))
 			draw_rect(Rect2(c + Vector2(-10, 0), Vector2(20, 13)), Color(0.35, 0.55, 1.0, 0.9))
-			_star(c + Vector2(-3, 6), 3.0, Color(1, 1, 1))
-			_star(c + Vector2(5, 3), 2.0, Color(1, 1, 1))
+			_cloud(c + Vector2(-3, 6), 3.0, Color(1, 1, 1))
+			_cloud(c + Vector2(5, 3), 2.0, Color(1, 1, 1))
 		"starhelp":
 			draw_rect(Rect2(c + Vector2(-12, -12), Vector2(24, 24)), Color(0.12, 0.13, 0.18))
-			_star(c + Vector2(-2, -2), 6.0, Color(0.6, 0.8, 1.0))
+			_cloud(c + Vector2(-2, -2), 6.0, Color.WHITE)
 			draw_rect(Rect2(c + Vector2(6, 2), Vector2(5, 9)), Color(0.85, 0.5, 0.2))
 		"gold":
 			draw_circle(c + Vector2(-5, 3), 10, Color(0.85, 0.62, 0.15))
@@ -143,10 +143,8 @@ func _poly(pts: Array, col: Color) -> void:
 	draw_colored_polygon(PackedVector2Array(pts), col)
 
 
-func _star(c: Vector2, r: float, col: Color) -> void:
-	var pts := PackedVector2Array()
-	for i in 10:
-		var rr := r if i % 2 == 0 else r * 0.45
-		var a := -PI / 2 + i * PI / 5
-		pts.append(c + Vector2(cos(a), sin(a)) * rr)
-	draw_colored_polygon(pts, col)
+## the sky items' mark: the cloud (assets/art/sky_marker.png)
+func _cloud(c: Vector2, r: float, col: Color) -> void:
+	var tex := Assets.texture("star_marker")
+	var half := Vector2(r, r) * 1.6
+	draw_texture_rect(tex, Rect2(c - half, half * 2.0), false, col)
