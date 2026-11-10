@@ -107,39 +107,27 @@
    }
   },
   "a90_face": {
-   "path": "res://assets/local/textures/a90_face.png",
+   "path": "res://assets/art/a90_face.png",
    "placeholder": {
     "kind": "face",
     "color": "#bdbdbd",
     "style": "smile"
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-90_IDLE.png"
    }
   },
   "a90_stop": {
-   "path": "res://assets/local/textures/a90_stop.png",
+   "path": "res://assets/art/a90_stop.png",
    "placeholder": {
     "kind": "sign",
     "color": "#d01010",
     "style": "stop"
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "Blocka90.png"
    }
   },
   "a90_jumpscare": {
-   "path": "res://assets/local/textures/a90_jumpscare.png",
+   "path": "res://assets/art/a90_jumpscare.png",
    "placeholder": {
     "kind": "face",
     "color": "#8a8a8a",
     "style": "wide"
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-90_JUMPSCARE.png"
    }
   },
   "a90b_face": {
@@ -441,6 +429,14 @@
    "placeholder": {
     "kind": "star",
     "color": "#ffffff"
+   }
+  },
+  "a90_stop_glitch": {
+   "path": "res://assets/art/a90_stop_glitch.png",
+   "placeholder": {
+    "kind": "sign",
+    "color": "#ff0000",
+    "style": "stop"
    }
   }
  },

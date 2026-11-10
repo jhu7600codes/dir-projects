@@ -13,6 +13,8 @@ const RULES := {
 }
 const DAMAGE := 90
 const WATCH_TIME := 1.3
+const GLITCH_EVERY := 0.2  # the sign glitches out every 200ms...
+const GLITCH_FOR := 0.06   # ...for this long
 
 var _watching := false
 var _caught := false
@@ -20,6 +22,8 @@ var _static: ColorRect
 var _face: TextureRect
 var _sign: TextureRect
 var _flick_t := 0.0
+var _glitch: TextureRect  # the glitched sign, flashed over the clean one every 200ms
+var _glitch_t := 0.0
 
 
 func begin() -> void:
@@ -49,6 +53,9 @@ func _show_sign() -> void:
 	center(_face)
 	_sign = image("a90_stop", vs.y * 0.5)
 	center(_sign)
+	_glitch = image("a90_stop_glitch", vs.y * 0.5)
+	center(_glitch)
+	_glitch.visible = false
 	_watching = true
 
 
@@ -58,6 +65,11 @@ func _process(delta: float) -> void:
 		if _flick_t <= 0.0:
 			_flick_t = 0.05
 			_static.color.a = randf_range(0.3, 0.55)
+	if _glitch:
+		_glitch_t += delta
+		if _glitch_t >= GLITCH_EVERY:
+			_glitch_t = 0.0
+		_glitch.visible = _glitch_t < GLITCH_FOR
 	if not _watching:
 		return
 	# held inputs count too: walking, a finger on the screen, a stick pushed
