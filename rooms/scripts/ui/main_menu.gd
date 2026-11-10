@@ -28,7 +28,7 @@ const TAGLINES := [
 	"did you hear that?",
 	"don't look back.",
 	"white means hide.",
-	"there is no a-1001.",
+	"there is no A-1001.",
 	"clock in.",
 	"nobody else came to work today.",
 	"your feet hurt.",

@@ -4,14 +4,14 @@ extends CanvasLayer
 const LIST := {
 	# the two you asked for
 	"long_walk": ["welp, thats been a long walk.", "leave through an exit door"],
-	"a1000": ["a-1000", "my legs hurt..."],
+	"a1000": ["A-1000", "my legs hurt..."],
 	"going_home": ["going home", "get on the bus outside Morse"],
 	# one per entity
-	"survive_a60": ["static on the line", "hide from a-60 and live"],
-	"survive_a60b": ["ping, pong, gone", "outlast a-60b for twenty rooms"],
-	"survive_a90": ["statue mode", "don't move a muscle when a-90 shows up"],
-	"survive_a90b": ["simon says", "do everything a-90b tells you"],
-	"survive_a120": ["wait for the quiet", "sit out a-120, rebounds and all"],
+	"survive_a60": ["static on the line", "hide from A-60 and live"],
+	"survive_a60b": ["ping, pong, gone", "outlast A-60b for twenty rooms"],
+	"survive_a90": ["statue mode", "don't move a muscle when A-90 shows up"],
+	"survive_a90b": ["simon says", "do everything A-90b tells you"],
+	"survive_a120": ["wait for the quiet", "sit out A-120, rebounds and all"],
 	"survive_a200": ["reverse uno", "survive the happy scribble until she leaves"],
 	# extra ones, inspired by the rooms: revisited badge list
 	"first_run": ["clocking in", "start your first run"],
@@ -20,10 +20,10 @@ const LIST := {
 	"deaths_50": ["regular customer", "die 50 times"],
 	"rich": ["office savings", "have 500 gold saved up"],
 	"no_lockers": ["who needs lockers", "reach an exit without ever hiding"],
-	"read_walls": ["someone was here", "walk the whole a-100 corridor"],
-	"lights_out": ["lights out", "reach a-150"],
+	"read_walls": ["someone was here", "walk the whole A-100 corridor"],
+	"lights_out": ["lights out", "reach A-150"],
 	"shake_it": ["shake it", "buy a shakelight"],
-	"early_bird": ["you're early", "meet a-90 in a-000"],
+	"early_bird": ["you're early", "meet A-90 in A-000"],
 	"management": ["management access", "find the management key and go down into the wires"],
 	"wired_up": ["wired up", "power the whole office and ride the elevator back up"],
 }

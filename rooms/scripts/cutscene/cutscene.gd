@@ -366,7 +366,7 @@ func _outside() -> void:
 	light(door_pos + Vector3(0, 1.4, -0.6), Color(1, 0.95, 0.85), 1.2, 6.0)
 	shot(Vector3(0.4, 1.7, 0.5), door_pos + Vector3(0, 1.2, 0))
 	fade(false, 1.0)
-	say("a-1000.", 2.4)
+	say("A-1000.", 2.4)
 	dolly(Vector3(0.1, 1.7, 4.4), door_pos + Vector3(0, 1.2, 0), 3.0)
 	if not await wait(3.0): return
 	sound("door_open", door_pos, 2.0, 0.8)

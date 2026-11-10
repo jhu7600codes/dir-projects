@@ -10,7 +10,7 @@ func build() -> void:
 	var w := 8.0
 	shell(-w / 2, w / 2, length, 3.0, "front", 0.0)
 	var shop := ShopStand.new()
-	shop.title = "a-150 shop"
+	shop.title = "A-150 shop"
 	shop.offers = [["battery", 4], ["bandage", 6], ["vitamins", 10], ["flashlight", 20], ["shakelight", 12]]
 	shop.position = Vector3(w / 2 - 0.45, 0, length * 0.5)
 	shop.rotation.y = -PI / 2

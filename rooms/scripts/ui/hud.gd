@@ -80,7 +80,7 @@ func _ready() -> void:
 
 	_flash = _rect(root, Color(0, 0, 0, 0))
 
-	_door = UIKit.label("a-000", 36, Color(0.95, 0.85, 0.4))
+	_door = UIKit.label("A-000", 36, Color(0.95, 0.85, 0.4))
 	_door.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 	_door.add_theme_constant_override("shadow_offset_y", 2)
 	_door.set_anchors_preset(Control.PRESET_CENTER_TOP)

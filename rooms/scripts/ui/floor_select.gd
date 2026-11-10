@@ -8,7 +8,7 @@ extends Control
 signal closed
 
 const FLOORS := [
-	["offices", "the offices", "the endless office. a-000 to a-1000. hide, run, survive.", "res://assets/branding/floor_offices.png"],
+	["offices", "the offices", "the endless office. A-000 to A-1000. hide, run, survive.", "res://assets/branding/floor_offices.png"],
 	["wires", "the wires", "the maintenance floor under the office. 50 doors, no timer. flip every breaker, power the elevator and ride it up.", "res://assets/branding/floor_wires.png"],
 ]
 

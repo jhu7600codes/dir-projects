@@ -45,7 +45,7 @@ func setup(id: String, scores: Dictionary, best := -1) -> void:
 static func score_text(id: String, score: int) -> String:
 	if id == "w10":
 		return "%d:%02d" % [score / 60, score % 60]
-	return Loc.t("%d a-90s") % score
+	return Loc.t("%d A-90s") % score
 
 
 ## multiplayer sightings: battle (everyone's kills) or hide and seek (who won)

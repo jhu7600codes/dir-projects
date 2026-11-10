@@ -10,13 +10,13 @@ static var instance: Sightings = null
 
 ## training: what comes, in order, and what to do about it
 const TRAINING := [
-	["a60", "a-60. you hear crackling, the lights flash red. get in a locker or under a table."],
-	["a90", "a-90. when it shows up on your screen, don't move. don't look around. wait."],
-	["a120", "a-120. it breaks some lockers first. hide in one that still works."],
-	["a10", "a-10. it kicks every locker and table it passes. do NOT hide. stay out in the open."],
-	["a200", "a-200. a locker door creaks open by itself. that's her warning. hide somewhere else."],
-	["a150", "a-150. don't stand in its light."],
-	["a25", "a-25. keep moving."],
+	["a60", "A-60. you hear crackling, the lights flash red. get in a locker or under a table."],
+	["a90", "A-90. when it shows up on your screen, don't move. don't look around. wait."],
+	["a120", "A-120. it breaks some lockers first. hide in one that still works."],
+	["a10", "A-10. it kicks every locker and table it passes. do NOT hide. stay out in the open."],
+	["a200", "A-200. a locker door creaks open by itself. that's her warning. hide somewhere else."],
+	["a150", "A-150. don't stand in its light."],
+	["a25", "A-25. keep moving."],
 ]
 ## battle (solo): entities you face, picked at random over and over
 const BATTLE_POOL := ["a60", "a120", "a10", "a90", "a200"]
@@ -67,7 +67,7 @@ func _ready() -> void:
 			Save.write()
 			_say("daily run. one try. same rooms for everyone today.")
 		"endless":
-			_say("ghlicht: no a-1000. doors keep going. me like that.")
+			_say("ghlicht: no A-1000. doors keep going. me like that.")
 		"battle":
 			if not Net.active:
 				_say("battle. the rooms go fast. the entities don't stop. how far can you get?")

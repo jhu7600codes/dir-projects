@@ -35,16 +35,16 @@ var elevator_power := false
 ## minigames (title screen, arcade, multiplayer party): "" in a normal run
 const MINIGAMES := {
 	"w10": ["w-10 forever", "outlets pop out of the walls faster and faster. dodge them as long as you can"],
-	"a90": ["a-90 forever", "a-90 keeps showing up. freeze every time. how many can you take?"],
+	"a90": ["A-90 forever", "A-90 keeps showing up. freeze every time. how many can you take?"],
 }
 var minigame := ""
 ## the sightings (title screen tab): ghlicht's versions of the office. "" in a normal run
 ## id -> [name, what it is]
 const SIGHTINGS := {
-	"office": ["the office", "the rooms, the way ghlicht sees them. side rooms, a-10, a-20 and ghlicht parts."],
+	"office": ["the office", "the rooms, the way ghlicht sees them. side rooms, A-10, A-20 and ghlicht parts."],
 	"training": ["training", "learn every entity one by one. you can't die here, ghlicht puts you back."],
 	"daily": ["daily run", "the same rooms for everyone today. one try. how far can you get?"],
-	"endless": ["endless", "no a-1000. the doors keep going and it gets worse every 100."],
+	"endless": ["endless", "no A-1000. the doors keep going and it gets worse every 100."],
 	"battle": ["battle", "the rooms go by way faster. with friends: kill them for points, nobody revives. alone: you against the entities."],
 	"hide_seek": ["hide and seek", "multiplayer. one of you is the entity. everyone else has to make it to the door."],
 }
@@ -56,18 +56,18 @@ var fixed_office := false   # this run is the office after the wires: lit, peopl
 ## unlocked by the "welp, thats been a long walk." achievement (leave through an exit door).
 ## id -> [name, what it does]
 const MODIFIERS := {
-	"lights_out": ["lights out", "every room is dark, right from a-001"],
-	"rush_hour": ["rush hour", "a-60 and a-120 show up twice as often"],
+	"lights_out": ["lights out", "every room is dark, right from A-001"],
+	"rush_hour": ["rush hour", "A-60 and A-120 show up twice as often"],
 	"in_a_hurry": ["in a hurry", "everything that rushes at you is 30% faster"],
 	"fragile": ["fragile", "you only have 50 health"],
-	"staring_contest": ["staring contest", "a-90 shows up way more often"],
+	"staring_contest": ["staring contest", "A-90 shows up way more often"],
 	"cheap_batteries": ["cheap batteries", "your flashlight drains twice as fast"],
 	"gold_rush": ["gold rush", "all the gold you find is doubled"],
 	"no_hiding": ["nowhere to hide", "rooms only ever have one locker"],
 	"out_of_shape": ["out of shape", "running wears you out twice as fast"],
 	"empty_pockets": ["empty pockets", "drawers are mostly empty and there's less loot lying around"],
 	"inflation": ["inflation", "everything in the shops costs twice as much"],
-	"charge_phone": ["charge your phone", "w-10 follows you from a-000 all the way to c-30. outlets keep popping out of the walls, dodge them"],
+	"charge_phone": ["charge your phone", "w-10 follows you from A-000 all the way to c-30. outlets keep popping out of the walls, dodge them"],
 	"more_doors": ["got any more doors?", "\"They're for my friends Rush, Ambush, Eyes, Screech, Figure and Seek.\" the entities from doors' hotel move into the office"],
 }
 

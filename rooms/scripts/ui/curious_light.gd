@@ -10,11 +10,11 @@ const COLOR := Color(1.0, 0.86, 0.45)
 const LINE_TIME := 3.2  # each line stays this long unless you skip it
 
 const NAMES := {
-	"a60": "a-60", "a60b": "a-60b", "a90": "a-90", "a90b": "a-90b", "a120": "a-120", "a200": "a-200",
+	"a60": "A-60", "a60b": "A-60b", "a90": "A-90", "a90b": "A-90b", "a120": "A-120", "a200": "A-200",
 	"w10": "w-10", "w15": "w-15", "w50": "w-50", "worker": "a coworker",
-	"headlights": "headlights", "billboard": "the billboard", "a70": "a-70", "a25": "a-25", "a150": "a-150", "a220": "a-220", "fire": "the fire",
+	"headlights": "headlights", "billboard": "the billboard", "a70": "A-70", "a25": "A-25", "a150": "A-150", "a220": "A-220", "fire": "the fire",
 	"w30": "w-30", "c15": "the pigeons",
-	"a10": "a-10", "a20": "a-20", "friend": "your friend", "seeker": "the seeker",
+	"a10": "A-10", "a20": "A-20", "friend": "your friend", "seeker": "the seeker",
 	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
@@ -25,11 +25,11 @@ const HINTS := {
 		"lurker": ["it was hiding, and you walked right up to it.", "crouch when you walk through the apartment. it can't hear you then."],
 	},
 	"a10": {
-		"locker": ["it kicked the locker you were in.", "a-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
-		"table": ["it kicked the table you were under.", "a-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
+		"locker": ["it kicked the locker you were in.", "A-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
+		"table": ["it kicked the table you were under.", "A-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
 	},
 	"a20": {
-		"": ["that door wasn't a door.", "a-20 wears doors with almost the right number. remember which door you're at."],
+		"": ["that door wasn't a door.", "A-20 wears doors with almost the right number. remember which door you're at."],
 	},
 	"fire": {
 		"": ["you weren't standing in the fire escape square.", "the fire burns everything outside the striped square in front of the box."],

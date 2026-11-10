@@ -492,7 +492,7 @@ func _minigame_tick(delta: float) -> void:
 			if (not Net.active or Net.is_host) and not entities.active.has("w10"):
 				entities.spawn("w10", {"follow": true, "endless": maxf(0.01, _mg_t)})
 		"a90":
-			_mg_label.text = Loc.t("a-90s survived: %d") % _mg_count
+			_mg_label.text = Loc.t("A-90s survived: %d") % _mg_count
 			var on := entities.active.has("a90")
 			if _mg_a90_on and not on:
 				_mg_count += 1  # it left and you're still here
