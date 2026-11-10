@@ -95,15 +95,11 @@
    }
   },
   "a60b_face": {
-   "path": "res://assets/local/textures/a60b_face.png",
+   "path": "res://assets/art/a60b_1.png",
    "placeholder": {
     "kind": "face",
     "color": "#2f6bff",
     "style": "wide"
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Timmy_render.png"
    }
   },
   "a90_face": {
@@ -453,6 +449,22 @@
     "kind": "face",
     "color": "#f2f2ff",
     "style": "scribble"
+   }
+  },
+  "a60b_face_2": {
+   "path": "res://assets/art/a60b_2.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#2f6bff",
+    "style": "wide"
+   }
+  },
+  "a60b_face_3": {
+   "path": "res://assets/art/a60b_3.png",
+   "placeholder": {
+    "kind": "face",
+    "color": "#2f6bff",
+    "style": "wide"
    }
   }
  },
