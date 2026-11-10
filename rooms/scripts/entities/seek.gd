@@ -1,6 +1,6 @@
 class_name Seek
 extends Rusher
-## seek (from doors, "got any more doors?" modifier): eyes open up on the walls of the room
+## A-300 ("more friends" modifier): eyes open up on the walls of the room
 ## you're in. through the next door it rises up behind you and the chase starts. run!
 ## doors open by themselves while it's chasing. it gives up after CHASE_DOORS doors.
 ## lockers don't help. the rooms on the way have obstacles like in doors: fallen beams you

@@ -191,95 +191,67 @@
    }
   },
   "rush_face": {
-   "path": "res://assets/local/textures/rush_face.webp",
+   "path": "res://assets/art/a45.png",
    "placeholder": {
     "kind": "face",
     "color": "#202030",
     "style": "wide"
    },
-   "max_size": 512,
-   "source": {
-    "wiki": "doors-game",
-    "file": "Rushvnew.webp"
-   }
+   "max_size": 512
   },
   "ambush_face": {
-   "path": "res://assets/local/textures/ambush_face.png",
+   "path": "res://assets/art/a85.png",
    "placeholder": {
     "kind": "face",
     "color": "#40ff60",
     "style": "wide"
    },
-   "max_size": 400,
-   "source": {
-    "wiki": "doors-game",
-    "file": "Ambush2.png"
-   }
+   "max_size": 400
   },
   "eyes_face": {
-   "path": "res://assets/local/textures/eyes_face.webp",
+   "path": "res://assets/art/a30.png",
    "placeholder": {
     "kind": "face",
     "color": "#9050ff",
     "style": "dots"
    },
-   "max_size": 512,
-   "source": {
-    "wiki": "doors-game",
-    "file": "Eyeopt2.webp"
-   }
+   "max_size": 512
   },
   "screech_face": {
-   "path": "res://assets/local/textures/screech_face.png",
+   "path": "res://assets/art/a130.png",
    "placeholder": {
     "kind": "face",
     "color": "#101010",
     "style": "smile"
    },
-   "max_size": 400,
-   "source": {
-    "wiki": "doors-game",
-    "file": "Screech Render.png"
-   }
+   "max_size": 400
   },
   "figure_body": {
-   "path": "res://assets/local/textures/figure_body.png",
+   "path": "res://assets/art/a180.png",
    "placeholder": {
     "kind": "face",
     "color": "#c05020",
     "style": "wide"
    },
-   "max_size": 600,
-   "source": {
-    "wiki": "doors-game",
-    "file": "FigureRenderOfficial.png"
-   }
+   "max_size": 600
   },
   "seek_body": {
-   "path": "res://assets/local/textures/seek_body.png",
+   "path": "res://assets/art/a300.png",
    "placeholder": {
     "kind": "face",
     "color": "#101010",
     "style": "dots"
    },
-   "max_size": 600,
-   "source": {
-    "wiki": "doors-game",
-    "file": "Seek2.png"
-   }
+   "max_size": 600
   },
   "seek_eye": {
-   "path": "res://assets/local/textures/seek_eye.png",
+   "path": "res://assets/art/a300_eye.png",
    "placeholder": {
     "kind": "face",
     "color": "#101010",
     "style": "dots"
    },
-   "max_size": 256,
-   "source": {
-    "wiki": "doors-game",
-    "file": "M Render Seek Eye V1.png"
-   }
+   "max_size": 256
   },
   "concrete": {
    "path": "res://assets/local/textures/concrete.png",

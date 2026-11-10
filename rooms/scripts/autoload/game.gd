@@ -68,7 +68,7 @@ const MODIFIERS := {
 	"empty_pockets": ["empty pockets", "drawers are mostly empty and there's less loot lying around"],
 	"inflation": ["inflation", "everything in the shops costs twice as much"],
 	"charge_phone": ["charge your phone", "w-10 follows you from A-000 all the way to c-30. outlets keep popping out of the walls, dodge them"],
-	"more_doors": ["got any more doors?", "\"They're for my friends Rush, Ambush, Eyes, Screech, Figure and Seek.\" the entities from doors' hotel move into the office"],
+	"more_doors": ["more friends", "\"They're for my friends A-45, A-85, A-30, A-130, A-180 and A-300.\" six more entities move into the office"],
 }
 
 # set by the game scene

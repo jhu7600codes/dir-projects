@@ -1,6 +1,6 @@
 class_name Rush
 extends Rusher
-## rush (from doors, "got any more doors?" modifier): the lights flicker, a roar comes from
+## A-45 ("more friends" modifier): the lights flicker, a roar comes from
 ## behind, then it flies through the rooms once. hide in a locker.
 
 const RULES := {

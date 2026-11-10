@@ -1,6 +1,6 @@
 class_name Figure
 extends Entity
-## figure (from doors, "got any more doors?" modifier): it's blind and walks around the
+## A-180 ("more friends" modifier): it's blind and walks around the
 ## room you just entered, listening. sprinting near it, or walking close to it, and it hears
 ## you and charges. crouch-walk past it, or hide in a locker until you can sneak out.
 ## the door out has a code lock: find the paper with the code somewhere in the room.

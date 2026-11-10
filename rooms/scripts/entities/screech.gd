@@ -1,6 +1,6 @@
 class_name Screech
 extends Entity
-## screech (from doors, "got any more doors?" modifier): only in dark rooms. you hear a
+## A-130 ("more friends" modifier): only in dark rooms. you hear a
 ## "psst", and it's hiding somewhere next to or behind you. turn and look at it within a
 ## couple of seconds and it leaves. don't, and it bites.
 

@@ -15,7 +15,7 @@ const NAMES := {
 	"headlights": "headlights", "billboard": "the billboard", "a70": "A-70", "a25": "A-25", "a150": "A-150", "a220": "A-220", "fire": "the fire",
 	"w30": "w-30", "c15": "the pigeons",
 	"a10": "A-10", "a20": "A-20", "friend": "your friend", "seeker": "the seeker",
-	"rush": "Rush", "ambush": "Ambush", "eyes": "Eyes", "screech": "Screech", "figure": "Figure", "seek": "Seek",
+	"rush": "A-45", "ambush": "A-85", "eyes": "A-30", "screech": "A-130", "figure": "A-180", "seek": "A-300",
 }
 ## cause -> detail -> lines. "" is the fallback for a cause.
 const HINTS := {

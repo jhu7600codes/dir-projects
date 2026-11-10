@@ -1,6 +1,6 @@
 class_name Eyes
 extends Entity
-## eyes (from doors, "got any more doors?" modifier): a ball of eyes floats in the room you
+## A-30 ("more friends" modifier): a ball of eyes floats in the room you
 ## just walked into, with a purple glow. looking at it hurts, a lot. look at the floor and
 ## walk past. it stays behind once you're two doors further.
 

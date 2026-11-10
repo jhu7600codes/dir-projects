@@ -1,6 +1,6 @@
 class_name Ambush
 extends Rusher
-## ambush (from doors, "got any more doors?" modifier): like rush but green, faster, and it
+## A-85 ("more friends" modifier): like rush but green, faster, and it
 ## rebounds back and forth a few times. stay in the locker until it's really gone.
 
 const RULES := {
