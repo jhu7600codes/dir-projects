@@ -44,6 +44,25 @@
             app:resize_mode="fit"
             app:show_shuffle_button="false" />
 
+        <!-- tv flavor only (see WatchActivity.onCreate/BuildConfig.IS_TV_FLAVOR):
+             yt2009's own real embed player (/embed/<id>, the same page its
+             own generated <iframe> embed codes point at) loaded directly,
+             instead of StreamingPlayer/PlayerView's custom ExoPlayer/SABR
+             pipeline. Same real-Chromium-MSE approach the mobile flavor's
+             MainActivity WebView already relies on for playback, just for
+             one page instead of the whole site. Same box as PlayerView
+             above; only one of the two is ever actually shown. -->
+        <WebView
+            android:id="@+id/watchPlayerWebView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="#000000"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <ProgressBar
             android:id="@+id/watchBufferingSpinner"
             android:layout_width="wrap_content"

@@ -468,6 +468,37 @@ class MobileInjectorTest {
     }
 
     @Test
+    fun `caps and centers baseDiv on a wide (tablet) viewport instead of stretching edge to edge`() {
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains("@media (min-width: 700px)"))
+        assertTrue(script.contains("max-width: 900px !important"))
+        assertTrue(script.contains("@media (min-width: 1000px)"))
+        assertTrue(script.contains("max-width: 1100px !important"))
+        assertTrue(script.contains("margin-left: auto !important"))
+    }
+
+    @Test
+    fun `grows grid-style listings into 2-3 columns on a wide viewport, scoped away from search results`() {
+        // regression test: search results (back/yt2009templates.js's
+        // searchVideo()) reuse the exact same .video-cell markup as the
+        // real grid listings (recommended_videoCell()/videoCell()) but lay
+        // each result out as a horizontal thumb+description list row --
+        // never a grid, even on the original desktop site. yt2009's own
+        // `grid-view` class is always an ancestor of the grid kind and
+        // never present around search results, so the multi-column rule
+        // has to be scoped to `.grid-view .video-cell`, not bare
+        // `.video-cell` -- otherwise this would turn search results into a
+        // broken 2-up grid of horizontal list rows instead of leaving them
+        // as the single-column list they're actually meant to be.
+        val script = MobileInjector.buildInjectionScript(config)
+        assertTrue(script.contains(".grid-view .video-cell, .grid-view .channel-cell"))
+        assertTrue(script.contains("width: 47% !important"))
+        assertTrue(script.contains("width: 30% !important"))
+        assertTrue(script.contains("nth-child(2n)"))
+        assertTrue(script.contains("nth-child(3n)"))
+    }
+
+    @Test
     fun `infinite-scrolls the homepage recommended module using yt2009's own recommended_page trick`() {
         // regression test: yt2009's own homepage-recommended.js already
         // fetches /yt2009_recommended once (targetVideos=8, back/backend.js)
