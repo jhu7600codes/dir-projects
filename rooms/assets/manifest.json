@@ -446,51 +446,39 @@
  },
  "sounds": {
   "ambience": {
-   "path": "res://assets/local/sounds/ambience.mp3",
+   "path": "res://assets/audio/ambience.ogg",
    "placeholder": {
     "kind": "hum",
     "length": 2.0,
     "volume": 0.25
    },
-   "loop": false,
-   "source": {
-    "wiki": "doors-game",
-    "file": "RoomsAmbienceNormal.mp3"
-   }
+   "loop": false
   },
   "door_open": {
-   "path": "res://assets/local/sounds/door_open.mp3",
+   "path": "res://assets/audio/door_open.ogg",
    "placeholder": {
     "kind": "creak",
     "length": 0.8,
     "volume": 0.5
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "RoomsDoorOpen.mp3"
    }
   },
   "door_locked": {
-   "path": "res://assets/local/sounds/door_locked.wav",
+   "path": "res://assets/audio/door_locked.ogg",
    "placeholder": {
     "kind": "thud",
     "length": 0.4
    }
   },
   "locker": {
-   "path": "res://assets/local/sounds/locker.mp3",
+   "path": "res://assets/audio/locker.ogg",
    "placeholder": {
     "kind": "thud",
     "length": 0.35,
     "volume": 0.5
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "LockerSmallOpen.mp3"
    }
   },
   "step": {
-   "path": "res://assets/local/sounds/step.wav",
+   "path": "res://assets/audio/step.ogg",
    "placeholder": {
     "kind": "step",
     "length": 0.15,
@@ -498,45 +486,33 @@
    }
   },
   "flashlight_click": {
-   "path": "res://assets/local/sounds/flashlight_click.mp3",
+   "path": "res://assets/audio/flashlight_click.ogg",
    "placeholder": {
     "kind": "tone",
     "freq": 1800,
     "length": 0.04,
     "volume": 0.3
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "FlashlightOpen.mp3"
    }
   },
   "shakelight": {
-   "path": "res://assets/local/sounds/shakelight.mp3",
+   "path": "res://assets/audio/shakelight.ogg",
    "placeholder": {
     "kind": "rattle",
     "length": 0.35,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "r-rooms",
-    "file": "Flashlight_shake.mp3"
    }
   },
   "gold": {
-   "path": "res://assets/local/sounds/gold.wav",
+   "path": "res://assets/audio/gold.ogg",
    "placeholder": {
     "kind": "chime",
     "freq": 1200,
     "length": 0.4,
     "volume": 0.4
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "GoldPickup.wav"
    }
   },
   "pickup": {
-   "path": "res://assets/local/sounds/pickup.wav",
+   "path": "res://assets/audio/pickup.ogg",
    "placeholder": {
     "kind": "chime",
     "freq": 700,
@@ -545,7 +521,7 @@
    }
   },
   "buy": {
-   "path": "res://assets/local/sounds/buy.wav",
+   "path": "res://assets/audio/buy.ogg",
    "placeholder": {
     "kind": "chime",
     "freq": 900,
@@ -554,7 +530,7 @@
    }
   },
   "deny": {
-   "path": "res://assets/local/sounds/deny.wav",
+   "path": "res://assets/audio/deny.ogg",
    "placeholder": {
     "kind": "tone",
     "freq": 160,
@@ -563,7 +539,7 @@
    }
   },
   "hurt": {
-   "path": "res://assets/local/sounds/hurt.wav",
+   "path": "res://assets/audio/hurt.ogg",
    "placeholder": {
     "kind": "thud",
     "length": 0.4,
@@ -571,31 +547,23 @@
    }
   },
   "vitamins": {
-   "path": "res://assets/local/sounds/vitamins.mp3",
+   "path": "res://assets/audio/vitamins.ogg",
    "placeholder": {
     "kind": "whoosh",
     "length": 0.5,
     "volume": 0.4
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "Vitamins.mp3"
    }
   },
   "death": {
-   "path": "res://assets/local/sounds/death.ogg",
+   "path": "res://assets/audio/death.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 1.2,
     "volume": 0.5
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Office_Death.ogg"
    }
   },
   "achievement": {
-   "path": "res://assets/local/sounds/achievement.wav",
+   "path": "res://assets/audio/achievement.ogg",
    "placeholder": {
     "kind": "chime",
     "freq": 880,
@@ -604,246 +572,170 @@
    }
   },
   "glitch": {
-   "path": "res://assets/local/sounds/glitch.mp3",
+   "path": "res://assets/audio/glitch.ogg",
    "placeholder": {
     "kind": "glitch",
     "length": 0.8,
     "volume": 0.5
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "Glitch-Sound1.mp3"
    }
   },
   "exit_ambience": {
-   "path": "res://assets/local/sounds/exit_ambience.ogg",
+   "path": "res://assets/audio/exit_ambience.ogg",
    "placeholder": {
     "kind": "pad",
     "length": 4.0,
     "volume": 0.5
    },
-   "loop": true,
-   "source": {
-    "wiki": "doors-game",
-    "file": "Curious_Light.ogg"
-   }
+   "loop": true
   },
   "a60_rumble": {
-   "path": "res://assets/local/sounds/a60_rumble.ogg",
+   "path": "res://assets/audio/a60_rumble.ogg",
    "placeholder": {
     "kind": "thud",
     "length": 1.5,
     "volume": 0.9
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-60_rumble.ogg"
    }
   },
   "a60_far": {
-   "path": "res://assets/local/sounds/a60_far.ogg",
+   "path": "res://assets/audio/a60_far.ogg",
    "placeholder": {
     "kind": "static",
     "length": 2.0,
     "volume": 0.7
    },
-   "loop": true,
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-60_far.ogg"
-   }
+   "loop": true
   },
   "a60_near": {
-   "path": "res://assets/local/sounds/a60_near.ogg",
+   "path": "res://assets/audio/a60_near.ogg",
    "placeholder": {
     "kind": "hiss",
     "length": 1.5,
     "volume": 0.9
    },
-   "loop": true,
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-60_near.ogg"
-   }
+   "loop": true
   },
   "a60b_far": {
-   "path": "res://assets/local/sounds/a60b_far.wav",
+   "path": "res://assets/audio/a60b_far.ogg",
    "placeholder": {
     "kind": "buzz",
     "length": 2.0,
     "volume": 0.6
    },
-   "loop": true,
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "A-60Far.wav"
-   }
+   "loop": true
   },
   "a60b_near": {
-   "path": "res://assets/local/sounds/a60b_near.wav",
+   "path": "res://assets/audio/a60b_near.ogg",
    "placeholder": {
     "kind": "hiss",
     "length": 1.5,
     "volume": 0.9
    },
-   "loop": true,
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "A-60CloseNew.wav"
-   }
+   "loop": true
   },
   "a90_knock": {
-   "path": "res://assets/local/sounds/a90_knock.ogg",
+   "path": "res://assets/audio/a90_knock.ogg",
    "placeholder": {
     "kind": "knock",
     "length": 0.8,
     "volume": 0.9
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A90SpawnSound.ogg"
    }
   },
   "a90_spawn": {
-   "path": "res://assets/local/sounds/a90_spawn.mp3",
+   "path": "res://assets/audio/a90_spawn.ogg",
    "placeholder": {
     "kind": "glitch",
     "length": 0.5,
     "volume": 0.6
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A90Spawn.mp3"
    }
   },
   "a90_jumpscare_sound": {
-   "path": "res://assets/local/sounds/a90_jumpscare.mp3",
+   "path": "res://assets/audio/a90_jumpscare_sound.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.9,
     "volume": 0.9
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-90_jumpscare.mp3"
    }
   },
   "a90_despawn": {
-   "path": "res://assets/local/sounds/a90_despawn.ogg",
+   "path": "res://assets/audio/a90_despawn.ogg",
    "placeholder": {
     "kind": "tone",
     "freq": 220,
     "length": 0.2,
     "volume": 0.3
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Paralysis_despawn.ogg"
    }
   },
   "a90b_spawn": {
-   "path": "res://assets/local/sounds/a90b_spawn.ogg",
+   "path": "res://assets/audio/a90b_spawn.ogg",
    "placeholder": {
     "kind": "glitch",
     "length": 0.6,
     "volume": 0.6
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Sensation_spawn.ogg"
    }
   },
   "a90b_halt": {
-   "path": "res://assets/local/sounds/a90b_halt.ogg",
+   "path": "res://assets/audio/a90b_halt.ogg",
    "placeholder": {
     "kind": "tone",
     "freq": 180,
     "length": 0.5,
     "volume": 0.6
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Halt.ogg"
    }
   },
   "a90b_proceed": {
-   "path": "res://assets/local/sounds/a90b_proceed.ogg",
+   "path": "res://assets/audio/a90b_proceed.ogg",
    "placeholder": {
     "kind": "tone",
     "freq": 520,
     "length": 0.5,
     "volume": 0.6
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Proceed.ogg"
    }
   },
   "a90b_attack_sound": {
-   "path": "res://assets/local/sounds/a90b_attack.ogg",
+   "path": "res://assets/audio/a90b_attack_sound.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.8,
     "volume": 0.9
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Paralysis_attack.ogg"
    }
   },
   "a120_far": {
-   "path": "res://assets/local/sounds/a120_far.ogg",
+   "path": "res://assets/audio/a120_far.ogg",
    "placeholder": {
     "kind": "clang",
     "length": 1.2,
     "volume": 0.6
    },
-   "loop": true,
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-120_ambience.ogg"
-   }
+   "loop": true
   },
   "a120_near": {
-   "path": "res://assets/local/sounds/a120_near.ogg",
+   "path": "res://assets/audio/a120_near.ogg",
    "placeholder": {
     "kind": "clang",
     "length": 0.6,
     "volume": 0.9
    },
-   "loop": true,
-   "source": {
-    "wiki": "doors-game",
-    "file": "A-120_voice.ogg"
-   }
+   "loop": true
   },
   "a200_spawn": {
-   "path": "res://assets/local/sounds/a200_spawn.mp3",
+   "path": "res://assets/audio/a200_spawn.ogg",
    "placeholder": {
     "kind": "bitcrush",
     "length": 1.5,
     "volume": 0.7
-   },
-   "source": {
-    "wiki": "r-rooms",
-    "file": "A-200_Spawn.mp3"
    }
   },
   "a200_far": {
-   "path": "res://assets/local/sounds/a200_far.mp3",
+   "path": "res://assets/audio/a200_far.ogg",
    "placeholder": {
     "kind": "bitcrush",
     "length": 2.0,
     "volume": 0.5
    },
-   "loop": true,
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "A-200_sound_old.mp3"
-   }
+   "loop": true
   },
   "a200_near": {
-   "path": "res://assets/local/sounds/a200_near.wav",
+   "path": "res://assets/audio/a200_near.ogg",
    "placeholder": {
     "kind": "hiss",
     "length": 1.5,
@@ -852,190 +744,130 @@
    "loop": true
   },
   "a200_voice": {
-   "path": "res://assets/local/sounds/a200_voice.ogg",
+   "path": "res://assets/audio/a200_voice.ogg",
    "placeholder": {
     "kind": "silent",
     "length": 0.1
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Its_not_over_it_never_is.ogg"
    }
   },
   "rush_far": {
-   "path": "res://assets/local/sounds/rush_far.mp3",
+   "path": "res://assets/audio/rush_far.ogg",
    "placeholder": {
     "kind": "static",
     "length": 2.0,
     "volume": 0.8
    },
-   "source": {
-    "wiki": "doors-game",
-    "file": "PlaySound (Rush).mp3"
-   },
    "loop": true
   },
   "ambush_far": {
-   "path": "res://assets/local/sounds/ambush_far.mp3",
+   "path": "res://assets/audio/ambush_far.ogg",
    "placeholder": {
     "kind": "buzz",
     "length": 2.0,
     "volume": 0.8
    },
-   "source": {
-    "wiki": "doors-game",
-    "file": "Ambush Near Noise.mp3"
-   },
    "loop": true
   },
   "eyes_ambience": {
-   "path": "res://assets/local/sounds/eyes_ambience.mp3",
+   "path": "res://assets/audio/eyes_ambience.ogg",
    "placeholder": {
     "kind": "hum",
     "length": 2.0,
     "volume": 0.6
    },
-   "source": {
-    "wiki": "doors-game",
-    "file": "EyesAmbience.MP3"
-   },
    "loop": true
   },
   "eyes_hurt": {
-   "path": "res://assets/local/sounds/eyes_hurt.mp3",
+   "path": "res://assets/audio/eyes_hurt.ogg",
    "placeholder": {
     "kind": "glitch",
     "length": 0.3,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "EyesAttack.MP3"
    }
   },
   "screech_psst": {
-   "path": "res://assets/local/sounds/screech_psst.mp3",
+   "path": "res://assets/audio/screech_psst.ogg",
    "placeholder": {
     "kind": "hiss",
     "length": 0.5,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "ScreechPsst.mp3"
    }
   },
   "screech_bite": {
-   "path": "res://assets/local/sounds/screech_bite.mp3",
+   "path": "res://assets/audio/screech_bite.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.6,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "Screech-Bite.mp3"
    }
   },
   "screech_caught": {
-   "path": "res://assets/local/sounds/screech_caught.mp3",
+   "path": "res://assets/audio/screech_caught.ogg",
    "placeholder": {
     "kind": "glitch",
     "length": 0.4,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "ScreechCaught.mp3"
    }
   },
   "figure_step": {
-   "path": "res://assets/local/sounds/figure_step.mp3",
+   "path": "res://assets/audio/figure_step.ogg",
    "placeholder": {
     "kind": "thud",
     "length": 0.4,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "FigureFootstep.mp3"
    }
   },
   "figure_growl": {
-   "path": "res://assets/local/sounds/figure_growl.mp3",
+   "path": "res://assets/audio/figure_growl.ogg",
    "placeholder": {
     "kind": "buzz",
     "length": 1.2,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "FigureGrowl1.mp3"
    }
   },
   "figure_kill": {
-   "path": "res://assets/local/sounds/figure_kill.wav",
+   "path": "res://assets/audio/figure_kill.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 1.0,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "FigureKill.wav"
    }
   },
   "seek_eyes": {
-   "path": "res://assets/local/sounds/seek_eyes.mp3",
+   "path": "res://assets/audio/seek_eyes.ogg",
    "placeholder": {
     "kind": "whoosh",
     "length": 1.0,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "SeekEyeSpawn.mp3"
    }
   },
   "seek_scream": {
-   "path": "res://assets/local/sounds/seek_scream.mp3",
+   "path": "res://assets/audio/seek_scream.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 1.5,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "SeekScream.mp3"
    }
   },
   "seek_steps": {
-   "path": "res://assets/local/sounds/seek_steps.mp3",
+   "path": "res://assets/audio/seek_steps.ogg",
    "placeholder": {
     "kind": "step",
     "length": 0.4,
     "volume": 0.8
    },
-   "source": {
-    "wiki": "doors-game",
-    "file": "SeekFootstepsClose.mp3"
-   },
    "loop": true
   },
   "seek_kill": {
-   "path": "res://assets/local/sounds/seek_kill.mp3",
+   "path": "res://assets/audio/seek_kill.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 1.0,
     "volume": 0.8
-   },
-   "source": {
-    "wiki": "doors-game",
-    "file": "SeekKill.mp3"
    }
   },
   "room_tone": {
-   "path": "res://assets/local/sounds/room_tone.ogg",
+   "path": "res://assets/audio/room_tone.ogg",
    "placeholder": {
     "kind": "hum",
     "length": 2.0,
@@ -1044,7 +876,7 @@
    "loop": true
   },
   "w10_spark": {
-   "path": "res://assets/local/sounds/w10_spark.ogg",
+   "path": "res://assets/audio/w10_spark.ogg",
    "placeholder": {
     "kind": "glitch",
     "length": 0.5,
@@ -1052,7 +884,7 @@
    }
   },
   "w10_lunge": {
-   "path": "res://assets/local/sounds/w10_lunge.ogg",
+   "path": "res://assets/audio/w10_lunge.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.4,
@@ -1060,7 +892,7 @@
    }
   },
   "w15_zap": {
-   "path": "res://assets/local/sounds/w15_zap.ogg",
+   "path": "res://assets/audio/w15_zap.ogg",
    "placeholder": {
     "kind": "buzz",
     "length": 0.35,
@@ -1068,7 +900,7 @@
    }
   },
   "w50_hum": {
-   "path": "res://assets/local/sounds/w50_hum.ogg",
+   "path": "res://assets/audio/w50_hum.ogg",
    "placeholder": {
     "kind": "hum",
     "length": 2.0,
@@ -1077,7 +909,7 @@
    "loop": true
   },
   "switch_flip": {
-   "path": "res://assets/local/sounds/switch_flip.ogg",
+   "path": "res://assets/audio/switch_flip.ogg",
    "placeholder": {
     "kind": "thud",
     "length": 0.3,
@@ -1085,7 +917,7 @@
    }
   },
   "power_on": {
-   "path": "res://assets/local/sounds/power_on.ogg",
+   "path": "res://assets/audio/power_on.ogg",
    "placeholder": {
     "kind": "pad",
     "length": 2.5,
@@ -1093,7 +925,7 @@
    }
   },
   "elevator": {
-   "path": "res://assets/local/sounds/elevator.ogg",
+   "path": "res://assets/audio/elevator.ogg",
    "placeholder": {
     "kind": "hum",
     "length": 3.0,
@@ -1101,7 +933,7 @@
    }
   },
   "typing": {
-   "path": "res://assets/local/sounds/typing.ogg",
+   "path": "res://assets/audio/typing.ogg",
    "placeholder": {
     "kind": "rattle",
     "length": 2.0,
@@ -1110,7 +942,7 @@
    "loop": true
   },
   "wires_ambience": {
-   "path": "res://assets/local/sounds/wires_ambience.ogg",
+   "path": "res://assets/audio/wires_ambience.ogg",
    "placeholder": {
     "kind": "buzz",
     "length": 2.0,
@@ -1119,7 +951,7 @@
    "loop": true
   },
   "city_ambience": {
-   "path": "res://assets/local/sounds/city_ambience.ogg",
+   "path": "res://assets/audio/city_ambience.ogg",
    "placeholder": {
     "kind": "hiss",
     "length": 2.0,
@@ -1128,7 +960,7 @@
    "loop": true
   },
   "car_horn": {
-   "path": "res://assets/local/sounds/car_horn.ogg",
+   "path": "res://assets/audio/car_horn.ogg",
    "placeholder": {
     "kind": "tone",
     "freq": 330,
@@ -1137,7 +969,7 @@
    }
   },
   "headlights_far": {
-   "path": "res://assets/local/sounds/headlights_far.ogg",
+   "path": "res://assets/audio/headlights_far.ogg",
    "placeholder": {
     "kind": "buzz",
     "length": 2.0,
@@ -1146,7 +978,7 @@
    "loop": true
   },
   "billboard_hum": {
-   "path": "res://assets/local/sounds/billboard_hum.ogg",
+   "path": "res://assets/audio/billboard_hum.ogg",
    "placeholder": {
     "kind": "hum",
     "length": 2.0,
@@ -1155,7 +987,7 @@
    "loop": true
   },
   "introvert": {
-   "path": "res://assets/local/sounds/introvert.ogg",
+   "path": "res://assets/audio/introvert.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.5,
@@ -1163,7 +995,7 @@
    }
   },
   "a70_scream": {
-   "path": "res://assets/local/sounds/a70_scream.ogg",
+   "path": "res://assets/audio/a70_scream.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.8,
@@ -1171,7 +1003,7 @@
    }
   },
   "a25_hum": {
-   "path": "res://assets/local/sounds/a25_hum.ogg",
+   "path": "res://assets/audio/a25_hum.ogg",
    "placeholder": {
     "kind": "hum",
     "length": 2.0,
@@ -1180,7 +1012,7 @@
    "loop": true
   },
   "w30_hiss": {
-   "path": "res://assets/local/sounds/w30_hiss.ogg",
+   "path": "res://assets/audio/w30_hiss.ogg",
    "placeholder": {
     "kind": "hiss",
     "length": 2.2,
@@ -1188,7 +1020,7 @@
    }
   },
   "w30_blast": {
-   "path": "res://assets/local/sounds/w30_blast.ogg",
+   "path": "res://assets/audio/w30_blast.ogg",
    "placeholder": {
     "kind": "whoosh",
     "length": 1.2,
@@ -1196,7 +1028,7 @@
    }
   },
   "c15_coo": {
-   "path": "res://assets/local/sounds/c15_coo.ogg",
+   "path": "res://assets/audio/c15_coo.ogg",
    "placeholder": {
     "kind": "tone",
     "length": 0.6,
@@ -1205,7 +1037,7 @@
    }
   },
   "c15_flap": {
-   "path": "res://assets/local/sounds/c15_flap.ogg",
+   "path": "res://assets/audio/c15_flap.ogg",
    "placeholder": {
     "kind": "rattle",
     "length": 1.5,
@@ -1213,7 +1045,7 @@
    }
   },
   "a150_hum": {
-   "path": "res://assets/local/sounds/a150_hum.ogg",
+   "path": "res://assets/audio/a150_hum.ogg",
    "placeholder": {
     "kind": "chime",
     "length": 1.6,
@@ -1223,7 +1055,7 @@
    "loop": true
   },
   "a150_kill": {
-   "path": "res://assets/local/sounds/a150_kill.ogg",
+   "path": "res://assets/audio/a150_kill.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.6,
@@ -1231,7 +1063,7 @@
    }
   },
   "a220_march": {
-   "path": "res://assets/local/sounds/a220_march.ogg",
+   "path": "res://assets/audio/a220_march.ogg",
    "placeholder": {
     "kind": "knock",
     "length": 1.0,
@@ -1240,7 +1072,7 @@
    "loop": true
   },
   "gate_beep": {
-   "path": "res://assets/local/sounds/gate_beep.ogg",
+   "path": "res://assets/audio/gate_beep.ogg",
    "placeholder": {
     "kind": "tone",
     "length": 0.5,
@@ -1249,7 +1081,7 @@
    }
   },
   "fire_alarm": {
-   "path": "res://assets/local/sounds/fire_alarm.ogg",
+   "path": "res://assets/audio/fire_alarm.ogg",
    "placeholder": {
     "kind": "buzz",
     "length": 2.0,
@@ -1258,7 +1090,7 @@
    "loop": true
   },
   "anomaly_breath": {
-   "path": "res://assets/local/sounds/anomaly_breath.ogg",
+   "path": "res://assets/audio/anomaly_breath.ogg",
    "placeholder": {
     "kind": "hiss",
     "length": 2.0,
@@ -1267,7 +1099,7 @@
    "loop": true
   },
   "anomaly_scream": {
-   "path": "res://assets/local/sounds/anomaly_scream.ogg",
+   "path": "res://assets/audio/anomaly_scream.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.7,
@@ -1275,7 +1107,7 @@
    }
   },
   "a10_kick": {
-   "path": "res://assets/local/sounds/a10_kick.ogg",
+   "path": "res://assets/audio/a10_kick.ogg",
    "placeholder": {
     "kind": "knock",
     "length": 0.35,
@@ -1283,7 +1115,7 @@
    }
   },
   "a20_burst": {
-   "path": "res://assets/local/sounds/a20_burst.ogg",
+   "path": "res://assets/audio/a20_burst.ogg",
    "placeholder": {
     "kind": "scream",
     "length": 0.6,
@@ -1291,7 +1123,7 @@
    }
   },
   "ghlicht_part": {
-   "path": "res://assets/local/sounds/ghlicht_part.ogg",
+   "path": "res://assets/audio/ghlicht_part.ogg",
    "placeholder": {
     "kind": "glitch",
     "length": 0.8,
@@ -1301,29 +1133,21 @@
  },
  "music": {
   "menu_music": {
-   "path": "res://assets/local/music/menu.ogg",
+   "path": "res://assets/audio/menu_music.ogg",
    "loop": true,
    "placeholder": {
     "kind": "hum",
     "length": 2.0,
     "volume": 0.15
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "The_Office.ogg"
    }
   },
   "a60b_theme": {
-   "path": "res://assets/local/music/a60b_theme.ogg",
+   "path": "res://assets/audio/a60b_theme.ogg",
    "loop": true,
    "placeholder": {
     "kind": "buzz",
     "length": 2.0,
     "volume": 0.25
-   },
-   "source": {
-    "wiki": "rooms-revisited",
-    "file": "Teardown.ogg"
    }
   }
  },
