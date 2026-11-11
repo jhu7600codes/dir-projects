@@ -123,11 +123,48 @@ def metal(dur, base, k=6, parts=(1, 2.76, 5.4, 8.93, 13.3)):
     x = sum(sine(base * p, dur, rng.uniform(0, 6)) * env_exp(dur, k * (1 + i * 0.6)) / (1 + i) for i, p in enumerate(parts))
     return x + hp(noise(dur), 2000) * env_exp(dur, 60) * 0.3
 
-def scream(dur, f0=420, f1=180, rough=0.6, formants=(800, 1200, 2600)):
-    f = np.linspace(f0, f1, int(SR * dur)) * (1 + 0.04 * sine(7, dur)) * (1 + rough * 0.02 * noise(dur))
-    src = saw(f, dur) + 0.5 * saw(f * 1.01, dur) + rough * noise(dur) * 0.5
-    y = sum(bp(src, fm * 0.8, fm * 1.25) for fm in formants)
-    return dist(norm(y) * adsr(dur, 0.01, 0.1, 0.8, 0.25), 3)
+def scream(dur, f0=420, f1=180, rough=0.6, formants=None):
+    """a shriek: a high wavering voice made of a few sine partials, ragged breath noise
+    around it, and some grit. (formants is unused, kept so the calls stay readable)"""
+    n = int(SR * dur)
+    f = np.maximum(np.linspace(f0, f1, n) * 1.8, 650.0)
+    f = f * (1 + 0.035 * sine(7.5, dur) + 0.02 * lp(noise(dur), 30) * rough)
+    tone = sine(f, dur) + 0.55 * sine(f * 2, dur, 1.0) + 0.3 * sine(f * 3, dur, 2.0) + 0.15 * sine(f * 4.02, dur)
+    breath = bp(noise(dur), 1500, 7000) * (0.6 + 0.4 * rough)
+    rasp = tone * (1 + rough * 0.6 * hp(noise(dur), 2000))
+    y = rasp * 0.7 + breath * 0.5
+    return dist(norm(y) * adsr(dur, 0.015, 0.08, 0.85, min(0.3, dur * 0.4)), 2.2)
+
+VOWELS = {"a": (800, 1150, 2900), "i": (300, 2300, 3000), "o": (450, 800, 2830), "e": (530, 1850, 2500), "u": (325, 700, 2530)}
+
+def vowel(v, f0, dur, f1=None, breath=0.15):
+    """a sung / shouted vowel by additive synthesis: harmonics of the pitch, each one as loud
+    as the vowel's formants are near it. clean, nothing buzzy"""
+    f1 = f0 if f1 is None else f1
+    f = np.linspace(f0, f1, int(SR * dur)) * (1 + 0.012 * sine(5.5, dur))
+    fm = VOWELS[v]
+    y = np.zeros(int(SR * dur))
+    for h in range(1, 28):
+        fh = f0 * h
+        if fh > 7000:
+            break
+        amp = sum(math.exp(-((fh - F) / (80 + F * 0.08)) ** 2) * (1.0 / (1 + k)) for k, F in enumerate(fm)) + 0.02 / h
+        y += sine(f * h, dur, h * 0.7) * amp
+    y = y + bp(noise(dur), fm[1] * 0.7, fm[2] * 1.3) * breath
+    return norm(y) * adsr(dur, 0.02, 0.05, 0.9, min(0.08, dur * 0.3))
+
+def speak(sylls, base, gap=0.03, consonant=None):
+    """sylls: [(vowel, dur, pitch multiplier)]. strings them together with tiny noise bursts"""
+    total = sum(d + gap for _, d, _ in sylls) + 0.1
+    out = np.zeros(int(SR * total))
+    t = 0.0
+    for i, (v, d, pm) in enumerate(sylls):
+        if consonant and i in consonant:
+            out = place(out, hp(noise(0.05), 3000) * env_exp(0.05, 50) * 0.5, t)
+            t += 0.03
+        out = place(out, vowel(v, base * pm, d, base * pm * 0.92), t)
+        t += d + gap
+    return out
 
 def glitchy(dur, seed):
     r = np.random.default_rng(seed)
@@ -182,10 +219,30 @@ S = {}
 # ---------------- the office ----------------
 S["ambience"] = loopify(N(hum(6.25, 60, air=0.5) * 0.4 + lp(brown(6.25), 300) * 0.6))
 S["room_tone"] = loopify(N(hum(6.25, 50, (1, 2, 3), 0.3) * 0.5), 0.25) * 0.6
-creak = bp(saw(np.linspace(180, 120, int(SR * 0.7)) * (1 + 0.15 * sine(23, 0.7)), 0.7), 300, 2500) * adsr(0.7, 0.05, 0.2, 0.6, 0.3)
-S["door_open"] = N(fade(place(pad_to(click(0.02, 2500) * 0.8, 0.9), creak * 0.7, 0.06)))
-S["door_locked"] = N(pad_to(place(place(np.zeros(int(SR * 0.45)), thud(0.18, 110, 30), 0.0), thud(0.18, 120, 30), 0.14) + place(np.zeros(int(SR * 0.45)), metal(0.2, 900, 25) * 0.4, 0.02), 0.45))
-S["locker"] = N(metal(0.6, 210, 9) * 0.7 + place(np.zeros(int(SR * 0.6)), click(0.02, 1500), 0.0) + thud(0.6, 80, 14) * 0.4)
+def latch(at, total, f=2600):
+    x = np.zeros(int(SR * total))
+    return place(x, mx(metal(0.06, f, 70, (1, 1.7, 2.9)) * 0.5, hp(noise(0.012), 3000) * env_exp(0.012, 500) * 0.6), at)
+
+def hinge(dur, f0, f1):
+    """a little squeak: a high, slightly unsteady glide, like a dry hinge"""
+    f = np.linspace(f0, f1, int(SR * dur)) * (1 + 0.03 * lp(noise(dur), 25) * 6)
+    y = sine(f, dur) * 0.6 + sine(f * 2.01, dur) * 0.25 + bp(noise(dur), f0, f1 * 2) * 0.2
+    return y * adsr(dur, 0.05, 0.1, 0.7, dur * 0.4)
+
+D = 1.0
+door = latch(0.0, D, 2400) + latch(0.045, D, 2900) * 0.7
+door = place(door, hinge(0.38, 820, 1150) * 0.22, 0.09)
+door = place(door, lp(noise(0.6), 700) * adsr(0.6, 0.18, 0.1, 0.6, 0.3) * 0.5, 0.08)   # the air as it swings
+door = place(door, thud(0.25, 95, 18) * 0.25, 0.62)                                     # it bumps to a stop
+S["door_open"] = N(fade(door))
+lk = np.zeros(int(SR * 0.55))
+for i, at in enumerate((0.0, 0.07, 0.16, 0.23)):   # the handle jiggles but the latch won't give
+    lk = place(lk, mx(metal(0.06, 2200 + (i % 2) * 400, 80, (1, 1.6, 2.7)) * 0.5, thud(0.08, 140, 50) * 0.35), at)
+S["door_locked"] = N(lk)
+lo = latch(0.0, 0.7, 2100)
+lo = place(lo, mx(metal(0.55, 170, 9, (1, 1.93, 3.1, 4.6)) * 0.45, metal(0.3, 760, 22, (1, 2.3)) * 0.2), 0.05)  # thin sheet metal
+lo = place(lo, thud(0.3, 85, 16) * 0.35, 0.05)
+S["locker"] = N(lo)
 S["step"] = N(lp(noise(0.16), 900) * env_exp(0.16, 32) + thud(0.16, 70, 40) * 0.3) * 0.7
 S["flashlight_click"] = N(mx(click(0.012, 2500), place(np.zeros(int(SR * 0.05)), click(0.01, 4000) * 0.6, 0.02)))
 x = np.zeros(int(SR * 0.4))
@@ -199,7 +256,7 @@ S["gold"] = N(x)
 S["pickup"] = N(notes([(0, 660, 0.2, 0.7), (0.07, 990, 0.25, 0.8)], dec=10))
 S["buy"] = N(notes([(0, 784, 0.2, 0.6), (0.08, 988, 0.2, 0.6), (0.16, 1319, 0.4, 0.8)], dec=7))
 S["deny"] = N(pad_to(place(np.zeros(int(SR * 0.3)), square(160, 0.1) * 0.5, 0) + place(np.zeros(int(SR * 0.3)), square(120, 0.12) * 0.5, 0.14), 0.3))
-S["hurt"] = N(thud(0.4, 70, 10) + bp(saw(np.linspace(240, 160, int(SR * 0.4)), 0.4), 300, 1500) * env_exp(0.4, 9) * 0.5)
+S["hurt"] = N(mx(thud(0.4, 70, 10), place(np.zeros(int(SR * 0.4)), vowel("a", 230, 0.22, 190, 0.6) * 0.35, 0.03), hp(noise(0.15), 1500) * env_exp(0.15, 25) * 0.4))
 x = np.zeros(int(SR * 0.6))
 for i in range(5):
     x = place(x, hp(noise(0.02), 2500) * env_exp(0.02, 200) * 0.5, i * 0.035)
@@ -209,7 +266,7 @@ S["achievement"] = N(notes([(0, 523, 0.3, 0.6), (0.09, 659, 0.3, 0.6), (0.18, 78
 S["glitch"] = N(glitchy(0.8, 1))
 S["exit_ambience"] = loopify(N(sum(sine(f, 8.25) * (0.6 + 0.4 * sine(0.25 + i * 0.05, 8.25)) for i, f in enumerate((220, 277.2, 329.6, 440, 554.4))) + lp(pink(8.25), 1500) * 0.1))
 S["typing"] = None  # below
-S["power_on"] = N(saw(np.geomspace(40, 400, int(SR * 2.5)), 2.5) * adsr(2.5, 0.3, 0.5, 0.7, 0.8) * 0.4 + hum(2.5, 60) * np.linspace(0, 0.6, int(SR * 2.5)))
+S["power_on"] = N(sine(np.geomspace(120, 900, int(SR * 2.5)), 2.5) * adsr(2.5, 0.3, 0.5, 0.7, 0.8) * 0.35 + hum(2.5, 60) * np.linspace(0, 0.6, int(SR * 2.5)))
 S["elevator"] = N(hum(3.0, 45, (1, 2, 3, 5), 0.6) * adsr(3, 0.4, 0.2, 0.9, 0.6) + lp(brown(3.0), 200) * 0.6)
 x = np.zeros(int(SR * 4.0))
 r = np.random.default_rng(7)
@@ -233,7 +290,7 @@ def crackle(dur, rate, seed):
 S["a60_far"] = loopify(N(hp(crackle(4.25, 900, 2), 800) * 0.8 + bp(noise(4.25), 1500, 5000) * 0.2))
 S["a60_near"] = loopify(N(dist(bp(noise(3.25), 2500, 9000) * (0.7 + 0.3 * sine(11, 3.25)) + saw(np.linspace(900, 900, int(SR * 3.25)) * (1 + 0.1 * sine(9, 3.25)), 3.25) * 0.25 + crackle(3.25, 1500, 3) * 0.6, 3)))
 S["a60b_far"] = loopify(N(lp(crackle(4.25, 700, 4), 3000) * 0.6 + square(55 * (1 + 0.02 * sine(0.5, 4.25)), 4.25) * 0.15 + bp(noise(4.25), 400, 1500) * 0.3))
-S["a60b_near"] = loopify(N(dist(bp(noise(3.25), 900, 4000) + saw(220 * (1 + 0.2 * sine(6, 3.25)), 3.25) * 0.4, 4)))
+S["a60b_near"] = loopify(N(dist(bp(noise(3.25), 900, 4000) + bp(brown(3.25), 200, 1200) * (0.6 + 0.4 * sine(6, 3.25)) * 0.8, 4)))
 
 # ---------------- A-90 / A-90B ----------------
 x = np.zeros(int(SR * 0.9))
@@ -266,22 +323,21 @@ mel = [(i * 0.12, f, 0.11, 0.7) for i, f in enumerate((523, 659, 784, 659, 523, 
 S["a200_spawn"] = N(crush(notes(mel, "square", 4), 3, 6))
 S["a200_far"] = loopify(N(crush(sine(330 * (1 + 0.3 * sine(0.7, 4.25)), 4.25) * 0.6 + square(165 * (1 + 0.05 * sine(3, 4.25)), 4.25) * 0.2, 3, 8)))
 S["a200_near"] = loopify(N(bp(noise(3.25), 2000, 8000) * (0.5 + 0.5 * sine(5, 3.25)) * 0.6 + crush(saw(440 * (1 + 0.5 * sine(0.9, 3.25)), 3.25), 2, 10) * 0.3))
-v = np.zeros(int(SR * 2.6))
-for i, (f, d) in enumerate(((300, 0.25), (260, 0.2), (340, 0.3), (220, 0.35), (380, 0.25), (240, 0.6))):
-    v = place(v, bp(saw(f * (1 + 0.03 * sine(6, d)), d) + noise(d) * 0.4, 500, 2600) * adsr(d, 0.03, 0.05, 0.8, 0.08), 0.1 + sum(dd for _, dd in ((300, 0.25), (260, 0.2), (340, 0.3), (220, 0.35), (380, 0.25), (240, 0.6))[:i]) + i * 0.05)
-S["a200_voice"] = N(crush(v, 4, 4))
+# "it's not over. it never is." whispered-sung, then crushed
+v = speak([("i", 0.18, 1.0), ("o", 0.25, 0.94), ("o", 0.2, 1.06), ("e", 0.3, 0.9), ("i", 0.16, 1.0), ("e", 0.18, 1.08), ("e", 0.22, 0.95), ("i", 0.45, 0.85)], 330, 0.06, consonant=(1, 2, 4, 7))
+S["a200_voice"] = N(crush(v * 0.8 + bp(noise(len(v) / SR), 2000, 6000) * 0.08, 5, 3))
 
 # ---------------- the "more friends" six ----------------
 S["rush_far"] = loopify(N(lp(brown(4.25), 900) * (0.6 + 0.4 * sine(0.5, 4.25)) + bp(noise(4.25), 200, 900) * 0.5 + crackle(4.25, 400, 5) * 0.3))
-S["ambush_far"] = loopify(N(dist(bp(noise(4.25), 300, 2500) * (0.5 + 0.5 * square(8, 4.25)) + saw(110 * (1 + 0.04 * sine(2, 4.25)), 4.25) * 0.3, 3)))
-S["eyes_ambience"] = loopify(N(sum(bp(saw(f * (1 + 0.004 * sine(0.3 + i * 0.1, 6.25)), 6.25), f * 1.5, f * 4) for i, f in enumerate((110, 165, 220.5, 262))) * (0.7 + 0.3 * sine(0.2, 6.25))))
+S["ambush_far"] = loopify(N(dist(bp(noise(4.25), 300, 2500) * (0.5 + 0.5 * square(8, 4.25)) + bp(noise(4.25), 2500, 7000) * 0.25, 2)))
+S["eyes_ambience"] = loopify(N(sum(vowel("o", f, 6.25, f * 1.003, 0.05) * (0.7 + 0.3 * sine(0.2 + i * 0.07, 6.25)) for i, f in enumerate((220, 277.2, 329.6, 415.3)))))
 S["eyes_hurt"] = N(glitchy(0.3, 4) + sine(2000, 0.3) * env_exp(0.3, 12) * 0.3)
 S["screech_psst"] = N(pad_to(bp(noise(0.12), 900, 3000) * adsr(0.12, 0.01, 0.03, 0.6, 0.05) * 0.6, 0.6) + place(np.zeros(int(SR * 0.6)), bp(noise(0.3), 3500, 9000) * adsr(0.3, 0.05, 0.05, 0.8, 0.15), 0.12))
 S["screech_bite"] = N(scream(0.5, 1200, 600, 1.0, (1500, 2800, 4200)) + thud(0.5, 90, 12) * 0.6 + hp(noise(0.5), 1500) * env_exp(0.5, 20) * 0.5)
 S["screech_caught"] = N(glitchy(0.4, 5) + sine(np.linspace(600, 1800, int(SR * 0.4)), 0.4) * env_exp(0.4, 6) * 0.3)
 S["figure_step"] = N(thud(0.45, 45, 9) + lp(noise(0.45), 400) * env_exp(0.45, 15) * 0.5)
-S["figure_growl"] = N(lp(saw(np.linspace(65, 55, int(SR * 1.3)) * (1 + 0.08 * noise(1.3)), 1.3), 500) * adsr(1.3, 0.15, 0.2, 0.8, 0.4) * 1.2 + lp(noise(1.3), 300) * 0.3)
-S["figure_kill"] = N(dist(scream(1.1, 300, 90, 1.2, (400, 900, 2000)), 4) + thud(1.1, 40, 5))
+S["figure_growl"] = N(dist(bp(brown(1.3), 80, 700) * (0.55 + 0.45 * sine(np.linspace(28, 18, int(SR * 1.3)), 1.3)) * adsr(1.3, 0.2, 0.2, 0.8, 0.4), 2.5) + bp(noise(1.3), 300, 900) * adsr(1.3, 0.2, 0.2, 0.6, 0.4) * 0.25)
+S["figure_kill"] = N(mx(dist(bp(brown(1.1), 70, 900) * adsr(1.1, 0.02, 0.2, 0.8, 0.4), 4) * 0.8, scream(1.0, 500, 300, 1.2) * 0.5, thud(1.1, 40, 5)))
 S["seek_eyes"] = N(lp(noise(1.0), 1200) * adsr(1.0, 0.3, 0.2, 0.7, 0.4) * 0.6 + sum(place(np.zeros(int(SR * 1.0)), sine(np.linspace(300, 120, int(SR * 0.15)), 0.15) * env_exp(0.15, 20) * 0.6, a) for a in (0.1, 0.3, 0.45, 0.6, 0.8)))
 S["seek_scream"] = N(dist(scream(1.6, 600, 160, 1.0), 3))
 S["seek_steps"] = loopify(N(steps_loop(2.25, 0.25, 1.3, 0.01, 6)), 0.02)
@@ -299,7 +355,7 @@ S["w30_blast"] = N(hp(noise(1.2), 600) * adsr(1.2, 0.01, 0.2, 0.6, 0.6) + thud(1
 # ---------------- The Outside ----------------
 S["city_ambience"] = loopify(N(lp(brown(8.25), 500) * 0.7 + bp(pink(8.25), 200, 1500) * 0.3 + sine(np.linspace(80, 110, int(SR * 8.25)), 8.25) * np.clip(sine(0.12, 8.25), 0, 1) * 0.15))
 S["car_horn"] = N(dist((square(415, 0.9) + square(523, 0.9)) * 0.5, 2) * adsr(0.9, 0.01, 0.05, 0.9, 0.08) * 0.6)
-S["headlights_far"] = loopify(N(lp(saw(55 * (1 + 0.05 * sine(4, 4.25)), 4.25), 400) + lp(brown(4.25), 300) * 0.6))
+S["headlights_far"] = loopify(N(bp(brown(4.25), 60, 500) * (0.75 + 0.25 * sine(4, 4.25)) + bp(noise(4.25), 800, 3000) * 0.15))
 S["billboard_hum"] = loopify(N(hum(4.25, 120, (1, 2, 3, 5), 0.1) * (0.85 + 0.15 * (rng.random(int(SR * 4.25)) > 0.002))))
 coo = np.zeros(int(SR * 0.7))
 for a in (0.0, 0.32):
@@ -311,8 +367,9 @@ for i in range(14):
 S["c15_flap"] = N(x)
 
 # ---------------- the rest of the entities ----------------
-S["introvert"] = N(dist(scream(0.6, 300, 260, 0.4, (700, 1150, 2500)), 3))
-S["a70_scream"] = N(dist(scream(0.8, 500, 250, 0.8) + metal(0.8, 300, 4) * 0.5, 3))
+# "IM AN INTROVERT": shouted, high and strained
+S["introvert"] = N(dist(speak([("a", 0.14, 1.0), ("i", 0.08, 1.05), ("a", 0.14, 1.1), ("i", 0.1, 1.0), ("o", 0.14, 1.15), ("e", 0.24, 1.25)], 430, 0.02, consonant=(3, 4, 5)), 1.8))
+S["a70_scream"] = N(scream(0.8, 520, 380, 0.9) + metal(0.8, 300, 4) * 0.4)
 S["a25_hum"] = loopify(N(sum(sine(f * (1 + 0.01 * sine(0.4 + i * 0.13, 6.25)), 6.25) for i, f in enumerate((70, 105, 140.5, 211))) * (0.6 + 0.4 * sine(0.33, 6.25)) + bp(pink(6.25), 300, 900) * 0.3))
 x = np.zeros(int(SR * 4.25))
 r = np.random.default_rng(15)
