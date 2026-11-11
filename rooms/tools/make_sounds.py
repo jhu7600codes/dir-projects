@@ -390,6 +390,47 @@ S["a10_kick"] = N(mx(thud(0.4, 60, 10) * 1.2 + metal(0.4, 240, 10) * 0.7, click(
 S["a20_burst"] = N(mx(lp(noise(0.25), 3000) * env_exp(0.25, 18) * 0.8, place(np.zeros(int(SR * 0.6)), dist(scream(0.45, 600, 350, 0.8), 3), 0.08)))
 S["ghlicht_part"] = N(mx(glitchy(0.4, 6) * 0.6, pad_to(notes([(0.3, 1047, 0.3, 0.7), (0.4, 1568, 0.4, 0.7)], dec=6), 0.8)))
 
+
+# ---------------- jumpscares and kills ----------------
+def screech(dur, f0, f1, vib=9.0, seed=0):
+    """a bowed-metal shriek: a few inharmonic tones sliding together, wobbling fast, ring-modulated
+    so they grind against each other. high, piercing, not a hiss"""
+    r = np.random.default_rng(seed)
+    n = int(SR * dur)
+    f = np.geomspace(f0, f1, n)
+    y = np.zeros(n)
+    for i, k in enumerate((1.0, 1.06, 1.49, 2.12, 2.97)):
+        wob = 1 + 0.03 * sine(vib * r.uniform(0.8, 1.3), dur, r.uniform(0, 6))
+        y += sine(f * k * wob, dur, r.uniform(0, 6)) / (1 + i * 0.6)
+    y *= 1 + 0.5 * sine(f * 0.5, dur)
+    return norm(y)
+
+def cluster(dur, root, spread=6, seed=0):
+    """a dissonant chord of sines a semitone apart, slowly bending: the horror movie string stab"""
+    r = np.random.default_rng(seed)
+    y = np.zeros(int(SR * dur))
+    for i in range(spread):
+        f = root * 2 ** (i / 12)
+        bend = np.linspace(1, r.uniform(0.97, 1.03), int(SR * dur))
+        y += (sine(f * bend, dur, r.uniform(0, 6)) + 0.4 * sine(f * 2 * bend, dur)) * (1 + 0.15 * sine(r.uniform(4, 7), dur))
+    return norm(y)
+
+def impact(dur=0.8):
+    """the hit: a sub boom, a sharp crack and a short noise burst"""
+    boom = sine(np.geomspace(90, 32, int(SR * dur)), dur) * env_exp(dur, 4.5)
+    crack = hp(noise(dur), 1800) * env_exp(dur, 35)
+    body = lp(noise(dur), 900) * env_exp(dur, 9)
+    return norm(boom * 0.55 + crack * 0.6 + body * 0.5)
+
+def stinger(dur, shriek=(1400, 2400), root=220, hit=1.0, crush_bits=0, seed=0):
+    y = impact(dur) * hit
+    y = y + screech(dur, shriek[0], shriek[1], seed=seed) * adsr(dur, 0.005, 0.15, 0.6, dur * 0.5) * 0.95
+    y = y + cluster(dur, root, 6, seed) * adsr(dur, 0.01, 0.2, 0.7, dur * 0.6) * 0.55
+    y = dist(norm(y), 1.8)
+    if crush_bits:
+        y = crush(y, crush_bits, 3)
+    return y
+
 # ---------------- music ----------------
 def menu_music():
     """slow, cold, a little sad: a minor pad, a soft piano-ish line, the office hum under it"""
@@ -443,6 +484,19 @@ def chase_music():
             out = place(out, hp(stab, 400), at)
     out = out[:int(SR * dur)]
     return loopify(N(dist(out, 1.5)), 0.02)
+
+
+# the jumpscares and kills, remade as proper stingers (these replace the earlier versions)
+S["death"] = N(mx(stinger(1.2, (1100, 700), 146.8, 1.0, 0, 1),
+                 place(np.zeros(int(SR * 2.6)), sine(np.linspace(4200, 4000, int(SR * 1.8)), 1.8) * adsr(1.8, 0.3, 0.2, 0.6, 1.0) * 0.18, 0.7),   # ringing ears
+                 place(np.zeros(int(SR * 2.6)), thud(0.3, 55, 14) * 0.6, 1.3), place(np.zeros(int(SR * 2.6)), thud(0.3, 55, 14) * 0.45, 1.65)))  # a heartbeat
+S["a90_jumpscare_sound"] = N(stinger(0.9, (1800, 2600), 311, 1.0, 4, 2))
+S["a90b_attack_sound"] = N(mx(stinger(0.8, (2200, 1300), 277, 1.0, 4, 3), square(np.where((t_(0.8) % 0.16) < 0.08, 880, 660), 0.8) * env_exp(0.8, 3) * 0.25))
+S["a20_burst"] = N(mx(lp(noise(0.12), 4000) * env_exp(0.12, 30) * 0.9, place(np.zeros(int(SR * 0.9)), stinger(0.8, (900, 1700), 196, 0.7, 0, 4), 0.06)))
+S["figure_kill"] = N(mx(stinger(1.1, (700, 400), 98, 1.2, 0, 5),
+                       dist(bp(brown(1.1), 70, 700) * (0.6 + 0.4 * sine(np.linspace(30, 14, int(SR * 1.1)), 1.1)) * adsr(1.1, 0.02, 0.2, 0.8, 0.4), 3) * 0.7))
+S["seek_kill"] = N(mx(stinger(1.0, (1600, 900), 233, 1.0, 0, 6), lp(noise(0.35), 1500) * env_exp(0.35, 9) * 0.5))
+S["anomaly_scream"] = N(stinger(0.8, (1300, 2100), 185, 0.8, 0, 7))
 
 S["menu_music"] = menu_music()
 S["a60b_theme"] = chase_music()
