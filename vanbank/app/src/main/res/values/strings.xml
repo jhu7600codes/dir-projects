@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">VANBank</string>
+    <string name="ai_notification_channel_name">DIR AI Assistant</string>
+    <string name="ai_notification_channel_desc">Payment requests from the DIR AI Assistant</string>
+    <string name="bill_notification_channel_name">Bill Pay</string>
+    <string name="bill_notification_channel_desc">Auto-pay confirmations and failures</string>
+</resources>
