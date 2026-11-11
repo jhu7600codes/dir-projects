@@ -6,6 +6,8 @@ enum class GamePhase {
     REVEAL,
     PLAY,
     VOTE,
+    /** Brief "thrown out" animation for the eliminated player, before RESULT. */
+    ELIMINATION,
     RESULT,
     END,
 }

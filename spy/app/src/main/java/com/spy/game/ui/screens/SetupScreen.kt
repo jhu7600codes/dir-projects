@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.spy.game.R
 import com.spy.game.ui.components.MascotImage
 import com.spy.game.ui.components.SpyPrimaryButton
+import com.spy.game.ui.components.SpyTextButton
 import com.spy.game.ui.theme.SpyOnSurfaceMuted
 import com.spy.game.ui.theme.SpyOutline
 import com.spy.game.ui.theme.SpyRed
@@ -56,7 +57,7 @@ private const val MIN_PLAYERS = 3
 private const val MAX_PLAYERS = 16
 
 @Composable
-fun SetupScreen(onStartGame: (List<String>) -> Unit) {
+fun SetupScreen(onStartGame: (List<String>) -> Unit, onShowDemo: () -> Unit) {
     val players = remember { mutableStateListOf<String>() }
     var input by remember { mutableStateOf("") }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -86,8 +87,9 @@ fun SetupScreen(onStartGame: (List<String>) -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = SpyOnSurfaceMuted,
         )
+        SpyTextButton(text = "Как играть — демо-игра", onClick = onShowDemo)
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(20.dp))
 
         OutlinedTextField(
             value = input,

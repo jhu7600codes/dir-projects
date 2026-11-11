@@ -4,7 +4,8 @@ import androidx.compose.ui.graphics.Color
 
 // Primary accent, lifted straight from the S-P-Y logo.
 val SpyRed = Color(0xFFFF2D2D)
-val SpyRedDark = Color(0xFFB80000)
+val SpyRedLight = Color(0xFFFF6B5C) // glossy highlight on the big 3D button's face
+val SpyRedDark = Color(0xFFB80000) // the big 3D button's base/shadow layer
 val SpyRedContainer = Color(0xFF3A0A0A)
 
 val SpyBackground = Color(0xFF0A0A0A)

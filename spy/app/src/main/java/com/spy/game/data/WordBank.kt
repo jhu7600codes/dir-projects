@@ -16,14 +16,23 @@ data class WordEntry(val word: String, val category: String)
  *  - [curatedEntries]: ~90 hand-picked locations/professions/etc, grouped
  *    into real categories, always available even before [loadDictionary]
  *    has run.
- *  - a much larger (~6,700-word) general Russian word list bundled as
- *    `assets/words_ru.txt`, loaded once via [loadDictionary]. It's filtered
- *    down from the 10,000 most common Russian words (Leeds University
- *    Russian corpus frequency list, CC BY 2.5 -- see README) to drop
- *    pronouns/prepositions/particles, most infinitive verbs, patronymics,
- *    and profanity; what's left is mostly concrete nouns and adjectives,
- *    shown under the generic [CATEGORY_DICTIONARY] label since the source
- *    list carries no category data.
+ *  - a larger (~3,100-word) general Russian word list bundled as
+ *    `assets/words_ru.txt`, loaded once via [loadDictionary] and shown
+ *    under the generic [CATEGORY_DICTIONARY] label since the source list
+ *    carries no category data. It's built offline (not on-device) from the
+ *    Leeds University Russian corpus's 10,000-most-common-words frequency
+ *    list (CC BY 2.5 -- see README), run through a real morphological
+ *    analyzer (pymorphy3), and kept only if its single most likely parse is
+ *    *unambiguously* a common noun in the nominative case -- no adjectives,
+ *    no verbs, no other part of speech (including words that parse as a
+ *    noun but tie for top score with a non-noun reading, like "мертвый" =
+ *    "dead [person]" vs. "dead"), and no personal names (pymorphy's
+ *    Name/Surn/Patr grammemes, plus a manual blocklist for names its
+ *    dictionary under-tags) or org/brand abbreviations. On top of that,
+ *    words over 10 characters and a short list of vulgar/offensive terms
+ *    are dropped, so what's left reads as simple, everyday, easy-to-act-out
+ *    nouns rather than bureaucratic/abstract vocabulary ("целесообразность",
+ *    "функциональность") that a frequency list alone still lets through.
  */
 object WordBank {
 
