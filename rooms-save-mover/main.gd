@@ -101,20 +101,37 @@ func _read_file(name: String) -> Dictionary:
 	if test_dir != "":
 		var path := test_dir.path_join(name)
 		return {"root": true, "text": FileAccess.get_file_as_string(path) if FileAccess.file_exists(path) else ""}
-	var out := []
-	var cmd := "for d in /data/user/0/%s /data/data/%s; do f=$(find \"$d\" -name '%s' 2>/dev/null | head -n 1); if [ -n \"$f\" ]; then cat \"$f\"; exit 0; fi; done; exit 3" % [PKG, PKG, name]
-	var code := OS.execute("su", ["-c", cmd], out, false)
-	var text: String = "" if out.is_empty() else str(out[0])
+	var cmd := "for d in %s; do f=$(find \"$d\" -name '%s' 2>/dev/null | head -n 1); if [ -n \"$f\" ]; then cat \"$f\"; exit 0; fi; done; exit 3" % [_dirs(), name]
+	var r := _su(cmd, false)
+	var text: String = r.text
 	var a := text.find("{")
 	var b := text.rfind("}")
 	text = text.substr(a, b - a + 1) if a >= 0 and b > a else ""
 	# exit 3: root worked but the file isn't there. anything else non-zero: no root
-	return {"root": code == 0 or code == 3, "text": text if code == 0 else ""}
+	return {"root": r.code == 0 or r.code == 3, "text": text if r.code == 0 else ""}
+
+
+## every place the game's files can be. android hides other apps' folders from an app (and
+## from a root shell started by it), so this also looks through the mirror folders
+func _dirs() -> String:
+	var d := []
+	for base in ["/data/data", "/data/user/0", "/data_mirror/data_ce/null/0", "/data/user_de/0", "/data/media/0/Android/data", "/sdcard/Android/data", "/storage/emulated/0/Android/data"]:
+		d.append(base + "/" + PKG)
+	return " ".join(d)
+
+
+## a root shell outside this app's sandbox (magisk --mount-master), or a plain one if that's not there
+func _su(cmd: String, stderr: bool) -> Dictionary:
+	for args in [["--mount-master", "-c", cmd], ["-c", cmd]]:
+		var out := []
+		var code := OS.execute("su", args, out, stderr)
+		if code == 0 or code == 3 or args.size() == 2:
+			return {"code": code, "text": "" if out.is_empty() else str(out[0])}
+	return {"code": -1, "text": ""}
 
 
 ## what's in the game's folder, as root sees it
 func _look_around() -> String:
-	var out := []
-	var cmd := "id; echo ---; ls -la /data/data/%s /data/data/%s/files 2>&1; echo ---; find /data/data/%s /data/user/0/%s -name '*.json' 2>&1 | head -n 20" % [PKG, PKG, PKG, PKG]
-	var code := OS.execute("su", ["-c", cmd], out, true)
-	return "details (send this to jhu):\nexit %d\n%s" % [code, "" if out.is_empty() else str(out[0]).left(1500)]
+	var cmd := "id; echo ---; for d in %s; do [ -d \"$d\" ] && echo \"found $d\"; done; echo ---; find %s -name '*.json' 2>/dev/null | head -n 20" % [_dirs(), _dirs()]
+	var r := _su(cmd, true)
+	return "details (send this to jhu):\nexit %d\n%s" % [r.code, str(r.text).left(1500)]
