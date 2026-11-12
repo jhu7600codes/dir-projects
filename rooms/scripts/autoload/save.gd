@@ -94,6 +94,55 @@ func _notification(what: int) -> void:
 		flush()
 
 
+# ---- moving saves between installs (settings -> move your save) ----
+const CODE_PREFIX := "ROOMS1:"
+
+
+## both profiles packed into one text code: json, gzipped, base64
+func export_code() -> String:
+	write()
+	flush()
+	var all := {"v": 1}
+	for p in PATHS:
+		var d = data if p == profile else _read_profile(p)
+		if d is Dictionary:
+			all[p] = d
+	var raw := JSON.stringify(all).to_utf8_buffer()
+	return CODE_PREFIX + Marshalls.raw_to_base64(raw.compress(FileAccess.COMPRESSION_GZIP))
+
+
+## puts a code from export_code() back. "" when it worked, otherwise what was wrong
+func import_code(code: String) -> String:
+	code = code.strip_edges().replace("\n", "").replace(" ", "")
+	if not code.begins_with(CODE_PREFIX):
+		return "that's not a save code"
+	var packed := Marshalls.base64_to_raw(code.substr(CODE_PREFIX.length()))
+	if packed.is_empty():
+		return "the code is broken (copy all of it)"
+	var raw := packed.decompress_dynamic(4 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
+	var all = JSON.parse_string(raw.get_string_from_utf8()) if not raw.is_empty() else null
+	if not (all is Dictionary) or not (all.get("main") is Dictionary):
+		return "the code is broken (copy all of it)"
+	_lock.lock()
+	for p in PATHS:
+		if all.get(p) is Dictionary:
+			var f := FileAccess.open(PATHS[p], FileAccess.WRITE)
+			if f:
+				f.store_string(JSON.stringify(all[p], "\t"))
+				f.close()
+	_pending.clear()
+	_lock.unlock()
+	data = DEFAULTS.duplicate(true)
+	load_data()
+	return ""
+
+
+func _read_profile(p: String):
+	if not FileAccess.file_exists(PATHS[p]):
+		return null
+	return JSON.parse_string(FileAccess.get_file_as_string(PATHS[p]))
+
+
 func has_run() -> bool:
 	return data.get("run", {}) is Dictionary and not data.run.is_empty()
 

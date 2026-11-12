@@ -5,3 +5,7 @@ export/
 build/
 # assets from the original games: personal use only, never commit them (see README)
 assets/local/
+
+# the signing key never goes in the repo (see keys/README.md)
+*.keystore
+*.jks

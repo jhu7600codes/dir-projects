@@ -52,6 +52,8 @@ func _ready() -> void:
 	v.add_child(UIKit.check("left handed layout", d.touch_left_handed, func(on): Settings.set_value("touch_left_handed", on)))
 	v.add_child(UIKit.slider("button size", d.touch_scale, 0.6, 1.6, func(x): Settings.set_value("touch_scale", x)))
 	v.add_child(UIKit.slider("button opacity", d.touch_opacity, 0.15, 1.0, func(x): Settings.set_value("touch_opacity", x)))
+	UIKit.section(v, "save")
+	v.add_child(UIKit.button("move your save", func(): get_parent().add_child(SaveTransfer.new()), 16))
 	outer.add_child(UIKit.button("back", func():
 		closed.emit()
 		queue_free()))
