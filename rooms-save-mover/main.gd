@@ -10,6 +10,7 @@ const CODE_PREFIX := "ROOMS1:"
 
 var _out: TextEdit
 var _status: Label
+var _log: Label  # what root actually saw, so a failed read can be figured out from a screenshot
 
 
 func _ready() -> void:
@@ -40,6 +41,8 @@ func _ready() -> void:
 			_say("copied. now paste it into the new The ROOMS.", false)))
 	_status = _label("", 30, Color(0.85, 0.7, 0.35))
 	v.add_child(_status)
+	_log = _label("", 20, Color(0.55, 0.55, 0.6))
+	v.add_child(_log)
 
 
 func _label(text: String, size: int, color: Color) -> Label:
@@ -79,6 +82,8 @@ func _read() -> void:
 		var parsed = JSON.parse_string(r.text) if r.text != "" else null
 		if parsed is Dictionary:
 			all[p] = parsed
+	if not (all.get("main") is Dictionary):
+		_log.text = _look_around()
 	if not root_ok:
 		_say("no root. allow it in your root app (magisk etc) when it asks, then try again.", true)
 		return
@@ -98,7 +103,18 @@ func _read_file(name: String) -> Dictionary:
 		return {"root": true, "text": FileAccess.get_file_as_string(path) if FileAccess.file_exists(path) else ""}
 	var out := []
 	var cmd := "for d in /data/user/0/%s /data/data/%s; do f=$(find \"$d\" -name '%s' 2>/dev/null | head -n 1); if [ -n \"$f\" ]; then cat \"$f\"; exit 0; fi; done; exit 3" % [PKG, PKG, name]
-	var code := OS.execute("su", ["-c", cmd], out, true)
+	var code := OS.execute("su", ["-c", cmd], out, false)
 	var text: String = "" if out.is_empty() else str(out[0])
+	var a := text.find("{")
+	var b := text.rfind("}")
+	text = text.substr(a, b - a + 1) if a >= 0 and b > a else ""
 	# exit 3: root worked but the file isn't there. anything else non-zero: no root
-	return {"root": code == 0 or code == 3, "text": text.strip_edges() if code == 0 else ""}
+	return {"root": code == 0 or code == 3, "text": text if code == 0 else ""}
+
+
+## what's in the game's folder, as root sees it
+func _look_around() -> String:
+	var out := []
+	var cmd := "id; echo ---; ls -la /data/data/%s /data/data/%s/files 2>&1; echo ---; find /data/data/%s /data/user/0/%s -name '*.json' 2>&1 | head -n 20" % [PKG, PKG, PKG, PKG]
+	var code := OS.execute("su", ["-c", cmd], out, true)
+	return "details (send this to jhu):\nexit %d\n%s" % [code, "" if out.is_empty() else str(out[0]).left(1500)]
