@@ -1,0 +1,22 @@
+; ROOMS save mover: a tiny separate app for rooted phones. it reads the old The ROOMS
+; save out of the game's private folder (needs root) and turns it into a "move your save" code.
+
+config_version=5
+
+[application]
+
+config/name="ROOMS save mover"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.4", "Mobile")
+config/icon="res://icon/icon.png"
+
+[display]
+
+window/handheld/orientation=1
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+
+textures/vram_compression/import_etc2_astc=true
