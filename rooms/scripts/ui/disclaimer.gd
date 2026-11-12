@@ -17,13 +17,13 @@ func _ready() -> void:
 	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(v)
 	var big := Label.new()
-	big.text = "THIS USES DOORS AND ROOMS REVISITED ASSETS!"
+	big.text = "WE ARE FREED FROM COPYRIGHT"
 	big.add_theme_font_size_override("font_size", 34)
-	big.add_theme_color_override("font_color", Color(1.0, 0.3, 0.25))
+	big.add_theme_color_override("font_color", Color(0.85, 0.7, 0.35))
 	big.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	big.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(big)
-	var small := UIKit.label("unofficial fan game. credit: the doors team and the rooms: revisited team.\nnot affiliated with roblox.", 16, Color(0.75, 0.75, 0.75))
+	var small := UIKit.label("every picture and sound in The ROOMS is made by us.\nunofficial fan game. not affiliated with roblox.", 16, Color(0.75, 0.75, 0.75))
 	small.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	small.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(small)

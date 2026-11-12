@@ -521,7 +521,7 @@ func _ending() -> void:
 		"The ROOMS",
 		"a fan game by jhu",
 		"based on rooms by nicorocks5555\nand the rooms in doors by lsplash",
-		"entity art and sounds by the doors team\nand the rooms: revisited team",
+		"all art and sounds\nmade from scratch",
 		"thanks for playing.",
 	]
 	for l in lines:
