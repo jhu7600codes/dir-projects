@@ -20,6 +20,10 @@ offline, english + russian. design notes in [plan.md](plan.md).
   words are tiered 1-5 by how common they are (subtitle frequency lists, hermitdave/FrequencyWords)
 - room for progress / power ups / streaks / scores / saved games, datastore for settings, per-app language
 
+## download
+
+grab the latest debug build: [dist/crossi-debug.apk](dist/crossi-debug.apk) (android 5.0+, allow unknown sources)
+
 ## build
 
 needs jdk 17+ and the android sdk (platform 35). put `sdk.dir=...` in `local.properties` or set `ANDROID_HOME`.
