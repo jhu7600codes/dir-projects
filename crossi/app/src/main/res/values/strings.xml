@@ -124,6 +124,12 @@
     <string name="show_timer">Show timer</string>
     <string name="highlight_crossing">Highlight crossing word</string>
     <string name="section_game">Game</string>
+    <string name="easy_mode">Easy Mode (global)</string>
+    <string name="easy_mode_desc">No hard or super hard words, in every mode and every grid size. Easy, normal and medium words stay.</string>
+    <string name="easy_mode_warning_title">WARNING!</string>
+    <string name="easy_mode_warning_text">Easy Mode (global) is on: no hard or super hard words anywhere, in levels, free roam and dailies. Do you want to keep it on?</string>
+    <string name="easy_mode_keep">Keep it on</string>
+    <string name="easy_mode_turn_off">Turn it off</string>
     <string name="section_look">Look</string>
     <string name="credits">Word lists: SCOWL (Kevin Atkinson). Clues partly from Open English WordNet (CC BY 4.0).</string>
 

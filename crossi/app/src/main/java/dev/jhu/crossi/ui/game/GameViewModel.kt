@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -102,17 +103,22 @@ class GameViewModel(val mode: GameMode, private val c: AppContainer) : ViewModel
         }
     }
 
-    private suspend fun newGame(): GameState = when (mode) {
+    private suspend fun newGame(): GameState {
+        val easy = c.settings.settings.first().easyMode
+        return newGame(easy)
+    }
+
+    private suspend fun newGame(easy: Boolean): GameState = when (mode) {
         is GameMode.Level -> {
-            val puzzle = c.content.level(language, mode.number)
+            val puzzle = c.content.level(language, mode.number, easy)
             val spec = LevelCatalog.spec(mode.number)
             val rules = Rules(spec.twists, LevelCatalog.pickups(spec, puzzle.entries.size))
             GameEngine.start(puzzle, rules, Seeds.level(mode.number, language) xor System.nanoTime())
         }
-        is GameMode.FreeRoam -> GameEngine.start(c.content.freeRoamPuzzle(language, mode.difficulty))
+        is GameMode.FreeRoam -> GameEngine.start(c.content.freeRoamPuzzle(language, mode.difficulty, easy))
         is GameMode.Daily -> {
-            val seed = Seeds.daily(mode.date, mode.difficulty, language, ContentRepository.dictionaryVersion(language))
-            GameEngine.start(c.content.generate(language, mode.difficulty, seed))
+            val seed = Seeds.daily(mode.date, mode.difficulty, language, ContentRepository.dictionaryVersion(language), easy)
+            GameEngine.start(c.content.generate(language, mode.difficulty, seed, easy))
         }
     }
 

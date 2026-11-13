@@ -16,6 +16,8 @@ offline, english + russian. design notes in [plan.md](plan.md).
 - **bosses**: timer, locked cells, scrambled clues, limited mistakes, fog, trick fest, scrambled keyboard, one shot
 - **letter tricks**: dumb riddle clues whose answer is a letter spelled out (AIGH, ARR, ЭЛЬ, ИКС...)
 - custom keyboard (qwerty / йцукен), auto-advance, direction toggle, pencil mode, pinch zoom on big grids
+- **Easy Mode (global)**: on by default, drops hard and super hard words from every mode and grid size.
+  words are tiered 1-5 by how common they are (subtitle frequency lists, hermitdave/FrequencyWords)
 - room for progress / power ups / streaks / scores / saved games, datastore for settings, per-app language
 
 ## build
@@ -33,11 +35,13 @@ the dictionaries in `app/src/main/assets/<lang>/words.tsv` are generated, then l
 
 ```
 # english: SCOWL word lists + Open English WordNet 2024 (clues)
-python3 tools/build_en_dictionary.py <scowl>/final <english-wordnet-2024.xml> app/src/main/assets/en/words.tsv
+python3 tools/build_en_dictionary.py <scowl>/final <english-wordnet-2024.xml> app/src/main/assets/en/words.tsv --freq=<en_full.txt>
 # russian: tools/ru_words_src.txt (hand-written) + russian wiktionary nouns (kaikki.org) + FrequencyWords
-python3 tools/build_ru_dictionary.py <kaikki-ru.jsonl> <ru_300k.txt>
+python3 tools/build_ru_dictionary.py --freq=<ru_full.txt>
 # freeze levels (bump ContentRepository.dictionaryVersion when words change)
-CROSSI_FREEZE=1 ./gradlew :app:testDebugUnitTest --tests '*LevelFreezer*'
+CROSSI_FREEZE=1 ./gradlew :app:testDebugUnitTest --tests '*LevelFreezer*'   # levels.json + levels_easy.json
+# russian 15x15 pool (too slow to build on a phone)
+CROSSI_POOL=150 ./gradlew :app:testDebugUnitTest --tests '*PoolFreezer*'
 ```
 
 ## credits / licenses of the word data

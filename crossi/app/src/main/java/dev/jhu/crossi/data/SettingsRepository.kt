@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.jhu.crossi.game.InputPrefs
@@ -23,6 +24,10 @@ data class Settings(
     val showTimer: Boolean = true,
     val highlightCrossing: Boolean = false,
     val seenHowToPlay: Boolean = false,
+    /** Easy Mode (global): no hard or super hard words anywhere. On by default. */
+    val easyMode: Boolean = true,
+    /** versionCode the easy mode warning was last shown for */
+    val easyModeAskedVersion: Int = 0,
 ) {
     val inputPrefs: InputPrefs get() = InputPrefs(autoAdvance, skipFilled, jumpToNextClue)
 }
@@ -42,6 +47,8 @@ class SettingsRepository(context: Context) {
         val timer = booleanPreferencesKey("show_timer")
         val crossing = booleanPreferencesKey("highlight_crossing")
         val seenHowTo = booleanPreferencesKey("seen_how_to_play")
+        val easyMode = booleanPreferencesKey("easy_mode")
+        val easyAsked = intPreferencesKey("easy_mode_asked_version")
     }
 
     val settings: Flow<Settings> = store.data.map { p ->
@@ -56,6 +63,8 @@ class SettingsRepository(context: Context) {
             showTimer = p[Keys.timer] ?: d.showTimer,
             highlightCrossing = p[Keys.crossing] ?: d.highlightCrossing,
             seenHowToPlay = p[Keys.seenHowTo] ?: d.seenHowToPlay,
+            easyMode = p[Keys.easyMode] ?: d.easyMode,
+            easyModeAskedVersion = p[Keys.easyAsked] ?: d.easyModeAskedVersion,
         )
     }
 
@@ -68,4 +77,11 @@ class SettingsRepository(context: Context) {
     suspend fun setShowTimer(on: Boolean) = store.edit { it[Keys.timer] = on }
     suspend fun setHighlightCrossing(on: Boolean) = store.edit { it[Keys.crossing] = on }
     suspend fun setSeenHowToPlay() = store.edit { it[Keys.seenHowTo] = true }
+    suspend fun setEasyMode(on: Boolean) = store.edit { it[Keys.easyMode] = on }
+
+    /** Answer to the "Easy Mode is on, keep it?" question after an update. */
+    suspend fun answerEasyModeQuestion(keepOn: Boolean, versionCode: Int) = store.edit {
+        it[Keys.easyMode] = keepOn
+        it[Keys.easyAsked] = versionCode
+    }
 }

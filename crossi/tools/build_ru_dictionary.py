@@ -27,11 +27,43 @@ KID_GLOSS = re.compile(r"алкогол|спирт|пьян|водк|\bвин[о
 ABBREV = re.compile(r"^((?:[а-яё]{1,8}\.)[,\s]*)+", re.I)
 
 
-def hand_written():
+# word tiers (the hardness column): 1 easy, 2 normal, 3 medium, 4 hard, 5 super hard.
+# from subtitle frequency of the exact form (hermitdave ru_full). Russian spreads a noun over
+# six cases, so the cutoffs are wider than english. The first hand-written batches are everyday
+# kid words, never harder than normal; cartoon heroes and places never harder than medium.
+EVERYDAY_UNTIL = "# --- ещё трёхбуквенные"
+NAMES_FROM = "# --- география, имена, герои"
+
+
+def read_ranks(path, limit=1000000):
+    ranks = {}
+    if not path:
+        return ranks
+    with open(path, encoding="utf-8") as f:
+        for i, line in enumerate(f):
+            if i >= limit:
+                break
+            ranks.setdefault(line.split(" ")[0].upper().replace("Ё", "Е"), i)
+    return ranks
+
+
+def tier_of(rank):
+    if rank is None:
+        return 5
+    return 1 if rank < 15000 else 2 if rank < 50000 else 3 if rank < 125000 else 4 if rank < 300000 else 5
+
+
+def hand_written(ranks=None):
+    ranks = ranks or {}
     rows = {}
+    cap = 2
     bad = []
     for n, line in enumerate((HERE / "ru_words_src.txt").read_text(encoding="utf-8").splitlines(), 1):
         line = line.strip()
+        if line.startswith(EVERYDAY_UNTIL):
+            cap = 5
+        if line.startswith(NAMES_FROM):
+            cap = 3
         if not line or line.startswith("#"):
             continue
         if " — " not in line:
@@ -47,7 +79,10 @@ def hand_written():
         if len(word) >= 4 and any(word.lower()[:4] in c.lower().replace("ё", "е") for c in clue_list):
             bad.append(f"{n}: clue contains the answer: {line}")
         # commonness 6: the filler prefers hand-written words, their clues are the good ones
-        rows.setdefault(word, (6, 2 if hard else 1, clue_list))
+        tier = min(tier_of(ranks.get(word)), cap)
+        if hard:
+            tier = max(tier, 4)
+        rows.setdefault(word, (6, tier, clue_list))
     return rows, bad
 
 
@@ -127,7 +162,8 @@ def is_bad(word):
 
 
 def main():
-    hand, bad = hand_written()
+    freq = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--freq=")), None)
+    hand, bad = hand_written(read_ranks(freq))
     rows = {}
     # only hand-written clues ship: wiktionary glosses are too confusing for kids.
     # pass --wiktionary <jsonl> <freq> to mix them back in.

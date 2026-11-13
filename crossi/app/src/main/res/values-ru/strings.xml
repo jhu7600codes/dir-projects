@@ -123,6 +123,12 @@
     <string name="show_timer">Показывать таймер</string>
     <string name="highlight_crossing">Подсвечивать пересекающееся слово</string>
     <string name="section_game">Игра</string>
+    <string name="easy_mode">Лёгкий режим (везде)</string>
+    <string name="easy_mode_desc">Без сложных и очень сложных слов, во всех режимах и сетках любого размера. Лёгкие, обычные и средние слова остаются.</string>
+    <string name="easy_mode_warning_title">ВНИМАНИЕ!</string>
+    <string name="easy_mode_warning_text">Лёгкий режим (везде) включён: никаких сложных и очень сложных слов в уровнях, свободной игре и ежедневных. Оставить его включённым?</string>
+    <string name="easy_mode_keep">Оставить</string>
+    <string name="easy_mode_turn_off">Выключить</string>
     <string name="section_look">Внешний вид</string>
     <string name="credits">Списки слов: SCOWL (Kevin Atkinson). Часть подсказок из Open English WordNet (CC BY 4.0).</string>
 

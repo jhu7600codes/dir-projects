@@ -1,6 +1,7 @@
 package dev.jhu.crossi.generator
 
 import dev.jhu.crossi.game.BossTwist
+import dev.jhu.crossi.game.EASY_MODE_MAX_TIER
 import dev.jhu.crossi.game.Language
 import dev.jhu.crossi.game.LevelCatalog
 import dev.jhu.crossi.game.Seeds
@@ -37,6 +38,8 @@ class LevelFreezer {
             )
             val curatedGenerator = PuzzleGenerator(curated)
             val generator = PuzzleGenerator(dictionary)
+            // levels.json: all words, levels_easy.json: Easy Mode (global), no hard or super hard words
+            for ((file, maxTier) in listOf("levels.json" to 5, "levels_easy.json" to EASY_MODE_MAX_TIER)) {
             val levels = (1..LevelCatalog.COUNT).map { n ->
                 val spec = LevelCatalog.spec(n)
                 val base = Seeds.level(n, language)
@@ -49,15 +52,17 @@ class LevelFreezer {
                                 size = spec.size,
                                 seed = base + i,
                                 maxHardness = spec.maxHardness,
+                                maxTier = maxTier,
                                 trickFest = BossTwist.TRICK_FEST in spec.twists,
                             ),
                         ).copy(id = "${language.code}-level-$n")
                     }.getOrNull()
                 }.also { check(PuzzleValidator.validate(it) { w -> dictionary.contains(w) }.isEmpty()) }
             }
-            File("src/main/assets/${language.code}/levels.json")
+            File("src/main/assets/${language.code}/$file")
                 .writeText(Json.encodeToString(ListSerializer(Puzzle.serializer()), levels))
-            println("froze ${levels.size} ${language.code} levels")
+            println("froze ${levels.size} ${language.code} levels into $file")
+            }
         }
     }
 }

@@ -6,9 +6,9 @@ Builds app/src/main/assets/en/words.tsv from:
   - tools/en_clues_handwritten.tsv              hand-written clues, these win over generated ones
   - tools/en_blocklist.txt                      words that never go in a grid
 
-usage: build_en_dictionary.py <scowl-final-dir> <english-wordnet.xml> <out.tsv>
+usage: build_en_dictionary.py <scowl-final-dir> <english-wordnet.xml> <out.tsv> --freq=<en_full.txt>
 
-output line: WORD \t commonness(1-5) \t hardness(1-3) \t clue1|clue2|clue3
+output line: WORD \t commonness \t tier(1 easy .. 5 super hard) \t clue1|clue2|clue3
 """
 import re
 import sys
@@ -216,8 +216,32 @@ def is_adult_meaning(word, senses, synsets, irregular):
     return False
 
 
+# word tiers (the hardness column): 1 easy, 2 normal, 3 medium, 4 hard, 5 super hard.
+# from how often the word shows up in movie subtitles (hermitdave/FrequencyWords en_full),
+# capped by SCOWL: the most basic SCOWL words are never harder than normal / medium.
+def read_ranks(path, limit=400000):
+    ranks = {}
+    if not path:
+        return ranks
+    with open(path, encoding="utf-8") as f:
+        for i, line in enumerate(f):
+            if i >= limit:
+                break
+            ranks.setdefault(line.split(" ")[0].lower(), i)
+    return ranks
+
+
+def tier_of(word, ranks, scowl_level):
+    r = ranks.get(word)
+    t = 5 if r is None else 1 if r < 3000 else 2 if r < 10000 else 3 if r < 25000 else 4 if r < 60000 else 5
+    cap = {10: 2, 20: 3}.get(scowl_level, 5)
+    return min(t, cap)
+
+
 def main():
     scowl_dir, wn_path, out_path = [a for a in sys.argv[1:] if not a.startswith("--")][:3]
+    freq = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--freq=")), None)
+    ranks = read_ranks(freq)
     levels = read_scowl(scowl_dir)
     wordset = set(levels)
     wordset_level.update(levels)
@@ -239,7 +263,8 @@ def main():
             adult += 1
             continue
         lv = levels[word]
-        commonness, hardness = LEVELS[lv]
+        commonness, _ = LEVELS[lv]
+        hardness = tier_of(word, ranks, lv)
         # only hand-written clues ship, dictionary definitions are too confusing for kids
         clues = hand.get(word) or (clues_for(word, senses, synsets, irregular, wordset) if WITH_AUTO_CLUES else None)
         if word in hand:
@@ -251,7 +276,7 @@ def main():
         rows.append(f"{word.upper()}\t{commonness}\t{hardness}\t{'|'.join(clues)}")
     for word, clues in hand.items():  # hand-written words not in scowl still get in
         if word not in levels and word not in blocklist and not is_bad(word) and re.fullmatch(r"[a-z]{3,15}", word):
-            rows.append(f"{word.upper()}\t{HAND_WRITTEN_SCORE}\t1\t{'|'.join(clues)}")
+            rows.append(f"{word.upper()}\t{HAND_WRITTEN_SCORE}\t{tier_of(word, ranks, None)}\t{'|'.join(clues)}")
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     Path(out_path).write_text("\n".join(sorted(rows)) + "\n", encoding="utf-8")
     print(f"{len(rows)} words written, {skipped} skipped (no clue), {adult} dropped as not kid friendly")

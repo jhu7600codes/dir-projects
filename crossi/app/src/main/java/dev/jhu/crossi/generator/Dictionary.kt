@@ -1,8 +1,8 @@
 package dev.jhu.crossi.generator
 
 /**
- * One dictionary word. [commonness] 1 (rare-ish) .. 5 (super common) drives fill
- * preference, [hardness] 1..3 is how hard its clues are.
+ * One dictionary word. [commonness] drives fill preference (6 = hand-written clue),
+ * [hardness] is the word's tier: 1 easy, 2 normal, 3 medium, 4 hard, 5 super hard.
  */
 data class DictWord(
     val word: String,

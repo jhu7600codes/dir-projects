@@ -16,12 +16,12 @@ enum class Language(val code: String) {
     }
 }
 
-/** Only free roam and the dailies use this. Levels just get harder as you go. */
+/** Only free roam and the dailies use this. Levels just get harder as you go. [maxHardness] is a word tier. */
 @Serializable
 enum class Difficulty(val size: Int, val maxHardness: Int, val scoreMultiplier: Int) {
-    EASY(5, 1, 1),
-    NORMAL(7, 2, 2),
-    HARD(15, 3, 5),
+    EASY(5, 2, 1),
+    NORMAL(7, 3, 2),
+    HARD(15, 4, 5),
 }
 
 @Serializable
@@ -31,7 +31,10 @@ enum class PowerUpType { REVEAL_LETTER, REVEAL_WORD, EXTRA_CHECK, SKIP_CLUE }
  * Bump when words, clues or levels change. Saved games from an older version are
  * ignored, so everyone gets the regenerated puzzles instead of stale ones.
  */
-const val CONTENT_VERSION = 2
+const val CONTENT_VERSION = 3
+
+/** Easy Mode (global) drops hard and super hard words everywhere. */
+const val EASY_MODE_MAX_TIER = 3
 
 @Serializable
 sealed interface GameMode {
@@ -56,9 +59,9 @@ sealed interface GameMode {
 }
 
 object Seeds {
-    /** Same date + difficulty + language + dictionary version = same puzzle for everyone. */
-    fun daily(date: String, difficulty: Difficulty, language: Language, dictionaryVersion: Int): Long =
-        Rng.seedOf("crossi-daily-$date-${difficulty.name}-${language.code}-v$dictionaryVersion")
+    /** Same date + difficulty + language + easy mode + dictionary version = same puzzle for everyone. */
+    fun daily(date: String, difficulty: Difficulty, language: Language, dictionaryVersion: Int, easyMode: Boolean = false): Long =
+        Rng.seedOf("crossi-daily-$date-${difficulty.name}-${language.code}-v$dictionaryVersion" + if (easyMode) "-easy" else "")
 
     fun level(number: Int, language: Language): Long = Rng.seedOf("crossi-level-$number-${language.code}")
 }

@@ -87,6 +87,12 @@ fun SettingsScreen(onBack: () -> Unit) {
             Toggle(R.string.dynamic_color, s.dynamicColor) { vm.edit { setDynamicColor(it) } }
 
             Section(R.string.section_game)
+            Toggle(R.string.easy_mode, s.easyMode) { vm.edit { setEasyMode(it) } }
+            Text(
+                stringResource(R.string.easy_mode_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Toggle(R.string.auto_advance, s.autoAdvance) { vm.edit { setAutoAdvance(it) } }
             Toggle(R.string.skip_filled, s.skipFilled) { vm.edit { setSkipFilled(it) } }
             Toggle(R.string.jump_next_clue, s.jumpToNextClue) { vm.edit { setJumpToNextClue(it) } }

@@ -18,6 +18,7 @@ enum class BossTwist {
 data class LevelSpec(
     val number: Int,
     val size: Int,
+    /** preferred max word tier */
     val maxHardness: Int,
     val twists: List<BossTwist>,
     /** entry index -> power up you get for solving that entry. Picked at runtime from the level seed. */
@@ -55,9 +56,9 @@ object LevelCatalog {
             else -> 15
         }
         val hardness = when (number) {
-            in 1..35 -> 1
-            in 36..70 -> 2
-            else -> 3
+            in 1..35 -> 2
+            in 36..70 -> 3
+            else -> 4
         }
         val twists = bosses[number].orEmpty()
         val pickups = when {

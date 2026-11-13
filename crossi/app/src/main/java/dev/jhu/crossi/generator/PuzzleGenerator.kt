@@ -4,10 +4,12 @@ data class GenConfig(
     val size: Int,
     val seed: Long,
     /**
-     * Preferred max word hardness (1..3). Harder words are still allowed but pushed to the
-     * back of the line, a hard cutoff starves big grids of words.
+     * Preferred max word tier (1 easy .. 5 super hard). Harder words are still allowed but
+     * pushed to the back of the line.
      */
-    val maxHardness: Int = 3,
+    val maxHardness: Int = 5,
+    /** Easy Mode: words above this tier are never used at all. */
+    val maxTier: Int = 5,
     /** Long fun words as seed entries. Ignored below [PuzzleGenerator.LONG_WORD_MIN_GRID]. */
     val allowLongWords: Boolean = true,
     /** Chance that an answer which can be a letter trick gets the trick clue. */
@@ -23,11 +25,11 @@ class GenerationException(message: String) : RuntimeException(message)
  * config always give the same puzzle.
  */
 class PuzzleGenerator(private val dictionary: Dictionary) {
-    private val indexes = HashMap<Pair<Int, Boolean>, WordIndex>()
+    private val indexes = HashMap<Triple<Int, Boolean, Int>, WordIndex>()
 
     fun generate(config: GenConfig): Puzzle {
         val spec = PatternSpec.forSize(config.size)
-        val index = indexFor(config.maxHardness, config.trickFest)
+        val index = indexFor(config.maxHardness, config.trickFest, config.maxTier)
         val rng = Rng(config.seed)
         val longWordsOk = config.allowLongWords && config.size >= LONG_WORD_MIN_GRID
 
@@ -42,10 +44,10 @@ class PuzzleGenerator(private val dictionary: Dictionary) {
         throw GenerationException("no ${config.size}x${config.size} fill for seed ${config.seed}")
     }
 
-    private fun indexFor(maxHardness: Int, trickFest: Boolean): WordIndex = synchronized(indexes) {
-        indexes.getOrPut(maxHardness to trickFest) {
+    private fun indexFor(maxHardness: Int, trickFest: Boolean, maxTier: Int): WordIndex = synchronized(indexes) {
+        indexes.getOrPut(Triple(maxHardness, trickFest, maxTier)) {
             val tricks = dictionary.tricks
-            val words = dictionary.words.map {
+            val words = dictionary.words.filter { it.hardness <= maxTier }.map {
                 when {
                     trickFest && tricks?.isTrick(it.word) == true -> it.copy(commonness = TRICK_FEST_SCORE)
                     it.hardness > maxHardness -> it.copy(commonness = it.commonness - HARDNESS_PENALTY * (it.hardness - maxHardness))

@@ -35,6 +35,22 @@ class GeneratorTest {
         sweep(Fixtures.russianGenerator, Fixtures.russian, mapOf(5 to 40, 7 to 30, 9 to 20, 11 to 12, 13 to 8, 15 to 6))
 
     @Test
+    fun `easy mode never uses hard or super hard words`() {
+        for ((generator, dictionary) in listOf(
+            Fixtures.englishGenerator to Fixtures.english,
+            Fixtures.russianGenerator to Fixtures.russian,
+        )) {
+            for (size in listOf(5, 7, 9, 11)) for (seed in 0L until 4) {
+                val puzzle = runCatching { generator.generate(GenConfig(size, seed, maxTier = 3)) }.getOrNull() ?: continue
+                for (e in puzzle.entries) {
+                    val tier = dictionary[e.answer]?.hardness ?: continue
+                    assertTrue(tier <= 3, "${e.answer} is tier $tier in easy mode")
+                }
+            }
+        }
+    }
+
+    @Test
     fun `same config same puzzle`() {
         val a = Fixtures.englishGenerator.generate(GenConfig(9, 1234))
         val b = PuzzleGenerator(Fixtures.english).generate(GenConfig(9, 1234))
