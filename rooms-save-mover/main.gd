@@ -70,68 +70,89 @@ func _say(text: String, bad: bool) -> void:
 
 func _read() -> void:
 	_out.text = ""
+	_log.text = ""
 	if OS.get_name() != "Android" and OS.get_environment("SAVE_MOVER_TEST") == "":
 		_say("this only works on a rooted android phone.", true)
 		return
+	var r := _run_search()
+	if not r.root:
+		_say("no root. allow it in your root app (magisk etc) when it asks, then try again.", true)
+		_log.text = "details (send this to jhu):\n" + r.log
+		return
 	var all := {"v": 1}
-	var root_ok := false
 	for p in FILES:
-		var r := _read_file(FILES[p])
-		if r.root:
-			root_ok = true
-		var parsed = JSON.parse_string(r.text) if r.text != "" else null
+		var parsed = JSON.parse_string(r.files.get(p, "")) if r.files.get(p, "") != "" else null
 		if parsed is Dictionary:
 			all[p] = parsed
 	if not (all.get("main") is Dictionary):
-		_log.text = _look_around()
-	if not root_ok:
-		_say("no root. allow it in your root app (magisk etc) when it asks, then try again.", true)
-		return
-	if not (all.get("main") is Dictionary):
 		_say("no old save found. is the old The ROOMS still installed? (uninstalling deletes it)", true)
+		_log.text = "details (send this to jhu):\n" + r.log
 		return
 	var raw := JSON.stringify(all).to_utf8_buffer()
 	_out.text = CODE_PREFIX + Marshalls.raw_to_base64(raw.compress(FileAccess.COMPRESSION_GZIP))
 	_say("got it: best door %d, %d gold. copy the code." % [int(all.main.get("best_door", 0)), int(all.main.get("gold", 0))], false)
 
 
-## reads one of the game's save files with su. finds it wherever the app keeps its files
-func _read_file(name: String) -> Dictionary:
+## the search runs as a little script file, so nothing in it gets mangled on the way to su.
+## it prints "@@main" / "@@admin" followed by each file, and "#" lines about what it saw
+const SCRIPT := """
+for d in /data/data/PKG /data/user/0/PKG /data_mirror/data_ce/null/0/PKG /data/media/0/Android/data/PKG /sdcard/Android/data/PKG /storage/emulated/0/Android/data/PKG; do
+	[ -d "$d" ] && echo "# found $d"
+done
+for n in save.json save_admin.json; do
+	for d in /data/data/PKG /data/user/0/PKG /data_mirror/data_ce/null/0/PKG /data/media/0/Android/data/PKG /sdcard/Android/data/PKG /storage/emulated/0/Android/data/PKG; do
+		f=$(find "$d" -name "$n" 2>/dev/null | head -n 1)
+		if [ -n "$f" ]; then
+			echo "# file $f"
+			echo "@@$n"
+			cat "$f"
+			echo ""
+			echo "@@end"
+			break
+		fi
+	done
+done
+echo "# done"
+"""
+
+
+func _run_search() -> Dictionary:
 	var test_dir := OS.get_environment("SAVE_MOVER_TEST")
+	var text := ""
+	var code := 0
 	if test_dir != "":
-		var path := test_dir.path_join(name)
-		return {"root": true, "text": FileAccess.get_file_as_string(path) if FileAccess.file_exists(path) else ""}
-	var cmd := "for d in %s; do f=$(find \"$d\" -name '%s' 2>/dev/null | head -n 1); if [ -n \"$f\" ]; then cat \"$f\"; exit 0; fi; done; exit 3" % [_dirs(), name]
-	var r := _su(cmd, false)
-	var text: String = r.text
-	var a := text.find("{")
-	var b := text.rfind("}")
-	text = text.substr(a, b - a + 1) if a >= 0 and b > a else ""
-	# exit 3: root worked but the file isn't there. anything else non-zero: no root
-	return {"root": r.code == 0 or r.code == 3, "text": text if r.code == 0 else ""}
-
-
-## every place the game's files can be. android hides other apps' folders from an app (and
-## from a root shell started by it), so this also looks through the mirror folders
-func _dirs() -> String:
-	var d := []
-	for base in ["/data/data", "/data/user/0", "/data_mirror/data_ce/null/0", "/data/user_de/0", "/data/media/0/Android/data", "/sdcard/Android/data", "/storage/emulated/0/Android/data"]:
-		d.append(base + "/" + PKG)
-	return " ".join(d)
-
-
-## a root shell outside this app's sandbox (magisk --mount-master), or a plain one if that's not there
-func _su(cmd: String, stderr: bool) -> Dictionary:
-	for args in [["--mount-master", "-c", cmd], ["-c", cmd]]:
-		var out := []
-		var code := OS.execute("su", args, out, stderr)
-		if code == 0 or code == 3 or args.size() == 2:
-			return {"code": code, "text": "" if out.is_empty() else str(out[0])}
-	return {"code": -1, "text": ""}
-
-
-## what's in the game's folder, as root sees it
-func _look_around() -> String:
-	var cmd := "id; echo ---; for d in %s; do [ -d \"$d\" ] && echo \"found $d\"; done; echo ---; find %s -name '*.json' 2>/dev/null | head -n 20" % [_dirs(), _dirs()]
-	var r := _su(cmd, true)
-	return "details (send this to jhu):\nexit %d\n%s" % [r.code, str(r.text).left(1500)]
+		for n in ["save.json", "save_admin.json"]:
+			var path := test_dir.path_join(n)
+			if FileAccess.file_exists(path):
+				text += "@@%s\n%s\n@@end\n" % [n, FileAccess.get_file_as_string(path)]
+	else:
+		var script_path := OS.get_user_data_dir().path_join("search.sh")
+		var f := FileAccess.open(script_path, FileAccess.WRITE)
+		f.store_string(SCRIPT.replace("PKG", PKG))
+		f.close()
+		# magisk's --mount-master runs outside this app's sandbox, where every app's folder is visible
+		for args in [["--mount-master", "-c", "sh " + script_path], ["-c", "sh " + script_path]]:
+			var out := []
+			code = OS.execute("su", args, out, true)
+			text = "" if out.is_empty() else str(out[0])
+			if code == 0 and text.contains("# done"):
+				break
+	var files := {}
+	var log := []
+	var current := ""
+	var buf := []
+	for line in text.split("\n"):
+		if line.begins_with("@@end"):
+			files[current] = "\n".join(buf)
+			current = ""
+			buf.clear()
+		elif line.begins_with("@@"):
+			current = line.substr(2).strip_edges()
+		elif current != "":
+			buf.append(line)
+		else:
+			log.append(line)
+	var by_profile := {}
+	for p in FILES:
+		by_profile[p] = files.get(FILES[p], "")
+	return {"root": code == 0, "files": by_profile, "log": "exit %d\n%s" % [code, "\n".join(log).left(1500)]}
