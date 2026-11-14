@@ -13,7 +13,8 @@ func build() -> void:
 	for i in 6:
 		var side := -1.0 if i % 2 == 0 else 1.0
 		var p := c + Vector3(side * 1.1, 0, -1.4 + (i / 2) * 1.4)
-		Props.chair(self, p, side * PI / 2 + rng.randf_range(-0.6, 0.6), rng.randf() < 0.6)
+		# facing the table: a fallen one tips over backwards, away from it
+		Props.chair(self, p, -side * PI / 2 + rng.randf_range(-0.4, 0.4), rng.randf() < 0.6)
 	# projector on the table, a screen on the wall with the light on it, the whiteboard next to it
 	box(Vector3(0.35, 0.12, 0.3), c + Vector3(0, Props.TABLE_H + 0.06, 0), Mats.get_mat("dark"), false)
 	box(Vector3(0.03, 1.4, 2.2), Vector3(w - 3.0 - 0.12, 1.75, length * 0.5 - 1.3), Mats.get_mat("fridge_white"), false)

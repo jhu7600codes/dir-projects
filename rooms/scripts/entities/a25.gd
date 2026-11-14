@@ -33,7 +33,7 @@ func begin() -> void:
 		return
 	var pts := r.path_global()
 	var p: Vector3 = pts[clampi(pts.size() / 2, 0, pts.size() - 1)]
-	global_position = p + Vector3(randf_range(-1.0, 1.0), -0.2, randf_range(-1.0, 1.0))
+	global_position = _off_walls(p + Vector3(randf_range(-1.0, 1.0), -0.2, randf_range(-1.0, 1.0)))
 	sprite = make_sprite("a25_face", 2.0)
 	if not Assets.has_real("textures", "a25_face"):
 		sprite.texture = _swirl()
@@ -49,6 +49,29 @@ func begin() -> void:
 	add_child(l)
 	_hum = make_3d_audio("a25_hum", 8.0, 40.0)
 	_hum.play()
+
+
+## the spiral is 2 m wide: push it out of any wall or furniture it would poke into
+func _off_walls(at: Vector3) -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var ex: Array[RID] = []
+	if player:
+		ex.append(player.get_rid())
+	for pass_i in 3:
+		var moved := false
+		for k in 8:
+			var dir := Vector3(cos(k * TAU / 8.0), 0, sin(k * TAU / 8.0))
+			for dy in [-0.7, 0.0, 0.7]:
+				var from := at + Vector3(0, dy, 0)
+				var q := PhysicsRayQueryParameters3D.create(from, from + dir * 1.15, 1, ex)
+				var hit := space.intersect_ray(q)
+				if not hit.is_empty():
+					at -= dir * (1.15 - from.distance_to(hit.position) + 0.02)
+					moved = true
+					break
+		if not moved:
+			break
+	return at
 
 
 func _physics_process(delta: float) -> void:

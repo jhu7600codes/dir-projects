@@ -15,7 +15,7 @@ func build() -> void:
 	for i in 3:
 		var a := TAU * i / 3.0
 		Props.chair(self, c + Vector3(cos(a), 0, sin(a)) * 1.0, -a, true)
-	add_cabinet(Vector3(-w / 2 + 0.27, 0, length * 0.75), PI / 2)
+	add_cabinet(Vector3(-w / 2 + 0.36, 0, length * 0.75), PI / 2)
 	scatter_loot([Vector3(w / 2 - 0.35, Props.COUNTER_H + 0.02, length * 0.4), c + Vector3(0, Props.TABLE_H + 0.02, 0)])
 	add_atm(Vector3(-w / 2 + 0.3, 0, 1.5), PI / 2)
 	if rng.randf() < 0.5:

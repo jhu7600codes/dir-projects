@@ -30,6 +30,12 @@ func _ready() -> void:
 	_frame_box(Vector3(0.1, h, 0.26), Vector3(-w / 2 - 0.05, h / 2, 0))
 	_frame_box(Vector3(0.1, h, 0.26), Vector3(w / 2 + 0.05, h / 2, 0))
 	_frame_box(Vector3(w + 0.2, 0.1, 0.26), Vector3(0, h + 0.05, 0))
+	# door stops on the room side: they cover the thin gap around the closed panel, which
+	# you could see the next room through. the panel swings the other way, so they never touch it
+	if Game.floor != "city":
+		_frame_box(Vector3(0.05, h, 0.025), Vector3(-w / 2 + 0.01, h / 2, -0.06))
+		_frame_box(Vector3(0.05, h, 0.025), Vector3(w / 2 - 0.01, h / 2, -0.06))
+		_frame_box(Vector3(w, 0.05, 0.025), Vector3(0, h - 0.01, -0.06))
 	# panel on a hinge at the -x side
 	_hinge = Node3D.new()
 	_hinge.position = Vector3(-w / 2, 0, 0)
@@ -64,10 +70,10 @@ func _ready() -> void:
 	else:
 		var mi := MeshInstance3D.new()
 		var bm := BoxMesh.new()
-		bm.size = Vector3(w - 0.04, h - 0.04, 0.07)
+		bm.size = Vector3(w - 0.04, h - 0.025, 0.07)
 		mi.mesh = bm
 		mi.material_override = Mats.get_mat("door_metal" if Game.floor == "wires" else "door")
-		mi.position = Vector3(w / 2, h / 2, 0)
+		mi.position = Vector3(w / 2, (h - 0.025) / 2 + 0.005, 0)
 		_hinge.add_child(mi)
 		_details(w, h)
 	_panel_shape = CollisionShape3D.new()

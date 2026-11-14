@@ -15,8 +15,9 @@ func build() -> void:
 			# two rows, desks facing each other with a low divider between
 			add_drawer_desk(Vector3(side * 2.4 - 0.75, 0, z), 0.0 if side < 0 else PI)
 			add_drawer_desk(Vector3(side * 2.4 + 0.75, 0, z), 0.0 if side < 0 else PI)
-		box(Vector3(3.2, 0.5, 0.06), Vector3(-2.4, Props.TABLE_H + 0.25, z), Mats.get_mat("cubicle"), false)
-		box(Vector3(3.2, 0.5, 0.06), Vector3(2.4, Props.TABLE_H + 0.25, z), Mats.get_mat("cubicle"), false)
+		# a low divider along the back edge of each row (not through the middle of the desks)
+		box(Vector3(3.0, 0.5, 0.04), Vector3(-2.4, Props.TABLE_H + 0.25, z - 0.37), Mats.get_mat("cubicle"), false)
+		box(Vector3(3.0, 0.5, 0.04), Vector3(2.4, Props.TABLE_H + 0.25, z + 0.37), Mats.get_mat("cubicle"), false)
 		z += 3.2
 	# lockers along one wall, near the middle
 	var lz := length * 0.5

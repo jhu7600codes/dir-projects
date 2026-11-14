@@ -99,7 +99,10 @@ static func cubicle(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
 	room.box(Vector3(0.08, 1.6, 2.0), pos + b * Vector3(1.1, 0.8, 0), mat, true, yaw)
 	room.add_drawer_desk(pos + b * Vector3(0, 0, -0.6), yaw)
 	if room.rng.randf() < 0.5 and not Game.office_powered():  # (powered: the worker brings a chair)
-		chair(room, pos + b * Vector3(room.rng.randf_range(-0.5, 0.5), 0, 0.2), yaw + room.rng.randf_range(-1, 1), room.rng.randf() < 0.4)
+		# it faces the desk, so a fallen one lies back out of the cubicle (not across the desk)
+		var fallen := room.rng.randf() < 0.4
+		var turn := room.rng.randf_range(-0.3, 0.3) if fallen else room.rng.randf_range(-0.8, 0.8)
+		chair(room, pos + b * Vector3(room.rng.randf_range(-0.4, 0.4), 0, 0.25), yaw + PI + turn, fallen)
 
 
 static func fridge(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:

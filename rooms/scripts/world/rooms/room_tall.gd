@@ -69,14 +69,21 @@ func _rail(a: Vector3, b: Vector3, solid: bool) -> void:
 	var len := d.length()
 	var yaw := atan2(d.x, d.z)
 	var mid := (a + b) / 2
-	box(Vector3(0.06, 0.06, len), mid + Vector3(0, 1.0, 0), Mats.get_mat("dark"), false, yaw)
-	box(Vector3(0.04, 0.04, len), mid + Vector3(0, 0.5, 0), Mats.get_mat("metal"), false, yaw)
+	# the bars tilt with the stairs (they used to stay flat and float through the air)
+	var tilt := Basis.looking_at(d.normalized(), Vector3.UP, true) if d.normalized().cross(Vector3.UP).length() > 0.01 else Basis()
+	_bar(Vector3(0.06, 0.06, len), mid + Vector3(0, 1.0, 0), Mats.get_mat("dark"), tilt)
+	_bar(Vector3(0.04, 0.04, len), mid + Vector3(0, 0.5, 0), Mats.get_mat("metal"), tilt)
 	var n := maxi(2, int(len / 1.2) + 1)
 	for i in n:
 		var p := a + d * (float(i) / (n - 1))
 		box(Vector3(0.06, 1.0, 0.06), p + Vector3(0, 0.5, 0), Mats.get_mat("dark"), false)
 	if solid:
 		box(Vector3(0.1, 1.1, len), mid + Vector3(0, 0.55, 0), Mats.get_mat("dark"), true, yaw).visible = false
+
+
+func _bar(size: Vector3, pos: Vector3, mat: Material, basis: Basis) -> void:
+	var mi := box(size, pos, mat, false)
+	mi.basis = basis
 
 
 ## steps along a side wall going up toward +z, ending at z = top. a ramp to walk on

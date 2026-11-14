@@ -17,7 +17,7 @@ func build() -> void:
 	Props.plant(self, t1 + Vector3(0.45, Props.TABLE_H + 0.02, 0))
 	# the cubicle against the side wall
 	var cp := Vector3(flip * (w / 2 - 1.1), 0, length * 0.55)
-	var yaw := flip * PI / 2
+	var yaw := -flip * PI / 2  # back against the side wall, open toward the room
 	Props.cubicle(self, cp, yaw)
 	var b := Basis(Vector3.UP, yaw)
 	var top := cp + b * Vector3(0, Props.TABLE_H + 0.02, -0.75)
@@ -33,6 +33,6 @@ func build() -> void:
 	var cols := ["poster_red", "poster_blue", "poster_yellow", "poster_green"]
 	for i in 3:
 		box(Vector3(0.25, 0.2, 0.25), t2 + Vector3(-0.55 + i * 0.3, Props.TABLE_H + 0.1, rng.randf_range(-0.15, 0.15)), Mats.get_mat(cols[rng.randi() % cols.size()]), false, rng.randf_range(-0.4, 0.4))
-	add_cabinet(Vector3(-flip * (w / 2 - 0.27), 0, length * 0.45), flip * PI / 2)
+	add_cabinet(Vector3(-flip * (w / 2 - 0.36), 0, length * 0.45), flip * PI / 2)
 	scatter_loot([t1 + Vector3(0, Props.TABLE_H + 0.02, 0.2), Vector3(-flip * (w / 2 - 0.4), 0, length * 0.5)])
 	make_path([Vector3(0, 0, length * 0.35), Vector3(-flip * 1.2, 0, length * 0.6), Vector3(-flip * 2.2, 0, length - 1.0)])

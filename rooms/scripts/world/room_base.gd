@@ -622,9 +622,10 @@ func _build_side_room() -> void:
 	d.rotation.y = PI / 2 if left else -PI / 2
 	d.name = "side_door"
 	add_child(d)
-	add_drawer_desk(Vector3(wx + sx * 2.5, 0, z), -PI / 2 if left else PI / 2)
+	# desk and locker against the far wall, next to each other (they used to overlap)
+	add_drawer_desk(Vector3(wx + sx * 2.5, 0, z - 0.6), -PI / 2 if left else PI / 2)
 	if rng.randf() < 0.5:
-		add_locker(Vector3(wx + sx * 2.5, 0, z + 1.05), -PI / 2 if left else PI / 2)
+		add_locker(Vector3(wx + sx * 2.48, 0, z + 0.88), -PI / 2 if left else PI / 2)
 	elif rng.randf() < 0.6:
 		add_pickup(Vector3(cx, 0.02, z - 0.9), "gold", rng.randi_range(10, 40))
 	decor_block.append(AABB(Vector3(wx - (1.2 if left else 0.0), 0, z - 1.0), Vector3(1.2, 2.5, 2.0)))
