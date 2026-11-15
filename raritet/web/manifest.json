@@ -1,0 +1,17 @@
+{
+ "id": "com.jhu.raritet",
+ "name": "Раритет",
+ "version": "1.0",
+ "versioncode": 1,
+ "type": "web",
+ "main": "main",
+ "icon": "icon.svg",
+ "theme": "holo-dark",
+ "dpk": "2.0",
+ "permissions": ["vibrate", "clipboard"],
+ "activities": {
+  "main": { "entry": "index.html", "label": "Раритет", "launcher": true }
+ },
+ "author": "jhu",
+ "description": "Русская викторина на редкие ответы: 7 вопросов, 20 секунд, чем реже ответ, тем больше очков. Игра дня и бесконечный режим, бесплатно."
+}
