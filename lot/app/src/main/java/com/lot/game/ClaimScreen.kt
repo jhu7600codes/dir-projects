@@ -111,7 +111,7 @@ fun ClaimScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     stage = Stage.WALK
                 }
                 Stage.WALK -> WalkStage(
-                    level, paused,
+                    level, paused, "sleeve" in state.items, "shoes" in state.items,
                     onDefect = { defects.add(it) },
                     onCoin = { walkCoins++ },
                     onThief = { stage = Stage.THIEF },
@@ -120,7 +120,7 @@ fun ClaimScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                         stage = Stage.FIGHT
                     },
                 )
-                Stage.THIEF -> ThiefStage(paused) { won ->
+                Stage.THIEF -> ThiefStage(paused, "whistle" in state.items) { won ->
                     if (won) {
                         vm.flag("thiefwin")
                         defects.add("thief fingerprints all over it")
@@ -132,7 +132,7 @@ fun ClaimScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                         stage = Stage.RESULT
                     }
                 }
-                Stage.FIGHT -> FightStage(defects.toList(), paused) { won, flawless ->
+                Stage.FIGHT -> FightStage(defects.toList(), paused, "lawyer" in state.items) { won, flawless ->
                     val bonus = walkCoins
                     if (won) {
                         val amount = claim.prize + bonus
@@ -244,6 +244,7 @@ private class Level(seed: Long) {
     val thiefX: Float?
     var thiefDone = false
     var walkDefects = 0
+    var sleeveUsed = false
 
     // player state survives the thief interruption
     var px = 2f
@@ -295,7 +296,7 @@ private val walkDefectNames = mapOf(
 
 @Composable
 private fun WalkStage(
-    lv: Level, paused: Boolean,
+    lv: Level, paused: Boolean, sleeve: Boolean, shoes: Boolean,
     onDefect: (String) -> Unit, onCoin: () -> Unit, onThief: () -> Unit, onArrive: () -> Unit,
 ) {
     val fx = LocalFx.current
@@ -309,6 +310,13 @@ private fun WalkStage(
     LaunchedEffect(toast) { if (toast != null) { delay(1300); toast = null } }
 
     fun hurt(kind: String) {
+        if (sleeve && !lv.sleeveUsed) {
+            lv.sleeveUsed = true
+            lv.invuln = 1.2f
+            toast = "the sleeve blocked it! (once)"
+            fx.play(Sfx.SNEAK); fx.buzz(Buzz.LIGHT)
+            return
+        }
         val d = walkDefectNames.getValue(kind).random()
         lv.walkDefects++
         onDefect(d)
@@ -329,11 +337,11 @@ private fun WalkStage(
                 lv.t += dt
                 val dir = (if (right) 1f else 0f) - (if (left) 1f else 0f)
                 if (dir != 0f) lv.facing = dir
-                lv.vx = if (lv.knock > 0f) -lv.facing * 5f else dir * 6.5f
+                lv.vx = if (lv.knock > 0f) -lv.facing * 5f else dir * (if (shoes) 8.5f else 6.5f)
                 lv.knock -= dt
                 lv.invuln -= dt
                 if (jump && !jumpWas && lv.onGround) {
-                    lv.vy = 13.5f; lv.onGround = false; fx.play(Sfx.BALL)
+                    lv.vy = if (shoes) 15f else 13.5f; lv.onGround = false; fx.play(Sfx.BALL)
                 }
                 if (!jump && lv.vy > 4f) lv.vy *= 0.6f
                 jumpWas = jump
@@ -462,7 +470,7 @@ private fun WalkStage(
             }
             toast?.let {
                 Text(
-                    "ticket damage: $it", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp,
+                    if (it.startsWith("the sleeve")) it else "ticket damage: $it", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 44.dp)
@@ -511,10 +519,13 @@ fun HoldButton(text: String, modifier: Modifier, color: Color, height: Dp = 70.d
 // ============================ thief ============================
 
 @Composable
-private fun ThiefStage(paused: Boolean, onEnd: (Boolean) -> Unit) {
+private fun ThiefStage(paused: Boolean, whistle: Boolean, onEnd: (Boolean) -> Unit) {
     val fx = LocalFx.current
-    var rope by remember { mutableFloatStateOf(0.15f) } // -1 = you win, 1 = thief wins
+    var rope by remember { mutableFloatStateOf(0f) } // -1 = you win, 1 = thief wins
     var fake by remember { mutableStateOf(false) }
+    var warn by remember { mutableStateOf(false) }
+    var fakeStart by remember { mutableFloatStateOf(0f) }
+    var fakePenalty by remember { mutableFloatStateOf(0f) }
     var clock by remember { mutableFloatStateOf(0f) }
     var over by remember { mutableStateOf(false) }
     var started by remember { mutableStateOf(false) }
@@ -524,7 +535,7 @@ private fun ThiefStage(paused: Boolean, onEnd: (Boolean) -> Unit) {
         delay(1200)
         started = true
         var last = 0L
-        var nextFake = 2f
+        var nextFake = 2.5f
         var fakeEnd = 0f
         while (!over) {
             withFrameNanos { now ->
@@ -532,9 +543,12 @@ private fun ThiefStage(paused: Boolean, onEnd: (Boolean) -> Unit) {
                 last = now
                 if (isPaused) return@withFrameNanos
                 clock += dt
-                if (!fake && clock > nextFake) { fake = true; fakeEnd = clock + 0.75f; fx.play(Sfx.LAUGH) }
-                if (fake && clock > fakeEnd) { fake = false; nextFake = clock + 1.4f + Random.nextFloat() * 1.8f }
-                rope += (0.3f + clock * 0.012f) * dt * (if (fake) 0.2f else 1f)
+                // he telegraphs every fake with a warning first, so you can stop in time
+                if (!fake && !warn && clock > nextFake - 0.7f) { warn = true; fx.play(Sfx.SNEAK) }
+                if (!fake && clock > nextFake) { warn = false; fake = true; fakeStart = clock; fakePenalty = 0f; fakeEnd = clock + 0.8f; fx.play(Sfx.LAUGH) }
+                if (fake && clock > fakeEnd) { fake = false; nextFake = clock + 2.2f + Random.nextFloat() * 2f }
+                val pull = (0.2f + clock * 0.006f) * (if (whistle) 0.7f else 1f)
+                if (!fake) rope += pull * dt
                 if (rope >= 1f && !over) { over = true; fx.play(Sfx.LOSE); fx.buzz(Buzz.FAIL); onEnd(false) }
                 if (rope <= -1f && !over) { over = true; fx.play(Sfx.WIN); fx.buzz(Buzz.SUCCESS); onEnd(true) }
             }
@@ -569,6 +583,7 @@ private fun ThiefStage(paused: Boolean, onEnd: (Boolean) -> Unit) {
                 when {
                     !started -> "a thief grabbed your ticket!!"
                     fake -> "he's faking! DON'T pull!"
+                    warn -> "careful... he's up to something"
                     else -> "mash pull!"
                 },
                 color = if (fake) Pink else Gold, fontWeight = FontWeight.Black, fontSize = 22.sp,
@@ -578,13 +593,16 @@ private fun ThiefStage(paused: Boolean, onEnd: (Boolean) -> Unit) {
             )
         }
         ChunkyButton(
-            "PULL!", Modifier.fillMaxWidth(), color = if (fake) Pink else Mint, height = 90.dp,
+            "PULL!", Modifier.fillMaxWidth(), color = if (fake) Pink else if (warn) Gold else Mint, height = 90.dp,
             enabled = started && !over, sfx = null,
         ) {
             if (fake) {
-                rope += 0.1f; fx.play(Sfx.ANGRY); fx.buzz(Buzz.MEDIUM)
+                // short grace window for taps already on their way, and a small capped penalty
+                if (clock - fakeStart > 0.25f && fakePenalty < 0.12f) {
+                    rope += 0.04f; fakePenalty += 0.04f; fx.play(Sfx.ANGRY); fx.buzz(Buzz.MEDIUM)
+                }
             } else {
-                rope -= 0.085f; fx.play(Sfx.CLICK)
+                rope -= 0.09f; fx.play(Sfx.CLICK)
             }
         }
     }
@@ -605,10 +623,10 @@ private val stampNames = listOf("stamp of rejection", "fine print slap", "calls 
 private enum class FPhase { INTRO, ATTACK, WINDUP, DEFEND, DONE }
 
 @Composable
-private fun FightStage(defects: List<String>, paused: Boolean, onEnd: (won: Boolean, flawless: Boolean) -> Unit) {
+private fun FightStage(defects: List<String>, paused: Boolean, lawyer: Boolean, onEnd: (won: Boolean, flawless: Boolean) -> Unit) {
     val fx = LocalFx.current
     val lines = remember { (defects + extraNitpicks.shuffled().take(2)) }
-    val maxHp = remember { (3 + lines.size).coerceAtMost(14) }
+    val maxHp = remember { (3 + lines.size - if (lawyer) 2 else 0).coerceIn(2, 14) }
     var hp by remember { mutableIntStateOf(maxHp) }
     var myHp by remember { mutableIntStateOf(5) }
     var phase by remember { mutableStateOf(FPhase.INTRO) }

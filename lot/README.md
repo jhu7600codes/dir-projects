@@ -9,6 +9,15 @@ a fake money lottery simulator for android. kotlin + jetpack compose + material 
 - **stealer** - hide in a bush, drag the binoculars to read tiny ticket numbers, grab winners with a timing minigame. more guards and faster customers every round, 3 lives.
 - **bingo** - daub your card as numbers get called and yell bingo before three very fast grannies do.
 - **dumpster** - rip open trash bags behind the stand, check thrown away tickets against tonight's numbers, fight off raccoons.
+- **derby** - bet on one of five pigeons and watch them race (and get distracted).
+- **slots** - lucky lot slots, you stop each reel yourself. 3 skulls takes your bet twice.
+- **inspector** - quality control at the ticket factory. approve real tickets, reject fakes before the timer runs out.
+
+### extras
+
+- item shop with 11 permanent upgrades (lucky sock, ticket sleeve, running shoes, pro binoculars, auto dauber...)
+- 3 daily quests with coin rewards
+- a news ticker on the home screen
 
 ### tickets
 
@@ -22,7 +31,7 @@ winning tickets don't pay out right away. you sign the back, walk to the stand i
 
 settings has a currency picker that shows what your coins are "worth" in usd, eur, rub, shawarmas, potatoes and more. it's fake, nothing can be cashed out.
 
-45 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
+58 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
 
 ## install
 

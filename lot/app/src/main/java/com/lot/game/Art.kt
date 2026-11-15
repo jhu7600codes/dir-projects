@@ -456,10 +456,10 @@ fun DrawScope.drawMask(cx: Float, baseY: Float, h: Float) {
     for (sx in listOf(-1f, 1f)) drawCircle(Color.White, hr * 0.12f, Offset(hc.x + sx * hr * 0.38f, hc.y - hr * 0.1f))
 }
 
-fun DrawScope.drawPigeon(c: Offset, s: Float, flap: Float, dir: Float) {
+fun DrawScope.drawPigeon(c: Offset, s: Float, flap: Float, dir: Float, body: Color = Color(0xFF9EA7B8)) {
     val w = s * 0.06f
     drawOval(Ink, Offset(c.x - s * 0.5f - w, c.y - s * 0.3f - w), Size(s + w * 2, s * 0.6f + w * 2))
-    drawOval(Color(0xFF9EA7B8), Offset(c.x - s * 0.5f, c.y - s * 0.3f), Size(s, s * 0.6f))
+    drawOval(body, Offset(c.x - s * 0.5f, c.y - s * 0.3f), Size(s, s * 0.6f))
     val head = Offset(c.x + dir * s * 0.45f, c.y - s * 0.3f)
     circleO(head, s * 0.22f, Color(0xFF7D8699), w)
     drawCircle(Color(0xFF4BE3AC).copy(alpha = 0.7f), s * 0.1f, head + Offset(-dir * s * 0.05f, s * 0.15f))

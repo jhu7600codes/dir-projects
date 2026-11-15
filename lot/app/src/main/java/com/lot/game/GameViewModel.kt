@@ -43,6 +43,12 @@ private fun GameState.toJson(): String = JSONObject().apply {
     put("claims", claims); put("bingoPlayed", bingoPlayed); put("bingoWins", bingoWins)
     put("bagsSearched", bagsSearched); put("trashWinners", trashWinners)
     put("currency", currency); put("currenciesSeen", JSONArray(currenciesSeen.toList())); put("lastWheelDay", lastWheelDay)
+    put("derbyBets", derbyBets); put("derbyWins", derbyWins)
+    put("slotSpins", slotSpins); put("slotSevens", slotSevens); put("inspected", inspected); put("inspectBest", inspectBest)
+    put("items", JSONArray(items.toList()))
+    put("questDay", questDay); put("questIds", JSONArray(questIds))
+    put("questBase", JSONObject().apply { questBase.forEach { (k, v) -> put(k, v) } })
+    put("questsDone", JSONArray(questsDone.toList())); put("questsCompleted", questsCompleted)
     put("flags", JSONArray(flags.toList()))
     put("badges", JSONObject().apply { badges.forEach { (k, v) -> put(k, v) } })
     put("tutorialsSeen", JSONArray(tutorialsSeen.toList()))
@@ -80,6 +86,15 @@ private fun parseState(s: String): GameState = try {
         bagsSearched = o.optInt("bagsSearched"), trashWinners = o.optInt("trashWinners"),
         currency = o.optString("currency", "usd"), currenciesSeen = o.optJSONArray("currenciesSeen").strings(),
         lastWheelDay = o.optLong("lastWheelDay", -1),
+        derbyBets = o.optInt("derbyBets"), derbyWins = o.optInt("derbyWins"),
+        slotSpins = o.optInt("slotSpins"), slotSevens = o.optInt("slotSevens"),
+        inspected = o.optInt("inspected"), inspectBest = o.optInt("inspectBest"),
+        items = o.optJSONArray("items").strings(),
+        questDay = o.optLong("questDay", -1),
+        questIds = o.optJSONArray("questIds")?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: emptyList(),
+        questBase = o.optJSONObject("questBase")?.let { b -> b.keys().asSequence().associateWith { b.getInt(it) } } ?: emptyMap(),
+        questsDone = o.optJSONArray("questsDone").strings(),
+        questsCompleted = o.optInt("questsCompleted"),
         flags = o.optJSONArray("flags").strings(),
         badges = o.optJSONObject("badges")?.let { b -> b.keys().asSequence().associateWith { b.getLong(it) } } ?: emptyMap(),
         tutorialsSeen = o.optJSONArray("tutorialsSeen").strings(),
@@ -160,7 +175,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 flags = if (tier.flag != null) it.flags + tier.flag else it.flags,
             )
         }
-        currentScratch = genScratch(tier)
+        val bonus = if ("sock" in _state.value.items) 0.04f else 0f
+        currentScratch = genScratch(tier.copy(winChance = tier.winChance + bonus))
         return true
     }
 
@@ -270,4 +286,42 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setCurrency(code: String) = update { it.copy(currency = code, currenciesSeen = it.currenciesSeen + code) }
+
+    // ---- items ----
+    fun buyItem(item: Item): Boolean {
+        val s = _state.value
+        if (item.id in s.items || s.coins < item.price) return false
+        update { it.copy(coins = it.coins - item.price, items = it.items + item.id) }
+        return true
+    }
+
+    // ---- daily quests ----
+    fun refreshQuests() {
+        val day = today()
+        val s = _state.value
+        if (s.questDay == day && s.questIds.isNotEmpty()) return
+        val picks = QuestPool.shuffled(kotlin.random.Random(day)).take(3)
+        update {
+            it.copy(
+                questDay = day,
+                questIds = picks.map { q -> q.id },
+                questBase = picks.associate { q -> q.id to q.stat(it) },
+                questsDone = emptySet(),
+            )
+        }
+    }
+
+    fun questProgress(s: GameState, q: QuestDef) = (q.stat(s) - (s.questBase[q.id] ?: q.stat(s))).coerceIn(0, q.target)
+
+    fun collectQuest(q: QuestDef) {
+        val s = _state.value
+        if (q.id in s.questsDone || questProgress(s, q) < q.target) return
+        update {
+            it.copy(
+                coins = it.coins + q.reward,
+                questsDone = it.questsDone + q.id,
+                questsCompleted = it.questsCompleted + 1,
+            )
+        }
+    }
 }

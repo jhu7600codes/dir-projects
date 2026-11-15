@@ -204,6 +204,43 @@ val Currencies = listOf(
 
 fun currencyOf(code: String) = Currencies.firstOrNull { it.code == code } ?: Currencies[0]
 
+// ---------- items (permanent upgrades) ----------
+
+data class Item(val id: String, val name: String, val price: Int, val desc: String, val mode: String)
+
+val Items = listOf(
+    Item("sock", "lucky sock", 300, "+4% win chance on every scratch ticket. unwashed for luck.", "player"),
+    Item("sleeve", "ticket sleeve", 400, "blocks the first bit of damage on every claim walk", "claim"),
+    Item("shoes", "running shoes", 250, "walk faster and jump higher on the way to the stand", "claim"),
+    Item("whistle", "loud whistle", 350, "ticket thieves pull 30% weaker", "claim"),
+    Item("lawyer", "lawyer's business card", 800, "the cashier starts the fight with 2 less patience", "claim"),
+    Item("coffee", "coffee thermos", 300, "host mode customers wait 30% longer before leaving", "host"),
+    Item("lens", "pro binoculars", 400, "bigger lens and stronger zoom in stealer mode", "stealer"),
+    Item("dauber", "auto dauber", 250, "bingo numbers on your card daub themselves after 2 seconds", "bingo"),
+    Item("magnet", "suspicious magnet", 450, "slot reels stop exactly when you tap, no drift", "slots"),
+    Item("glasses", "reading glasses", 300, "inspector gets 40% more time per ticket", "inspector"),
+    Item("birdseed", "bag of birdseed", 200, "your derby pigeon gets a small speed boost. totally legal.", "derby"),
+)
+
+// ---------- daily quests ----------
+
+data class QuestDef(val id: String, val desc: String, val target: Int, val reward: Int, val stat: (GameState) -> Int)
+
+val QuestPool = listOf(
+    QuestDef("scratch5", "scratch 5 tickets", 5, 60) { it.scratched },
+    QuestDef("tv2", "watch 2 tv draws", 2, 60) { it.tvPlayed },
+    QuestDef("yell3", "yell at 3 customers", 3, 50) { it.yells },
+    QuestDef("serve6", "serve 6 customers as host", 6, 80) { it.served },
+    QuestDef("steal1", "steal a winning ticket", 1, 100) { it.steals },
+    QuestDef("bingo1", "win a round of bingo", 1, 120) { it.bingoWins },
+    QuestDef("bags8", "search 8 trash bags", 8, 70) { it.bagsSearched },
+    QuestDef("claim1", "claim a prize the hard way", 1, 120) { it.claims },
+    QuestDef("derby3", "bet on 3 pigeon races", 3, 60) { it.derbyBets },
+    QuestDef("slots10", "spin the slots 10 times", 10, 60) { it.slotSpins },
+    QuestDef("inspect15", "inspect 15 tickets", 15, 70) { it.inspected },
+    QuestDef("win3", "win 3 tickets of any kind", 3, 90) { it.wins },
+)
+
 data class GameState(
     val coins: Int = 500,
     val history: List<TicketRecord> = emptyList(),
@@ -236,6 +273,21 @@ data class GameState(
     // dumpster
     val bagsSearched: Int = 0,
     val trashWinners: Int = 0,
+    // derby
+    val derbyBets: Int = 0,
+    val derbyWins: Int = 0,
+    // slots + inspector
+    val slotSpins: Int = 0,
+    val slotSevens: Int = 0,
+    val inspected: Int = 0,
+    val inspectBest: Int = 0,
+    // items + quests
+    val items: Set<String> = emptySet(),
+    val questDay: Long = -1,
+    val questIds: List<String> = emptyList(),
+    val questBase: Map<String, Int> = emptyMap(),
+    val questsDone: Set<String> = emptySet(),
+    val questsCompleted: Int = 0,
     // misc
     val currency: String = "usd",
     val currenciesSeen: Set<String> = emptySet(),
@@ -306,6 +358,19 @@ val Badges = listOf(
     BadgeDef("trash1", "trash treasure", "find a winning ticket in the trash", "dumpster") { it.trashWinners >= 1 },
     BadgeDef("trash50", "raccoon energy", "search 50 trash bags", "dumpster") { it.bagsSearched >= 50 },
     BadgeDef("raccoon", "trash panda", "fight off a raccoon", "dumpster") { "raccoon" in it.flags },
+    BadgeDef("derby1", "bird brain", "win a pigeon race bet", "derby") { it.derbyWins >= 1 },
+    BadgeDef("longshot", "long shot", "win on a 10x pigeon", "derby") { "longshot" in it.flags },
+    BadgeDef("derby10", "pigeon whisperer", "win 10 pigeon race bets", "derby") { it.derbyWins >= 10 },
+    BadgeDef("slots25", "one-armed bandit", "spin the slots 25 times", "slots") { it.slotSpins >= 25 },
+    BadgeDef("triple7", "triple seven", "hit 3 sevens on the slots", "slots") { it.slotSevens >= 1 },
+    BadgeDef("skullslot", "bad omen", "hit 3 skulls on the slots", "slots") { "skullslot" in it.flags },
+    BadgeDef("inspect50", "rubber stamp", "inspect 50 tickets", "inspector") { it.inspected >= 50 },
+    BadgeDef("streak20", "nothing gets past me", "get a 20 ticket streak as inspector", "inspector") { it.inspectBest >= 20 },
+    BadgeDef("item1", "retail therapy", "buy your first item", "all") { it.items.isNotEmpty() },
+    BadgeDef("item5", "shopaholic", "own 5 items", "all") { it.items.size >= 5 },
+    BadgeDef("itemall", "fully loaded", "own every item", "all") { it.items.size >= Items.size },
+    BadgeDef("quest1", "to-do list", "finish a daily quest", "all") { it.questsCompleted >= 1 },
+    BadgeDef("quest15", "productive citizen", "finish 15 daily quests", "all") { it.questsCompleted >= 15 },
     BadgeDef("economist", "economist", "check what coins are worth in 3 currencies", "all") { it.currenciesSeen.size >= 3 },
-    BadgeDef("all", "jack of all trades", "play all 5 modes", "all") { it.modesPlayed.size >= 5 },
+    BadgeDef("all", "jack of all trades", "play all 8 modes", "all") { it.modesPlayed.size >= 8 },
 )

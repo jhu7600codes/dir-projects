@@ -38,6 +38,10 @@ sealed interface Screen {
     data object Claim : Screen
     data object Bingo : Screen
     data object Dumpster : Screen
+    data object Derby : Screen
+    data object Items : Screen
+    data object Slots : Screen
+    data object Inspector : Screen
 }
 
 class Nav {
@@ -102,6 +106,10 @@ fun App(vm: GameViewModel, fx: Fx) {
                     Screen.Claim -> ClaimScreen(vm, state, nav)
                     Screen.Bingo -> BingoScreen(vm, state, nav)
                     Screen.Dumpster -> DumpsterScreen(vm, state, nav)
+                    Screen.Derby -> DerbyScreen(vm, state, nav)
+                    Screen.Items -> ItemsScreen(vm, state, nav)
+                    Screen.Slots -> SlotsScreen(vm, state, nav)
+                    Screen.Inspector -> InspectorScreen(vm, state, nav)
                 }
             }
         }

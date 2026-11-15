@@ -93,6 +93,7 @@ fun HostScreen(vm: GameViewModel, state: GameState, nav: Nav) {
     val fx = LocalFx.current
     val scope = rememberCoroutineScope()
     var help by remember { mutableStateOf(false) }
+    val coffee by rememberUpdatedState("coffee" in state.items)
     val paused by rememberUpdatedState(help || "host" !in state.tutorialsSeen)
     ModeTutorial(vm, state, "host", "host", hostTutorial, help) { help = false }
 
@@ -181,7 +182,8 @@ fun HostScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 if (!paused) {
                     val c = cust
                     if (c != null && phase == HPhase.ORDERING && !busy) {
-                        val rate = when (c.mood) { Mood.HAPPY -> 0.05f; Mood.MEH -> 0.07f; Mood.GRUMPY -> 0.1f; Mood.ANGRY -> 0.16f }
+                        val rate = when (c.mood) { Mood.HAPPY -> 0.05f; Mood.MEH -> 0.07f; Mood.GRUMPY -> 0.1f; Mood.ANGRY -> 0.16f } *
+                            (if (coffee) 0.7f else 1f)
                         c.patience -= dt * rate
                         if (c.patience < 0.35f && !c.waitNagged) {
                             c.waitNagged = true; c.line = waitLines.random()

@@ -97,6 +97,8 @@ fun BingoScreen(vm: GameViewModel, state: GameState, nav: Nav) {
     val card = remember(round) { newCard(Random) }
     val daubed = remember(round) { mutableStateListOf<Boolean>().apply { addAll(List(25) { it == 12 }) } }
     val called = remember(round) { mutableStateListOf<Int>() }
+    val callTimes = remember(round) { mutableMapOf<Int, Float>() }
+    val dauber by rememberUpdatedState("dauber" in state.items)
     val grannies = remember(round) { List(3) { Granny(it) } }
     var clock by remember(round) { mutableFloatStateOf(0f) }
     var lockout by remember(round) { mutableFloatStateOf(0f) }
@@ -132,11 +134,18 @@ fun BingoScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 if (clock >= nextCall && bag.isNotEmpty()) {
                     val n = bag.removeAt(0)
                     called.add(n)
+                    callTimes[n] = clock
                     fx.play(Sfx.BALL)
                     nextCall = clock + (2.6f - called.size * 0.025f).coerceAtLeast(1.5f)
                     grannies.forEach { g ->
                         val i = g.card.indexOf(n)
                         if (i >= 0 && Random.nextFloat() > 0.1f) g.pending.add(clock + 0.7f + Random.nextFloat() * 2.2f to i)
+                    }
+                }
+                if (dauber) {
+                    callTimes.forEach { (n, at) ->
+                        val i = card.indexOf(n)
+                        if (i >= 0 && !daubed[i] && clock - at >= 2f) daubed[i] = true
                     }
                 }
                 grannies.forEach { g ->

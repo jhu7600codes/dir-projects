@@ -316,12 +316,14 @@ fun StealerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 if (lens == Offset.Unspecified) lens = Offset(w * 0.62f, h * 0.55f)
                 stealScene(g, w, h)
                 // binoculars lens
-                val r = w * 0.2f
+                val pro = "lens" in state.items
+                val r = w * (if (pro) 0.26f else 0.2f)
+                val zoom = if (pro) 4f else ZOOM
                 val lc = lens
                 val clip = Path().apply { addOval(Rect(lc, r)) }
                 clipPath(clip) {
                     drawRect(Color.Black)
-                    withTransform({ scale(ZOOM, ZOOM, lc) }) { stealScene(g, w, h) }
+                    withTransform({ scale(zoom, zoom, lc) }) { stealScene(g, w, h) }
                     drawCircle(Brush.radialGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)), lc, r), r, lc)
                 }
                 drawCircle(Ink, r + 7f, lc, style = Stroke(16f))
