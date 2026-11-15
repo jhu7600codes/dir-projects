@@ -335,6 +335,16 @@ fun DrawScope.drawSymbol(s: Sym, c: Offset, size: Float) {
             drawCircle(Color(0xFF43A047), r * 0.2f, c)
         }
         Sym.SEVEN -> label("7", c.x, c.y, size * 0.95f, Color(0xFFE53935), Ink)
+        Sym.SKULL -> {
+            drawRoundRect(Ink, Offset(c.x - r * 0.42f - w, c.y + r * 0.05f - w), Size(r * 0.84f + w * 2, r * 0.6f + w * 2), CornerRadius(r * 0.15f))
+            drawRoundRect(Color(0xFFF2F2F2), Offset(c.x - r * 0.42f, c.y + r * 0.05f), Size(r * 0.84f, r * 0.6f), CornerRadius(r * 0.15f))
+            circleO(Offset(c.x, c.y - r * 0.15f), r * 0.68f, Color(0xFFF2F2F2), w)
+            drawRect(Color(0xFFF2F2F2), Offset(c.x - r * 0.38f, c.y + r * 0.1f), Size(r * 0.76f, r * 0.3f))
+            drawCircle(Ink, r * 0.2f, Offset(c.x - r * 0.27f, c.y - r * 0.12f))
+            drawCircle(Ink, r * 0.2f, Offset(c.x + r * 0.27f, c.y - r * 0.12f))
+            drawPath(Path().apply { moveTo(c.x, c.y + r * 0.08f); lineTo(c.x - r * 0.1f, c.y + r * 0.25f); lineTo(c.x + r * 0.1f, c.y + r * 0.25f); close() }, Ink)
+            for (i in -1..1) drawLine(Ink, Offset(c.x + i * r * 0.18f, c.y + r * 0.42f), Offset(c.x + i * r * 0.18f, c.y + r * 0.62f), w * 0.8f)
+        }
         Sym.DIAMOND -> {
             val p = Path().apply {
                 moveTo(c.x - r * 0.75f, c.y - r * 0.25f); lineTo(c.x - r * 0.4f, c.y - r * 0.65f); lineTo(c.x + r * 0.4f, c.y - r * 0.65f)
@@ -425,4 +435,82 @@ fun DrawScope.drawBush(c: Offset, r: Float, eyes: Boolean, look: Float, t: Float
             }
         }
     }
+}
+
+// ---------- claim / bingo / dumpster props ----------
+
+val YouDude = Dude(Color(0xFFFFD7B5), Color(0xFF4BE3AC), Color(0xFF6B3E26), 1, Color(0xFFFF5C8A), "you", false, 1f)
+val ThiefDude = Dude(Color(0xFFE0AC69), Color(0xFF222233), Color(0xFF222233), 3, Color(0xFF222233), "thief", false, 0.9f)
+val CashierDude = Dude(Color(0xFFF1C27D), Color(0xFFE9E9E9), Color(0xFF9E9E9E), 1, Color(0xFF2E9E5B), "cashier", true, 1.15f)
+fun grannyDude(i: Int) = Dude(
+    listOf(Color(0xFFFFD7B5), Color(0xFFC68642), Color(0xFFF1C27D))[i % 3],
+    listOf(Color(0xFFB39DDB), Color(0xFF80CBC4), Color(0xFFF48FB1))[i % 3],
+    Color(0xFFE0E0E0), 0, Color.White, listOf("granny rose", "nana pearl", "mrs. fitz")[i % 3], true, 1.05f,
+)
+
+/** black bandit mask over a dude's eyes */
+fun DrawScope.drawMask(cx: Float, baseY: Float, h: Float) {
+    val hc = headCenter(cx, baseY, h)
+    val hr = h * 0.2f
+    drawRoundRect(Ink, Offset(hc.x - hr * 0.95f, hc.y - hr * 0.32f), Size(hr * 1.9f, hr * 0.42f), CornerRadius(hr * 0.2f))
+    for (sx in listOf(-1f, 1f)) drawCircle(Color.White, hr * 0.12f, Offset(hc.x + sx * hr * 0.38f, hc.y - hr * 0.1f))
+}
+
+fun DrawScope.drawPigeon(c: Offset, s: Float, flap: Float, dir: Float) {
+    val w = s * 0.06f
+    drawOval(Ink, Offset(c.x - s * 0.5f - w, c.y - s * 0.3f - w), Size(s + w * 2, s * 0.6f + w * 2))
+    drawOval(Color(0xFF9EA7B8), Offset(c.x - s * 0.5f, c.y - s * 0.3f), Size(s, s * 0.6f))
+    val head = Offset(c.x + dir * s * 0.45f, c.y - s * 0.3f)
+    circleO(head, s * 0.22f, Color(0xFF7D8699), w)
+    drawCircle(Color(0xFF4BE3AC).copy(alpha = 0.7f), s * 0.1f, head + Offset(-dir * s * 0.05f, s * 0.15f))
+    drawCircle(Ink, s * 0.05f, head + Offset(dir * s * 0.06f, -s * 0.03f))
+    drawPath(Path().apply {
+        moveTo(head.x + dir * s * 0.18f, head.y); lineTo(head.x + dir * s * 0.36f, head.y + s * 0.06f); lineTo(head.x + dir * s * 0.18f, head.y + s * 0.1f); close()
+    }, Gold)
+    val wingY = c.y - s * 0.1f - flap * s * 0.45f
+    outlined(Path().apply {
+        moveTo(c.x - dir * s * 0.2f, c.y - s * 0.05f); lineTo(c.x - dir * s * 0.1f, wingY); lineTo(c.x + dir * s * 0.25f, c.y - s * 0.1f); close()
+    }, Color(0xFF7D8699), w)
+}
+
+fun DrawScope.drawCone(x: Float, groundY: Float, s: Float) {
+    val p = Path().apply {
+        moveTo(x - s * 0.5f, groundY); lineTo(x - s * 0.15f, groundY - s); lineTo(x + s * 0.15f, groundY - s); lineTo(x + s * 0.5f, groundY); close()
+    }
+    outlined(p, Color(0xFFFF8C42), s * 0.06f)
+    drawRect(Color.White, Offset(x - s * 0.3f, groundY - s * 0.55f), Size(s * 0.6f, s * 0.14f))
+}
+
+fun DrawScope.drawTrashBag(c: Offset, s: Float, color: Color, shake: Float) {
+    rotate(shake * 8f, Offset(c.x, c.y + s * 0.5f)) {
+        val p = Path().apply {
+            moveTo(c.x - s * 0.15f, c.y - s * 0.5f)
+            quadraticBezierTo(c.x - s * 0.7f, c.y - s * 0.2f, c.x - s * 0.55f, c.y + s * 0.5f)
+            lineTo(c.x + s * 0.55f, c.y + s * 0.5f)
+            quadraticBezierTo(c.x + s * 0.7f, c.y - s * 0.2f, c.x + s * 0.15f, c.y - s * 0.5f)
+            close()
+        }
+        outlined(p, color, s * 0.05f)
+        // knot
+        circleO(Offset(c.x, c.y - s * 0.55f), s * 0.1f, color, s * 0.04f)
+        drawLine(Color.White.copy(alpha = 0.25f), Offset(c.x - s * 0.3f, c.y - s * 0.1f), Offset(c.x - s * 0.35f, c.y + s * 0.3f), s * 0.05f, StrokeCap.Round)
+    }
+}
+
+fun DrawScope.drawRaccoon(c: Offset, s: Float, t: Float, angry: Boolean) {
+    val w = s * 0.05f
+    // tail
+    for (i in 0 until 4) circleO(Offset(c.x + s * (0.55f + i * 0.12f), c.y + s * 0.2f - i * s * 0.08f + sin(t * 8f + i) * s * 0.04f), s * 0.13f, if (i % 2 == 0) Color(0xFF6E6A75) else Color(0xFF2A2830), w)
+    drawOval(Ink, Offset(c.x - s * 0.5f - w, c.y - s * 0.1f - w), Size(s + w * 2, s * 0.55f + w * 2))
+    drawOval(Color(0xFF8A8592), Offset(c.x - s * 0.5f, c.y - s * 0.1f), Size(s, s * 0.55f))
+    val hc = Offset(c.x - s * 0.35f, c.y - s * 0.15f)
+    circleO(hc + Offset(-s * 0.2f, -s * 0.28f), s * 0.1f, Color(0xFF8A8592), w)
+    circleO(hc + Offset(s * 0.2f, -s * 0.28f), s * 0.1f, Color(0xFF8A8592), w)
+    circleO(hc, s * 0.32f, Color(0xFFB5B0BC), w)
+    drawRoundRect(Color(0xFF2A2830), Offset(hc.x - s * 0.3f, hc.y - s * 0.12f), Size(s * 0.6f, s * 0.18f), CornerRadius(s * 0.09f))
+    for (sx in listOf(-1f, 1f)) {
+        drawCircle(if (angry) Color(0xFFFF3B3B) else Color.White, s * 0.06f, hc + Offset(sx * s * 0.13f, -s * 0.03f))
+        drawCircle(Ink, s * 0.03f, hc + Offset(sx * s * 0.13f, -s * 0.03f))
+    }
+    drawCircle(Ink, s * 0.05f, hc + Offset(0f, s * 0.12f))
 }

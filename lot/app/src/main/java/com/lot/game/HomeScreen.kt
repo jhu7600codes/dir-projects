@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,6 +87,17 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             drawCircle(Sky.copy(alpha = 0.7f), h * 0.09f, c + Offset(-h * 0.16f, 0f))
             drawCircle(Sky.copy(alpha = 0.7f), h * 0.09f, c + Offset(h * 0.16f, 0f))
         }) { nav.go(Screen.Stealer) }
+        Spacer(Modifier.height(12.dp))
+        ModeCard("bingo", "you vs three very fast grannies", Sky, t, art = { w, h, tt ->
+            drawDude(grannyDude(0), w * 0.3f, h * 1.05f, h * 0.9f, Mood.GRUMPY, t = tt * 10)
+            drawBall(Offset(w * 0.72f, h * 0.35f), h * 0.2f, 42)
+            drawBall(Offset(w * 0.78f, h * 0.75f), h * 0.16f, 7)
+        }) { nav.go(Screen.Bingo) }
+        Spacer(Modifier.height(12.dp))
+        ModeCard("dumpster", "dig through trash for thrown away winners", Color(0xFF9CCC65), t, art = { w, h, tt ->
+            drawTrashBag(Offset(w * 0.3f, h * 0.55f), h * 0.7f, Color(0xFF2A2830), (tt - 0.5f) * 0.6f)
+            drawRaccoon(Offset(w * 0.68f, h * 0.65f), h * 0.45f, tt * 5f, false)
+        }) { nav.go(Screen.Dumpster) }
 
         Spacer(Modifier.height(18.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -138,6 +150,28 @@ private fun SettingsDialog(vm: GameViewModel, state: GameState, onClose: () -> U
                 Spacer(Modifier.height(10.dp))
                 SettingRow("sound effects", state.sound) { vm.setSound(it) }
                 SettingRow("haptics", state.haptics) { vm.setHaptics(it) }
+                Spacer(Modifier.height(8.dp))
+                Text("show coin \"value\" in", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text("for fun only. coins are fake and can't be cashed out.", color = Dim, fontSize = 12.sp)
+                Spacer(Modifier.height(6.dp))
+                Currencies.chunked(4).forEach { row ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        row.forEach { c ->
+                            val on = c.code == state.currency
+                            Text(
+                                c.code, color = if (on) Ink else Color.White, fontWeight = FontWeight.Black, fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(if (on) Gold else CardHi, androidx.compose.foundation.shape.RoundedCornerShape(50))
+                                    .clickable { vm.setCurrency(c.code) }
+                                    .padding(vertical = 6.dp),
+                            )
+                        }
+                        repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+                Text("1 coin ≈ ${coinValue(1, state.currency)}", color = Mint, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp))
                 ChunkyButton("reset all progress", Modifier.fillMaxWidth(), color = Color(0xFFFF6B6B)) { confirmReset = true }
                 Spacer(Modifier.height(8.dp))

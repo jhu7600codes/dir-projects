@@ -310,7 +310,10 @@ fun modeColor(mode: String) = when (mode) {
     "player" -> Gold
     "host" -> Pink
     "stealer" -> Mint
-    else -> Sky
+    "claim" -> Color(0xFFFF8C42)
+    "bingo" -> Sky
+    "dumpster" -> Color(0xFF9CCC65)
+    else -> Grape
 }
 
 /** confetti burst, restarts every time [key] changes (and key > 0) */
@@ -351,4 +354,10 @@ fun StatBox(label: String, value: String, modifier: Modifier = Modifier, color: 
             Text(label, color = Dim, fontSize = 12.sp, maxLines = 1)
         }
     }
+}
+
+/** what [coins] would be "worth" in a currency. purely for laughs, nothing is ever paid out. */
+fun coinValue(coins: Int, code: String): String {
+    val c = currencyOf(code)
+    return "%,.${c.decimals}f %s".format(coins * c.perCoin, c.code)
 }

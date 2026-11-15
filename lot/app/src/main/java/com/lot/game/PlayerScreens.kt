@@ -62,6 +62,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -81,7 +83,9 @@ fun PlayerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
     var tab by remember { mutableIntStateOf(0) }
     var help by remember { mutableStateOf(false) }
     var msg by remember { mutableStateOf<String?>(null) }
+    var wheel by remember { mutableStateOf(false) }
     LaunchedEffect(msg) { if (msg != null) { delay(1800); msg = null } }
+    if (wheel) WheelDialog(vm) { wheel = false }
 
     ModeTutorial(vm, state, "player", "player", playerTutorial, help) { help = false }
 
@@ -94,6 +98,25 @@ fun PlayerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
         Box(Modifier.weight(1f)) {
             if (tab == 0) {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (state.unclaimed.isNotEmpty()) {
+                        item {
+                            Panel(Modifier.fillMaxWidth().clickable { tab = 1 }, color = Color(0xFF3B5A3A)) {
+                                Text(
+                                    "you have ${state.unclaimed.size} unclaimed prize${if (state.unclaimed.size > 1) "s" else ""} (${fmt(state.unclaimed.sumOf { it.prize })}c). tap to open your wallet.",
+                                    color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.padding(14.dp),
+                                )
+                            }
+                        }
+                    }
+                    if (state.lastWheelDay != vm.today()) {
+                        item {
+                            ShopCard(
+                                title = "daily wheel", price = 0, sub = "one free spin a day. might be 500. might be nothing.",
+                                canBuy = true, buyLabel = "spin",
+                                art = { Canvas(Modifier.size(72.dp)) { drawWheel(center, size.minDimension * 0.45f, 0f) } },
+                            ) { wheel = true }
+                        }
+                    }
                     if (state.coins < Tiers[0].price) {
                         item {
                             Panel(Modifier.fillMaxWidth(), color = CardHi) {
@@ -108,7 +131,7 @@ fun PlayerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     }
                     items(Tiers) { tier ->
                         ShopCard(
-                            title = tier.name, price = tier.price, sub = "top prize ${fmt(tier.topPrize)}",
+                            title = tier.name, price = tier.price, sub = "${tier.blurb} · top prize ${fmt(tier.topPrize)}",
                             canBuy = state.coins >= tier.price,
                             art = { MiniTicket(tier) },
                         ) {
@@ -135,7 +158,7 @@ fun PlayerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     }
                 }
             } else {
-                WalletTab(state)
+                WalletTab(vm, state, nav)
             }
             msg?.let {
                 Text(
@@ -160,12 +183,19 @@ private fun MiniTicket(tier: Tier) {
         drawRoundRect(Ink, tl, sz, CornerRadius(12f), style = Stroke(5f))
         drawRoundRect(Color(0xFFA9A9B8), tl + Offset(sz.width * 0.12f, sz.height * 0.35f), Size(sz.width * 0.76f, sz.height * 0.5f), CornerRadius(6f))
         drawRect(tier.accent, tl + Offset(0f, sz.height * 0.08f), Size(sz.width, sz.height * 0.18f))
-        drawSymbol(tier.prizes.last().first, Offset(size.width * 0.72f, size.height * 0.62f), size.width * 0.32f)
+        if (tier.kind == Kind.NUMBERS) {
+            drawBall(Offset(size.width * 0.38f, size.height * 0.6f), size.width * 0.11f, 7)
+            drawBall(Offset(size.width * 0.66f, size.height * 0.6f), size.width * 0.11f, 21)
+        } else drawSymbol(tier.prizes.last().first, Offset(size.width * 0.72f, size.height * 0.62f), size.width * 0.32f)
+        if (tier.kind == Kind.CURSED) drawSymbol(Sym.SKULL, Offset(size.width * 0.32f, size.height * 0.62f), size.width * 0.3f)
     }
 }
 
 @Composable
-private fun ShopCard(title: String, price: Int, sub: String, canBuy: Boolean, art: @Composable () -> Unit, onBuy: () -> Unit) {
+private fun ShopCard(
+    title: String, price: Int, sub: String, canBuy: Boolean, art: @Composable () -> Unit,
+    buyLabel: String? = null, onBuy: () -> Unit,
+) {
     Panel(Modifier.fillMaxWidth()) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             art()
@@ -175,13 +205,13 @@ private fun ShopCard(title: String, price: Int, sub: String, canBuy: Boolean, ar
                 Text(sub, color = Dim, fontSize = 13.sp)
             }
             Spacer(Modifier.width(8.dp))
-            ChunkyButton("${fmt(price)}c", Modifier.width(88.dp), enabled = canBuy, height = 46.dp, onClick = onBuy)
+            ChunkyButton(buyLabel ?: "${fmt(price)}c", Modifier.width(88.dp), enabled = canBuy, height = 46.dp, onClick = onBuy)
         }
     }
 }
 
 @Composable
-private fun WalletTab(state: GameState) {
+private fun WalletTab(vm: GameViewModel, state: GameState, nav: Nav) {
     val df = remember { SimpleDateFormat("MMM d, HH:mm", Locale.getDefault()) }
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
@@ -190,6 +220,26 @@ private fun WalletTab(state: GameState) {
                     Canvas(Modifier.size(56.dp)) { drawCoin(center, size.minDimension / 2) }
                     Text(fmt(state.coins), color = Gold, fontWeight = FontWeight.Black, fontSize = 40.sp)
                     Text("fake coins", color = Dim)
+                    Spacer(Modifier.height(6.dp))
+                    Text("\"worth\" ≈ ${coinValue(state.coins, state.currency)}", color = Mint, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("(not real. can't be withdrawn. ever. change currency in settings)", color = Dim, fontSize = 11.sp, textAlign = TextAlign.Center)
+                }
+            }
+        }
+        if (state.unclaimed.isNotEmpty()) {
+            item { Text("unclaimed prizes", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp) }
+            items(state.unclaimed, key = { it.id }) { u ->
+                Panel(Modifier.fillMaxWidth(), color = CardHi) {
+                    Column(Modifier.padding(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(u.name, color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Text("${fmt(u.prize)}c", color = Gold, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ClaimButtons(vm, u.id, nav, Modifier.weight(1f))
+                        }
+                    }
                 }
             }
         }
@@ -266,6 +316,9 @@ fun ScratchScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             fx.play(if (t.prize >= t.tier.price * 5) Sfx.BIG_WIN else Sfx.WIN)
             fx.buzz(Buzz.SUCCESS)
             confetti++
+        } else if (t.prize < 0) {
+            fx.play(Sfx.ANGRY)
+            fx.buzz(Buzz.HEAVY)
         } else {
             fx.play(Sfx.LOSE)
             fx.buzz(Buzz.FAIL)
@@ -295,7 +348,13 @@ fun ScratchScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                         ) {
                             Text(t.tier.name, color = Color.White, fontWeight = FontWeight.Black, fontSize = 22.sp)
                         }
-                        Text("match 3 symbols to win!", color = Ink, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(6.dp))
+                        Text(
+                            when (t.tier.kind) {
+                                Kind.MATCH3 -> "match 3 symbols to win!"
+                                Kind.NUMBERS -> "scratch to reveal the numbers!"
+                                Kind.CURSED -> "match 3 to win. pray it's not skulls."
+                            },
+                            color = if (t.tier.kind == Kind.CURSED) Color.White else Ink, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(6.dp))
                         Box(
                             Modifier
                                 .fillMaxWidth()
@@ -305,14 +364,33 @@ fun ScratchScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                             Canvas(Modifier.fillMaxSize()) {
                                 val cw = size.width / 3
                                 drawRoundRect(Color.White, cornerRadius = CornerRadius(30f))
-                                t.cells.forEachIndexed { i, s ->
+                                if (t.tier.kind == Kind.NUMBERS) {
+                                    val sz = size.width
+                                    label("winning numbers", sz / 2, sz * 0.05f, sz * 0.045f, Ink.copy(alpha = 0.6f))
+                                    t.winNums.forEachIndexed { i, n ->
+                                        val c = Offset(sz * (0.36f + i * 0.28f), sz * 0.16f)
+                                        circleO(c, sz * 0.085f, Gold, 4f)
+                                        label("$n", c.x, c.y, sz * 0.08f, Ink)
+                                    }
+                                    drawLine(Ink.copy(alpha = 0.3f), Offset(sz * 0.05f, sz * 0.28f), Offset(sz * 0.95f, sz * 0.28f), 4f)
+                                    label("your numbers", sz / 2, sz * 0.32f, sz * 0.045f, Ink.copy(alpha = 0.6f))
+                                    t.myNums.forEachIndexed { i, n ->
+                                        val cx = sz * (0.125f + (i % 4) * 0.25f)
+                                        val cy = sz * (0.47f + (i / 4) * 0.3f)
+                                        val hit = n in t.winNums
+                                        if (revealed && hit) drawCircle(Mint.copy(alpha = glow * 0.8f), sz * 0.11f, Offset(cx, cy + sz * 0.04f))
+                                        circleO(Offset(cx, cy), sz * 0.07f, t.tier.accent.copy(alpha = 0.25f), 3f)
+                                        label("$n", cx, cy, sz * 0.07f, Ink)
+                                        label("${fmt(t.myPrizes[i])}c", cx, cy + sz * 0.11f, sz * 0.045f, if (revealed && hit) Pink else Ink.copy(alpha = 0.7f))
+                                    }
+                                } else t.cells.forEachIndexed { i, s ->
                                     val c = Offset(cw * (i % 3) + cw / 2, cw * (i / 3) + cw / 2)
                                     if (revealed && s == t.winSym) {
                                         drawCircle(Gold.copy(alpha = glow * 0.7f), cw * 0.46f, c)
                                     }
                                     drawSymbol(s, c, cw * 0.62f)
                                 }
-                                for (i in 1..2) {
+                                if (t.tier.kind != Kind.NUMBERS) for (i in 1..2) {
                                     drawLine(Ink.copy(alpha = 0.15f), Offset(cw * i, 0f), Offset(cw * i, size.height), 3f)
                                     drawLine(Ink.copy(alpha = 0.15f), Offset(0f, cw * i), Offset(size.width, cw * i), 3f)
                                 }
@@ -376,10 +454,13 @@ fun ScratchScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                         }
                         Spacer(Modifier.height(8.dp))
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            if (t.tier.kind == Kind.NUMBERS) {
+                                Text("match a winning number, win the prize under it", color = Ink, fontSize = 12.sp, textAlign = TextAlign.Center)
+                            }
                             t.tier.prizes.forEach { (s, p) ->
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Canvas(Modifier.size(26.dp)) { drawSymbol(s, center, size.width * 0.9f) }
-                                    Text(fmt(p), color = Ink, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text(fmt(p), color = if (t.tier.kind == Kind.CURSED) Color.White else Ink, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -389,7 +470,8 @@ fun ScratchScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 Text(
                     when {
                         !revealed -> "rub the grey stuff with your finger"
-                        t.prize > 0 -> "you won ${fmt(t.prize)} fake coins!"
+                        t.prize > 0 -> "you won ${fmt(t.prize)} fake coins!\nnow go claim it."
+                        t.prize < 0 -> "CURSED! the skulls took ${-t.prize} more coins"
                         else -> loseLine
                     },
                     color = if (revealed && t.prize > 0) Gold else Color.White,
@@ -399,6 +481,8 @@ fun ScratchScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (!revealed) {
                     ChunkyButton("just reveal it", Modifier.weight(1f), color = CardHi, textColor = Color.White) { reveal() }
+                } else if (state.unclaimed.any { it.id == t.uid }) {
+                    ClaimButtons(vm, t.uid, nav, Modifier.weight(1f))
                 } else {
                     ChunkyButton("again (${t.tier.price}c)", Modifier.weight(1f), enabled = state.coins >= t.tier.price, sfx = Sfx.BUY) {
                         vm.buyScratch(t.tier)
@@ -709,8 +793,12 @@ fun TvShowScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
                 Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ChunkyButton("play again", Modifier.weight(1f), enabled = state.coins >= TV_PRICE) { nav.swap(Screen.TvPick) }
-                    ChunkyButton("shop", Modifier.weight(1f), color = CardHi, textColor = Color.White) { nav.back() }
+                    if (state.unclaimed.any { it.id == t.uid }) {
+                        ClaimButtons(vm, t.uid, nav, Modifier.weight(1f))
+                    } else {
+                        ChunkyButton("play again", Modifier.weight(1f), enabled = state.coins >= TV_PRICE) { nav.swap(Screen.TvPick) }
+                        ChunkyButton("shop", Modifier.weight(1f), color = CardHi, textColor = Color.White) { nav.back() }
+                    }
                 }
             } else {
                 ChunkyButton(
@@ -740,6 +828,93 @@ private fun BallRow(nums: List<Int?>, hl: (Int) -> Boolean) {
                     label("?", center.x, center.y, r, Dim)
                 } else drawBall(center, r, n, hl(n))
             }
+        }
+    }
+}
+
+/** "claim prize" (sign, walk, fight) or the lazy 70% cash-out */
+@Composable
+fun ClaimButtons(vm: GameViewModel, id: Long, nav: Nav, modifier: Modifier) {
+    ChunkyButton("claim prize", modifier, color = Mint, sfx = Sfx.WHOOSH) {
+        if (vm.startClaim(id)) nav.go(Screen.Claim)
+    }
+    ChunkyButton("lazy cash (70%)", modifier, color = CardHi, textColor = Color.White, sfx = Sfx.COIN) { vm.lazyCash(id) }
+}
+
+private val wheelPrizes = listOf(10, 25, 0, 50, 5, 100, 15, 500)
+private val wheelWeights = listOf(20, 16, 14, 12, 16, 8, 12, 2)
+
+fun DrawScope.drawWheel(c: Offset, r: Float, rot: Float) {
+    val seg = 360f / wheelPrizes.size
+    wheelPrizes.forEachIndexed { i, p ->
+        val start = -90f + i * seg + rot
+        drawArc(ballColors[i % ballColors.size], start, seg, true, c - Offset(r, r), Size(r * 2, r * 2))
+        drawArc(Ink, start, seg, true, c - Offset(r, r), Size(r * 2, r * 2), style = Stroke(r * 0.03f))
+        val a = Math.toRadians((start + seg / 2).toDouble())
+        val tp = c + Offset((kotlin.math.cos(a) * r * 0.66f).toFloat(), (kotlin.math.sin(a) * r * 0.66f).toFloat())
+        label(if (p == 0) "lol" else "$p", tp.x, tp.y, r * 0.17f, Ink)
+    }
+    circleO(c, r * 0.14f, Gold, r * 0.03f)
+    drawCircle(Ink, r, c, style = Stroke(r * 0.05f))
+}
+
+@Composable
+private fun WheelDialog(vm: GameViewModel, onClose: () -> Unit) {
+    val fx = LocalFx.current
+    val rot = remember { Animatable(0f) }
+    var spinning by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<Int?>(null) }
+    var confetti by remember { mutableIntStateOf(0) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var lastTick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(rot.value) {
+        val t = (rot.value / 45f).toInt()
+        if (t != lastTick) { lastTick = t; fx.play(Sfx.CLICK); fx.buzz(Buzz.TICK) }
+    }
+    androidx.compose.ui.window.Dialog(onDismissRequest = { if (!spinning) onClose() }) {
+        Box {
+            Panel(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("daily wheel", color = Gold, fontWeight = FontWeight.Black, fontSize = 24.sp)
+                    Canvas(Modifier.fillMaxWidth().aspectRatio(1f).padding(8.dp)) {
+                        drawWheel(center, size.minDimension * 0.46f, rot.value)
+                        val top = Offset(center.x, center.y - size.minDimension * 0.46f)
+                        outlined(Path().apply {
+                            moveTo(top.x - 22f, top.y - 30f); lineTo(top.x + 22f, top.y - 30f); lineTo(top.x, top.y + 16f); close()
+                        }, Pink, 5f)
+                    }
+                    Text(
+                        when (val r = result) {
+                            null -> if (spinning) "spinning..." else "one spin per day"
+                            0 -> "lol. nothing. see you tomorrow."
+                            else -> "you won $r coins!"
+                        },
+                        color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    if (result == null) {
+                        ChunkyButton("SPIN", Modifier.fillMaxWidth(), color = Pink, enabled = !spinning, sfx = Sfx.WHOOSH) {
+                            spinning = true
+                            var roll = kotlin.random.Random.nextInt(wheelWeights.sum())
+                            var idx = 0
+                            while (roll >= wheelWeights[idx]) { roll -= wheelWeights[idx]; idx++ }
+                            val target = 360f * 6 - (idx * 45f + 22.5f) + (kotlin.random.Random.nextFloat() - 0.5f) * 30f
+                            scope.launch {
+                                rot.animateTo(target, tween(4200, easing = androidx.compose.animation.core.CubicBezierEasing(0.1f, 0.7f, 0.2f, 1f)))
+                                val prize = wheelPrizes[idx]
+                                vm.spinWheel(prize)
+                                result = prize
+                                spinning = false
+                                if (prize > 0) { fx.play(if (prize >= 100) Sfx.BIG_WIN else Sfx.WIN); fx.buzz(Buzz.SUCCESS); confetti++ }
+                                else { fx.play(Sfx.LOSE); fx.buzz(Buzz.FAIL) }
+                            }
+                        }
+                    } else {
+                        ChunkyButton("nice", Modifier.fillMaxWidth()) { onClose() }
+                    }
+                }
+            }
+            Confetti(confetti)
         }
     }
 }

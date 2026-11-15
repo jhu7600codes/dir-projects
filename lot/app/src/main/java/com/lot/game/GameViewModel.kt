@@ -37,6 +37,12 @@ private fun GameState.toJson(): String = JSONObject().apply {
     put("yells", yells); put("served", served); put("bestDayProfit", bestDayProfit)
     put("steals", steals); put("perfectSteals", perfectSteals); put("timesCaught", timesCaught)
     put("bestRound", bestRound); put("stealLoot", stealLoot)
+    put("unclaimed", JSONArray().apply {
+        unclaimed.forEach { put(JSONObject().put("id", it.id).put("n", it.name).put("p", it.prize).put("ts", it.time)) }
+    })
+    put("claims", claims); put("bingoPlayed", bingoPlayed); put("bingoWins", bingoWins)
+    put("bagsSearched", bagsSearched); put("trashWinners", trashWinners)
+    put("currency", currency); put("currenciesSeen", JSONArray(currenciesSeen.toList())); put("lastWheelDay", lastWheelDay)
     put("flags", JSONArray(flags.toList()))
     put("badges", JSONObject().apply { badges.forEach { (k, v) -> put(k, v) } })
     put("tutorialsSeen", JSONArray(tutorialsSeen.toList()))
@@ -51,6 +57,7 @@ private fun parseState(s: String): GameState = try {
     val o = JSONObject(s)
     val d = GameState()
     val hist = o.optJSONArray("history")
+    val unc = o.optJSONArray("unclaimed")
     GameState(
         coins = o.optInt("coins", d.coins),
         history = if (hist == null) emptyList() else (0 until hist.length()).map {
@@ -65,6 +72,14 @@ private fun parseState(s: String): GameState = try {
         bestDayProfit = o.optInt("bestDayProfit"),
         steals = o.optInt("steals"), perfectSteals = o.optInt("perfectSteals"), timesCaught = o.optInt("timesCaught"),
         bestRound = o.optInt("bestRound"), stealLoot = o.optInt("stealLoot"),
+        unclaimed = if (unc == null) emptyList() else (0 until unc.length()).map {
+            val u = unc.getJSONObject(it)
+            Unclaimed(u.optLong("id"), u.optString("n"), u.optInt("p"), u.optLong("ts"))
+        },
+        claims = o.optInt("claims"), bingoPlayed = o.optInt("bingoPlayed"), bingoWins = o.optInt("bingoWins"),
+        bagsSearched = o.optInt("bagsSearched"), trashWinners = o.optInt("trashWinners"),
+        currency = o.optString("currency", "usd"), currenciesSeen = o.optJSONArray("currenciesSeen").strings(),
+        lastWheelDay = o.optLong("lastWheelDay", -1),
         flags = o.optJSONArray("flags").strings(),
         badges = o.optJSONObject("badges")?.let { b -> b.keys().asSequence().associateWith { b.getLong(it) } } ?: emptyMap(),
         tutorialsSeen = o.optJSONArray("tutorialsSeen").strings(),
@@ -142,7 +157,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 coins = it.coins - tier.price,
                 ticketsBought = it.ticketsBought + 1,
                 totalSpent = it.totalSpent + tier.price,
-                flags = if (tier.id == 2) it.flags + "gold" else it.flags,
+                flags = if (tier.flag != null) it.flags + tier.flag else it.flags,
             )
         }
         currentScratch = genScratch(tier)
@@ -151,17 +166,23 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun settleScratch(t: ScratchTicket) {
         if (!settled.add(t.uid)) return
+        val now = System.currentTimeMillis()
         update {
             it.copy(
-                coins = it.coins + t.prize,
+                coins = if (t.prize < 0) (it.coins + t.prize).coerceAtLeast(0) else it.coins,
                 scratched = it.scratched + 1,
                 wins = it.wins + if (t.prize > 0) 1 else 0,
-                totalWon = it.totalWon + t.prize,
-                biggestWin = maxOf(it.biggestWin, t.prize),
+                flags = if (t.prize < 0) it.flags + "cursed" else it.flags,
+                unclaimed = if (t.prize > 0) it.unclaimed + Unclaimed(t.uid, t.tier.name, t.prize, now) else it.unclaimed,
                 history = record(
                     it, TicketRecord(
-                        t.tier.name, t.tier.price, t.prize, System.currentTimeMillis(),
-                        if (t.winSym != null) "3x ${t.winSym.name.lowercase()}" else "no match",
+                        t.tier.name, t.tier.price, t.prize, now,
+                        when {
+                            t.prize < 0 -> "cursed! 3 skulls"
+                            t.tier.kind == Kind.NUMBERS -> if (t.prize > 0) "numbers matched" else "no match"
+                            t.winSym != null -> "3x ${t.winSym.name.lowercase()}"
+                            else -> "no match"
+                        },
                     )
                 ),
             )
@@ -185,13 +206,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun settleTv(t: TvTicket) {
         if (!settled.add(t.uid)) return
+        val now = System.currentTimeMillis()
         update {
             it.copy(
-                coins = it.coins + t.prize,
                 tvPlayed = it.tvPlayed + 1,
                 wins = it.wins + if (t.prize > 0) 1 else 0,
-                totalWon = it.totalWon + t.prize,
-                biggestWin = maxOf(it.biggestWin, t.prize),
+                unclaimed = if (t.prize > 0) it.unclaimed + Unclaimed(t.uid, "tv ticket", t.prize, now) else it.unclaimed,
                 flags = if (t.matches >= 3) it.flags + "tv3" else it.flags,
                 history = record(
                     it, TicketRecord(
@@ -202,4 +222,52 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
     }
+
+    // ---- claiming prizes ----
+    var currentClaim by mutableStateOf<Unclaimed?>(null)
+        private set
+
+    fun startClaim(id: Long): Boolean {
+        val u = _state.value.unclaimed.firstOrNull { it.id == id } ?: return false
+        currentClaim = u
+        return true
+    }
+
+    /** pays out a claimed ticket and removes it from the unclaimed list */
+    fun payClaim(id: Long, amount: Int, hardWay: Boolean, extraFlags: Set<String> = emptySet()) {
+        update { s ->
+            if (s.unclaimed.none { it.id == id }) return@update s
+            s.copy(
+                unclaimed = s.unclaimed.filter { it.id != id },
+                coins = s.coins + amount,
+                totalWon = s.totalWon + amount,
+                biggestWin = maxOf(s.biggestWin, amount),
+                claims = s.claims + if (hardWay) 1 else 0,
+                flags = s.flags + extraFlags,
+            )
+        }
+    }
+
+    fun loseClaim(id: Long, extraFlags: Set<String> = emptySet()) =
+        update { s -> s.copy(unclaimed = s.unclaimed.filter { it.id != id }, flags = s.flags + extraFlags) }
+
+    fun lazyCash(id: Long) {
+        val u = _state.value.unclaimed.firstOrNull { it.id == id } ?: return
+        payClaim(id, u.prize * 7 / 10, false, setOf("lazy"))
+    }
+
+    fun addUnclaimed(name: String, prize: Int) = update {
+        it.copy(unclaimed = it.unclaimed + Unclaimed(System.nanoTime(), name, prize, System.currentTimeMillis()))
+    }
+
+    fun flag(f: String) = update { if (f in it.flags) it else it.copy(flags = it.flags + f) }
+
+    // ---- misc ----
+    fun today() = System.currentTimeMillis() / 86_400_000L
+
+    fun spinWheel(prize: Int) = update {
+        it.copy(coins = it.coins + prize, lastWheelDay = today(), flags = it.flags + "wheel")
+    }
+
+    fun setCurrency(code: String) = update { it.copy(currency = code, currenciesSeen = it.currenciesSeen + code) }
 }

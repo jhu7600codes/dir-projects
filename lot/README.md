@@ -7,8 +7,22 @@ a fake money lottery simulator for android. kotlin + jetpack compose + material 
 - **player** - shop with 3 scratch ticket tiers (paper / shiny / golden, finger-scratch erase mask) and tv tickets (pick 5 of 30, watch a live draw show with a goofy host and a bouncing ball globe). wallet, stats, ticket history, and mom bails you out when you're broke.
 - **host** - run the stand. customers with moods and patience walk up with orders, you sell, they scratch, you pay out (or pretend it lost). yell buttons are funny and dangerous for your reputation. end of day summary, profit goes to your wallet.
 - **stealer** - hide in a bush, drag the binoculars to read tiny ticket numbers, grab winners with a timing minigame. more guards and faster customers every round, 3 lives.
+- **bingo** - daub your card as numbers get called and yell bingo before three very fast grannies do.
+- **dumpster** - rip open trash bags behind the stand, check thrown away tickets against tonight's numbers, fight off raccoons.
 
-26 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
+### tickets
+
+8 scratch tickets across 3 kinds: match-3 (pocket change, paper, shiny, golden, diamond), numbers (number cruncher, big numbers) and the cursed ticket (3 skulls takes coins from you). plus tv tickets and a free daily wheel.
+
+### claiming prizes
+
+winning tickets don't pay out right away. you sign the back, walk to the stand in a 2d platformer (puddles, cones, pigeons and holes all damage the ticket), maybe fight off a ticket thief in a tug of war, then argue with a cashier who points out every single defect. or take the lazy cash-out for 70%.
+
+### coin "value"
+
+settings has a currency picker that shows what your coins are "worth" in usd, eur, rub, shawarmas, potatoes and more. it's fake, nothing can be cashed out.
+
+45 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
 
 ## install
 

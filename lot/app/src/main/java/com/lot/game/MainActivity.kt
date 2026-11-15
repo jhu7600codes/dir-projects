@@ -35,6 +35,9 @@ sealed interface Screen {
     data object TvShow : Screen
     data object Host : Screen
     data object Stealer : Screen
+    data object Claim : Screen
+    data object Bingo : Screen
+    data object Dumpster : Screen
 }
 
 class Nav {
@@ -96,6 +99,9 @@ fun App(vm: GameViewModel, fx: Fx) {
                     Screen.TvShow -> TvShowScreen(vm, state, nav)
                     Screen.Host -> HostScreen(vm, state, nav)
                     Screen.Stealer -> StealerScreen(vm, state, nav)
+                    Screen.Claim -> ClaimScreen(vm, state, nav)
+                    Screen.Bingo -> BingoScreen(vm, state, nav)
+                    Screen.Dumpster -> DumpsterScreen(vm, state, nav)
                 }
             }
         }
@@ -109,9 +115,9 @@ fun App(vm: GameViewModel, fx: Fx) {
 @Composable
 fun ModeTutorial(
     vm: GameViewModel, state: GameState, mode: String, title: String, pages: List<String>,
-    forceOpen: Boolean, onClosed: () -> Unit,
+    forceOpen: Boolean, countsAsMode: Boolean = true, onClosed: () -> Unit,
 ) {
-    LaunchedEffect(mode) { vm.markPlayed(mode) }
+    LaunchedEffect(mode) { if (countsAsMode) vm.markPlayed(mode) }
     if (mode !in state.tutorialsSeen || forceOpen) {
         TutorialDialog(title, pages) {
             vm.markTutorial(mode)

@@ -129,10 +129,14 @@ fun HostScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             roll < 0.75f + 0.1f * r -> Mood.MEH
             else -> Mood.GRUMPY
         }
-        val tier = when (Random.nextInt(10)) {
-            in 0..3 -> Tiers[0]
-            in 4..6 -> Tiers[1]
-            7 -> Tiers[2]
+        val tier = when (Random.nextInt(12)) {
+            0 -> Tiers[0]
+            in 1..3 -> Tiers[1]
+            4 -> Tiers[2]
+            in 5..6 -> Tiers[3]
+            7 -> Tiers[4]
+            8 -> Tiers[5]
+            9 -> Tiers[6]
             else -> null
         }
         val qty = 1 + Random.nextInt(if (r > 0.6f) 3 else 2)
@@ -216,7 +220,7 @@ fun HostScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             dayServed++
             vm.update { it.copy(served = it.served + 1) }
             c.prizes = List(c.order.qty) {
-                if (c.order.tier != null) genScratch(c.order.tier).prize
+                if (c.order.tier != null) genScratch(c.order.tier).prize.coerceAtLeast(0)
                 else genTv((1..TV_POOL).shuffled().take(TV_PICKS)).prize
             }
             c.line = "ooh let's see..."
