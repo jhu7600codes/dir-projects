@@ -41,6 +41,10 @@ sealed interface Screen {
     data object Derby : Screen
     data object Items : Screen
     data object Slots : Screen
+    data object Campaign : Screen
+    data object Boss : Screen
+    data object Rain : Screen
+    data object Hilo : Screen
     data object Inspector : Screen
 }
 
@@ -109,6 +113,10 @@ fun App(vm: GameViewModel, fx: Fx) {
                     Screen.Derby -> DerbyScreen(vm, state, nav)
                     Screen.Items -> ItemsScreen(vm, state, nav)
                     Screen.Slots -> SlotsScreen(vm, state, nav)
+                    Screen.Campaign -> CampaignScreen(vm, state, nav)
+                    Screen.Boss -> BossScreen(vm, state, nav)
+                    Screen.Rain -> RainScreen(vm, state, nav)
+                    Screen.Hilo -> HiloScreen(vm, state, nav)
                     Screen.Inspector -> InspectorScreen(vm, state, nav)
                 }
             }

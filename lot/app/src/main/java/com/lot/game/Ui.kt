@@ -316,6 +316,9 @@ fun modeColor(mode: String) = when (mode) {
     "derby" -> Color(0xFFFF8C42)
     "slots" -> Color(0xFFE53935)
     "inspector" -> Color(0xFF26C6DA)
+    "rain" -> Color(0xFF7986CB)
+    "hilo" -> Color(0xFFFFB74D)
+    "campaign" -> Color(0xFFFFD54F)
     else -> Grape
 }
 

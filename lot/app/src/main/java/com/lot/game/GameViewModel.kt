@@ -44,6 +44,8 @@ private fun GameState.toJson(): String = JSONObject().apply {
     put("bagsSearched", bagsSearched); put("trashWinners", trashWinners)
     put("currency", currency); put("currenciesSeen", JSONArray(currenciesSeen.toList())); put("lastWheelDay", lastWheelDay)
     put("derbyBets", derbyBets); put("derbyWins", derbyWins)
+    put("rainBest", rainBest); put("rainPlays", rainPlays); put("hiloBestStreak", hiloBestStreak); put("hiloBestCashout", hiloBestCashout)
+    put("campaignLevel", campaignLevel); put("campaignBase", campaignBase)
     put("slotSpins", slotSpins); put("slotSevens", slotSevens); put("inspected", inspected); put("inspectBest", inspectBest)
     put("items", JSONArray(items.toList()))
     put("questDay", questDay); put("questIds", JSONArray(questIds))
@@ -87,6 +89,9 @@ private fun parseState(s: String): GameState = try {
         currency = o.optString("currency", "usd"), currenciesSeen = o.optJSONArray("currenciesSeen").strings(),
         lastWheelDay = o.optLong("lastWheelDay", -1),
         derbyBets = o.optInt("derbyBets"), derbyWins = o.optInt("derbyWins"),
+        rainBest = o.optInt("rainBest"), rainPlays = o.optInt("rainPlays"),
+        hiloBestStreak = o.optInt("hiloBestStreak"), hiloBestCashout = o.optInt("hiloBestCashout"),
+        campaignLevel = o.optInt("campaignLevel"), campaignBase = o.optInt("campaignBase", -1),
         slotSpins = o.optInt("slotSpins"), slotSevens = o.optInt("slotSevens"),
         inspected = o.optInt("inspected"), inspectBest = o.optInt("inspectBest"),
         items = o.optJSONArray("items").strings(),
@@ -321,6 +326,33 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 coins = it.coins + q.reward,
                 questsDone = it.questsDone + q.id,
                 questsCompleted = it.questsCompleted + 1,
+            )
+        }
+    }
+
+    // ---- campaign ----
+    fun campaignStart() {
+        val s = _state.value
+        val lv = Campaign.getOrNull(s.campaignLevel) ?: return
+        if (s.campaignBase < 0) update { it.copy(campaignBase = lv.stat(it)) }
+    }
+
+    fun campaignProgress(s: GameState): Int {
+        val lv = Campaign.getOrNull(s.campaignLevel) ?: return 0
+        val v = lv.stat(s)
+        return (if (lv.absolute) v else v - (if (s.campaignBase < 0) v else s.campaignBase)).coerceIn(0, lv.target)
+    }
+
+    fun campaignComplete() {
+        val s = _state.value
+        val lv = Campaign.getOrNull(s.campaignLevel) ?: return
+        if (campaignProgress(s) < lv.target) return
+        update {
+            val next = Campaign.getOrNull(it.campaignLevel + 1)
+            it.copy(
+                coins = it.coins + lv.reward,
+                campaignLevel = it.campaignLevel + 1,
+                campaignBase = next?.stat?.invoke(it) ?: -1,
             )
         }
     }

@@ -66,24 +66,32 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
         }
         LotLogo()
         Text("the fake money lottery", color = Dim, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Text(
+            "rank: ${rankOf(state.badges.size)}", color = Ink, fontWeight = FontWeight.Black, fontSize = 13.sp,
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .background(modeColor("campaign"), androidx.compose.foundation.shape.RoundedCornerShape(50))
+                .padding(horizontal = 12.dp, vertical = 3.dp),
+        )
         Spacer(Modifier.height(10.dp))
         NewsTicker(state)
         Spacer(Modifier.height(12.dp))
         QuestPanel(vm, state)
         Spacer(Modifier.height(12.dp))
 
-        ModeCard("player", "buy tickets, scratch stuff, lose fake money", Gold, t, art = { w, h, tt ->
+        CampaignCard(state, t) { nav.go(Screen.Campaign) }
+        Spacer(Modifier.height(12.dp))
+        val modes = listOf(
+        ModeEntry("player", "buy tickets, scratch stuff, lose fake money", Gold, art = { w, h, tt ->
             drawDude(Dude(Color(0xFFFFD7B5), Pink, Color(0xFF6B3E26), 1, Mint, "", false, 1f), w * 0.5f, h * 1.05f, h * 0.95f, Mood.HAPPY, wobble = tt * 2 - 1, holdTicket = true, t = tt * 10)
             drawSymbol(Sym.STAR, Offset(w * 0.18f, h * 0.35f), h * 0.35f)
             drawSymbol(Sym.SEVEN, Offset(w * 0.82f, h * 0.4f), h * 0.4f)
-        }) { nav.go(Screen.Player) }
-        Spacer(Modifier.height(12.dp))
-        ModeCard("host", "run the stand. sell. yell. regret.", Pink, t, art = { w, h, tt ->
+        }, go = Screen.Player),
+        ModeEntry("host", "run the stand. sell. yell. regret.", Pink, art = { w, h, tt ->
             drawStand(w * 0.12f, w * 0.88f, h * 0.3f, h * 0.68f, h * 1.0f)
             drawDude(HostDude.copy(shirt = Gold), w * 0.5f, h * 0.7f, h * 0.45f, Mood.GRUMPY, talk = tt > 0.5f, t = tt * 10)
-        }) { nav.go(Screen.Host) }
-        Spacer(Modifier.height(12.dp))
-        ModeCard("stealer", "spy with binoculars, snatch winning tickets", Mint, t, art = { w, h, tt ->
+        }, go = Screen.Host),
+        ModeEntry("stealer", "spy with binoculars, snatch winning tickets", Mint, art = { w, h, tt ->
             drawBush(Offset(w * 0.32f, h * 0.65f), h * 0.42f, true, tt * 2 - 1, tt * 20)
             // binoculars
             val c = Offset(w * 0.7f, h * 0.5f)
@@ -91,26 +99,22 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             circleO(c + Offset(h * 0.16f, 0f), h * 0.15f, Color(0xFF333344), h * 0.03f)
             drawCircle(Sky.copy(alpha = 0.7f), h * 0.09f, c + Offset(-h * 0.16f, 0f))
             drawCircle(Sky.copy(alpha = 0.7f), h * 0.09f, c + Offset(h * 0.16f, 0f))
-        }) { nav.go(Screen.Stealer) }
-        Spacer(Modifier.height(12.dp))
-        ModeCard("bingo", "you vs three very fast grannies", Sky, t, art = { w, h, tt ->
+        }, go = Screen.Stealer),
+        ModeEntry("bingo", "you vs three very fast grannies", Sky, art = { w, h, tt ->
             drawDude(grannyDude(0), w * 0.3f, h * 1.05f, h * 0.9f, Mood.GRUMPY, t = tt * 10)
             drawBall(Offset(w * 0.72f, h * 0.35f), h * 0.2f, 42)
             drawBall(Offset(w * 0.78f, h * 0.75f), h * 0.16f, 7)
-        }) { nav.go(Screen.Bingo) }
-        Spacer(Modifier.height(12.dp))
-        ModeCard("dumpster", "dig through trash for thrown away winners", Color(0xFF9CCC65), t, art = { w, h, tt ->
+        }, go = Screen.Bingo),
+        ModeEntry("dumpster", "dig through trash for thrown away winners", Color(0xFF9CCC65), art = { w, h, tt ->
             drawTrashBag(Offset(w * 0.3f, h * 0.55f), h * 0.7f, Color(0xFF2A2830), (tt - 0.5f) * 0.6f)
             drawRaccoon(Offset(w * 0.68f, h * 0.65f), h * 0.45f, tt * 5f, false)
-        }) { nav.go(Screen.Dumpster) }
-        Spacer(Modifier.height(12.dp))
-        ModeCard("derby", "bet on pigeons. lose to pigeons.", Color(0xFFFF8C42), t, art = { w, h, tt ->
+        }, go = Screen.Dumpster),
+        ModeEntry("derby", "bet on pigeons. lose to pigeons.", Color(0xFFFF8C42), art = { w, h, tt ->
             drawPigeon(Offset(w * 0.35f, h * 0.4f), h * 0.4f, tt, 1f)
             drawPigeon(Offset(w * 0.62f, h * 0.7f), h * 0.4f, 1f - tt, 1f, Color(0xFF3A3A44))
             for (i in 0 until 6) drawRect(if (i % 2 == 0) Color.White else Ink, Offset(w * 0.88f, i * h / 6), Size(w * 0.04f, h / 6))
-        }) { nav.go(Screen.Derby) }
-        Spacer(Modifier.height(12.dp))
-        ModeCard("slots", "stop the reels yourself. blame yourself.", Color(0xFFE53935), t, art = { w, h, tt ->
+        }, go = Screen.Derby),
+        ModeEntry("slots", "stop the reels yourself. blame yourself.", Color(0xFFE53935), art = { w, h, tt ->
             drawRoundRect(Color(0xFFE53935), Offset(w * 0.15f, h * 0.15f), Size(w * 0.6f, h * 0.75f), androidx.compose.ui.geometry.CornerRadius(16f))
             for (i in 0 until 3) {
                 drawRect(Color.White, Offset(w * (0.2f + i * 0.18f), h * 0.32f), Size(w * 0.15f, h * 0.4f))
@@ -118,14 +122,34 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             }
             drawLine(Ink, Offset(w * 0.8f, h * 0.5f), Offset(w * 0.85f, h * (0.15f + tt * 0.2f)), 8f)
             circleO(Offset(w * 0.85f, h * (0.15f + tt * 0.2f)), h * 0.09f, Pink, 4f)
-        }) { nav.go(Screen.Slots) }
-        Spacer(Modifier.height(12.dp))
-        ModeCard("inspector", "spot fake tickets before they spot you", Color(0xFF26C6DA), t, art = { w, h, tt ->
+        }, go = Screen.Slots),
+        ModeEntry("inspector", "spot fake tickets before they spot you", Color(0xFF26C6DA), art = { w, h, tt ->
             drawInspectTicket(realTicket(1234), Offset(w * 0.12f, h * 0.2f), Size(w * 0.6f, h * 0.55f))
             drawCircle(Color(0xFFBFE6FF).copy(alpha = 0.5f), h * 0.22f, Offset(w * (0.55f + tt * 0.15f), h * 0.5f))
             drawCircle(Ink, h * 0.22f, Offset(w * (0.55f + tt * 0.15f), h * 0.5f), style = androidx.compose.ui.graphics.drawscope.Stroke(6f))
-        }) { nav.go(Screen.Inspector) }
+        }, go = Screen.Inspector),
 
+            ModeEntry("rain", "catch falling tickets", Color(0xFF7986CB), art = { w, h, tt ->
+                for (i in 0 until 4) {
+                    val x = w * (0.2f + i * 0.2f)
+                    val y = h * ((0.15f + i * 0.17f + tt * 0.3f) % 0.8f)
+                    drawRoundRect(Color(0xFFFFF3D6), Offset(x - 12f, y - 7f), Size(24f, 14f), androidx.compose.ui.geometry.CornerRadius(3f))
+                }
+                outlined(androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w * 0.3f, h * 0.75f); lineTo(w * 0.7f, h * 0.75f); lineTo(w * 0.65f, h * 0.95f); lineTo(w * 0.35f, h * 0.95f); close()
+                }, Color(0xFFB5651D), 4f)
+            }, go = Screen.Rain),
+            ModeEntry("hi-lo", "higher or lower. or broke.", Color(0xFFFFB74D), art = { w, h, tt ->
+                drawBall(Offset(w * 0.35f, h * 0.5f), h * 0.3f, 17)
+                label(if (tt > 0.5f) "▲" else "▼", w * 0.72f, h * 0.5f, h * 0.45f, if (tt > 0.5f) Pink else Sky, Ink)
+            }, go = Screen.Hilo),
+        )
+        modes.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { m -> ModeTile(m, t, Modifier.weight(1f)) { nav.go(m.go) } }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
         Spacer(Modifier.height(18.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ChunkyButton("badges ${state.badges.size}/${Badges.size}", Modifier.weight(1f), color = Sky) { nav.go(Screen.Badges) }
@@ -257,6 +281,69 @@ fun BadgesScreen(state: GameState, nav: Nav) {
                         Text(b.mode, color = modeColor(b.mode), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
+            }
+        }
+    }
+}
+
+class ModeEntry(
+    val title: String, val sub: String, val color: Color,
+    val art: DrawScope.(Float, Float, Float) -> Unit, val go: Screen,
+)
+
+fun rankOf(badges: Int) = when {
+    badges >= 65 -> "the house"
+    badges >= 55 -> "lottery legend"
+    badges >= 45 -> "fake money mogul"
+    badges >= 35 -> "stand regular"
+    badges >= 25 -> "lottery enjoyer"
+    badges >= 15 -> "scratch rookie"
+    badges >= 5 -> "ticket goblin"
+    else -> "nobody (yet)"
+}
+
+@Composable
+private fun ModeTile(m: ModeEntry, t: Float, modifier: Modifier, onClick: () -> Unit) {
+    val fx = LocalFx.current
+    Panel(
+        modifier.clickable { fx.play(Sfx.WHOOSH); fx.buzz(Buzz.LIGHT); onClick() },
+        color = Card,
+    ) {
+        Column(Modifier.padding(10.dp)) {
+            Canvas(Modifier.fillMaxWidth().height(78.dp)) {
+                drawRoundRect(m.color.copy(alpha = 0.18f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24f))
+                m.art(this, size.width, size.height, t)
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(m.title, color = m.color, fontWeight = FontWeight.Black, fontSize = 20.sp)
+            Text(m.sub, color = Dim, fontSize = 12.sp, maxLines = 2, lineHeight = 14.sp)
+        }
+    }
+}
+
+@Composable
+private fun CampaignCard(state: GameState, t: Float, onClick: () -> Unit) {
+    val fx = LocalFx.current
+    val lv = Campaign.getOrNull(state.campaignLevel)
+    Panel(
+        Modifier
+            .fillMaxWidth()
+            .clickable { fx.play(Sfx.WHOOSH); fx.buzz(Buzz.LIGHT); onClick() },
+        color = CardHi,
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Canvas(Modifier.size(90.dp, 80.dp)) {
+                drawRoundRect(modeColor("campaign").copy(alpha = 0.2f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24f))
+                drawDude(CommissionerDude, size.width / 2, size.height * 1.05f, size.height * 0.9f, Mood.GRUMPY, wobble = (t - 0.5f) * 0.6f, t = t * 10)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("campaign", color = modeColor("campaign"), fontWeight = FontWeight.Black, fontSize = 26.sp)
+                Text(
+                    if (lv == null) "complete! you are the lottery now." else "chapter ${lv.chapter + 1} · level ${state.campaignLevel + 1}: ${lv.title}",
+                    color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                )
+                Text("${state.campaignLevel.coerceAtMost(Campaign.size)}/${Campaign.size} levels", color = Dim, fontSize = 12.sp)
             }
         }
     }

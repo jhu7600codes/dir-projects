@@ -623,10 +623,18 @@ private val stampNames = listOf("stamp of rejection", "fine print slap", "calls 
 private enum class FPhase { INTRO, ATTACK, WINDUP, DEFEND, DONE }
 
 @Composable
-private fun FightStage(defects: List<String>, paused: Boolean, lawyer: Boolean, onEnd: (won: Boolean, flawless: Boolean) -> Unit) {
+internal fun FightStage(
+    defects: List<String>, paused: Boolean, lawyer: Boolean,
+    boss: Dude = CashierDude,
+    extraLines: Int = 2,
+    fixedHp: Int? = null,
+    opener: String = "let me take a look at this...",
+    challenge: String? = null,
+    onEnd: (won: Boolean, flawless: Boolean) -> Unit,
+) {
     val fx = LocalFx.current
-    val lines = remember { (defects + extraNitpicks.shuffled().take(2)) }
-    val maxHp = remember { (3 + lines.size - if (lawyer) 2 else 0).coerceIn(2, 14) }
+    val lines = remember { (defects + extraNitpicks.shuffled().take(extraLines)) }
+    val maxHp = remember { (fixedHp ?: (3 + lines.size - if (lawyer) 2 else 0)).coerceIn(2, 30) }
     var hp by remember { mutableIntStateOf(maxHp) }
     var myHp by remember { mutableIntStateOf(5) }
     var phase by remember { mutableStateOf(FPhase.INTRO) }
@@ -669,7 +677,7 @@ private fun FightStage(defects: List<String>, paused: Boolean, lawyer: Boolean, 
     LaunchedEffect(Unit) {
         while (isPaused) delay(100)
         // the cashier lists every single defect
-        speech = "let me take a look at this..."
+        speech = opener
         fx.play(Sfx.DRUM)
         delay(1300)
         for (i in lines.indices) {
@@ -679,7 +687,7 @@ private fun FightStage(defects: List<String>, paused: Boolean, lawyer: Boolean, 
             fx.buzz(Buzz.LIGHT)
             withTimeoutOrNull(1500) { taps.receive() }
         }
-        speech = "${lines.size} problems. i'm not paying. fight me."
+        speech = challenge ?: "${lines.size} problems. i'm not paying. fight me."
         delay(1200)
         var damaged = false
         while (hp > 0 && myHp > 0) {
@@ -751,7 +759,7 @@ private fun FightStage(defects: List<String>, paused: Boolean, lawyer: Boolean, 
                     hp < maxHp / 2 -> Mood.ANGRY
                     else -> Mood.GRUMPY
                 }
-                drawDude(CashierDude, cx, h * 0.78f, h * 0.62f, mood, talk = phase == FPhase.INTRO && clock % 1f < 0.6f, wobble = hitFlash, t = clock)
+                drawDude(boss, cx, h * 0.78f, h * 0.62f, mood, talk = phase == FPhase.INTRO && clock % 1f < 0.6f, wobble = hitFlash, t = clock)
                 // magnifying glass
                 val hc = headCenter(cx, h * 0.78f, h * 0.62f)
                 val hr = h * 0.62f * 0.2f

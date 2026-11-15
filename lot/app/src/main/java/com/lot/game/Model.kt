@@ -238,6 +238,7 @@ val QuestPool = listOf(
     QuestDef("derby3", "bet on 3 pigeon races", 3, 60) { it.derbyBets },
     QuestDef("slots10", "spin the slots 10 times", 10, 60) { it.slotSpins },
     QuestDef("inspect15", "inspect 15 tickets", 15, 70) { it.inspected },
+    QuestDef("rain2", "play 2 rounds of ticket rain", 2, 60) { it.rainPlays },
     QuestDef("win3", "win 3 tickets of any kind", 3, 90) { it.wins },
 )
 
@@ -281,6 +282,14 @@ data class GameState(
     val slotSevens: Int = 0,
     val inspected: Int = 0,
     val inspectBest: Int = 0,
+    // ticket rain + hi-lo
+    val rainBest: Int = 0,
+    val rainPlays: Int = 0,
+    val hiloBestStreak: Int = 0,
+    val hiloBestCashout: Int = 0,
+    // campaign
+    val campaignLevel: Int = 0,
+    val campaignBase: Int = -1,
     // items + quests
     val items: Set<String> = emptySet(),
     val questDay: Long = -1,
@@ -366,11 +375,65 @@ val Badges = listOf(
     BadgeDef("skullslot", "bad omen", "hit 3 skulls on the slots", "slots") { "skullslot" in it.flags },
     BadgeDef("inspect50", "rubber stamp", "inspect 50 tickets", "inspector") { it.inspected >= 50 },
     BadgeDef("streak20", "nothing gets past me", "get a 20 ticket streak as inspector", "inspector") { it.inspectBest >= 20 },
+    BadgeDef("rain300", "make it rain", "score 300+ in ticket rain", "rain") { it.rainBest >= 300 },
+    BadgeDef("rain10", "umbrella not included", "play 10 rounds of ticket rain", "rain") { it.rainPlays >= 10 },
+    BadgeDef("hilo6", "risk taker", "get a 6 guess streak in hi-lo", "hilo") { it.hiloBestStreak >= 6 },
+    BadgeDef("hilo1000", "walk away", "cash out 1,000+ in hi-lo", "hilo") { it.hiloBestCashout >= 1000 },
+    BadgeDef("ch1", "chapter 1: broke and hopeful", "finish campaign chapter 1", "campaign") { it.campaignLevel >= 4 },
+    BadgeDef("ch2", "chapter 2: behind the counter", "finish campaign chapter 2", "campaign") { it.campaignLevel >= 8 },
+    BadgeDef("ch3", "chapter 3: the dark side", "finish campaign chapter 3", "campaign") { it.campaignLevel >= 12 },
+    BadgeDef("ch4", "chapter 4: hall of chance", "finish campaign chapter 4", "campaign") { it.campaignLevel >= 16 },
+    BadgeDef("legend", "lottery legend", "defeat the lottery commissioner", "campaign") { "boss" in it.flags },
     BadgeDef("item1", "retail therapy", "buy your first item", "all") { it.items.isNotEmpty() },
     BadgeDef("item5", "shopaholic", "own 5 items", "all") { it.items.size >= 5 },
     BadgeDef("itemall", "fully loaded", "own every item", "all") { it.items.size >= Items.size },
     BadgeDef("quest1", "to-do list", "finish a daily quest", "all") { it.questsCompleted >= 1 },
     BadgeDef("quest15", "productive citizen", "finish 15 daily quests", "all") { it.questsCompleted >= 15 },
     BadgeDef("economist", "economist", "check what coins are worth in 3 currencies", "all") { it.currenciesSeen.size >= 3 },
-    BadgeDef("all", "jack of all trades", "play all 8 modes", "all") { it.modesPlayed.size >= 8 },
+    BadgeDef("all", "jack of all trades", "play all 10 modes", "all") { it.modesPlayed.size >= 10 },
+)
+
+// ---------- campaign ----------
+
+/** absolute goals check a stat directly, the others count from when the level started */
+data class CampaignLevel(
+    val chapter: Int,
+    val title: String,
+    val speaker: String,
+    val story: String,
+    val goal: String,
+    val target: Int,
+    val reward: Int,
+    val screen: String,
+    val absolute: Boolean = false,
+    val stat: (GameState) -> Int,
+)
+
+val Chapters = listOf("broke and hopeful", "behind the counter", "the dark side", "hall of chance", "the lottery boss")
+
+val Campaign = listOf(
+    CampaignLevel(0, "a dream", "mom", "you found 500 coins in the couch. mom says \"don't spend it on tickets.\" so obviously...", "buy 3 tickets", 3, 50, "player") { it.ticketsBought },
+    CampaignLevel(0, "beginner's luck", "mom", "mom is watching. win something so she stops sighing.", "win 2 tickets", 2, 80, "player") { it.wins },
+    CampaignLevel(0, "the walk", "cashier", "\"you want money? come to the stand and ASK for it. properly.\" - the cashier", "claim a prize the hard way", 1, 120, "player") { it.claims },
+    CampaignLevel(0, "a fortune (fake)", "mom", "if you hit 1,000 coins, mom promises to say she's proud of you. once.", "have 1,000 coins", 1000, 150, "player", absolute = true) { it.coins },
+
+    CampaignLevel(1, "help wanted", "cashier", "the cashier is on vacation. guess who's running the stand now.", "serve 8 customers", 8, 120, "host") { it.served },
+    CampaignLevel(1, "first shift", "cashier", "survive a whole day. the stand has survived worse. (not really)", "finish a day as host", 1, 150, "host") { it.hostDays },
+    CampaignLevel(1, "find your voice", "cashier", "\"customers respect a firm voice.\" that's not what he meant but ok", "yell at 5 customers", 5, 100, "host") { it.yells },
+    CampaignLevel(1, "employee of the month", "cashier", "get the stand to 70 reputation and the job is yours forever. congrats?", "reach 70 reputation", 70, 250, "host", absolute = true) { it.reputation },
+
+    CampaignLevel(2, "fired", "raccoon", "you got fired for yelling. a raccoon in the dumpster offers you a new career.", "search 10 trash bags", 10, 120, "dumpster") { it.bagsSearched },
+    CampaignLevel(2, "trash to treasure", "raccoon", "*raccoon noises* (he means: find a winning ticket in the trash)", "find a winner in the trash", 1, 180, "dumpster") { it.trashWinners },
+    CampaignLevel(2, "the bush", "raccoon", "the raccoon shows you a bush with a great view of the stand. you know what to do.", "steal 2 winning tickets", 2, 200, "stealer") { it.steals },
+    CampaignLevel(2, "most wanted", "raccoon", "make it to round 4 without getting caught for good. the raccoon believes in you.", "reach round 4 as stealer", 4, 300, "stealer", absolute = true) { it.bestRound },
+
+    CampaignLevel(3, "the hall", "granny", "\"you're a criminal now, dear? come play bingo, it's worse.\" - granny rose", "win a round of bingo", 1, 150, "bingo") { it.bingoWins },
+    CampaignLevel(3, "bird money", "granny", "granny rose bets her pension on pigeons every tuesday. join her.", "win a pigeon bet", 1, 150, "derby") { it.derbyWins },
+    CampaignLevel(3, "the machine", "granny", "\"the slot machine in the corner is haunted. spin it 15 times.\"", "spin the slots 15 times", 15, 150, "slots") { it.slotSpins },
+    CampaignLevel(3, "granny's blessing", "granny", "beat the grannies twice and granny rose will tell you a secret.", "win 2 rounds of bingo", 2, 300, "bingo") { it.bingoWins },
+
+    CampaignLevel(4, "the secret", "granny", "the secret: the lottery is run by one man. the commissioner. he prints the fakes too.", "inspect 20 tickets", 20, 200, "inspector") { it.inspected },
+    CampaignLevel(4, "the evidence", "granny", "catch enough fakes in a row and you'll have proof. 10 in a row.", "get a 10 ticket streak", 10, 250, "inspector", absolute = true) { it.inspectBest },
+    CampaignLevel(4, "gear up", "raccoon", "you can't face the commissioner in socks. well, one lucky sock. buy 3 items.", "own 3 items", 3, 300, "items", absolute = true) { it.items.size },
+    CampaignLevel(4, "the commissioner", "commissioner", "\"so YOU'RE the one asking questions. come to my office. bring your arguments.\"", "defeat the lottery commissioner", 1, 5000, "boss", absolute = true) { if ("boss" in it.flags) 1 else 0 },
 )
