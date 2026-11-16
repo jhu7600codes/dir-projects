@@ -5,6 +5,9 @@ on:
     paths: ["patternbox/**", ".github/workflows/patternbox.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,9 +20,22 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: android-actions/setup-android@v3
+      # ubuntu runners already ship the android sdk at $ANDROID_HOME
       - run: chmod +x gradlew && ./gradlew :core:test :app:assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: patternbox-apk
           path: patternbox/app/build/outputs/apk/release/app-release.apk
+      - name: publish to the patternbox-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/patternbox.apk
+          cp app/build/outputs/apk/release/app-release.apk "dist/patternbox-$VERSION.apk"
+          gh release delete patternbox-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create patternbox-latest --prerelease --target "$GITHUB_SHA" \
+            --title "Patternbox $VERSION" \
+            --notes "download patternbox.apk on the phone and install it (allow installs from your browser if it asks). android 8+, material you colours on android 12+. built from $GITHUB_SHA." \
+            dist/patternbox.apk "dist/patternbox-$VERSION.apk"
