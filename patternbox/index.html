@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patternbox</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* layout: lock-screen slab. two fighter cards side by side (stack on phones), arena below as one big screen */
+:root {
+  --bg: #0d1117;
+  --panel: #151b24;
+  --line: #263142;
+  --fg: #e6ecf3;
+  --dim: #8796aa;
+  --p1: #ff7a59;
+  --p2: #4fb3ff;
+  --metal: #b9c3cf;
+  --display: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "DejaVu Sans Mono", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  margin: 0; font: 14px/1.45 var(--mono);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 40px;
+}
+.wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; }
+h1 { font: 700 34px/1 var(--display); margin: 0; letter-spacing: .02em; }
+h1 span { color: var(--dim); font-weight: 500; }
+.tag { color: var(--dim); font-size: 12px; }
+.tabs { display: flex; gap: 6px; }
+button, .btn {
+  font: 600 13px var(--mono); color: var(--fg); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer;
+}
+button:hover { border-color: var(--dim); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--p2); outline-offset: 2px; }
+button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+button.big { font: 700 18px var(--display); padding: 10px 26px; letter-spacing: .05em; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card.p1 { border-top: 3px solid var(--p1); }
+.card.p2 { border-top: 3px solid var(--p2); }
+.cardhead { display: flex; gap: 8px; align-items: center; }
+.cardhead input { flex: 1; min-width: 0; font: 700 18px var(--display); background: transparent; color: var(--fg); border: 0; border-bottom: 1px dashed var(--line); padding: 2px 0; }
+.pads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pad { display: flex; flex-direction: column; gap: 4px; align-items: center; min-width: 0; }
+.pad label { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--dim); }
+.pad canvas { width: 100%; max-width: 150px; aspect-ratio: 1; touch-action: none; background: #0a0e14; border-radius: 8px; border: 1px solid var(--line); cursor: crosshair; }
+.pad .mini { display: flex; gap: 4px; }
+.pad .mini button { padding: 3px 7px; font-size: 11px; }
+.pad .stat { font-size: 11px; color: var(--dim); text-align: center; min-height: 2.9em; }
+.preview { display: flex; gap: 12px; align-items: center; }
+.preview canvas { width: 120px; height: 120px; flex: none; background: #0a0e14; border-radius: 8px; border: 1px solid var(--line); }
+.sheet { font-size: 12px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-variant-numeric: tabular-nums; min-width: 0; }
+.sheet b { color: var(--dim); font-weight: 400; }
+.code { display: flex; gap: 6px; }
+.code input { flex: 1; min-width: 0; font: 12px var(--mono); background: #0a0e14; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+.go { display: flex; justify-content: center; }
+#arenaWrap { display: flex; flex-direction: column; gap: 10px; }
+#arena { width: 100%; display: block; background: #0a0e14; border: 1px solid var(--line); border-radius: 10px; touch-action: none; }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tools .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+.help { color: var(--dim); font-size: 12px; }
+.help kbd { font: 600 11px var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; color: var(--fg); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>patternbox <span>/ unlock to fight</span></h1>
+    <div class="tabs">
+      <button id="tabBuild" class="on">build</button>
+      <button id="tabFight">fight</button>
+    </div>
+  </header>
+
+  <section id="build">
+    <div class="cards" id="cards"></div>
+    <p class="help">draw on the dots like an android lock screen. body needs 4+ dots, weapon and armour need 2+. skipping over an unused dot grabs it too, same as the real thing. longer weapon = more damage but slower swing. more armour dots = tankier but heavier.</p>
+    <div class="go"><button class="big" id="fightBtn">fight</button></div>
+  </section>
+
+  <section id="fight" hidden>
+    <div id="arenaWrap">
+      <canvas id="arena"></canvas>
+      <div class="tools">
+        <button id="toolGrab" class="on">grab</button>
+        <button id="toolBoom">boom</button>
+        <button id="toolPoke">poke</button>
+        <span class="sep"></span>
+        <button id="ai1">p1 bot: on</button>
+        <button id="ai2">p2 bot: on</button>
+        <span class="sep"></span>
+        <button id="grav">gravity: earth</button>
+        <button id="slow">slowmo: off</button>
+        <button id="chaos">chaos</button>
+        <button id="heal">heal</button>
+        <button id="again">rematch</button>
+      </div>
+      <p class="help">p1: <kbd>A</kbd><kbd>D</kbd> move, <kbd>W</kbd> jump, <kbd>S</kbd> swing. p2: arrows, <kbd>↓</kbd> swing. pressing a key turns that player's bot off. grab and throw fighters into walls, they take impact damage.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+// ---------- pattern basics ----------
+const P = i => ({ x: i % 3, y: (i / 3) | 0 });
+function addDot(pat, d) {
+  if (pat.includes(d)) return;
+  if (pat.length) {
+    const a = P(pat[pat.length - 1]), b = P(d);
+    if ((a.x + b.x) % 2 === 0 && (a.y + b.y) % 2 === 0) {
+      const m = ((a.y + b.y) / 2) * 3 + (a.x + b.x) / 2;
+      if (!pat.includes(m)) pat.push(m);
+    }
+  }
+  pat.push(d);
+}
+function plen(p) { let L = 0; for (let i = 1; i < p.length; i++) { const a = P(p[i-1]), b = P(p[i]); L += Math.hypot(a.x-b.x, a.y-b.y); } return L; }
+function turns(p) {
+  let t = 0, prev = null;
+  for (let i = 1; i < p.length; i++) {
+    const a = P(p[i-1]), b = P(p[i]);
+    const ang = Math.atan2(b.y-a.y, b.x-a.x).toFixed(2);
+    if (prev !== null && ang !== prev) t++;
+    prev = ang;
+  }
+  return t;
+}
+function hash(p) { let h = 7; for (const d of p) h = (h * 31 + d + 1) >>> 0; return h; }
+function randPattern(min, max) {
+  const n = min + Math.floor(Math.random() * (max - min + 1));
+  const p = [];
+  let guard = 0;
+  while (p.length < n && guard++ < 100) addDot(p, Math.floor(Math.random() * 9));
+  return p.slice(0, Math.max(min, Math.min(p.length, 9)));
+}
+
+const BODY_NAMES = ["gerald","dmitri","swipey","lockjaw","bob","zig","patternina","gleb","pin-boi","kevin","vasya","the unlocker","sergei","doug","nyusha","squiggle"];
+const BODY_ADJ = ["angry","sleepy","wobbly","crunchy","illegal","shiny","sus","feral","polite","overclocked","soggy","based"];
+const WEAPON_NAMES = ["spork","bonk stick","noodle blade","yeet lance","zigzagger","pointy boi","unlock axe","swipe saber","pin pike","lightning fork","coat hanger","pool noodle"];
+const ARMOUR_NAMES = ["tin foil","screen protector","cardboard plate","rubber case","fridge door","spaghetti mail","bubble wrap","pizza box","dish rack"];
+const pick = (arr, p) => arr[hash(p) % arr.length];
+
+function stats(f) {
+  const b = f.body, w = f.weapon, a = f.armour;
+  const bl = plen(b), wl = plen(w);
+  const s = {};
+  s.hp = Math.round(50 + b.length * 9 + bl * 4);
+  s.speed = Math.min(5.2, 2.4 + turns(b) * 0.3) * (1 - a.length * 0.035);
+  s.jump = 9 + (9 - b.length) * 0.35 - a.length * 0.12;
+  s.dmg = Math.round(4 + wl * 2.4 + w.length * 0.8);
+  s.swing = 0.32 + wl * 0.055;              // seconds
+  s.def = a.length >= 2 ? Math.min(0.65, 0.1 + a.length * 0.055) : 0;
+  s.plates = Math.max(0, a.length - 1);
+  return s;
+}
+function autoName(f) { return pick(BODY_ADJ, f.weapon.concat(f.body)) + " " + pick(BODY_NAMES, f.body); }
+function encode(f) { return [f.body, f.weapon, f.armour].map(p => p.map(d => d + 1).join("")).join("-"); }
+function decode(str) {
+  const parts = String(str).trim().split("-");
+  if (parts.length !== 3) return null;
+  const out = parts.map(s => { const p = []; for (const c of s) { const d = +c - 1; if (d >= 0 && d < 9) addDot(p, d); } return p; });
+  if (out[0].length < 4 || out[1].length < 2 || out[2].length < 2) return null;
+  return { body: out[0], weapon: out[1], armour: out[2] };
+}
+
+// ---------- fighters (config) ----------
+const COLORS = ["#ff7a59", "#4fb3ff"];
+const cfg = [
+  { body: [0,3,6,7,8], weapon: [0,4,8], armour: [3,4,5], name: "" },
+  { body: [2,4,6,7,8,5], weapon: [6,4,2,1], armour: [0,1,2,5], name: "" },
+];
+cfg.forEach(f => f.name = autoName(f));
+
+// ---------- pattern pad ----------
+function makePad(canvas, getPat, setPat, minDots, color, onChange) {
+  const ctx = canvas.getContext("2d");
+  const size = 300; canvas.width = size; canvas.height = size;
+  const pos = i => ({ x: 50 + P(i).x * 100, y: 50 + P(i).y * 100 });
+  let drawing = false, cur = null, temp = [];
+  function draw() {
+    ctx.clearRect(0, 0, size, size);
+    const pat = drawing ? temp : getPat();
+    const bad = !drawing && pat.length < minDots;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    if (pat.length) {
+      ctx.strokeStyle = bad ? "#6b7685" : color; ctx.lineWidth = 12; ctx.globalAlpha = .85;
+      ctx.beginPath();
+      pat.forEach((d, k) => { const p = pos(d); k ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+      if (drawing && cur) ctx.lineTo(cur.x, cur.y);
+      ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    for (let i = 0; i < 9; i++) {
+      const p = pos(i), on = pat.includes(i);
+      ctx.fillStyle = on ? "#fff" : "#4a5566";
+      ctx.beginPath(); ctx.arc(p.x, p.y, on ? 13 : 9, 0, 7); ctx.fill();
+      if (on && pat[0] === i) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, 22, 0, 7); ctx.stroke(); }
+    }
+  }
+  function local(e) { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) * size / r.width, y: (e.clientY - r.top) * size / r.height }; }
+  function hit(pt) { for (let i = 0; i < 9; i++) { const p = pos(i); if (Math.hypot(p.x - pt.x, p.y - pt.y) < 34) return i; } return -1; }
+  canvas.addEventListener("pointerdown", e => {
+    canvas.setPointerCapture(e.pointerId);
+    drawing = true; temp = []; cur = local(e);
+    const h = hit(cur); if (h >= 0) addDot(temp, h);
+    draw();
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!drawing) return; cur = local(e);
+    const h = hit(cur); if (h >= 0) addDot(temp, h);
+    draw();
+  });
+  const end = () => {
+    if (!drawing) return; drawing = false;
+    if (temp.length >= minDots) { setPat(temp.slice()); onChange(); }
+    draw();
+  };
+  canvas.addEventListener("pointerup", end);
+  canvas.addEventListener("pointercancel", end);
+  draw();
+  return draw;
+}
+
+// ---------- fighter drawing (shared by preview + arena) ----------
+const BS = 26, WS = 22, AS = 31;
+function localBody(p) { return p.map(d => ({ x: (P(d).x - 1) * BS, y: (P(d).y - 1) * BS })); }
+function weaponGeom(p) {
+  // grip = first dot, returns points relative to grip, plus base angle toward furthest point
+  const o = P(p[0]);
+  const pts = p.map(d => ({ x: (P(d).x - o.x) * WS, y: (P(d).y - o.y) * WS }));
+  let far = pts[1] || { x: 1, y: 0 }, fd = 0;
+  for (const q of pts) { const dd = Math.hypot(q.x, q.y); if (dd > fd) { fd = dd; far = q; } }
+  return { pts, base: Math.atan2(far.y, far.x), reach: fd };
+}
+function polyline(ctx, pts) { ctx.beginPath(); pts.forEach((p, k) => k ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke(); }
+function rot(p, a) { const c = Math.cos(a), s = Math.sin(a); return { x: p.x * c - p.y * s, y: p.x * s + p.y * c }; }
+
+// draws in fighter-local space (already translated/rotated/flipped)
+function drawFighterLocal(ctx, f, color, opts) {
+  const body = localBody(f.body);
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  // body
+  ctx.strokeStyle = color; ctx.lineWidth = 9;
+  polyline(ctx, body);
+  ctx.fillStyle = color;
+  for (const p of body) { ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, 7); ctx.fill(); }
+  // armour plates
+  const ap = f.armour.map(d => ({ x: (P(d).x - 1) * AS, y: (P(d).y - 1) * AS }));
+  const alive = opts.plates || null;
+  ctx.strokeStyle = "rgba(200,212,226,.75)"; ctx.lineWidth = 7;
+  for (let i = 1; i < ap.length; i++) {
+    if (alive && !alive[i - 1]) continue;
+    ctx.beginPath(); ctx.moveTo(ap[i-1].x, ap[i-1].y); ctx.lineTo(ap[i].x, ap[i].y); ctx.stroke();
+    // rivets
+    ctx.fillStyle = "#e9eef4";
+    const mx = (ap[i-1].x + ap[i].x) / 2, my = (ap[i-1].y + ap[i].y) / 2;
+    ctx.beginPath(); ctx.arc(mx, my, 2.2, 0, 7); ctx.fill();
+  }
+  // face: googly eyes near top-most body point
+  let top = body[0]; for (const p of body) if (p.y < top.y || (p.y === top.y && p.x > top.x)) top = p;
+  const look = opts.look || 0, dead = opts.dead;
+  for (const ex of [-6, 6]) {
+    const cx = top.x + ex, cy = top.y - 4;
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5; ctx.stroke();
+    if (dead) {
+      ctx.strokeStyle = "#111"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx-3, cy-3); ctx.lineTo(cx+3, cy+3); ctx.moveTo(cx+3, cy-3); ctx.lineTo(cx-3, cy+3); ctx.stroke();
+    } else {
+      ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(cx + 2.5 + Math.cos(look) * 1, cy + Math.sin(look) * 2.5, 2.6, 0, 7); ctx.fill();
+    }
+  }
+  // weapon at hand (last body dot)
+  if (!opts.noWeapon) {
+    const hand = body[body.length - 1];
+    const g = weaponGeom(f.weapon);
+    const sw = (opts.swing ?? -0.9) - g.base;
+    const pts = g.pts.map(p => { const r = rot(p, sw); return { x: hand.x + r.x, y: hand.y + r.y }; });
+    ctx.strokeStyle = "#1b1f27"; ctx.lineWidth = 8; polyline(ctx, pts);
+    ctx.strokeStyle = opts.hot ? "#fff6c2" : "#dfe6ee"; ctx.lineWidth = 4.5; polyline(ctx, pts);
+    ctx.fillStyle = "#6b4a2b"; ctx.beginPath(); ctx.arc(hand.x, hand.y, 5, 0, 7); ctx.fill();
+  }
+}
+
+// ---------- build ui ----------
+const cardsEl = document.getElementById("cards");
+const redrawers = [];
+function buildCards() {
+  cardsEl.innerHTML = "";
+  cfg.forEach((f, idx) => {
+    const col = COLORS[idx];
+    const card = document.createElement("div");
+    card.className = "card p" + (idx + 1);
+    card.innerHTML = `
+      <div class="cardhead"><input id="name${idx}" aria-label="fighter name"><button id="rand${idx}">random</button></div>
+      <div class="pads">
+        ${["body","weapon","armour"].map(k => `<div class="pad"><label>${k}</label><canvas id="pad${idx}${k}"></canvas>
+          <div class="mini"><button data-k="${k}" data-a="rnd">rnd</button></div><div class="stat" id="st${idx}${k}"></div></div>`).join("")}
+      </div>
+      <div class="preview"><canvas id="prev${idx}" width="240" height="240"></canvas><div class="sheet" id="sheet${idx}"></div></div>
+      <div class="code"><input id="code${idx}" aria-label="share code"><button id="copy${idx}">copy</button><button id="load${idx}">load</button></div>`;
+    cardsEl.appendChild(card);
+    const nameIn = card.querySelector("#name" + idx);
+    nameIn.value = f.name;
+    nameIn.addEventListener("input", () => f.name = nameIn.value || autoName(f));
+    const pads = {};
+    const refresh = () => {
+      Object.values(pads).forEach(d => d());
+      const s = stats(f);
+      card.querySelector("#st" + idx + "body").textContent = `${s.hp} hp · spd ${s.speed.toFixed(1)}`;
+      card.querySelector("#st" + idx + "weapon").textContent = `${pick(WEAPON_NAMES, f.weapon)} · ${s.dmg} dmg`;
+      card.querySelector("#st" + idx + "armour").textContent = `${pick(ARMOUR_NAMES, f.armour)} · ${Math.round(s.def*100)}% block`;
+      card.querySelector("#sheet" + idx).innerHTML =
+        `<b>health</b><span>${s.hp}</span><b>speed</b><span>${s.speed.toFixed(2)}</span><b>jump</b><span>${s.jump.toFixed(1)}</span>` +
+        `<b>damage</b><span>${s.dmg}</span><b>swing</b><span>${s.swing.toFixed(2)}s</span><b>block</b><span>${Math.round(s.def*100)}% × ${s.plates} plates</span>`;
+      card.querySelector("#code" + idx).value = encode(f);
+      const pc = card.querySelector("#prev" + idx), c = pc.getContext("2d");
+      c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,240,240);
+      c.setTransform(2,0,0,2,120,124);
+      drawFighterLocal(c, f, col, { swing: -0.9 });
+    };
+    for (const k of ["body", "weapon", "armour"]) {
+      pads[k] = makePad(card.querySelector(`#pad${idx}${k}`), () => f[k], v => f[k] = v, k === "body" ? 4 : 2, k === "armour" ? "#b9c3cf" : col, refresh);
+    }
+    card.querySelectorAll("[data-a=rnd]").forEach(b => b.addEventListener("click", () => {
+      const k = b.dataset.k; f[k] = randPattern(k === "body" ? 4 : 2, k === "body" ? 9 : 6); refresh();
+    }));
+    card.querySelector("#rand" + idx).addEventListener("click", () => {
+      f.body = randPattern(4, 9); f.weapon = randPattern(2, 6); f.armour = randPattern(2, 6);
+      f.name = autoName(f); nameIn.value = f.name; refresh();
+    });
+    card.querySelector("#copy" + idx).addEventListener("click", () => {
+      const inp = card.querySelector("#code" + idx);
+      navigator.clipboard?.writeText(inp.value).catch(() => { inp.select(); });
+      if (!navigator.clipboard) inp.select();
+    });
+    card.querySelector("#load" + idx).addEventListener("click", () => {
+      const inp = card.querySelector("#code" + idx), d = decode(inp.value);
+      if (!d) { inp.value = "bad code, looks like 1478-159-456"; return; }
+      Object.assign(f, d); refresh();
+    });
+    refresh();
+    redrawers[idx] = refresh;
+  });
+}
+buildCards();
+
+// ---------- tabs ----------
+const tabBuild = document.getElementById("tabBuild"), tabFight = document.getElementById("tabFight");
+const buildSec = document.getElementById("build"), fightSec = document.getElementById("fight");
+function show(which) {
+  const f = which === "fight";
+  buildSec.hidden = f; fightSec.hidden = !f;
+  tabBuild.classList.toggle("on", !f); tabFight.classList.toggle("on", f);
+  if (f) { resize(); startRound(); }
+}
+tabBuild.onclick = () => show("build");
+tabFight.onclick = () => show("fight");
+document.getElementById("fightBtn").onclick = () => show("fight");
+
+// ---------- arena ----------
+const cv = document.getElementById("arena"), ctx = cv.getContext("2d");
+let W = 900, H = 500, DPR = 1;
+function resize() {
+  const w = cv.clientWidth || 900;
+  W = w; H = Math.round(Math.min(560, Math.max(320, w * 0.56)));
+  DPR = window.devicePixelRatio || 1;
+  cv.width = W * DPR; cv.height = H * DPR; cv.style.height = H + "px";
+}
+window.addEventListener("resize", () => { if (!fightSec.hidden) resize(); });
+
+const R = 36;
+let fighters = [], debris = [], texts = [], booms = [], shake = 0, winner = null, winT = 0;
+let gravMode = 0; const GRAVS = [["earth", .55], ["moon", .15], ["off", 0], ["jupiter", 1.3]];
+let slow = false, tool = "grab";
+const ai = [true, true];
+
+function startRound() {
+  debris = []; texts = []; booms = []; winner = null; winT = 0;
+  fighters = cfg.map((f, i) => {
+    const s = stats(f);
+    return {
+      i, f, s, color: COLORS[i], name: f.name || autoName(f),
+      x: i ? W * 0.75 : W * 0.25, y: H - 120, vx: 0, vy: 0, ang: 0, av: 0,
+      hp: s.hp, face: i ? -1 : 1, swingT: -1, hitDone: false, cd: 0, stun: 0,
+      plates: new Array(s.plates).fill(true), dead: false, ground: false, look: 0,
+      aiJumpT: 0, held: false,
+    };
+  });
+}
+const floorY = () => H - 28;
+
+function say(x, y, t, c) { texts.push({ x, y, t, c: c || "#fff", life: 1.1, vy: -1.2 }); }
+
+function addDebris(x, y, a, b, color, width, vx, vy) {
+  debris.push({ x, y, a, b, color, width, vx, vy, ang: 0, av: (Math.random() - .5) * .4, life: 6 });
+}
+
+function damage(t, amount, fromX, kb, label) {
+  if (t.dead) return;
+  const alive = t.plates.filter(Boolean).length;
+  const frac = t.plates.length ? alive / t.plates.length : 0;
+  const block = t.s.def * frac;
+  let dmg = Math.max(1, Math.round(amount * (1 - block) * (0.85 + Math.random() * 0.3)));
+  const crit = Math.random() < 0.08; if (crit) dmg *= 2;
+  t.hp -= dmg;
+  const dir = Math.sign(t.x - fromX) || 1;
+  t.vx += dir * kb; t.vy -= kb * 0.6; t.av += dir * kb * 0.03; t.stun = 0.35;
+  say(t.x, t.y - 50, (crit ? "crit " : "") + "-" + dmg + (label ? " " + label : ""), crit ? "#ffd84a" : "#fff");
+  shake = Math.min(14, shake + dmg * 0.3);
+  // knock a plate off
+  if (alive && Math.random() < 0.55 + dmg / 60) {
+    const idxs = t.plates.map((v, k) => v ? k : -1).filter(k => k >= 0);
+    const k = idxs[Math.floor(Math.random() * idxs.length)];
+    t.plates[k] = false;
+    const a = P(t.f.armour[k]), b = P(t.f.armour[k + 1]);
+    addDebris(t.x, t.y, { x: (a.x - 1) * AS * t.face, y: (a.y - 1) * AS }, { x: (b.x - 1) * AS * t.face, y: (b.y - 1) * AS }, "#c8d4e2", 7, dir * (3 + Math.random() * 4), -5 - Math.random() * 4);
+    say(t.x, t.y - 72, pick(ARMOUR_NAMES, t.f.armour) + " cracked", "#b9c3cf");
+  }
+  if (t.hp <= 0) ko(t, dir);
+}
+
+function ko(t, dir) {
+  t.hp = 0; t.dead = true; t.swingT = -1;
+  // body falls apart
+  const body = localBody(t.f.body);
+  for (let i = 1; i < body.length; i++) {
+    addDebris(t.x, t.y, { x: body[i-1].x * t.face, y: body[i-1].y }, { x: body[i].x * t.face, y: body[i].y }, t.color, 9, dir * (2 + Math.random() * 6) + (Math.random()-.5)*4, -6 - Math.random() * 6);
+  }
+  const g = weaponGeom(t.f.weapon);
+  for (let i = 1; i < g.pts.length; i++) addDebris(t.x, t.y - 20, g.pts[i-1], g.pts[i], "#dfe6ee", 4.5, -dir * 4 + (Math.random()-.5)*6, -9);
+  t.plates.fill(false);
+  const other = fighters[1 - t.i];
+  if (!winner) { winner = other.dead ? "nobody" : other.name; winT = 0; }
+  say(t.x, t.y - 80, pick(["unlocked.", "wrong pattern.", "try again in 30 seconds", "bricked", "factory reset"], t.f.body), "#ffd84a");
+  shake = 18;
+}
+
+// world-space weapon segments of fighter
+function weaponWorld(F) {
+  const body = localBody(F.f.body), hand = body[body.length - 1];
+  const g = weaponGeom(F.f.weapon);
+  const sw = swingAngle(F) - g.base;
+  return g.pts.map(p => {
+    const r = rot(p, sw); let q = { x: hand.x + r.x, y: hand.y + r.y };
+    q.x *= F.face; q = rot(q, F.ang);
+    return { x: F.x + q.x, y: F.y + q.y };
+  });
+}
+function swingAngle(F) {
+  if (F.swingT < 0) return -0.9 + Math.sin(performance.now() / 400 + F.i) * 0.08;
+  const t = F.swingT / F.s.swing;
+  if (t < 0.3) return -0.9 - (t / 0.3) * 1.0;           // windup
+  if (t < 0.7) return -1.9 + ((t - 0.3) / 0.4) * 3.4;   // strike
+  return 1.5 - ((t - 0.7) / 0.3) * 2.4;                 // recover
+}
+function segDist(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, l = dx*dx + dy*dy || 1;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l));
+  return Math.hypot(p.x - a.x - dx * t, p.y - a.y - dy * t);
+}
+function swing(F) { if (F.dead || F.swingT >= 0 || F.cd > 0 || F.held) return; F.swingT = 0; F.hitDone = false; }
+
+// ---------- input ----------
+const keys = {};
+const KEYMAP = { a: [0,"l"], d: [0,"r"], w: [0,"j"], s: [0,"x"], f: [0,"x"], arrowleft: [1,"l"], arrowright: [1,"r"], arrowup: [1,"j"], arrowdown: [1,"x"], l: [1,"x"] };
+window.addEventListener("keydown", e => {
+  if (fightSec.hidden || e.target.tagName === "INPUT") return;
+  const m = KEYMAP[e.key.toLowerCase()]; if (!m) return;
+  e.preventDefault();
+  if (ai[m[0]]) { ai[m[0]] = false; syncAiBtns(); }
+  keys[m[0] + m[1]] = true;
+  if (m[1] === "x" && fighters[m[0]]) swing(fighters[m[0]]);
+});
+window.addEventListener("keyup", e => { const m = KEYMAP[e.key.toLowerCase()]; if (m) keys[m[0] + m[1]] = false; });
+
+let grab = null; // {F, px, py, lastX, lastY}
+function arenaPt(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
+cv.addEventListener("pointerdown", e => {
+  const p = arenaPt(e); cv.setPointerCapture(e.pointerId);
+  if (tool === "grab") {
+    const F = fighters.find(F => Math.hypot(F.x - p.x, F.y - p.y) < R + 14);
+    if (F) { grab = { F, x: p.x, y: p.y, vx: 0, vy: 0 }; F.held = true; F.swingT = -1; say(F.x, F.y - 60, pick(["hey!", "put me down", "wheee", "bro", "nooo"], [Math.random()*9|0]), "#fff"); }
+  } else if (tool === "boom") {
+    booms.push({ x: p.x, y: p.y, t: 0 });
+    for (const F of fighters) {
+      const d = Math.hypot(F.x - p.x, F.y - p.y);
+      if (d < 170) {
+        const k = (1 - d / 170);
+        F.vx += (F.x - p.x) / (d || 1) * 18 * k; F.vy += ((F.y - p.y) / (d || 1) * 18 - 6) * k; F.av += (Math.random() - .5) * .5 * k;
+        if (k > .15) damage(F, 22 * k, p.x, 0, "boom");
+      }
+    }
+    for (const d of debris) { const dd = Math.hypot(d.x - p.x, d.y - p.y); if (dd < 200) { d.vx += (d.x - p.x) / (dd || 1) * 12; d.vy -= 10; } }
+    shake = 16;
+  } else if (tool === "poke") {
+    const F = fighters.find(F => Math.hypot(F.x - p.x, F.y - p.y) < R + 14);
+    if (F) { damage(F, 3, p.x, 5, "poke"); }
+  }
+});
+cv.addEventListener("pointermove", e => {
+  if (!grab) return; const p = arenaPt(e);
+  grab.vx = p.x - grab.x; grab.vy = p.y - grab.y; grab.x = p.x; grab.y = p.y;
+});
+const release = () => { if (!grab) return; grab.F.held = false; grab.F.vx = grab.vx * 1.1; grab.F.vy = grab.vy * 1.1; grab.F.av = grab.vx * 0.02; grab = null; };
+cv.addEventListener("pointerup", release); cv.addEventListener("pointercancel", release);
+
+// ---------- tool buttons ----------
+const $ = id => document.getElementById(id);
+const toolBtns = { grab: $("toolGrab"), boom: $("toolBoom"), poke: $("toolPoke") };
+for (const [k, b] of Object.entries(toolBtns)) b.onclick = () => { tool = k; for (const [kk, bb] of Object.entries(toolBtns)) bb.classList.toggle("on", kk === k); };
+function syncAiBtns() { $("ai1").textContent = "p1 bot: " + (ai[0] ? "on" : "off"); $("ai2").textContent = "p2 bot: " + (ai[1] ? "on" : "off"); }
+$("ai1").onclick = () => { ai[0] = !ai[0]; syncAiBtns(); };
+$("ai2").onclick = () => { ai[1] = !ai[1]; syncAiBtns(); };
+$("grav").onclick = () => { gravMode = (gravMode + 1) % GRAVS.length; $("grav").textContent = "gravity: " + GRAVS[gravMode][0]; };
+$("slow").onclick = () => { slow = !slow; $("slow").textContent = "slowmo: " + (slow ? "on" : "off"); };
+$("chaos").onclick = () => { for (const F of fighters) { F.vx += (Math.random() - .5) * 30; F.vy -= 8 + Math.random() * 12; F.av += (Math.random() - .5) * .8; } say(W/2, 60, "chaos", "#ffd84a"); };
+$("heal").onclick = () => { for (const F of fighters) if (!F.dead) { F.hp = F.s.hp; F.plates.fill(true); say(F.x, F.y - 60, "+heal", "#7dffa8"); } };
+$("again").onclick = () => startRound();
+
+// ---------- sim ----------
+function step(dt) {
+  const g = GRAVS[gravMode][1];
+  const fl = floorY();
+  for (const F of fighters) {
+    const O = fighters[1 - F.i];
+    F.cd = Math.max(0, F.cd - dt); F.stun = Math.max(0, F.stun - dt);
+    if (!F.dead && !F.held) F.face = O.x >= F.x ? 1 : -1;
+    F.look = Math.atan2(O.y - F.y, (O.x - F.x) * F.face);
+
+    if (F.held && grab) {
+      F.x += (grab.x - F.x) * 0.5; F.y += (grab.y - F.y) * 0.5; F.vx = 0; F.vy = 0;
+      F.ang += Math.sin(performance.now() / 90) * 0.04;
+      continue;
+    }
+
+    // controls
+    let mv = 0, jump = false;
+    if (!F.dead && F.stun <= 0 && !winner) {
+      if (ai[F.i]) {
+        const reach = weaponGeom(F.f.weapon).reach + 30;
+        const dx = O.x - F.x, adx = Math.abs(dx);
+        const scared = F.hp < F.s.hp * 0.25 && Math.random() < 0.5;
+        if (O.dead) mv = 0;
+        else if (scared && adx < 200) mv = -Math.sign(dx);
+        else if (adx > reach + 10) mv = Math.sign(dx);
+        else if (adx < reach * 0.5) mv = -Math.sign(dx) * 0.6;
+        if (!O.dead && adx < reach + 40 && Math.abs(O.y - F.y) < 90 && Math.random() < 0.08) swing(F);
+        F.aiJumpT -= dt;
+        if (F.aiJumpT <= 0) { F.aiJumpT = 0.6 + Math.random() * 1.6; if (Math.random() < 0.45 || O.y < F.y - 50) jump = true; }
+      } else {
+        if (keys[F.i + "l"]) mv -= 1; if (keys[F.i + "r"]) mv += 1;
+        if (keys[F.i + "j"]) jump = true;
+      }
+    }
+    const accel = F.ground ? 0.9 : 0.35;
+    if (mv) F.vx += (mv * F.s.speed - F.vx) * accel * 0.4;
+    if (jump && F.ground) { F.vy = -F.s.jump * (g ? 1 : 0.4) * (gravMode === 3 ? 1.3 : 1); F.ground = false; }
+
+    // physics
+    F.vy += g; if (!g) { F.vx *= 0.995; F.vy *= 0.995; }
+    F.x += F.vx; F.y += F.vy;
+    F.ang += F.av; F.av *= 0.96;
+    if (!F.dead) { F.av += -F.ang * 0.02; F.ang *= F.ground ? 0.85 : 0.99; }
+
+    // walls + floor with impact damage
+    const imp = (speed, label) => { if (speed > 15 && !F.dead) damage(F, (speed - 15) * 2.2, F.x, 0, label); };
+    F.ground = false;
+    if (F.y > fl - R) { imp(F.vy, "splat"); F.y = fl - R; F.vy = F.dead ? -F.vy * 0.3 : (Math.abs(F.vy) > 6 ? -F.vy * 0.25 : 0); F.ground = true; F.vx *= F.dead ? 0.9 : (mv ? 1 : 0.8); F.av += F.vx * 0.01 * (F.dead ? 1 : 0); }
+    if (F.y < R) { imp(-F.vy, "bonk"); F.y = R; F.vy = -F.vy * 0.4; }
+    if (F.x < R) { imp(-F.vx, "wall"); F.x = R; F.vx = -F.vx * 0.5; F.av += 0.1; }
+    if (F.x > W - R) { imp(F.vx, "wall"); F.x = W - R; F.vx = -F.vx * 0.5; F.av -= 0.1; }
+
+    // swing
+    if (F.swingT >= 0) {
+      F.swingT += dt;
+      const t = F.swingT / F.s.swing;
+      if (!F.hitDone && t > 0.3 && t < 0.75 && !O.dead && !O.held) {
+        const ws = weaponWorld(F);
+        for (let i = 1; i < ws.length; i++) {
+          if (segDist(O, ws[i-1], ws[i]) < R) {
+            F.hitDone = true;
+            damage(O, F.s.dmg, F.x, 4 + F.s.dmg * 0.25, "");
+            break;
+          }
+        }
+        // clash with opponent weapon
+        if (!F.hitDone && O.swingT >= 0) {
+          const ow = weaponWorld(O);
+          outer: for (let i = 1; i < ws.length; i++) for (let j = 1; j < ow.length; j++) {
+            if (segDist(ws[i], ow[j-1], ow[j]) < 6) {
+              F.hitDone = true; O.hitDone = true;
+              F.vx -= F.face * 7; O.vx -= O.face * 7; F.vy -= 3; O.vy -= 3;
+              say((F.x + O.x) / 2, Math.min(F.y, O.y) - 60, "clang", "#ffd84a"); shake = 8;
+              break outer;
+            }
+          }
+        }
+      }
+      if (t >= 1) { F.swingT = -1; F.cd = 0.15; }
+    }
+  }
+  // fighter separation
+  const [A, B] = fighters;
+  if (A && B && !A.held && !B.held) {
+    const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1, ov = R * 2 - d;
+    if (ov > 0) {
+      const nx = dx / d, ny = dy / d;
+      A.x -= nx * ov / 2; A.y -= ny * ov / 2; B.x += nx * ov / 2; B.y += ny * ov / 2;
+      const rel = (B.vx - A.vx) * nx + (B.vy - A.vy) * ny;
+      if (rel < 0) { A.vx += nx * rel * 0.6; A.vy += ny * rel * 0.6; B.vx -= nx * rel * 0.6; B.vy -= ny * rel * 0.6; }
+    }
+  }
+  // debris
+  for (const d of debris) {
+    d.vy += g; d.x += d.vx; d.y += d.vy; d.ang += d.av; d.life -= dt;
+    if (d.y > fl - 4) { d.y = fl - 4; d.vy *= -0.35; d.vx *= 0.8; d.av *= 0.7; }
+    if (d.x < 4 || d.x > W - 4) { d.vx *= -0.6; d.x = Math.max(4, Math.min(W - 4, d.x)); }
+  }
+  debris = debris.filter(d => d.life > 0);
+  for (const t of texts) { t.y += t.vy; t.life -= dt; }
+  texts = texts.filter(t => t.life > 0);
+  for (const b of booms) b.t += dt;
+  booms = booms.filter(b => b.t < 0.5);
+  if (winner) winT += dt;
+}
+
+// ---------- render ----------
+function render() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  if (shake > 0.2) { ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake); shake *= 0.88; }
+  // background lock-screen dot grid
+  ctx.fillStyle = "#1a2230";
+  for (let x = 30; x < W; x += 60) for (let y = 30; y < floorY(); y += 60) { ctx.beginPath(); ctx.arc(x, y, 2.5, 0, 7); ctx.fill(); }
+  // floor
+  ctx.fillStyle = "#151c27"; ctx.fillRect(-20, floorY(), W + 40, 60);
+  ctx.strokeStyle = "#2c394c"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, floorY()); ctx.lineTo(W, floorY()); ctx.stroke();
+
+  // debris
+  ctx.lineCap = "round";
+  for (const d of debris) {
+    ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.ang); ctx.globalAlpha = Math.min(1, d.life);
+    ctx.strokeStyle = d.color; ctx.lineWidth = d.width;
+    ctx.beginPath(); ctx.moveTo(d.a.x, d.a.y); ctx.lineTo(d.b.x, d.b.y); ctx.stroke();
+    ctx.restore();
+  }
+  // fighters
+  for (const F of fighters) {
+    if (F.dead) continue;
+    // shadow
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    const sh = Math.max(0.3, 1 - (floorY() - F.y) / 400);
+    ctx.beginPath(); ctx.ellipse(F.x, floorY() + 2, 34 * sh, 6 * sh, 0, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(F.x, F.y); ctx.rotate(F.ang); ctx.scale(F.face, 1);
+    const t = F.swingT >= 0 ? F.swingT / F.s.swing : -1;
+    drawFighterLocal(ctx, F.f, F.stun > 0.25 ? "#fff" : F.color, { swing: swingAngle(F), plates: F.plates, look: F.look, hot: t > 0.3 && t < 0.75 });
+    ctx.restore();
+    // swoosh trail
+    if (t > 0.3 && t < 0.75) {
+      const ws = weaponWorld(F), tip = ws[ws.length - 1];
+      ctx.strokeStyle = "rgba(255,246,194,.25)"; ctx.lineWidth = 14; ctx.beginPath(); ctx.arc(tip.x, tip.y, 4, 0, 7); ctx.stroke();
+    }
+  }
+  // booms
+  for (const b of booms) {
+    const k = b.t / 0.5;
+    ctx.fillStyle = `rgba(255,190,90,${0.5 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, 30 + 140 * k, 0, 7); ctx.fill();
+    ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x, b.y, 20 + 170 * k, 0, 7); ctx.stroke();
+  }
+  // texts
+  ctx.textAlign = "center"; ctx.font = "600 15px 'IBM Plex Mono', monospace";
+  for (const t of texts) { ctx.globalAlpha = Math.min(1, t.life * 2); ctx.fillStyle = "#000"; ctx.fillText(t.t, t.x + 1, t.y + 1); ctx.fillStyle = t.c; ctx.fillText(t.t, t.x, t.y); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // hud
+  fighters.forEach((F, i) => {
+    const bw = Math.min(300, W * 0.38), x = i ? W - 16 - bw : 16, y = 16;
+    ctx.fillStyle = "#1a2230"; ctx.fillRect(x, y + 18, bw, 10);
+    ctx.fillStyle = F.color; const fr = Math.max(0, F.hp / F.s.hp); ctx.fillRect(i ? x + bw * (1 - fr) : x, y + 18, bw * fr, 10);
+    ctx.fillStyle = "#e6ecf3"; ctx.font = "700 15px 'Chakra Petch', sans-serif"; ctx.textAlign = i ? "right" : "left";
+    ctx.fillText(F.name + "  " + Math.max(0, Math.ceil(F.hp)), i ? x + bw : x, y + 12);
+    ctx.font = "11px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#8796aa";
+    ctx.fillText(pick(WEAPON_NAMES, F.f.weapon) + " / " + pick(ARMOUR_NAMES, F.f.armour), i ? x + bw : x, y + 44);
+  });
+  if (winner && winT > 0.6) {
+    ctx.textAlign = "center"; ctx.fillStyle = "rgba(10,14,20,.6)"; ctx.fillRect(0, H / 2 - 50, W, 90);
+    ctx.fillStyle = "#e6ecf3"; ctx.font = "700 " + Math.min(44, W / 14) + "px 'Chakra Petch', sans-serif";
+    ctx.fillText(winner === "nobody" ? "double ko" : winner + " wins", W / 2, H / 2);
+    ctx.font = "13px 'IBM Plex Mono', monospace"; ctx.fillStyle = "#8796aa";
+    ctx.fillText("hit rematch, or go back to build and draw something meaner", W / 2, H / 2 + 26);
+  }
+}
+
+let last = performance.now(), acc = 0;
+function loop(now) {
+  const real = Math.min(0.1, (now - last) / 1000); last = now;
+  if (!fightSec.hidden && fighters.length) {
+    acc += real * (slow ? 0.3 : 1);
+    while (acc >= 1 / 60) { step(1 / 60); acc -= 1 / 60; }
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
