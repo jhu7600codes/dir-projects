@@ -45,6 +45,10 @@ sealed interface Screen {
     data object Boss : Screen
     data object Rain : Screen
     data object Hilo : Screen
+    data object Claw : Screen
+    data object Flight : Screen
+    data object Tower : Screen
+    data object Profile : Screen
     data object Inspector : Screen
 }
 
@@ -80,6 +84,7 @@ fun App(vm: GameViewModel, fx: Fx) {
         fx.soundOn = state.sound
         fx.hapticsOn = state.haptics
     }
+    LaunchedEffect(state.outfitHat, state.outfitShirt, state.outfitGlasses) { YouDude = youDude(state) }
     val nav = remember { Nav() }
     BackHandler(nav.stack.size > 1) { nav.back() }
 
@@ -117,6 +122,10 @@ fun App(vm: GameViewModel, fx: Fx) {
                     Screen.Boss -> BossScreen(vm, state, nav)
                     Screen.Rain -> RainScreen(vm, state, nav)
                     Screen.Hilo -> HiloScreen(vm, state, nav)
+                    Screen.Claw -> ClawScreen(vm, state, nav)
+                    Screen.Flight -> FlightScreen(vm, state, nav)
+                    Screen.Tower -> TowerScreen(vm, state, nav)
+                    Screen.Profile -> ProfileScreen(vm, state, nav)
                     Screen.Inspector -> InspectorScreen(vm, state, nav)
                 }
             }

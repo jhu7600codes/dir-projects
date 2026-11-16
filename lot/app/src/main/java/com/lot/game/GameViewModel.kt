@@ -46,6 +46,9 @@ private fun GameState.toJson(): String = JSONObject().apply {
     put("derbyBets", derbyBets); put("derbyWins", derbyWins)
     put("rainBest", rainBest); put("rainPlays", rainPlays); put("hiloBestStreak", hiloBestStreak); put("hiloBestCashout", hiloBestCashout)
     put("campaignLevel", campaignLevel); put("campaignBase", campaignBase)
+    put("clawPlays", clawPlays); put("clawWins", clawWins); put("flightPlays", flightPlays); put("flightBest", flightBest)
+    put("towerPlays", towerPlays); put("towerBest", towerBest)
+    put("wardrobe", JSONArray(wardrobe.toList())); put("outfitHat", outfitHat); put("outfitShirt", outfitShirt); put("outfitGlasses", outfitGlasses)
     put("slotSpins", slotSpins); put("slotSevens", slotSevens); put("inspected", inspected); put("inspectBest", inspectBest)
     put("items", JSONArray(items.toList()))
     put("questDay", questDay); put("questIds", JSONArray(questIds))
@@ -92,6 +95,12 @@ private fun parseState(s: String): GameState = try {
         rainBest = o.optInt("rainBest"), rainPlays = o.optInt("rainPlays"),
         hiloBestStreak = o.optInt("hiloBestStreak"), hiloBestCashout = o.optInt("hiloBestCashout"),
         campaignLevel = o.optInt("campaignLevel"), campaignBase = o.optInt("campaignBase", -1),
+        clawPlays = o.optInt("clawPlays"), clawWins = o.optInt("clawWins"),
+        flightPlays = o.optInt("flightPlays"), flightBest = o.optInt("flightBest"),
+        towerPlays = o.optInt("towerPlays"), towerBest = o.optInt("towerBest"),
+        wardrobe = o.optJSONArray("wardrobe")?.let { a -> (0 until a.length()).map { a.getString(it) }.toSet() } ?: d.wardrobe,
+        outfitHat = o.optString("outfitHat", d.outfitHat), outfitShirt = o.optString("outfitShirt", d.outfitShirt),
+        outfitGlasses = o.optBoolean("outfitGlasses"),
         slotSpins = o.optInt("slotSpins"), slotSevens = o.optInt("slotSevens"),
         inspected = o.optInt("inspected"), inspectBest = o.optInt("inspectBest"),
         items = o.optJSONArray("items").strings(),
@@ -354,6 +363,24 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 campaignLevel = it.campaignLevel + 1,
                 campaignBase = next?.stat?.invoke(it) ?: -1,
             )
+        }
+    }
+
+    // ---- wardrobe ----
+    fun buyCosmetic(c: Cosmetic): Boolean {
+        val s = _state.value
+        if (c.id in s.wardrobe || c.price <= 0 || s.coins < c.price) return false
+        update { it.copy(coins = it.coins - c.price, wardrobe = it.wardrobe + c.id) }
+        return true
+    }
+
+    fun giveCosmetic(id: String) = update { it.copy(wardrobe = it.wardrobe + id) }
+
+    fun wear(c: Cosmetic) = update {
+        if (c.id !in it.wardrobe) it else when (c.kind) {
+            "hat" -> it.copy(outfitHat = c.id)
+            "shirt" -> it.copy(outfitShirt = c.id)
+            else -> it.copy(outfitGlasses = !it.outfitGlasses)
         }
     }
 }

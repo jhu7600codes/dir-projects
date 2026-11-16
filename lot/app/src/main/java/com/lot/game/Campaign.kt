@@ -74,6 +74,10 @@ private fun screenFor(s: String): Screen = when (s) {
     "slots" -> Screen.Slots
     "inspector" -> Screen.Inspector
     "items" -> Screen.Items
+    "claw" -> Screen.Claw
+    "flight" -> Screen.Flight
+    "tower" -> Screen.Tower
+    "wardrobe" -> Screen.Profile
     else -> Screen.Boss
 }
 

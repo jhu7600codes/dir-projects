@@ -14,10 +14,13 @@ a fake money lottery simulator for android. kotlin + jetpack compose + material 
 - **inspector** - quality control at the ticket factory. approve real tickets, reject fakes before the timer runs out.
 - **ticket rain** - a lottery truck crashed. catch falling tickets in a basket, dodge bricks and skulls.
 - **hi-lo** - guess if the next ball is higher or lower, grow the pot, cash out before you lose it.
+- **claw machine** - drop the claw on prizes. some clothes (crown, propeller hat, tuxedo) only come from here.
+- **pigeon flight** - the multiplier climbs while a pigeon carries your bet. cash out before it sees a fry.
+- **ticket tower** - stack sliding tickets, overhang gets cut off, perfect drops keep the size.
 
 ### campaign
 
-"the rise of a lottery legend": 5 chapters, 20 levels with story and goals that send you through every mode, ending in a boss fight against the lottery commissioner.
+"the rise of a lottery legend": 5 chapters, 20 levels with story and goals that send you through every mode, ending in a boss fight against the lottery commissioner, plus a bonus chapter after that.
 
 ### extras
 
@@ -25,6 +28,7 @@ a fake money lottery simulator for android. kotlin + jetpack compose + material 
 - 3 daily quests with coin rewards
 - a news ticker on the home screen
 - a rank title that grows with your badges
+- profile screen with a wardrobe (hats, shirts, glasses) that changes how you look everywhere, and all your stats
 
 ### tickets
 
@@ -38,7 +42,7 @@ winning tickets don't pay out right away. you sign the back, walk to the stand i
 
 settings has a currency picker that shows what your coins are "worth" in usd, eur, rub, shawarmas, potatoes and more. it's fake, nothing can be cashed out.
 
-67 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
+76 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
 
 ## install
 

@@ -240,6 +240,28 @@ fun DrawScope.drawDude(
                 outlined(p, d.hatColor, w)
                 circleO(Offset(hc.x + hr * 0.1f, hc.y - hr * 2.0f), hr * 0.14f, Gold, w * 0.7f)
             }
+            7 -> { // crown
+                val p = Path().apply {
+                    moveTo(hc.x - hr * 0.75f, hc.y - hr * 0.7f); lineTo(hc.x - hr * 0.85f, hc.y - hr * 1.5f)
+                    lineTo(hc.x - hr * 0.42f, hc.y - hr * 1.05f); lineTo(hc.x, hc.y - hr * 1.65f)
+                    lineTo(hc.x + hr * 0.42f, hc.y - hr * 1.05f); lineTo(hc.x + hr * 0.85f, hc.y - hr * 1.5f)
+                    lineTo(hc.x + hr * 0.75f, hc.y - hr * 0.7f); close()
+                }
+                outlined(p, Gold, w)
+                circleO(Offset(hc.x, hc.y - hr * 0.95f), hr * 0.12f, Pink, w * 0.6f)
+                circleO(Offset(hc.x - hr * 0.45f, hc.y - hr * 0.88f), hr * 0.08f, Sky, w * 0.5f)
+                circleO(Offset(hc.x + hr * 0.45f, hc.y - hr * 0.88f), hr * 0.08f, Mint, w * 0.5f)
+            }
+            8 -> { // propeller beanie
+                drawArc(d.hatColor, 180f, 180f, true, hc - Offset(hr * 1.02f, hr * 1.15f), Size(hr * 2.04f, hr * 1.5f))
+                drawArc(Ink, 180f, 180f, true, hc - Offset(hr * 1.02f, hr * 1.15f), Size(hr * 2.04f, hr * 1.5f), style = Stroke(w))
+                val top = Offset(hc.x, hc.y - hr * 1.2f)
+                drawLine(Ink, top, top - Offset(0f, hr * 0.3f), w)
+                val spin = sin(t * 20f)
+                drawOval(Sky, Offset(top.x - hr * 0.7f * kotlin.math.abs(spin), top.y - hr * 0.42f), Size(hr * 1.4f * kotlin.math.abs(spin) + 2f, hr * 0.18f))
+                drawOval(Pink, Offset(top.x - hr * 0.7f * kotlin.math.abs(spin), top.y - hr * 0.42f), Size(hr * 0.7f * kotlin.math.abs(spin) + 1f, hr * 0.18f))
+                circleO(top - Offset(0f, hr * 0.33f), hr * 0.08f, Gold, w * 0.5f)
+            }
             5 -> { // police cap
                 val p = Path().apply {
                     moveTo(hc.x - hr * 1.1f, hc.y - hr * 1.25f); lineTo(hc.x + hr * 1.1f, hc.y - hr * 1.25f)
@@ -439,7 +461,8 @@ fun DrawScope.drawBush(c: Offset, r: Float, eyes: Boolean, look: Float, t: Float
 
 // ---------- claim / bingo / dumpster props ----------
 
-val YouDude = Dude(Color(0xFFFFD7B5), Color(0xFF4BE3AC), Color(0xFF6B3E26), 1, Color(0xFFFF5C8A), "you", false, 1f)
+/** your character. updated from the wardrobe whenever the outfit changes */
+var YouDude = Dude(Color(0xFFFFD7B5), Color(0xFF4BE3AC), Color(0xFF6B3E26), 1, Color(0xFFFF5C8A), "you", false, 1f)
 val ThiefDude = Dude(Color(0xFFE0AC69), Color(0xFF222233), Color(0xFF222233), 3, Color(0xFF222233), "thief", false, 0.9f)
 val CashierDude = Dude(Color(0xFFF1C27D), Color(0xFFE9E9E9), Color(0xFF9E9E9E), 1, Color(0xFF2E9E5B), "cashier", true, 1.15f)
 fun grannyDude(i: Int) = Dude(

@@ -319,6 +319,9 @@ fun modeColor(mode: String) = when (mode) {
     "rain" -> Color(0xFF7986CB)
     "hilo" -> Color(0xFFFFB74D)
     "campaign" -> Color(0xFFFFD54F)
+    "claw" -> Color(0xFFF06292)
+    "flight" -> Color(0xFF4FC3F7)
+    "tower" -> Color(0xFFAED581)
     else -> Grape
 }
 

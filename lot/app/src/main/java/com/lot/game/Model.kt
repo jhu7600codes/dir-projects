@@ -239,6 +239,9 @@ val QuestPool = listOf(
     QuestDef("slots10", "spin the slots 10 times", 10, 60) { it.slotSpins },
     QuestDef("inspect15", "inspect 15 tickets", 15, 70) { it.inspected },
     QuestDef("rain2", "play 2 rounds of ticket rain", 2, 60) { it.rainPlays },
+    QuestDef("claw3", "play the claw machine 3 times", 3, 60) { it.clawPlays },
+    QuestDef("flight3", "fly 3 pigeons", 3, 60) { it.flightPlays },
+    QuestDef("tower2", "build 2 ticket towers", 2, 60) { it.towerPlays },
     QuestDef("win3", "win 3 tickets of any kind", 3, 90) { it.wins },
 )
 
@@ -287,6 +290,18 @@ data class GameState(
     val rainPlays: Int = 0,
     val hiloBestStreak: Int = 0,
     val hiloBestCashout: Int = 0,
+    // claw, flight, tower
+    val clawPlays: Int = 0,
+    val clawWins: Int = 0,
+    val flightPlays: Int = 0,
+    val flightBest: Int = 0, // best cashed multiplier x100
+    val towerPlays: Int = 0,
+    val towerBest: Int = 0,
+    // wardrobe
+    val wardrobe: Set<String> = setOf("hat_cap", "shirt_mint"),
+    val outfitHat: String = "hat_cap",
+    val outfitShirt: String = "shirt_mint",
+    val outfitGlasses: Boolean = false,
     // campaign
     val campaignLevel: Int = 0,
     val campaignBase: Int = -1,
@@ -384,13 +399,22 @@ val Badges = listOf(
     BadgeDef("ch3", "chapter 3: the dark side", "finish campaign chapter 3", "campaign") { it.campaignLevel >= 12 },
     BadgeDef("ch4", "chapter 4: hall of chance", "finish campaign chapter 4", "campaign") { it.campaignLevel >= 16 },
     BadgeDef("legend", "lottery legend", "defeat the lottery commissioner", "campaign") { "boss" in it.flags },
+    BadgeDef("claw1", "got one!", "win something from the claw machine", "claw") { it.clawWins >= 1 },
+    BadgeDef("claw10", "claw master", "win 10 claw machine prizes", "claw") { it.clawWins >= 10 },
+    BadgeDef("flight5", "high flyer", "cash out at 5x or more in pigeon flight", "flight") { it.flightBest >= 500 },
+    BadgeDef("flight10", "to the moon", "cash out at 10x or more in pigeon flight", "flight") { it.flightBest >= 1000 },
+    BadgeDef("tower10", "skyscraper", "stack a 10 ticket tower", "tower") { it.towerBest >= 10 },
+    BadgeDef("tower20", "architect", "stack a 20 ticket tower", "tower") { it.towerBest >= 20 },
+    BadgeDef("drip", "drip", "own 6 wardrobe items", "all") { it.wardrobe.size >= 6 },
+    BadgeDef("royal", "royalty", "wear the crown", "all") { it.outfitHat == "hat_crown" },
+    BadgeDef("ch6", "the sequel", "finish the bonus campaign chapter", "campaign") { it.campaignLevel >= 24 },
     BadgeDef("item1", "retail therapy", "buy your first item", "all") { it.items.isNotEmpty() },
     BadgeDef("item5", "shopaholic", "own 5 items", "all") { it.items.size >= 5 },
     BadgeDef("itemall", "fully loaded", "own every item", "all") { it.items.size >= Items.size },
     BadgeDef("quest1", "to-do list", "finish a daily quest", "all") { it.questsCompleted >= 1 },
     BadgeDef("quest15", "productive citizen", "finish 15 daily quests", "all") { it.questsCompleted >= 15 },
     BadgeDef("economist", "economist", "check what coins are worth in 3 currencies", "all") { it.currenciesSeen.size >= 3 },
-    BadgeDef("all", "jack of all trades", "play all 10 modes", "all") { it.modesPlayed.size >= 10 },
+    BadgeDef("all", "jack of all trades", "play all 13 modes", "all") { it.modesPlayed.size >= 13 },
 )
 
 // ---------- campaign ----------
@@ -409,7 +433,7 @@ data class CampaignLevel(
     val stat: (GameState) -> Int,
 )
 
-val Chapters = listOf("broke and hopeful", "behind the counter", "the dark side", "hall of chance", "the lottery boss")
+val Chapters = listOf("broke and hopeful", "behind the counter", "the dark side", "hall of chance", "the lottery boss", "bonus: the sequel")
 
 val Campaign = listOf(
     CampaignLevel(0, "a dream", "mom", "you found 500 coins in the couch. mom says \"don't spend it on tickets.\" so obviously...", "buy 3 tickets", 3, 50, "player") { it.ticketsBought },
@@ -436,4 +460,35 @@ val Campaign = listOf(
     CampaignLevel(4, "the evidence", "granny", "catch enough fakes in a row and you'll have proof. 10 in a row.", "get a 10 ticket streak", 10, 250, "inspector", absolute = true) { it.inspectBest },
     CampaignLevel(4, "gear up", "raccoon", "you can't face the commissioner in socks. well, one lucky sock. buy 3 items.", "own 3 items", 3, 300, "items", absolute = true) { it.items.size },
     CampaignLevel(4, "the commissioner", "commissioner", "\"so YOU'RE the one asking questions. come to my office. bring your arguments.\"", "defeat the lottery commissioner", 1, 5000, "boss", absolute = true) { if ("boss" in it.flags) 1 else 0 },
+
+    CampaignLevel(5, "the arcade", "commissioner", "\"i'm back. i bought an arcade. it's rigged too.\" win a prize from his claw machine.", "win a claw machine prize", 1, 300, "claw") { it.clawWins },
+    CampaignLevel(5, "bird mail", "commissioner", "he sends your ticket away by pigeon. cash out before the pigeon gets bored. 3x or more.", "cash out at 3x in pigeon flight", 300, 400, "flight", absolute = true) { it.flightBest },
+    CampaignLevel(5, "the tower", "commissioner", "\"build me a tower of tickets 12 high and i'll leave you alone forever.\"", "stack a 12 ticket tower", 12, 500, "tower", absolute = true) { it.towerBest },
+    CampaignLevel(5, "dress for success", "mom", "mom says you can't be a legend in that shirt. get 4 wardrobe items.", "own 4 wardrobe items", 4, 1000, "wardrobe", absolute = true) { it.wardrobe.size },
 )
+
+// ---------- wardrobe ----------
+
+/** kind: hat (value = hat id for drawDude), shirt (value = argb), glasses. price 0 = claw machine only */
+data class Cosmetic(val id: String, val name: String, val kind: String, val value: Long, val price: Int)
+
+val Cosmetics = listOf(
+    Cosmetic("hat_none", "just hair", "hat", 0, 30),
+    Cosmetic("hat_cap", "pink cap", "hat", 1, 0),
+    Cosmetic("hat_beanie", "beanie", "hat", 3, 150),
+    Cosmetic("hat_party", "party hat", "hat", 4, 100),
+    Cosmetic("hat_top", "top hat", "hat", 2, 300),
+    Cosmetic("hat_police", "fake police cap", "hat", 5, 400),
+    Cosmetic("hat_crown", "crown", "hat", 7, 0),
+    Cosmetic("hat_prop", "propeller hat", "hat", 8, 0),
+    Cosmetic("shirt_mint", "mint shirt", "shirt", 0xFF4BE3AC, 0),
+    Cosmetic("shirt_pink", "pink shirt", "shirt", 0xFFFF5C8A, 50),
+    Cosmetic("shirt_sky", "sky shirt", "shirt", 0xFF6EC6FF, 50),
+    Cosmetic("shirt_grape", "grape shirt", "shirt", 0xFF8E6CFF, 80),
+    Cosmetic("shirt_gold", "gold shirt", "shirt", 0xFFFFC93C, 120),
+    Cosmetic("shirt_hoodie", "black hoodie", "shirt", 0xFF222233, 150),
+    Cosmetic("shirt_tux", "tuxedo", "shirt", 0xFF2A2140, 0),
+    Cosmetic("glasses", "nerd glasses", "glasses", 0, 80),
+)
+
+fun cosmetic(id: String) = Cosmetics.firstOrNull { it.id == id }

@@ -143,6 +143,25 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 drawBall(Offset(w * 0.35f, h * 0.5f), h * 0.3f, 17)
                 label(if (tt > 0.5f) "▲" else "▼", w * 0.72f, h * 0.5f, h * 0.45f, if (tt > 0.5f) Pink else Sky, Ink)
             }, go = Screen.Hilo),
+            ModeEntry("claw", "the claw is weak. so are you.", Color(0xFFF06292), art = { w, h, tt ->
+                val cx = w * (0.3f + tt * 0.4f)
+                drawLine(Color(0xFFBDBDBD), Offset(cx, 0f), Offset(cx, h * 0.35f), 5f)
+                drawLine(Ink, Offset(cx, h * 0.35f), Offset(cx - 14f, h * 0.55f), 6f)
+                drawLine(Ink, Offset(cx, h * 0.35f), Offset(cx + 14f, h * 0.55f), 6f)
+                drawPigeon(Offset(w * 0.3f, h * 0.82f), h * 0.3f, 0.2f, 1f)
+                drawRaccoon(Offset(w * 0.68f, h * 0.82f), h * 0.28f, 0f, false)
+            }, go = Screen.Claw),
+            ModeEntry("flight", "cash out before the pigeon sees a fry", Color(0xFF4FC3F7), art = { w, h, tt ->
+                drawPigeon(Offset(w * 0.5f, h * (0.6f - tt * 0.25f)), h * 0.4f, tt, 1f)
+                label("${"%.1f".format(1f + tt * 4f)}x", w * 0.5f, h * 0.15f, h * 0.22f, Gold, Ink)
+            }, go = Screen.Flight),
+            ModeEntry("tower", "stack tickets. pray.", Color(0xFFAED581), art = { w, h, tt ->
+                for (i in 0 until 4) {
+                    val bw = w * (0.5f - i * 0.06f)
+                    drawRoundRect(ballColors[i], Offset(w * 0.25f + i * w * 0.03f, h * (0.82f - i * 0.18f)), Size(bw, h * 0.16f), androidx.compose.ui.geometry.CornerRadius(4f))
+                }
+                drawRoundRect(ballColors[4], Offset(w * (0.1f + tt * 0.4f), h * 0.05f), Size(w * 0.3f, h * 0.16f), androidx.compose.ui.geometry.CornerRadius(4f))
+            }, go = Screen.Tower),
         )
         modes.chunked(2).forEach { row ->
             Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -156,6 +175,8 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             ChunkyButton("items ${state.items.size}/${Items.size}", Modifier.weight(1f), color = Pink) { nav.go(Screen.Items) }
             ChunkyButton("settings", Modifier.weight(1f), color = CardHi, textColor = Color.White) { settings = true }
         }
+        Spacer(Modifier.height(10.dp))
+        ChunkyButton("profile & wardrobe", Modifier.fillMaxWidth(), color = Mint) { nav.go(Screen.Profile) }
         Spacer(Modifier.height(24.dp))
     }
 
