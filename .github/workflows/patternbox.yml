@@ -21,7 +21,7 @@ jobs:
           distribution: temurin
           java-version: 17
       # ubuntu runners already ship the android sdk at $ANDROID_HOME
-      - run: chmod +x gradlew && ./gradlew :core:test :app:assembleRelease --no-daemon
+      - run: chmod +x gradlew && ./gradlew :core:test :app:testDebugUnitTest :app:assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: patternbox-apk

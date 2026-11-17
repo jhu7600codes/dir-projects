@@ -2,6 +2,7 @@ package com.patternbox.app
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -14,33 +15,55 @@ import androidx.compose.ui.platform.LocalContext
 private val FallbackDark = darkColorScheme(
     primary = Color(0xFFFF8A65), onPrimary = Color(0xFF3B0E00),
     primaryContainer = Color(0xFF5A1F0A), onPrimaryContainer = Color(0xFFFFDBCF),
+    secondary = Color(0xFFE7BDB0), secondaryContainer = Color(0xFF5D4037),
     tertiary = Color(0xFF7CC4FF), onTertiary = Color(0xFF00325A),
     tertiaryContainer = Color(0xFF004880), onTertiaryContainer = Color(0xFFD1E4FF),
 )
 private val FallbackLight = lightColorScheme(
-    primary = Color(0xFFB4421C), tertiary = Color(0xFF00629F),
+    primary = Color(0xFFB4421C), tertiary = Color(0xFF00629F), secondary = Color(0xFF77574C),
     primaryContainer = Color(0xFFFFDBCF), tertiaryContainer = Color(0xFFD1E4FF),
 )
 
 /** material you: on android 12+ everything (fighters included) takes the wallpaper colours */
 @Composable
-fun PatternboxTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun PatternboxTheme(state: GameState, content: @Composable () -> Unit) {
+    val dark = when (state.themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+    }
     val ctx = LocalContext.current
     val scheme = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
+        state.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
         dark -> FallbackDark
         else -> FallbackLight
     }
     MaterialTheme(colorScheme = scheme, content = content)
 }
 
-/** p1 = primary, p2 = tertiary, so the two sides always look different but still match the wallpaper */
-@Composable
-fun playerColor(i: Int): Color = if (i == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+/** six team colours. the first three come from the wallpaper, the rest are fixed so ffa stays readable */
+fun teamColor(scheme: ColorScheme, team: Int): Color = when (((team % 6) + 6) % 6) {
+    0 -> scheme.primary
+    1 -> scheme.tertiary
+    2 -> scheme.secondary
+    3 -> Color(0xFF6FCF8E)
+    4 -> Color(0xFFE5B93C)
+    else -> Color(0xFFC77DFF)
+}
+
+fun teamContainer(scheme: ColorScheme, team: Int): Color = when (((team % 6) + 6) % 6) {
+    0 -> scheme.primaryContainer
+    1 -> scheme.tertiaryContainer
+    2 -> scheme.secondaryContainer
+    else -> teamColor(scheme, team).copy(alpha = .3f)
+}
+
+fun onTeamContainer(scheme: ColorScheme, team: Int): Color = when (((team % 6) + 6) % 6) {
+    0 -> scheme.onPrimaryContainer
+    1 -> scheme.onTertiaryContainer
+    2 -> scheme.onSecondaryContainer
+    else -> scheme.onSurface
+}
 
 @Composable
-fun playerContainer(i: Int): Color = if (i == 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer
-
-@Composable
-fun onPlayerContainer(i: Int): Color = if (i == 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
+fun playerColor(i: Int): Color = teamColor(MaterialTheme.colorScheme, i)

@@ -1,7 +1,9 @@
 package com.patternbox.app
 
 import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,169 +25,301 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotateRad
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.patternbox.core.Arena
-import com.patternbox.core.Debris
-import com.patternbox.core.FloatText
+import com.patternbox.core.Ability
+import com.patternbox.core.Entry
+import com.patternbox.core.Fighter
+import com.patternbox.core.GameMap
 import com.patternbox.core.Gravity
+import com.patternbox.core.Match
+import com.patternbox.core.Mode
 import com.patternbox.core.Tool
-import kotlin.math.max
-import kotlin.random.Random
 
-/** world is at least this many units wide so fighters aren't tiny on a portrait phone */
-private const val MIN_WORLD_W = 560f
+/** everything needed to start a fight. humans = indices into entries driven by the on-screen pads */
+data class FightConfig(
+    val mode: Mode,
+    val entries: List<Entry>,
+    val map: GameMap,
+    val humans: List<Int> = emptyList(),
+    val tournamentMatch: Pair<Int, Int>? = null,
+)
+
+private val FIGHT_TOOLS = listOf(Tool.GRAB, Tool.BOOM, Tool.POKE, Tool.FIRE, Tool.FREEZE, Tool.ZAP, Tool.HEAL)
 
 @Composable
-fun FightScreen(state: GameState, padding: PaddingValues, round: Int, onRematch: () -> Unit) {
-    val arena = remember(round) {
-        Arena().also { it.start(state.loadouts[0], state.nameFor(0), state.loadouts[1], state.nameFor(1)) }
+fun FightScreen(
+    state: GameState,
+    sfx: Sfx?,
+    config: FightConfig,
+    padding: PaddingValues,
+    onDone: (winner: Int?) -> Unit,
+    onExit: () -> Unit,
+) {
+    var round by remember { mutableIntStateOf(0) }
+    val match = remember(round, config) {
+        Match(config.mode, config.entries, config.map).also {
+            it.arena.showDamage = state.damageNumbers
+            it.arena.spawnLoadout = {
+                state.roster.randomOrNull()?.let { f -> f.loadout to f.displayName }
+                    ?: com.patternbox.core.Loadout.random().let { l -> l to l.autoName }
+            }
+        }
     }
-    var tool by remember { mutableStateOf(Tool.GRAB) }
+    val arena = match.arena
+    var started by remember(match) { mutableStateOf(false) }
+    var tool by remember { mutableStateOf<Tool?>(Tool.GRAB) }
     var slow by remember { mutableStateOf(false) }
-    var gravity by remember { mutableStateOf(Gravity.EARTH) }
-    var bots by remember(round) { mutableStateOf(listOf(true, true)) }
+    var paused by remember { mutableStateOf(false) }
+    var gravity by remember(match) { mutableStateOf(Gravity.EARTH) }
     var frame by remember { mutableLongStateOf(0L) }
+    var botFlags by remember(match) { mutableStateOf(List(config.entries.size) { it !in config.humans }) }
+    var showResult by remember(match) { mutableStateOf(false) }
+    var recorded by remember(match) { mutableStateOf(false) }
     val view = LocalView.current
-    // touching a player's buttons turns that player's bot off
-    fun takeOver(i: Int) {
-        if (arena.bot[i]) { arena.bot[i] = false; bots = listOf(arena.bot[0], arena.bot[1]) }
+    val speed by rememberUpdatedState(state.gameSpeed)
+    val haptics by rememberUpdatedState(state.haptics)
+    val soundOn by rememberUpdatedState(state.sound)
+    val sandbox = config.mode == Mode.SANDBOX
+
+    fun humanFighter(slot: Int): Fighter? {
+        val idx = config.humans.getOrNull(slot) ?: return null
+        return arena.fighters.getOrNull(idx)
     }
 
-    LaunchedEffect(arena) {
+    LaunchedEffect(match) {
         var last = 0L
         var acc = 0f
-        var seenImpacts = 0
         while (true) {
             withFrameNanos { now ->
-                if (last != 0L) {
+                if (!started) {
+                    // first frame: the canvas has measured the arena by now, so place everything for real
+                    started = arena.width > 0
+                    if (started) {
+                        match.start()
+                        arena.fighters.forEachIndexed { i, f -> f.bot = botFlags.getOrElse(i) { true } }
+                    }
+                }
+                if (last != 0L && started && !paused) {
                     val dt = ((now - last) / 1e9f).coerceAtMost(.1f)
-                    acc += dt * (if (slow) .3f else 1f)
-                    while (acc >= 1f / 60f) { arena.step(); acc -= 1f / 60f }
+                    acc += dt * (if (slow) .3f else 1f) * speed
+                    while (acc >= 1f / 60f) { match.step(); acc -= 1f / 60f }
                 }
                 last = now
                 frame = now
-                if (arena.impacts > seenImpacts) {
-                    val big = arena.impacts - seenImpacts >= 2
-                    view.performHapticFeedback(if (big) HapticFeedbackConstants.LONG_PRESS else HapticFeedbackConstants.CONTEXT_CLICK)
-                    seenImpacts = arena.impacts
+                if (arena.events.isNotEmpty()) {
+                    var bigHit = false
+                    for (e in arena.events) {
+                        if (soundOn) sfx?.play(e)
+                        if (e is com.patternbox.core.Event.Boom || e == com.patternbox.core.Event.Ko) bigHit = true
+                        if (e is com.patternbox.core.Event.Hit && e.dmg > 12) bigHit = true
+                    }
+                    if (haptics && arena.events.any { it !is com.patternbox.core.Event.Jump && it !is com.patternbox.core.Event.Shoot }) {
+                        view.performHapticFeedback(if (bigHit) HapticFeedbackConstants.LONG_PRESS else HapticFeedbackConstants.CONTEXT_CLICK)
+                    }
+                    arena.events.clear()
+                }
+                if (match.over && !showResult && arena.winT > 1.2f) showResult = true
+            }
+        }
+    }
+
+    // save results once per match
+    LaunchedEffect(showResult) {
+        if (!showResult || recorded) return@LaunchedEffect
+        recorded = true
+        val ids = config.entries.map { it.rosterId }
+        val kos = arena.fighters.mapIndexedNotNull { i, f -> ids.getOrNull(i)?.takeIf { it >= 0 }?.let { it to f.kos } }.toMap()
+        when (config.mode) {
+            Mode.SURVIVAL -> {
+                state.recordWave(match.wave - 1)
+                state.record(emptySet(), emptySet(), kos)
+            }
+            else -> {
+                val w = match.winners().toSet()
+                val winners = ids.filterIndexed { i, id -> id >= 0 && i in w }.toSet()
+                val losers = ids.filterIndexed { i, id -> id >= 0 && i !in w }.toSet()
+                state.record(winners, losers, kos)
+            }
+        }
+    }
+
+    Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding())) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val extra = when (config.mode) {
+                Mode.SURVIVAL -> "wave ${match.wave}   best ${state.bestWave}"
+                Mode.SANDBOX -> "${arena.fighters.count { !it.dead }} alive, ${arena.props.size} props"
+                else -> config.map.label
+            }
+            ArenaView(arena, tool, { frame }, state.screenShake, if (paused) "paused" else extra, Modifier.weight(1f).fillMaxWidth())
+
+            Row(
+                Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                for (t in if (sandbox) Tool.values().toList() else FIGHT_TOOLS) {
+                    FilterChip(selected = tool == t, onClick = { tool = if (tool == t) null else t }, label = { Text(t.label) })
+                }
+                VerticalDivider(Modifier.padding(vertical = 8.dp).size(1.dp, 24.dp))
+                FilterChip(selected = paused, onClick = { paused = !paused }, label = { Text("pause") })
+                FilterChip(selected = slow, onClick = { slow = !slow }, label = { Text("slowmo") })
+                AssistChip(onClick = {
+                    gravity = Gravity.values()[(gravity.ordinal + 1) % Gravity.values().size]; arena.gravity = gravity
+                }, label = { Text("gravity: ${gravity.label}") })
+                AssistChip(onClick = { arena.chaos() }, label = { Text("chaos") })
+                AssistChip(onClick = { arena.healAll() }, label = { Text("heal all") })
+                for ((slot, idx) in config.humans.withIndex()) {
+                    FilterChip(selected = botFlags.getOrElse(idx) { true }, onClick = {
+                        val f = arena.fighters.getOrNull(idx) ?: return@FilterChip
+                        f.bot = !f.bot
+                        botFlags = botFlags.toMutableList().also { it[idx] = f.bot }
+                    }, label = { Text("p${slot + 1} autopilot") })
+                }
+                AssistChip(onClick = { round++ }, label = { Text("restart") })
+            }
+
+            if (config.humans.isNotEmpty()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = if (config.humans.size == 1) Arrangement.Center else Arrangement.SpaceBetween,
+                ) {
+                    for (slot in config.humans.indices) {
+                        val idx = config.humans[slot]
+                        ControlPad(
+                            team = if (config.mode == Mode.TEAMS) idx % 2 else idx,
+                            fighter = { humanFighter(slot) },
+                            frame = { frame },
+                            onTouch = {
+                                val f = humanFighter(slot) ?: return@ControlPad
+                                if (f.bot) { f.bot = false; botFlags = botFlags.toMutableList().also { it[idx] = false } }
+                            },
+                            onSwing = { humanFighter(slot)?.let { arena.swing(it) } },
+                            onAbility = { humanFighter(slot)?.let { arena.useAbility(it) } },
+                        )
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(showResult, Modifier.align(Alignment.Center), enter = fadeIn() + slideInVertically { it / 3 }) {
+            ResultCard(
+                match, config, state,
+                onRematch = { round++ },
+                onContinue = { onDone(arena.winnerTeam) },
+                onExit = onExit,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResultCard(match: Match, config: FightConfig, state: GameState, onRematch: () -> Unit, onContinue: () -> Unit, onExit: () -> Unit) {
+    val arena = match.arena
+    val cs = MaterialTheme.colorScheme
+    ElevatedCard(Modifier.padding(24.dp).widthIn(max = 420.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val title = when {
+                config.mode == Mode.SURVIVAL -> "survived ${match.wave - 1} wave${if (match.wave - 1 == 1) "" else "s"}"
+                arena.winnerName.isNullOrEmpty() -> "double ko"
+                else -> "${arena.winnerName} wins"
+            }
+            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+            if (config.mode == Mode.SURVIVAL) Text("best: ${state.bestWave}", color = cs.onSurfaceVariant)
+            for (f in arena.fighters.filter { config.mode != Mode.SURVIVAL || it.team == 0 }.sortedByDescending { it.dmgDealt }.take(6)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.size(10.dp).clip(RoundedCornerShape(50)).background(teamColor(cs, f.team)))
+                    Text(f.name, Modifier.weight(1f), maxLines = 1)
+                    Text("${f.kos} ko  ${f.dmgDealt.toInt()} dmg", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                if (config.tournamentMatch != null) {
+                    Button(onClick = onContinue) { Text("back to bracket") }
+                } else {
+                    Button(onClick = onRematch) { Text("rematch") }
+                    OutlinedButton(onClick = onExit) { Text("done") }
                 }
             }
         }
     }
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding())
-            .padding(horizontal = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        ArenaCanvas(arena, tool, { frame }, Modifier.weight(1f).fillMaxWidth())
-
-        Row(
-            Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            for (t in Tool.values()) {
-                FilterChip(selected = tool == t, onClick = { tool = t }, label = { Text(t.name.lowercase()) })
-            }
-            VerticalDivider(Modifier.padding(vertical = 8.dp).size(1.dp, 24.dp))
-            for (i in 0..1) {
-                FilterChip(selected = bots[i], onClick = {
-                    arena.bot[i] = !arena.bot[i]; bots = listOf(arena.bot[0], arena.bot[1])
-                }, label = { Text("p${i + 1} bot") })
-            }
-            VerticalDivider(Modifier.padding(vertical = 8.dp).size(1.dp, 24.dp))
-            AssistChip(onClick = {
-                gravity = Gravity.values()[(gravity.ordinal + 1) % Gravity.values().size]; arena.gravity = gravity
-            }, label = { Text("gravity: ${gravity.label}") })
-            FilterChip(selected = slow, onClick = { slow = !slow }, label = { Text("slowmo") })
-            AssistChip(onClick = { arena.chaos() }, label = { Text("chaos") })
-            AssistChip(onClick = { arena.heal() }, label = { Text("heal") })
-            AssistChip(onClick = onRematch, label = { Text("rematch") })
-        }
-
-        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            for (i in 0..1) {
-                ControlPad(
-                    i,
-                    onMove = { left, right, jump ->
-                        takeOver(i)
-                        arena.input[i].left = left; arena.input[i].right = right; arena.input[i].jump = jump
-                    },
-                    onSwing = { takeOver(i); arena.swing(arena.fighters[i]) },
-                )
-            }
-        }
-    }
 }
 
 @Composable
-private fun ControlPad(i: Int, onMove: (left: Boolean, right: Boolean, jump: Boolean) -> Unit, onSwing: () -> Unit) {
+private fun ControlPad(
+    team: Int,
+    fighter: () -> Fighter?,
+    frame: () -> Long,
+    onTouch: () -> Unit,
+    onSwing: () -> Unit,
+    onAbility: () -> Unit,
+) {
+    val cs = MaterialTheme.colorScheme
     var l by remember { mutableStateOf(false) }
     var r by remember { mutableStateOf(false) }
     var j by remember { mutableStateOf(false) }
-    fun push() = onMove(l, r, j)
-    Surface(shape = RoundedCornerShape(28.dp), color = playerContainer(i)) {
-        Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            HoldButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, i) { l = it; push() }
-            HoldButton(Icons.Filled.KeyboardArrowUp, i) { j = it; push() }
-            HoldButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, i) { r = it; push() }
-            HoldButton(Icons.Filled.Star, i, strong = true) {
-                if (it) onSwing()
+    fun push() {
+        onTouch()
+        fighter()?.input?.let { it.left = l; it.right = r; it.jump = j }
+    }
+    Surface(shape = RoundedCornerShape(28.dp), color = teamContainer(cs, team)) {
+        Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            HoldButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, team) { l = it; push() }
+            HoldButton(Icons.Filled.KeyboardArrowUp, team) { j = it; push() }
+            HoldButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, team) { r = it; push() }
+            HoldButton(Icons.Filled.Star, team, strong = true) { if (it) { onTouch(); onSwing() } }
+            val f = fighter()
+            frame()
+            val ab = f?.loadout?.ability ?: Ability.NONE
+            if (ab.cooldown > 0) {
+                val ready = (f?.abilityCd ?: 1f) <= 0f
+                HoldButton(Icons.Filled.ThumbUp, team, strong = ready, dim = !ready) { if (it) { onTouch(); onAbility() } }
             }
         }
     }
 }
 
 @Composable
-private fun HoldButton(icon: ImageVector, i: Int, strong: Boolean = false, onHold: (Boolean) -> Unit) {
+private fun HoldButton(icon: ImageVector, team: Int, strong: Boolean = false, dim: Boolean = false, onHold: (Boolean) -> Unit) {
+    val cs = MaterialTheme.colorScheme
     var down by remember { mutableStateOf(false) }
+    val c = teamColor(cs, team)
     val bg = when {
-        down -> playerColor(i)
-        strong -> playerColor(i).copy(alpha = .35f)
+        down -> c
+        strong -> c.copy(alpha = .35f)
         else -> Color.Transparent
     }
     Box(
         Modifier
-            .size(42.dp)
+            .size(44.dp)
             .clip(RoundedCornerShape(50))
             .background(bg)
             .pointerInput(Unit) {
@@ -193,148 +328,14 @@ private fun HoldButton(icon: ImageVector, i: Int, strong: Boolean = false, onHol
                     d.consume(); down = true; onHold(true)
                     while (true) {
                         val ev = awaitPointerEvent()
-                        val c = ev.changes.firstOrNull { it.id == d.id } ?: break
-                        if (!c.pressed) break
+                        val ch = ev.changes.firstOrNull { it.id == d.id } ?: break
+                        if (!ch.pressed) break
                     }
                     down = false; onHold(false)
                 }
             },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, tint = if (down) MaterialTheme.colorScheme.surface else onPlayerContainer(i))
+        Icon(icon, null, tint = (if (down) cs.surface else onTeamContainer(cs, team)).copy(alpha = if (dim) .4f else 1f))
     }
 }
-
-@Composable
-private fun ArenaCanvas(arena: Arena, tool: Tool, frame: () -> Long, modifier: Modifier) {
-    val cs = MaterialTheme.colorScheme
-    val pals = listOf(fighterPalette(0), fighterPalette(1))
-    val bg = cs.surfaceContainerLow
-    val grid = cs.outlineVariant
-    val floor = cs.surfaceContainerHigh
-    val onSurface = cs.onSurface
-    val dim = cs.onSurfaceVariant
-    val crit = Color(0xFFFFC94A)
-    val good = Color(0xFF7DDE9A)
-    val measurer = rememberTextMeasurer()
-    val toolNow by androidx.compose.runtime.rememberUpdatedState(tool)
-    var scaleK by remember { mutableStateOf(1f) }
-
-    Canvas(
-        modifier
-            .clip(RoundedCornerShape(28.dp))
-            .background(bg)
-            .pointerInput(arena) {
-                awaitEachGesture {
-                    val d = awaitFirstDown()
-                    d.consume()
-                    val k = scaleK
-                    arena.pointerDown(toolNow, d.position.x / k, d.position.y / k)
-                    while (true) {
-                        val ev = awaitPointerEvent()
-                        val c = ev.changes.firstOrNull { it.id == d.id } ?: break
-                        c.consume()
-                        if (!c.pressed) break
-                        arena.pointerMove(c.position.x / k, c.position.y / k)
-                    }
-                    arena.pointerUp()
-                }
-            }
-    ) {
-        frame() // read so the canvas redraws every frame
-        val k = size.width / max(MIN_WORLD_W, size.width / density)
-        scaleK = k
-        val ww = size.width / k
-        val wh = size.height / k
-        if (arena.width != ww || arena.height != wh) arena.resize(ww, wh)
-
-        val shake = if (arena.shake > .2f) Offset((Random.nextFloat() - .5f) * arena.shake * k, (Random.nextFloat() - .5f) * arena.shake * k) else Offset.Zero
-        translate(shake.x, shake.y) {
-            scale(k, pivot = Offset.Zero) {
-                // lock screen dot grid
-                var gx = 30f
-                while (gx < ww) {
-                    var gy = 30f
-                    while (gy < arena.floorY) { drawCircle(grid, 2.5f, Offset(gx, gy)); gy += 60f }
-                    gx += 60f
-                }
-                drawRect(floor, Offset(-20f, arena.floorY), Size(ww + 40, 80f))
-                drawLine(grid, Offset(0f, arena.floorY), Offset(ww, arena.floorY), 2f)
-
-                for (d in arena.debris) {
-                    val pal = pals[d.owner]
-                    val c = when (d.kind) {
-                        Debris.Kind.BODY -> pal.body
-                        Debris.Kind.WEAPON -> pal.blade
-                        Debris.Kind.ARMOUR -> pal.metal
-                    }
-                    withTransform({ translate(d.x, d.y); rotateRad(d.ang, Offset.Zero) }) {
-                        drawLine(c.copy(alpha = d.life.coerceIn(0f, 1f) * c.alpha), Offset(d.a.x, d.a.y), Offset(d.b.x, d.b.y),
-                            if (d.kind == Debris.Kind.WEAPON) 4.5f else if (d.kind == Debris.Kind.BODY) 9f else 7f,
-                            androidx.compose.ui.graphics.StrokeCap.Round)
-                    }
-                }
-
-                for (f in arena.fighters) {
-                    if (f.dead) continue
-                    val sh = max(.3f, 1 - (arena.floorY - f.y) / 400f)
-                    drawOval(Color.Black.copy(alpha = .25f), Offset(f.x - 34 * sh, arena.floorY - 4 * sh), Size(68 * sh, 12 * sh))
-                    withTransform({
-                        translate(f.x, f.y)
-                        rotateRad(f.ang, Offset.Zero)
-                        scale(f.face, 1f, Offset.Zero)
-                    }) {
-                        drawFighter(
-                            f.loadout, pals[f.index], arena.swingAngle(f), f.plates, f.look,
-                            dead = false, hot = f.hot, flash = f.stun > .25f,
-                        )
-                    }
-                }
-
-                for (b in arena.booms) {
-                    val t = b.t / .5f
-                    drawCircle(Color(0xFFFFBE5A).copy(alpha = .5f * (1 - t)), 30 + 140 * t, Offset(b.x, b.y))
-                    drawCircle(Color.White.copy(alpha = 1 - t), 20 + 170 * t, Offset(b.x, b.y), style = Stroke(3f))
-                }
-
-                for (t in arena.texts) {
-                    val c = when (t.tone) {
-                        FloatText.Tone.CRIT -> crit
-                        FloatText.Tone.METAL -> dim
-                        FloatText.Tone.GOOD -> good
-                        FloatText.Tone.NORMAL -> onSurface
-                    }
-                    val lay = measurer.measure(t.text, TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = c))
-                    drawText(lay, topLeft = Offset(t.x - lay.size.width / 2f, t.y - lay.size.height), alpha = (t.life * 2).coerceIn(0f, 1f))
-                }
-            }
-        }
-
-        // hud, drawn unscaled in screen pixels
-        val barW = size.width * .4f
-        for (f in arena.fighters) {
-            val x = if (f.index == 0) 16.dp.toPx() else size.width - 16.dp.toPx() - barW
-            val y = 16.dp.toPx()
-            val name = measurer.measure("${f.name}  ${max(0, kotlin.math.ceil(f.hp).toInt())}",
-                TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = onSurface))
-            drawText(name, topLeft = Offset(if (f.index == 0) x else x + barW - name.size.width, y))
-            val by = y + name.size.height + 4.dp.toPx()
-            val bh = 8.dp.toPx()
-            drawRoundRect(floor, Offset(x, by), Size(barW, bh), androidx.compose.ui.geometry.CornerRadius(bh / 2))
-            val fr = (f.hp / f.stats.hp).coerceIn(0f, 1f)
-            drawRoundRect(pals[f.index].body, Offset(if (f.index == 0) x else x + barW * (1 - fr), by), Size(barW * fr, bh),
-                androidx.compose.ui.geometry.CornerRadius(bh / 2))
-        }
-        val w = arena.winner
-        if (w != null && arena.winT > .6f) {
-            val big = measurer.measure(if (w.isEmpty()) "double ko" else "$w wins",
-                TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface, textAlign = TextAlign.Center))
-            val small = measurer.measure("tap rematch, or go build something meaner", TextStyle(fontSize = 13.sp, color = dim))
-            val cy = size.height / 2
-            drawRect(bg.copy(alpha = .75f), Offset(0f, cy - big.size.height.toFloat()), Size(size.width, (big.size.height * 2 + small.size.height).toFloat()))
-            drawText(big, topLeft = Offset((size.width - big.size.width) / 2, cy - big.size.height / 2))
-            drawText(small, topLeft = Offset((size.width - small.size.width) / 2, cy + big.size.height / 2 + 4))
-        }
-    }
-}
-
