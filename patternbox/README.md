@@ -44,4 +44,4 @@ up to two people can play on one phone with the on screen pads, everyone else is
 ./gradlew :app:assembleRelease      # needs ANDROID_HOME or local.properties
 ```
 
-github actions builds the apk on every push that touches `patternbox/` and puts it on the `patternbox-latest` release.
+the ready to install apk lives in `dist/patternbox.apk`. it's built locally and signed with the patternbox release key (kept out of the repo), pass it in with `PB_KEYSTORE_FILE` and `PB_KEYSTORE_PASSWORD`. without those, builds fall back to the debug key and won't install over the real apk.
