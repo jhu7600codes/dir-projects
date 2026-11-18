@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 SDK=${ANDROID_HOME:-/opt/android-sdk}; BT=$SDK/build-tools/34.0.0; JAR=$SDK/platforms/android-34/android.jar
 if [ -n "${DROID:-}" ]; then (cd "$DROID" && node tools/pack-dpk/pack.mjs "$OLDPWD/web" "$OLDPWD/raritet.dpk" --integrity); fi
 B=build; rm -rf $B; mkdir -p $B/assets $B/classes $B/dex
-cp web/index.html $B/assets/
+cp web/*.html web/*.js web/*.css $B/assets/
 $BT/aapt2 compile --dir android/res -o $B/res.zip
 $BT/aapt2 link -I $JAR --manifest android/AndroidManifest.xml -A $B/assets --java $B/gen -o $B/unsigned.apk $B/res.zip
 javac -source 8 -target 8 -classpath $JAR -d $B/classes android/src/com/jhu/raritet/*.java $(find $B/gen -name '*.java') 2>&1 | grep -v "warning: \[options\]" || true

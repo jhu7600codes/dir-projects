@@ -1,8 +1,8 @@
 {
  "id": "com.jhu.raritet",
  "name": "Раритет",
- "version": "1.0",
- "versioncode": 1,
+ "version": "2.0",
+ "versioncode": 2,
  "type": "web",
  "main": "main",
  "icon": "icon.svg",
