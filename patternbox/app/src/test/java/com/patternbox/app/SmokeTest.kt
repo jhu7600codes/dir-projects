@@ -97,7 +97,7 @@ class SmokeTest {
         back()
 
         click("settings")
-        click("reset stats")
-        click("cancel")
+        click("huge")
+        click("medium")
     }
 }
