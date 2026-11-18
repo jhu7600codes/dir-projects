@@ -1,16 +1,35 @@
 {
  "id": "com.jhu.raritet",
  "name": "Раритет",
- "version": "2.3",
- "versioncode": 5,
+ "version": "2.4",
+ "versioncode": 6,
  "type": "web",
  "main": "main",
  "icon": "icon.svg",
  "theme": "holo-dark",
  "dpk": "2.0",
- "permissions": ["vibrate", "clipboard"],
+ "permissions": [
+  "vibrate",
+  "clipboard",
+  {
+   "name": "network",
+   "hosts": [
+    "ru.wikipedia.org",
+    "en.wikipedia.org",
+    "ru.wiktionary.org",
+    "en.wiktionary.org",
+    "*.fandom.com",
+    "minecraft.wiki",
+    "terraria.wiki.gg"
+   ]
+  }
+ ],
  "activities": {
-  "main": { "entry": "index.html", "label": "Раритет", "launcher": true }
+  "main": {
+   "entry": "index.html",
+   "label": "Раритет",
+   "launcher": true
+  }
  },
  "author": "jhu",
  "description": "Русская викторина на редкие ответы: 7 вопросов, 20 секунд, чем реже ответ, тем больше очков. Игра дня и бесконечный режим, бесплатно."

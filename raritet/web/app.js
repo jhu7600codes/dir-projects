@@ -1,4 +1,4 @@
-// Раритет 2.2: rare-answer trivia. a round is a list of prompts; each answer has a rough
+// Раритет 2.4: rare-answer trivia. a round is a list of prompts; each answer has a rough
 // "how many players would say this" percent and scores 100 - 2 * percent (min 10).
 'use strict'
 const $ = (id) => document.getElementById(id)
@@ -58,7 +58,7 @@ function lev(a, b) {
   return p[b.length]
 }
 function parse(bank, lang, pre = '') {
-  return bank.map(([q, raw], i) => {
+  return bank.map(([q, raw, src], i) => {
     const seen = new Set()
     const answers = []
     for (const part of raw.split(/,\s*(?=[^,=]+=\d)/)) {
@@ -71,12 +71,12 @@ function parse(bank, lang, pre = '') {
       answers.push({ name: all[0], keys: [...keys], pct: +part.slice(eq + 1) })
     }
     answers.sort((a, b) => b.pct - a.pct)
-    return { id: pre + lang + i, q, answers }
+    return { id: pre + lang + i, q, answers, src }
   })
 }
 const BANKS = {
   ru: parse(BANK_RU, 'ru'), en: parse(BANK_EN, 'en'),
-  gamer: { ru: parse(BANK_GAMER.map(([r, , a]) => [r, a]), 'ru', 'g'), en: parse(BANK_GAMER.map(([, e, a]) => [e, a]), 'en', 'g') },
+  gamer: { ru: parse(BANK_GAMER.map(([r, , a, w]) => [r, a, w]), 'ru', 'g'), en: parse(BANK_GAMER.map(([, e, a, w]) => [e, a, w]), 'en', 'g') },
 }
 function match(prompt, input) {
   const t1 = tight(input), t2 = S.lang === 'ru' ? tight(translit(norm(input))) : t1
@@ -289,18 +289,41 @@ function record(a, raw, why) {
   return pts
 }
 
-function submit(why) {
-  if (G.locked) return
+function setChecking(on) {
+  for (const id of ['ans', 'go', 'skip', 'hint']) $(id).disabled = on || (id === 'hint' && G.hintUsed)
+  if (on) { G.hintSaved = $('hintLine').textContent; $('hintLine').innerHTML = `<span class="spin"></span>${esc(t('checking'))}` }
+  else $('hintLine').textContent = G.hintSaved || ''
+}
+const shortHost = (h) => (h || '').replace(/^www\./, '').replace('.fandom.com', ' wiki').replace('.wiki.gg', ' wiki')
+
+async function submit(why) {
+  if (G.locked || G.checking) return
   const raw = $('ans').value.trim()
   if (why === 'answer' && !raw) { $('ans').classList.remove('shake'); void $('ans').offsetWidth; $('ans').classList.add('shake'); return }
   const p = G.round[G.at]
   let a = why === 'skip' ? null : match(p, raw)
-  // anything typed that isn't on the list counts as a super rare answer (0%, 100 points)
-  if (!a && why !== 'skip' && tight(raw).length >= 2) a = { name: raw.toLowerCase(), keys: [], pct: 0, unknown: true }
+  G.note = null
+  // not on the list: look it up. if it's real, it's a super rare answer (0%, 100 points)
+  if (!a && why !== 'skip' && tight(raw).length >= 2) {
+    const g = G
+    g.checking = true
+    if (g.mode !== 'blitz') stopTimer()
+    setChecking(true)
+    const r = await Verify.check(p, raw, S.lang)
+    g.checking = false
+    if (G !== g || cur !== 'play' || g.locked) return
+    setChecking(false)
+    if (r.ok) a = { name: raw.toLowerCase(), keys: [], pct: 0, unknown: true, found: r.title, where: shortHost(r.where) }
+    else G.note = r.error ? { k: 'offline' } : { k: 'notReal', where: shortHost(r.where) }
+  }
 
   if (G.mode === 'blitz') {
     // blitz: wrong answers just shake, so you can try again; skip moves on
-    if (!a && why === 'answer') { $('ans').classList.remove('shake'); void $('ans').offsetWidth; $('ans').classList.add('shake'); buzz(60); sfx.bad(); return }
+    if (!a && why === 'answer') {
+      $('ans').classList.remove('shake'); void $('ans').offsetWidth; $('ans').classList.add('shake'); buzz(60); sfx.bad()
+      if (G.note) $('hintLine').textContent = G.note.k === 'offline' ? t('offline') : t('notReal')
+      $('ans').focus(); return
+    }
     const pts = record(a, raw, why)
     if (a) { flash('+' + pts, tierCls[tier(pts)]); pts >= 90 ? sfx.rare() : sfx.good(); buzz(25) }
     G.at++
@@ -318,9 +341,9 @@ function submit(why) {
   const v = $('vPts')
   v.className = 'pts ' + tierCls[tr]
   if (a) { v.textContent = '+0'; countUp({ set textContent(x) { v.textContent = '+' + x } }, pts) } else v.textContent = '0'
-  $('vLbl').textContent = a && a.unknown ? t('vNew') : a ? t('v' + tr) : why === 'time' ? t('timeUp') : why === 'skip' ? t('skipped') : t('notFound')
+  $('vLbl').textContent = a && a.unknown ? t('vNew') : a ? t('v' + tr) : G.note ? t(G.note.k) : why === 'time' ? t('timeUp') : why === 'skip' ? t('skipped') : t('notFound')
   $('vLbl').className = 'lbl ' + tierCls[tr]
-  $('vSub').textContent = a && a.unknown ? t('nobody') : a ? t('saidBy', { a: a.name, p: a.pct }) : ''
+  $('vSub').textContent = a && a.unknown ? t('foundOn', { t: a.found, w: a.where }) : a ? t('saidBy', { a: a.name, p: a.pct }) : G.note && G.note.where ? t('checkedOn', { w: G.note.where }) : ''
   $('vList').innerHTML = answerBars(p, a)
   $('next').textContent = G.at === G.round.length - 1 ? t('results') : t('next')
   $('reveal').classList.add('on')
