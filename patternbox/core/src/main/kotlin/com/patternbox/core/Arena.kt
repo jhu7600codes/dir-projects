@@ -735,7 +735,15 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         }
         val o = pickTarget(f)
         f.target = o
-        if (!f.held && o != null) f.face = if (o.x >= f.x) 1f else -1f
+        if (!f.held) {
+            if (f.bot) {
+                if (o != null) f.face = if (o.x >= f.x) 1f else -1f
+            } else if (f.swingT < 0 && f.stun <= 0) {
+                // players turn the way they walk and keep facing that way when they stop
+                if (f.input.left && !f.input.right) f.face = -1f
+                else if (f.input.right && !f.input.left) f.face = 1f
+            }
+        }
         f.look = if (o != null) atan2(o.y - f.y, (o.x - f.x) * f.face) else 0f
 
         if (f.held) {
@@ -880,7 +888,9 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         events += Event.Break
     }
 
-    private fun fire(f: Fighter, target: Fighter?) {
+    private fun fire(f: Fighter, enemy: Fighter?) {
+        // players shoot where they're facing; only auto-aim if the enemy is actually in front
+        val target = if (f.bot) enemy else enemy?.takeIf { sign(it.x - f.x) == f.face }
         val hand = handWorld(f)
         val wt = f.loadout.weaponType
         val dx = (target?.x ?: (f.x + f.face * 300)) - hand.x

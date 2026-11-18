@@ -93,6 +93,23 @@ class PatternboxTest {
         assertNotNull(t.champion)
     }
 
+    @Test fun playersTurnTheWayTheyWalk() {
+        val arena = Arena()
+        arena.start(Loadout.DEFAULT_P1, "a", Loadout.DEFAULT_P2, "b")
+        val f = arena.fighters[0]   // starts on the left facing right, enemy to the right
+        f.bot = false
+        arena.fighters[1].bot = false
+        f.input.left = true
+        repeat(10) { arena.step() }
+        assertEquals(-1f, f.face)
+        f.input.left = false
+        repeat(10) { arena.step() }
+        assertEquals("keeps facing left after stopping", -1f, f.face)
+        f.input.right = true
+        repeat(10) { arena.step() }
+        assertEquals(1f, f.face)
+    }
+
     @Test fun throwingIntoWallHurts() {
         val arena = Arena()
         arena.start(Loadout.DEFAULT_P1, "a", Loadout.DEFAULT_P2, "b")
