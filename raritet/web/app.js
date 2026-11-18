@@ -294,7 +294,9 @@ function submit(why) {
   const raw = $('ans').value.trim()
   if (why === 'answer' && !raw) { $('ans').classList.remove('shake'); void $('ans').offsetWidth; $('ans').classList.add('shake'); return }
   const p = G.round[G.at]
-  const a = why === 'skip' ? null : match(p, raw)
+  let a = why === 'skip' ? null : match(p, raw)
+  // anything typed that isn't on the list counts as a super rare answer (0%, 100 points)
+  if (!a && why !== 'skip' && tight(raw).length >= 2) a = { name: raw.toLowerCase(), keys: [], pct: 0, unknown: true }
 
   if (G.mode === 'blitz') {
     // blitz: wrong answers just shake, so you can try again; skip moves on
@@ -316,9 +318,9 @@ function submit(why) {
   const v = $('vPts')
   v.className = 'pts ' + tierCls[tr]
   if (a) { v.textContent = '+0'; countUp({ set textContent(x) { v.textContent = '+' + x } }, pts) } else v.textContent = '0'
-  $('vLbl').textContent = a ? t('v' + tr) : why === 'time' ? t('timeUp') : why === 'skip' ? t('skipped') : t('notFound')
+  $('vLbl').textContent = a && a.unknown ? t('vNew') : a ? t('v' + tr) : why === 'time' ? t('timeUp') : why === 'skip' ? t('skipped') : t('notFound')
   $('vLbl').className = 'lbl ' + tierCls[tr]
-  $('vSub').textContent = a ? t('saidBy', { a: a.name, p: a.pct }) : ''
+  $('vSub').textContent = a && a.unknown ? t('nobody') : a ? t('saidBy', { a: a.name, p: a.pct }) : ''
   $('vList').innerHTML = answerBars(p, a)
   $('next').textContent = G.at === G.round.length - 1 ? t('results') : t('next')
   $('reveal').classList.add('on')
