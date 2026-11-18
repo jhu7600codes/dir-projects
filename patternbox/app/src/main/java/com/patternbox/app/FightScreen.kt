@@ -345,6 +345,9 @@ private fun HoldButton(
 ) {
     val cs = MaterialTheme.colorScheme
     var down by remember { mutableStateOf(false) }
+    // pointerInput below lives across recompositions, so always call the newest onHold.
+    // without this, rematch left the buttons driving the old match's fighters
+    val hold by rememberUpdatedState(onHold)
     val c = teamColor(cs, team)
     val bg = when {
         down -> c
@@ -363,13 +366,13 @@ private fun HoldButton(
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val d = awaitFirstDown()
-                    d.consume(); down = true; onHold(true)
+                    d.consume(); down = true; hold(true)
                     while (true) {
                         val ev = awaitPointerEvent()
                         val ch = ev.changes.firstOrNull { it.id == d.id } ?: break
                         if (!ch.pressed) break
                     }
-                    down = false; onHold(false)
+                    down = false; hold(false)
                 }
             },
         contentAlignment = Alignment.Center,

@@ -76,7 +76,7 @@ fun SettingsScreen(state: GameState, padding: PaddingValues) {
     )
 }
 
-object BuildConfigVersion { const val NAME = "0.2.3" }
+object BuildConfigVersion { const val NAME = "0.2.4" }
 
 @Composable
 private fun Toggle(title: String, sub: String, value: Boolean, onChange: (Boolean) -> Unit) {
