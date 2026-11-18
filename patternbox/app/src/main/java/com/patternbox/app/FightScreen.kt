@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,8 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
@@ -50,11 +49,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.drawBehind
 import com.patternbox.core.Ability
 import com.patternbox.core.Entry
 import com.patternbox.core.Fighter
@@ -208,14 +208,14 @@ fun FightScreen(
             }
 
             if (config.humans.isNotEmpty()) {
-                Row(
-                    Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    horizontalArrangement = if (config.humans.size == 1) Arrangement.Center else Arrangement.SpaceBetween,
-                ) {
-                    for (slot in config.humans.indices) {
+                // one full width row per player, p2 on top so p1 sits under the thumbs
+                Column(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (slot in config.humans.indices.reversed()) {
                         val idx = config.humans[slot]
                         ControlPad(
                             team = if (config.mode == Mode.TEAMS) idx % 2 else idx,
+                            size = state.controlSize.dp,
+                            label = if (config.humans.size > 1) "p${slot + 1}" else null,
                             fighter = { humanFighter(slot) },
                             frame = { frame },
                             onTouch = {
@@ -276,6 +276,8 @@ private fun ResultCard(match: Match, config: FightConfig, state: GameState, onRe
 @Composable
 private fun ControlPad(
     team: Int,
+    size: Dp,
+    label: String?,
     fighter: () -> Fighter?,
     frame: () -> Long,
     onTouch: () -> Unit,
@@ -290,38 +292,74 @@ private fun ControlPad(
         onTouch()
         fighter()?.input?.let { it.left = l; it.right = r; it.jump = j }
     }
-    Surface(shape = RoundedCornerShape(28.dp), color = teamContainer(cs, team)) {
-        Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            HoldButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, team) { l = it; push() }
-            HoldButton(Icons.Filled.KeyboardArrowUp, team) { j = it; push() }
-            HoldButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, team) { r = it; push() }
-            HoldButton(Icons.Filled.Star, team, strong = true) { if (it) { onTouch(); onSwing() } }
+    Surface(shape = RoundedCornerShape(minOf(size / 2, 36.dp) + 8.dp), color = teamContainer(cs, team), modifier = Modifier.fillMaxWidth()) {
+        BoxWithConstraints(Modifier.padding(8.dp)) {
             val f = fighter()
             frame()
             val ab = f?.loadout?.ability ?: Ability.NONE
-            if (ab.cooldown > 0) {
-                val ready = (f?.abilityCd ?: 1f) <= 0f
-                HoldButton(Icons.Filled.ThumbUp, team, strong = ready, dim = !ready) { if (it) { onTouch(); onAbility() } }
+            val hasAb = ab.cooldown > 0
+            // widths in "units": 2 wide move buttons, jump, ability, a bigger hit button, plus a gap for the label
+            val units = 1.25f * 2 + 1f + (if (hasAb) 1f else 0f) + 1.2f + .5f
+            val gaps = 8.dp * (if (hasAb) 5 else 4)
+            val unit = minOf(size, (maxWidth - gaps) / units)
+            // narrow phones: buttons get taller instead of wider, so bigger settings still help
+            val h = maxOf(size, unit)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HoldButton(team, unit * 1.25f, h, round = false, onHold = { l = it; push() }) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "left", Modifier.size(unit * .6f), tint = it)
+                }
+                HoldButton(team, unit * 1.25f, h, round = false, onHold = { r = it; push() }) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "right", Modifier.size(unit * .6f), tint = it)
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    if (label != null) Text(label, style = MaterialTheme.typography.labelLarge, color = onTeamContainer(cs, team))
+                }
+                HoldButton(team, unit, h, onHold = { j = it; push() }) {
+                    Icon(Icons.Filled.KeyboardArrowUp, "jump", Modifier.size(unit * .55f), tint = it)
+                }
+                if (hasAb) {
+                    val ready = 1f - ((f?.abilityCd ?: 0f) / ab.cooldown).coerceIn(0f, 1f)
+                    HoldButton(team, unit, h, fill = ready, onHold = { if (it) { onTouch(); onAbility() } }) {
+                        Text(ab.label.substringBefore(' ').take(6), color = it.copy(alpha = if (ready >= 1f) 1f else .5f), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+                    }
+                }
+                HoldButton(team, unit * 1.2f, h, strong = true, onHold = { if (it) { onTouch(); onSwing() } }) {
+                    Text("hit", color = it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                }
             }
         }
     }
 }
 
+/** a button that reports press and release, so holding left keeps walking */
 @Composable
-private fun HoldButton(icon: ImageVector, team: Int, strong: Boolean = false, dim: Boolean = false, onHold: (Boolean) -> Unit) {
+private fun HoldButton(
+    team: Int,
+    width: Dp,
+    height: Dp,
+    round: Boolean = true,
+    strong: Boolean = false,
+    fill: Float = 1f,
+    onHold: (Boolean) -> Unit,
+    content: @Composable (tint: Color) -> Unit,
+) {
     val cs = MaterialTheme.colorScheme
     var down by remember { mutableStateOf(false) }
     val c = teamColor(cs, team)
     val bg = when {
         down -> c
-        strong -> c.copy(alpha = .35f)
-        else -> Color.Transparent
+        strong -> c.copy(alpha = .4f)
+        else -> c.copy(alpha = .14f)
     }
     Box(
         Modifier
-            .size(44.dp)
-            .clip(RoundedCornerShape(50))
+            .size(width, height)
+            .clip(if (round) RoundedCornerShape(50) else RoundedCornerShape(30))
             .background(bg)
+            .drawBehind {
+                // cooldown: fills up from the bottom
+                if (fill < 1f && !down) drawRect(c.copy(alpha = .35f), topLeft = androidx.compose.ui.geometry.Offset(0f, this.size.height * (1 - fill)))
+            }
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val d = awaitFirstDown()
@@ -336,6 +374,6 @@ private fun HoldButton(icon: ImageVector, team: Int, strong: Boolean = false, di
             },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, tint = (if (down) cs.surface else onTeamContainer(cs, team)).copy(alpha = if (dim) .4f else 1f))
+        content(if (down) cs.surface else onTeamContainer(cs, team))
     }
 }

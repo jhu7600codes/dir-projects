@@ -48,6 +48,10 @@ fun SettingsScreen(state: GameState, padding: PaddingValues) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (m in ThemeMode.values()) FilterChip(selected = state.themeMode == m, onClick = { state.changeThemeMode(m) }, label = { Text(m.label) })
             }
+            Text("button size", style = MaterialTheme.typography.titleSmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for ((v, n) in listOf(52 to "small", 64 to "medium", 76 to "big", 88 to "huge")) FilterChip(selected = state.controlSize == v, onClick = { state.changeControlSize(v) }, label = { Text(n) })
+            }
             Text("game speed", style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (v in listOf(.5f, .75f, 1f, 1.25f, 1.5f, 2f)) FilterChip(selected = state.gameSpeed == v, onClick = { state.changeGameSpeed(v) }, label = { Text("${v}x") })
@@ -72,7 +76,7 @@ fun SettingsScreen(state: GameState, padding: PaddingValues) {
     )
 }
 
-object BuildConfigVersion { const val NAME = "0.2.0" }
+object BuildConfigVersion { const val NAME = "0.2.1" }
 
 @Composable
 private fun Toggle(title: String, sub: String, value: Boolean, onChange: (Boolean) -> Unit) {

@@ -38,6 +38,8 @@ class GameState(context: Context) {
     var dynamicColor by mutableStateOf(prefs.getBoolean("dyncolor", true)); private set
     var themeMode by mutableStateOf(ThemeMode.values().getOrElse(prefs.getInt("theme", 0)) { ThemeMode.SYSTEM }); private set
     var gameSpeed by mutableStateOf(prefs.getFloat("speed", 1f)); private set
+    /** size of the on screen fight buttons in dp */
+    var controlSize by mutableStateOf(prefs.getInt("ctrlsize", 64)); private set
     var bestWave by mutableIntStateOf(prefs.getInt("bestwave", 0)); private set
     var totalKos by mutableIntStateOf(prefs.getInt("totalkos", 0)); private set
     var matchesPlayed by mutableIntStateOf(prefs.getInt("matches", 0)); private set
@@ -124,6 +126,7 @@ class GameState(context: Context) {
     fun changeScreenShake(v: Boolean) { screenShake = v; prefs.edit().putBoolean("shake", v).apply() }
     fun changeDynamicColor(v: Boolean) { dynamicColor = v; prefs.edit().putBoolean("dyncolor", v).apply() }
     fun changeThemeMode(v: ThemeMode) { themeMode = v; prefs.edit().putInt("theme", v.ordinal).apply() }
+    fun changeControlSize(v: Int) { controlSize = v; prefs.edit().putInt("ctrlsize", v).apply() }
     fun changeGameSpeed(v: Float) { gameSpeed = v; prefs.edit().putFloat("speed", v).apply() }
 
     // one fighter per line: id \t name \t code \t wins \t losses \t kos \t cups
