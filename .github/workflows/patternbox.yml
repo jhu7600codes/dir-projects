@@ -21,7 +21,16 @@ jobs:
           distribution: temurin
           java-version: 17
       # ubuntu runners already ship the android sdk at $ANDROID_HOME
+      - name: release key from secrets
+        env:
+          KS: ${{ secrets.PATTERNBOX_KEYSTORE }}
+        run: |
+          if [ -z "$KS" ]; then echo "::error::PATTERNBOX_KEYSTORE secret missing, every build would get a different key"; exit 1; fi
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/patternbox.keystore"
+          echo "PB_KEYSTORE_FILE=$RUNNER_TEMP/patternbox.keystore" >> "$GITHUB_ENV"
       - run: chmod +x gradlew && ./gradlew :core:test :app:testDebugUnitTest :app:assembleRelease --no-daemon
+        env:
+          PB_KEYSTORE_PASSWORD: ${{ secrets.PATTERNBOX_KEYSTORE_PASSWORD }}
       - uses: actions/upload-artifact@v4
         with:
           name: patternbox-apk

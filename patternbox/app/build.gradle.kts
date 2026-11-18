@@ -11,17 +11,29 @@ android {
         applicationId = "com.patternbox.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.2.2"
+        versionCode = 5
+        versionName = "0.2.3"
     }
+
+    // release key comes from the environment (github actions secrets), never from the repo.
+    // without it, builds fall back to the debug key and won't install over the real releases
+    val ksFile = System.getenv("PB_KEYSTORE_FILE")
+    signingConfigs {
+        if (ksFile != null && file(ksFile).exists()) create("patternbox") {
+            storeFile = file(ksFile)
+            storePassword = System.getenv("PB_KEYSTORE_PASSWORD")
+            keyAlias = "patternbox"
+            keyPassword = System.getenv("PB_KEYSTORE_PASSWORD")
+        }
+    }
+    val release = signingConfigs.findByName("patternbox") ?: signingConfigs.getByName("debug")
 
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // signed with the debug key so the apk installs straight away, swap for a real key before any store upload
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = release
         }
     }
 
