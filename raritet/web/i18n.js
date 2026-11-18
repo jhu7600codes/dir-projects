@@ -13,7 +13,7 @@ window.I18N = {
     skip: 'Пропуск', hint: 'Подсказка', hintUsed: 'Подсказка (1 за игру)', placeholder: 'твой ответ',
     next: 'Дальше', results: 'Итоги', question: 'Вопрос {n} из {m}', blitzQ: 'Вопрос {n}',
     pts: 'очков', notFound: 'Такого ответа нет в базе', timeUp: 'Время вышло', skipped: 'Пропуск',
-    saidBy: '«{a}» сказали бы ~{p}%', vNew: 'Суперраритет!', nobody: 'так ещё никто не отвечал', checking: 'Проверяю ответ...', notReal: 'Такого не нашлось', offline: 'Нет сети, не проверить', foundOn: 'нашлось: {t} · {w}', checkedOn: 'проверено: {w}', topAnswers: 'частые ответы', yours: 'твой',
+    saidBy: '«{a}» сказали бы ~{p}%', vNew: 'Суперраритет!', nobody: 'так ещё никто не отвечал', offTopic: 'Не по теме', otherCat: 'это ответ на «{q}»', gibberish: 'Не похоже на слово', topAnswers: 'частые ответы', yours: 'твой',
     v1: 'Раритет!', v2: 'Редкий ответ', v3: 'Неплохо', v4: 'Как у всех', v0: 'Мимо',
     hintText: 'Редкий ответ: {w} ({n} букв)', hintFirst: 'начинается на «{c}»',
     ranks: ['Как все', 'Неплохо', 'Оригинал', 'Редкий экземпляр', 'Раритет'],
@@ -24,7 +24,7 @@ window.I18N = {
     last14: 'Игра дня, последние 14 дней', rarestFind: 'Самая редкая находка', none: 'пока ничего', achievements: 'Достижения',
     language: 'Язык', timer: 'Таймер', sound: 'Звук', vibration: 'Вибрация', reset: 'Сбросить статистику',
     resetQ: 'Точно стереть всю статистику?', resetDone: 'Статистика сброшена', sec: 'с',
-    about: 'Раритет, версия 2.4. Бесплатно, без рекламы, работает офлайн.',
+    about: 'Раритет, версия 2.5. Бесплатно, без рекламы, работает офлайн.',
     newAch: 'Достижение: {a}', quitQ: 'Выйти из игры? Результат не сохранится.',
     modeNames: { daily: 'Игра дня', endless: 'Бесконечный', blitz: 'Блиц', zen: 'Дзен', gamer: 'Геймер' },
     howText: [
@@ -32,7 +32,7 @@ window.I18N = {
       ['Очки и бросок', 'Твой ответ улетает из рогатки на столько метров, сколько очков он стоит: 100 минус 2 за каждый процент игроков, которые ответили бы так же, но не меньше 10. «Волга» (35%) стоит 30, «Селенга» (1%) стоит 98.'],
       ['Режимы', 'Игра дня: 7 одинаковых для всех вопросов, переигрывать можно, засчитывается лучший. Бесконечный: случайные вопросы. Блиц: 60 секунд на всё, отвечай как можно больше. Дзен: без таймера. Геймер: вопросы про Roblox, DOORS, Geometry Dash, Minecraft, Terraria, FNAF, Brawl Stars.'],
       ['Подсказка', 'Одна за игру. Показывает первую букву редкого ответа, но очки за этот вопрос делятся пополам.'],
-      ['Ввод', 'Регистр, ё/е и знаки не важны. Можно латиницей (ria news), опечатки в 1-2 буквы прощаются. Ответа нет в списке? Игра проверит его в Википедии (а для игр на их вики), и если он настоящий и по теме, это суперраритет на 100 очков.'],
+      ['Ввод', 'Регистр, ё/е и знаки не важны. Можно латиницей (ria news), опечатки в 1-2 буквы прощаются. Ответа нет в списке? Если это не ответ на другой вопрос и похоже на настоящее слово, это суперраритет на 100 очков.'],
     ],
     ach: {
       first: ['Первый раз', 'сыграть первую игру'],
@@ -62,7 +62,7 @@ window.I18N = {
     skip: 'Skip', hint: 'Hint', hintUsed: 'Hint (1 per game)', placeholder: 'your answer',
     next: 'Next', results: 'Results', question: 'Question {n} of {m}', blitzQ: 'Question {n}',
     pts: 'points', notFound: "That answer isn't on the list", timeUp: "Time's up", skipped: 'Skipped',
-    saidBy: '~{p}% would say "{a}"', vNew: 'Super rare!', nobody: 'nobody has said that yet', checking: 'Checking your answer...', notReal: 'Could not find that', offline: 'No internet, cannot check', foundOn: 'found: {t} · {w}', checkedOn: 'checked: {w}', topAnswers: 'common answers', yours: 'you',
+    saidBy: '~{p}% would say "{a}"', vNew: 'Super rare!', nobody: 'nobody has said that yet', offTopic: 'Off topic', otherCat: 'that answers "{q}"', gibberish: 'That does not look like a word', topAnswers: 'common answers', yours: 'you',
     v1: 'Legendary!', v2: 'Rare answer', v3: 'Not bad', v4: 'Same as everyone', v0: 'Miss',
     hintText: 'Rare answer: {w} ({n} letters)', hintFirst: 'starts with "{c}"',
     ranks: ['Mainstream', 'Not bad', 'Original', 'Rare find', 'Legendary'],
@@ -73,7 +73,7 @@ window.I18N = {
     last14: 'Daily game, last 14 days', rarestFind: 'Rarest find', none: 'nothing yet', achievements: 'Achievements',
     language: 'Language', timer: 'Timer', sound: 'Sound', vibration: 'Vibration', reset: 'Reset stats',
     resetQ: 'Really erase all stats?', resetDone: 'Stats reset', sec: 's',
-    about: 'Raritet 2.4. Free, no ads, works offline.',
+    about: 'Raritet 2.5. Free, no ads, works offline.',
     newAch: 'Achievement: {a}', quitQ: "Quit this game? It won't be saved.",
     modeNames: { daily: 'Daily game', endless: 'Endless', blitz: 'Blitz', zen: 'Zen', gamer: 'Gamer' },
     howText: [
@@ -81,7 +81,7 @@ window.I18N = {
       ['Scoring and the throw', 'Your answer gets flung from a slingshot as many meters as it scores: 100 minus 2 for every percent of players who would say the same thing, never less than 10. "Nile" (25%) is worth 50, "Limpopo" (1%) is worth 98.'],
       ['Modes', 'Daily: 7 questions, the same for everyone, replay as much as you like and your best counts. Endless: random questions. Blitz: 60 seconds total, answer as many as you can. Zen: no timer. Gamer: questions about Roblox, DOORS, Geometry Dash, Minecraft, Terraria, FNAF, Brawl Stars.'],
       ['Hint', 'One per game. Shows the first letter of a rare answer, but halves the points for that question.'],
-      ['Typing', 'Case and punctuation do not matter, and 1-2 letter typos are forgiven. Answer not on the list? The game looks it up on Wikipedia (or the game wiki), and if it is real and on topic, it is a super rare 100.'],
+      ['Typing', 'Case and punctuation do not matter, and 1-2 letter typos are forgiven. Answer not on the list? If it is not an answer to a different question and looks like a real word, it is a super rare 100.'],
     ],
     ach: {
       first: ['First time', 'play your first game'],

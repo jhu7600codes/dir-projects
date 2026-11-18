@@ -1,8 +1,8 @@
 {
  "id": "com.jhu.raritet",
  "name": "Раритет",
- "version": "2.4",
- "versioncode": 6,
+ "version": "2.5",
+ "versioncode": 7,
  "type": "web",
  "main": "main",
  "icon": "icon.svg",
@@ -10,19 +10,7 @@
  "dpk": "2.0",
  "permissions": [
   "vibrate",
-  "clipboard",
-  {
-   "name": "network",
-   "hosts": [
-    "ru.wikipedia.org",
-    "en.wikipedia.org",
-    "ru.wiktionary.org",
-    "en.wiktionary.org",
-    "*.fandom.com",
-    "minecraft.wiki",
-    "terraria.wiki.gg"
-   ]
-  }
+  "clipboard"
  ],
  "activities": {
   "main": {

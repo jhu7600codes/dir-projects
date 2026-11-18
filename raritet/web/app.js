@@ -1,4 +1,4 @@
-// Раритет 2.4: rare-answer trivia. a round is a list of prompts; each answer has a rough
+// Раритет 2.5: rare-answer trivia. a round is a list of prompts; each answer has a rough
 // "how many players would say this" percent and scores 100 - 2 * percent (min 10).
 'use strict'
 const $ = (id) => document.getElementById(id)
@@ -57,8 +57,18 @@ function lev(a, b) {
   }
   return p[b.length]
 }
+// extra rare answers from bank-extra.js: "a|alias, b, c". entries marked "|no" / "|не" are notes, not answers
+function extraFor(key) {
+  const out = []
+  for (const item of (BANK_EXTRA[key] || '').split(',')) {
+    const all = item.split('|').map((n) => n.trim()).filter(Boolean)
+    if (!all.length || all.some((n) => /^(no|не)( |$)/.test(n))) continue
+    out.push(all)
+  }
+  return out
+}
 function parse(bank, lang, pre = '') {
-  return bank.map(([q, raw, src], i) => {
+  return bank.map(([q, raw, src, extraKey], i) => {
     const seen = new Set()
     const answers = []
     for (const part of raw.split(/,\s*(?=[^,=]+=\d)/)) {
@@ -70,13 +80,55 @@ function parse(bank, lang, pre = '') {
       if (lang === 'ru') for (const n of all) keys.add(tight(translit(norm(n))))
       answers.push({ name: all[0], keys: [...keys], pct: +part.slice(eq + 1) })
     }
+    const taken = new Set(answers.flatMap((a) => a.keys))
+    for (const all of extraFor(extraKey || q)) {
+      const keys = new Set(all.map(tight))
+      if (lang === 'ru') for (const n of all) keys.add(tight(translit(norm(n))))
+      if ([...keys].some((k) => !k || taken.has(k))) continue
+      keys.forEach((k) => taken.add(k))
+      answers.push({ name: all[0].toLowerCase(), keys: [...keys], pct: 1 })
+    }
     answers.sort((a, b) => b.pct - a.pct)
     return { id: pre + lang + i, q, answers, src }
   })
 }
 const BANKS = {
   ru: parse(BANK_RU, 'ru'), en: parse(BANK_EN, 'en'),
-  gamer: { ru: parse(BANK_GAMER.map(([r, , a, w]) => [r, a, w]), 'ru', 'g'), en: parse(BANK_GAMER.map(([, e, a, w]) => [e, a, w]), 'en', 'g') },
+  gamer: { ru: parse(BANK_GAMER.map(([r, e, a]) => [r, a, null, e]), 'ru', 'g'), en: parse(BANK_GAMER.map(([, e, a]) => [e, a]), 'en', 'g') },
+}
+// every known answer -> the questions it belongs to, so an off-topic answer can be told apart
+// (gamer and normal questions are kept apart: "orbit" the gd level is not "орбит" the gum)
+const OWNERS = new Map()
+for (const lang of ['ru', 'en']) for (const [fam, bank] of [['n', BANKS[lang]], ['g', BANKS.gamer[lang]]]) {
+  const m = new Map()
+  for (const p of bank) { p.fam = lang + fam; for (const a of p.answers) for (const k of a.keys) { if (!m.has(k)) m.set(k, new Set()); m.get(k).add(p) } }
+  OWNERS.set(lang + fam, m)
+}
+// answers not on the list: is it in some other category instead? does it even look like a word?
+function judgeUnknown(p, raw) {
+  const t1 = tight(raw), t2 = S.lang === 'ru' ? tight(translit(norm(raw))) : t1
+  for (const k of [t1, t2]) {
+    const owners = OWNERS.get(p.fam).get(k)
+    if (owners && !owners.has(p)) return { ok: false, k: 'otherCat', other: [...owners][0].q }
+  }
+  if (gibberish(raw)) return { ok: false, k: 'gibberish' }
+  return { ok: true }
+}
+function gibberish(raw) {
+  const s = norm(raw)
+  if (!/[a-zа-я]/.test(s)) return true
+  if (/(.)\1\1/.test(s.replace(/\s/g, ''))) return true
+  const flat = s.replace(/[^a-zа-я]/g, '')
+  if (/(qwer|wert|erty|asdf|sdfg|dfgh|zxcv|xcvb|йцук|цуке|фыва|ывап|ячсм|чсми|ролд|олдж|hjkl|uiop|фвап|ыфва)/.test(flat)) return true
+  for (const w of s.split(/[\s-]+/)) {
+    const letters = w.replace(/[^a-zа-я]/g, '')
+    if (letters.length < 4) continue
+    const vow = letters.match(/[aeiouyаеиоуыэюя]/g) || []
+    if (!vow.length) return true
+    if (/[^aeiouyаеиоуыэюяьъ]{5,}/.test(letters)) return true
+    if (vow.length / letters.length > 0.85) return true
+  }
+  return false
 }
 function match(prompt, input) {
   const t1 = tight(input), t2 = S.lang === 'ru' ? tight(translit(norm(input))) : t1
@@ -289,12 +341,6 @@ function record(a, raw, why) {
   return pts
 }
 
-function setChecking(on) {
-  for (const id of ['ans', 'go', 'skip', 'hint']) $(id).disabled = on || (id === 'hint' && G.hintUsed)
-  if (on) { G.hintSaved = $('hintLine').textContent; $('hintLine').innerHTML = `<span class="spin"></span>${esc(t('checking'))}` }
-  else $('hintLine').textContent = G.hintSaved || ''
-}
-const shortHost = (h) => (h || '').replace(/^www\./, '').replace('.fandom.com', ' wiki').replace('.wiki.gg', ' wiki')
 
 async function submit(why) {
   if (G.locked || G.checking) return
@@ -303,25 +349,18 @@ async function submit(why) {
   const p = G.round[G.at]
   let a = why === 'skip' ? null : match(p, raw)
   G.note = null
-  // not on the list: look it up. if it's real, it's a super rare answer (0%, 100 points)
+  // not on the list: if it isn't an answer to some other question and looks like a real word, it's a super rare (0%, 100 points)
   if (!a && why !== 'skip' && tight(raw).length >= 2) {
-    const g = G
-    g.checking = true
-    if (g.mode !== 'blitz') stopTimer()
-    setChecking(true)
-    const r = await Verify.check(p, raw, S.lang)
-    g.checking = false
-    if (G !== g || cur !== 'play' || g.locked) return
-    setChecking(false)
-    if (r.ok) a = { name: raw.toLowerCase(), keys: [], pct: 0, unknown: true, found: r.title, where: shortHost(r.where) }
-    else G.note = r.error ? { k: 'offline' } : { k: 'notReal', where: shortHost(r.where) }
+    const r = judgeUnknown(p, raw)
+    if (r.ok) a = { name: raw.toLowerCase(), keys: [], pct: 0, unknown: true }
+    else G.note = r
   }
 
   if (G.mode === 'blitz') {
     // blitz: wrong answers just shake, so you can try again; skip moves on
     if (!a && why === 'answer') {
       $('ans').classList.remove('shake'); void $('ans').offsetWidth; $('ans').classList.add('shake'); buzz(60); sfx.bad()
-      if (G.note) $('hintLine').textContent = G.note.k === 'offline' ? t('offline') : t('notReal')
+      if (G.note) $('hintLine').textContent = G.note.k === 'otherCat' ? t('otherCat', { q: G.note.other }) : t(G.note.k)
       $('ans').focus(); return
     }
     const pts = record(a, raw, why)
@@ -341,9 +380,9 @@ async function submit(why) {
   const v = $('vPts')
   v.className = 'pts ' + tierCls[tr]
   if (a) { v.textContent = '+0'; countUp({ set textContent(x) { v.textContent = '+' + x } }, pts) } else v.textContent = '0'
-  $('vLbl').textContent = a && a.unknown ? t('vNew') : a ? t('v' + tr) : G.note ? t(G.note.k) : why === 'time' ? t('timeUp') : why === 'skip' ? t('skipped') : t('notFound')
+  $('vLbl').textContent = a && a.unknown ? t('vNew') : a ? t('v' + tr) : G.note ? t(G.note.k === 'otherCat' ? 'offTopic' : G.note.k) : why === 'time' ? t('timeUp') : why === 'skip' ? t('skipped') : t('notFound')
   $('vLbl').className = 'lbl ' + tierCls[tr]
-  $('vSub').textContent = a && a.unknown ? t('foundOn', { t: a.found, w: a.where }) : a ? t('saidBy', { a: a.name, p: a.pct }) : G.note && G.note.where ? t('checkedOn', { w: G.note.where }) : ''
+  $('vSub').textContent = a && a.unknown ? t('nobody') : a ? t('saidBy', { a: a.name, p: a.pct }) : G.note && G.note.k === 'otherCat' ? t('otherCat', { q: G.note.other }) : ''
   $('vList').innerHTML = answerBars(p, a)
   $('next').textContent = G.at === G.round.length - 1 ? t('results') : t('next')
   $('reveal').classList.add('on')
