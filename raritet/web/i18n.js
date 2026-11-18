@@ -1,7 +1,8 @@
 // interface strings. {n} style placeholders get filled by t()
 window.I18N = {
   ru: {
-    title: 'Раритет',
+    title: 'Раритет', m: 'м', tapSkip: 'нажми, чтобы пропустить', flingSet: 'Бросок ответа',
+    zones: ['как все', 'неплохо', 'редкий', 'раритет'],
     tagline: 'Отвечай правильно, но не как все. Чем реже ответ, тем больше очков.',
     mDaily: 'Игра дня', mEndless: 'Бесконечный', mEndlessSub: 'случайные вопросы, без лимитов',
     mBlitz: 'Блиц', mBlitzSub: '60 секунд, сколько успеешь', mZen: 'Дзен', mZenSub: 'без таймера, думай спокойно',
@@ -22,12 +23,12 @@ window.I18N = {
     last14: 'Игра дня, последние 14 дней', rarestFind: 'Самая редкая находка', none: 'пока ничего', achievements: 'Достижения',
     language: 'Язык', timer: 'Таймер', sound: 'Звук', vibration: 'Вибрация', reset: 'Сбросить статистику',
     resetQ: 'Точно стереть всю статистику?', resetDone: 'Статистика сброшена', sec: 'с',
-    about: 'Раритет, версия 2.0. Бесплатно, без рекламы, работает офлайн.',
+    about: 'Раритет, версия 2.1. Бесплатно, без рекламы, работает офлайн.',
     newAch: 'Достижение: {a}', quitQ: 'Выйти из игры? Результат не сохранится.',
     modeNames: { daily: 'Игра дня', endless: 'Бесконечный', blitz: 'Блиц', zen: 'Дзен' },
     howText: [
       ['Суть', 'Тебе дают вопрос вроде «назови реку России». Любой правильный ответ засчитывается, но очки зависят от того, насколько он редкий.'],
-      ['Очки', '100 минус 2 за каждый процент игроков, которые ответили бы так же, но не меньше 10. «Волга» (35%) стоит 30, «Селенга» (1%) стоит 98.'],
+      ['Очки и бросок', 'Твой ответ улетает из рогатки на столько метров, сколько очков он стоит: 100 минус 2 за каждый процент игроков, которые ответили бы так же, но не меньше 10. «Волга» (35%) стоит 30, «Селенга» (1%) стоит 98.'],
       ['Режимы', 'Игра дня: 7 одинаковых для всех вопросов, переигрывать можно, засчитывается лучший. Бесконечный: случайные вопросы. Блиц: 60 секунд на всё, отвечай как можно больше. Дзен: без таймера.'],
       ['Подсказка', 'Одна за игру. Показывает первую букву редкого ответа, но очки за этот вопрос делятся пополам.'],
       ['Ввод', 'Регистр, ё/е и знаки не важны. Можно латиницей (ria news), опечатки в 1-2 буквы прощаются.'],
@@ -48,7 +49,8 @@ window.I18N = {
     },
   },
   en: {
-    title: 'Raritet',
+    title: 'Raritet', m: 'm', tapSkip: 'tap to skip', flingSet: 'Answer throw',
+    zones: ['mainstream', 'not bad', 'rare', 'legendary'],
     tagline: 'Be right, but not like everyone else. The rarer your answer, the more points.',
     mDaily: 'Daily game', mEndless: 'Endless', mEndlessSub: 'random questions, no limits',
     mBlitz: 'Blitz', mBlitzSub: '60 seconds, as many as you can', mZen: 'Zen', mZenSub: 'no timer, take your time',
@@ -69,12 +71,12 @@ window.I18N = {
     last14: 'Daily game, last 14 days', rarestFind: 'Rarest find', none: 'nothing yet', achievements: 'Achievements',
     language: 'Language', timer: 'Timer', sound: 'Sound', vibration: 'Vibration', reset: 'Reset stats',
     resetQ: 'Really erase all stats?', resetDone: 'Stats reset', sec: 's',
-    about: 'Raritet 2.0. Free, no ads, works offline.',
+    about: 'Raritet 2.1. Free, no ads, works offline.',
     newAch: 'Achievement: {a}', quitQ: "Quit this game? It won't be saved.",
     modeNames: { daily: 'Daily game', endless: 'Endless', blitz: 'Blitz', zen: 'Zen' },
     howText: [
       ['The idea', 'You get a prompt like "name a river". Any correct answer counts, but the points depend on how rare it is.'],
-      ['Scoring', '100 minus 2 for every percent of players who would say the same thing, never less than 10. "Nile" (25%) is worth 50, "Limpopo" (1%) is worth 98.'],
+      ['Scoring and the throw', 'Your answer gets flung from a slingshot as many meters as it scores: 100 minus 2 for every percent of players who would say the same thing, never less than 10. "Nile" (25%) is worth 50, "Limpopo" (1%) is worth 98.'],
       ['Modes', 'Daily: 7 questions, the same for everyone, replay as much as you like and your best counts. Endless: random questions. Blitz: 60 seconds total, answer as many as you can. Zen: no timer.'],
       ['Hint', 'One per game. Shows the first letter of a rare answer, but halves the points for that question.'],
       ['Typing', 'Case and punctuation do not matter, and 1-2 letter typos are forgiven.'],

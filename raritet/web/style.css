@@ -148,3 +148,19 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,40px);background:#26313c;color:var(--text);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:9;max-width:90%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.4)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:8}
+
+/* the throw */
+.fling{position:fixed;inset:0;z-index:6;display:none;background:#0c0f13}
+.fling.on{display:block}
+#flc{width:100%;height:100%;display:block}
+.flhud{position:absolute;top:0;left:0;right:0;padding:18px 16px;text-align:center;pointer-events:none}
+.flq{font-size:15px;color:#d6e8f5;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.fld{margin-top:2px}
+.fld span{font-size:60px;font-weight:600;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.45);font-variant-numeric:tabular-nums}
+.fld small{font-size:22px;margin-left:4px;color:#fff}
+.fltap{font-size:12px;color:rgba(255,255,255,.65)}
+.fling.landed .fltap{visibility:hidden}
+.flsheet{position:absolute;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;padding:12px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(120%);transition:transform .35s ease}
+.fling.landed .flsheet{transform:none}
+.flsheet .reveal{display:block;margin:0;background:rgba(18,23,29,.94);border:1px solid var(--line);box-shadow:0 -8px 30px rgba(0,0,0,.35)}
+.flsheet #vList{display:none}

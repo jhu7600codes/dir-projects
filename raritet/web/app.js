@@ -1,4 +1,4 @@
-// Раритет 2.0: rare-answer trivia. a round is a list of prompts; each answer has a rough
+// Раритет 2.1: rare-answer trivia. a round is a list of prompts; each answer has a rough
 // "how many players would say this" percent and scores 100 - 2 * percent (min 10).
 'use strict'
 const $ = (id) => document.getElementById(id)
@@ -8,7 +8,7 @@ if (hasDroid) { droid.system.orientation('portrait').catch(() => {}); droid.acti
 /* ---------- storage: one json blob, droid.prefs inside droid, localStorage elsewhere ---------- */
 const KEY = 'raritet.state'
 const fresh = () => ({
-  v: 2, lang: (navigator.language || 'ru').startsWith('ru') ? 'ru' : 'en', timer: 20, sound: true, vibe: true,
+  v: 2, lang: (navigator.language || 'ru').startsWith('ru') ? 'ru' : 'en', timer: 20, sound: true, vibe: true, fling: true,
   games: 0, answers: 0, points: 0, rare: 0, langsPlayed: [],
   best: { endless: 0, blitz: 0 }, days: {}, streak: 0, bestStreak: 0, lastDay: '',
   rarest: null, ach: [],
@@ -131,6 +131,18 @@ const sfx = {
   bad: () => tone(180, 0.25, 'sawtooth', 0, 0.06),
   tick: () => tone(1200, 0.04, 'square', 0, 0.03),
   end: () => [392, 523, 659].forEach((f, i) => tone(f, 0.25, 'triangle', i * 0.12)),
+  whoosh: () => sweep(260, 900, 0.35),
+  thud: () => { tone(90, 0.18, 'sine', 0, 0.25); tone(140, 0.08, 'triangle', 0, 0.1) },
+}
+function sweep(f1, f2, dur) {
+  if (!S.sound) return
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)()
+    const o = ac.createOscillator(), g = ac.createGain(), t0 = ac.currentTime
+    o.type = 'triangle'; o.frequency.setValueAtTime(f1, t0); o.frequency.exponentialRampToValueAtTime(f2, t0 + dur)
+    g.gain.setValueAtTime(0.07, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur)
+    o.connect(g).connect(ac.destination); o.start(t0); o.stop(t0 + dur)
+  } catch {}
 }
 function buzz(ms) { if (!S.vibe) return; if (hasDroid) droid.system.vibrate(ms).catch(() => {}); else if (navigator.vibrate) navigator.vibrate(ms) }
 
@@ -170,6 +182,7 @@ function fxStep() {
 /* ---------- home ---------- */
 function goHome() {
   stopTimer()
+  if (Fling.on) { Fling.close(); $('play').appendChild($('reveal')) }
   applyLang()
   const d = S.days[S.lang + ':' + today()]
   const h = 24 - new Date().getHours()
@@ -213,6 +226,7 @@ function ask() {
   if (G.at >= G.round.length) return finish()
   const p = G.round[G.at]
   G.locked = false; G.hinted = false
+  if (Fling.on) { Fling.close(); $('play').appendChild($('reveal')) }
   $('qNum').textContent = G.mode === 'blitz' ? t('blitzQ', { n: G.at + 1 }) : t('question', { n: G.at + 1, m: G.round.length })
   $('qText').textContent = p.q
   $('hintLine').textContent = ''
@@ -305,9 +319,25 @@ function submit(why) {
   $('vList').innerHTML = answerBars(p, a)
   $('next').textContent = G.at === G.round.length - 1 ? t('results') : t('next')
   $('reveal').classList.add('on')
-  requestAnimationFrame(() => { for (const f of $('vList').querySelectorAll('.fill')) f.style.width = f.dataset.w })
-  if (a && pts >= 90) { sfx.rare(); confetti(50); buzz(80) } else if (a) { sfx.good(); buzz(25) } else { sfx.bad(); buzz(120) }
-  $('next').focus()
+  const react = () => { if (a && pts >= 90) { sfx.rare(); confetti(50); buzz(80) } else if (a) { sfx.good(); buzz(25) } else { sfx.bad(); buzz(120) } $('next').focus() }
+  if (!S.fling) {
+    requestAnimationFrame(() => { for (const f of $('vList').querySelectorAll('.fill')) f.style.width = f.dataset.w })
+    return react()
+  }
+  // the throw: distance in meters = points
+  $('flSheet').appendChild($('reveal'))
+  $('flQ').textContent = p.q
+  $('flUnit').textContent = t('m')
+  const shown = [...p.answers.slice(0, 5), p.answers[p.answers.length - 1]].filter((x, i, arr) => x !== a && arr.indexOf(x) === i)
+  Fling.open({
+    flags: shown.map((x) => ({ name: x.name, pct: x.pct, dist: points(x) })),
+    mine: a ? { dist: pts } : null,
+    label: a ? a.name : raw || '...',
+    unit: t('m'), zones: L().zones,
+    onLaunch: () => { sfx.whoosh(); buzz(15) },
+    onLand: () => { sfx.thud(); buzz(40) },
+    onDone: react,
+  })
 }
 
 function answerBars(p, mine) {
@@ -327,6 +357,7 @@ function nextQ() { if (!G || !G.locked) return; G.at++; ask() }
 
 function finish() {
   stopTimer()
+  if (Fling.on) { Fling.close(); $('play').appendChild($('reveal')) }
   const g = G, n = g.mode === 'blitz' ? g.log.length : g.round.length
   // stats
   S.games++
@@ -429,6 +460,7 @@ function renderSettings() {
     `<div class="set"><span>${t('timer')}</span>${seg('timer', [15, 20, 30], (o) => o + ' ' + t('sec'))}</div>` +
     `<div class="set"><span>${t('sound')}</span>${sw('sound')}</div>` +
     `<div class="set"><span>${t('vibration')}</span>${sw('vibe')}</div>` +
+    `<div class="set"><span>${t('flingSet')}</span>${sw('fling')}</div>` +
     `<button class="set danger" id="reset" style="width:100%">${t('reset')}</button>` +
     `<div class="about">${t('about')}<br>RU: ${BANKS.ru.length} · EN: ${BANKS.en.length}</div>`
   show('settings')
@@ -454,7 +486,7 @@ $('skip').onclick = () => submit('skip')
 $('hint').onclick = useHint
 $('next').onclick = nextQ
 $('ans').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); submit('answer') } })
-document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && cur === 'play' && G && G.locked) { e.preventDefault(); nextQ() } })
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && cur === 'play' && G && G.locked) { e.preventDefault(); if (Fling.busy) Fling.skip(); else nextQ() } })
 $('quit').onclick = () => { if (!G.log.length || confirm(t('quitQ'))) goHome() }
 $('again').onclick = () => start(G.mode)
 $('home2').onclick = goHome
@@ -462,6 +494,7 @@ $('share').onclick = share
 // android back button (the apk calls this; true = handled)
 window.androidBack = () => {
   if (cur === 'home') return false
+  if (cur === 'play' && Fling.busy) { Fling.skip(); return true }
   if (cur === 'play') { $('quit').click(); return true }
   goHome(); return true
 }
