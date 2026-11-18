@@ -1,4 +1,4 @@
-// Раритет 2.1: rare-answer trivia. a round is a list of prompts; each answer has a rough
+// Раритет 2.2: rare-answer trivia. a round is a list of prompts; each answer has a rough
 // "how many players would say this" percent and scores 100 - 2 * percent (min 10).
 'use strict'
 const $ = (id) => document.getElementById(id)
@@ -10,7 +10,7 @@ const KEY = 'raritet.state'
 const fresh = () => ({
   v: 2, lang: (navigator.language || 'ru').startsWith('ru') ? 'ru' : 'en', timer: 20, sound: true, vibe: true, fling: true,
   games: 0, answers: 0, points: 0, rare: 0, langsPlayed: [],
-  best: { endless: 0, blitz: 0 }, days: {}, streak: 0, bestStreak: 0, lastDay: '',
+  best: { endless: 0, blitz: 0, gamer: 0 }, days: {}, streak: 0, bestStreak: 0, lastDay: '',
   rarest: null, ach: [],
 })
 let S = fresh()
@@ -57,7 +57,7 @@ function lev(a, b) {
   }
   return p[b.length]
 }
-function parse(bank, lang) {
+function parse(bank, lang, pre = '') {
   return bank.map(([q, raw], i) => {
     const seen = new Set()
     const answers = []
@@ -71,10 +71,13 @@ function parse(bank, lang) {
       answers.push({ name: all[0], keys: [...keys], pct: +part.slice(eq + 1) })
     }
     answers.sort((a, b) => b.pct - a.pct)
-    return { id: lang + i, q, answers }
+    return { id: pre + lang + i, q, answers }
   })
 }
-const BANKS = { ru: parse(BANK_RU, 'ru'), en: parse(BANK_EN, 'en') }
+const BANKS = {
+  ru: parse(BANK_RU, 'ru'), en: parse(BANK_EN, 'en'),
+  gamer: { ru: parse(BANK_GAMER.map(([r, , a]) => [r, a]), 'ru', 'g'), en: parse(BANK_GAMER.map(([, e, a]) => [e, a]), 'en', 'g') },
+}
 function match(prompt, input) {
   const t1 = tight(input), t2 = S.lang === 'ru' ? tight(translit(norm(input))) : t1
   if (!t1) return null
@@ -105,8 +108,7 @@ function shuffled(list, r = Math.random) {
 }
 // endless/zen/blitz avoid repeating the prompts you saw most recently
 let recent = []
-function pickFresh(n) {
-  const pool = BANKS[S.lang]
+function pickFresh(n, pool = BANKS[S.lang]) {
   const notRecent = pool.filter((p) => !recent.includes(p.id))
   const out = shuffled(notRecent.length >= n ? notRecent : pool).slice(0, n)
   recent = [...recent, ...out.map((p) => p.id)].slice(-Math.floor(pool.length * 0.6))
@@ -190,6 +192,7 @@ function goHome() {
   $('dailyBadge').textContent = d != null ? t('dailyLeft', { h }) : today().slice(5).split('-').reverse().join('.')
   $('blitzBadge').textContent = S.best.blitz ? S.best.blitz : ''
   $('blitzBadge').style.display = S.best.blitz ? '' : 'none'
+  $('gamerBadge').textContent = S.best.gamer ? S.best.gamer : 'NEW'
   $('hStreak').textContent = S.streak && (S.lastDay === today() || S.lastDay === dayBefore(today())) ? S.streak : 0
   $('hBest').textContent = Math.max(0, ...Object.values(S.days))
   $('hFound').textContent = S.rare
@@ -203,7 +206,7 @@ function stopTimer() { clearInterval(timer); timer = null }
 
 function start(mode) {
   const round = mode === 'daily' ? shuffled(BANKS[S.lang], rng(hash(S.lang + today()))).slice(0, 7)
-    : mode === 'blitz' ? pickFresh(40) : pickFresh(7)
+    : mode === 'blitz' ? pickFresh(40) : mode === 'gamer' ? pickFresh(7, BANKS.gamer[S.lang]) : pickFresh(7)
   G = { mode, round, at: 0, total: 0, log: [], hintUsed: false, hinted: false, locked: false, end: 0, qEnd: 0 }
   if (mode === 'blitz') G.end = Date.now() + 60000
   $('modeLbl').textContent = L().modeNames[mode]
@@ -369,6 +372,7 @@ function finish() {
     S.days[k] = Math.max(S.days[k] || 0, g.total)
     if (firstToday) { S.streak = S.lastDay === dayBefore(today()) ? S.streak + 1 : 1; S.lastDay = today(); S.bestStreak = Math.max(S.bestStreak, S.streak) }
   } else if (g.mode === 'endless') S.best.endless = Math.max(S.best.endless, g.total)
+  else if (g.mode === 'gamer') S.best.gamer = Math.max(S.best.gamer || 0, g.total)
   else if (g.mode === 'blitz') S.best.blitz = Math.max(S.best.blitz, g.total)
   const correct = g.log.filter((l) => l.a).length
   unlock('first')
@@ -439,7 +443,7 @@ function renderStats() {
   const chart = days.map((d, i) => `<div class="c${vals[i] ? '' : ' z'}" style="height:${vals[i] ? Math.max(6, vals[i] / top * 100) : 3}%"><em>${+d.slice(8)}</em></div>`).join('')
   const ach = Object.entries(L().ach).map(([k, [name, desc]]) => `<div class="${S.ach.includes(k) ? 'on' : ''}"><b>${esc(name)}</b><small>${esc(desc)}</small></div>`).join('')
   $('statsBody').innerHTML =
-    `<div class="grid2">${stat(S.games, 'sGames')}${stat(S.answers, 'sAnswers')}${stat(avg, 'sAvg')}${stat(S.rare, 'sRare')}${stat(bestDaily, 'sBestDaily')}${stat(S.best.endless, 'sBestEndless')}${stat(S.best.blitz, 'sBestBlitz')}${stat(S.bestStreak, 'sStreak')}</div>` +
+    `<div class="grid2">${stat(S.games, 'sGames')}${stat(S.answers, 'sAnswers')}${stat(avg, 'sAvg')}${stat(S.rare, 'sRare')}${stat(bestDaily, 'sBestDaily')}${stat(S.best.endless, 'sBestEndless')}${stat(S.best.blitz, 'sBestBlitz')}${stat(S.best.gamer || 0, 'sBestGamer')}${stat(S.bestStreak, 'sStreak')}</div>` +
     `<div class="section">${t('last14')}</div><div class="chart">${chart}</div>` +
     `<div class="section">${t('rarestFind')}</div><div class="stat">${S.rarest ? `<b class="good">${esc(S.rarest.name)}</b><small>${esc(S.rarest.q)} · ${S.rarest.pct}%</small>` : `<small>${t('none')}</small>`}</div>` +
     `<div class="section">${t('achievements')} · ${S.ach.length}/${Object.keys(L().ach).length}</div><div class="ach">${ach}</div>`
@@ -462,7 +466,7 @@ function renderSettings() {
     `<div class="set"><span>${t('vibration')}</span>${sw('vibe')}</div>` +
     `<div class="set"><span>${t('flingSet')}</span>${sw('fling')}</div>` +
     `<button class="set danger" id="reset" style="width:100%">${t('reset')}</button>` +
-    `<div class="about">${t('about')}<br>RU: ${BANKS.ru.length} · EN: ${BANKS.en.length}</div>`
+    `<div class="about">${t('about')}<br>RU: ${BANKS.ru.length} · EN: ${BANKS.en.length} · ${t('mGamer')}: ${BANKS.gamer.ru.length}</div>`
   show('settings')
 }
 $('setBody').addEventListener('click', (e) => {
