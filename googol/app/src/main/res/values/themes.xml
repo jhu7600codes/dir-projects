@@ -1,0 +1,9 @@
+<resources>
+    <color name="bg">#0B0B12</color>
+    <color name="icon_bg">#14122B</color>
+    <style name="Theme.Googol" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+    </style>
+</resources>
