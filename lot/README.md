@@ -17,6 +17,12 @@ a fake money lottery simulator for android. kotlin + jetpack compose + material 
 - **claw machine** - drop the claw on prizes. some clothes (crown, propeller hat, tuxedo) only come from here.
 - **pigeon flight** - the multiplier climbs while a pigeon carries your bet. cash out before it sees a fry.
 - **ticket tower** - stack sliding tickets, overhang gets cut off, perfect drops keep the size.
+- **magic ball** - bet on whether it says yes, maybe or no, then physically shake your phone to make it answer.
+
+### creator studio
+
+- **ticket creator** - design your own scratch ticket (name, price, win chance, symbols, colors). prizes are balanced automatically and it shows up in the shop.
+- **mode creator** - build your own game mode from a template (number draw, wheel, coin flips) with its own rules, host, catchphrase and color. it shows up on the home screen.
 
 ### campaign
 
@@ -42,7 +48,7 @@ winning tickets don't pay out right away. you sign the back, walk to the stand i
 
 settings has a currency picker that shows what your coins are "worth" in usd, eur, rub, shawarmas, potatoes and more. it's fake, nothing can be cashed out.
 
-76 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
+84 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
 
 ## install
 

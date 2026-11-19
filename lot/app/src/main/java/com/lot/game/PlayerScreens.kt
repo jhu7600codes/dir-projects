@@ -129,6 +129,18 @@ fun PlayerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                             }
                         }
                     }
+                    if (state.customTickets.isNotEmpty()) {
+                        item { Text("your designs", color = modeColor("creator"), fontWeight = FontWeight.Black, fontSize = 17.sp) }
+                        items(state.customTickets.map { it.toTier() }) { tier ->
+                            ShopCard(
+                                title = tier.name, price = tier.price, sub = "designed by you · top prize ${fmt(tier.topPrize)}",
+                                canBuy = state.coins >= tier.price, art = { MiniTicket(tier) },
+                            ) {
+                                if (vm.buyScratch(tier)) { fx.play(Sfx.BUY); nav.go(Screen.Scratch) } else msg = "not enough coins"
+                            }
+                        }
+                        item { Text("official tickets", color = Gold, fontWeight = FontWeight.Black, fontSize = 17.sp) }
+                    }
                     items(Tiers) { tier ->
                         ShopCard(
                             title = tier.name, price = tier.price, sub = "${tier.blurb} · top prize ${fmt(tier.topPrize)}",

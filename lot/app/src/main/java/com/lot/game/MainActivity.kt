@@ -49,6 +49,9 @@ sealed interface Screen {
     data object Flight : Screen
     data object Tower : Screen
     data object Profile : Screen
+    data object Creator : Screen
+    data object CustomPlay : Screen
+    data object MagicBall : Screen
     data object Inspector : Screen
 }
 
@@ -126,6 +129,9 @@ fun App(vm: GameViewModel, fx: Fx) {
                     Screen.Flight -> FlightScreen(vm, state, nav)
                     Screen.Tower -> TowerScreen(vm, state, nav)
                     Screen.Profile -> ProfileScreen(vm, state, nav)
+                    Screen.Creator -> CreatorScreen(vm, state, nav)
+                    Screen.CustomPlay -> CustomPlayScreen(vm, state, nav)
+                    Screen.MagicBall -> MagicBallScreen(vm, state, nav)
                     Screen.Inspector -> InspectorScreen(vm, state, nav)
                 }
             }

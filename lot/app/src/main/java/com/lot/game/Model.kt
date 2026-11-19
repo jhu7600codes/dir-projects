@@ -242,6 +242,8 @@ val QuestPool = listOf(
     QuestDef("claw3", "play the claw machine 3 times", 3, 60) { it.clawPlays },
     QuestDef("flight3", "fly 3 pigeons", 3, 60) { it.flightPlays },
     QuestDef("tower2", "build 2 ticket towers", 2, 60) { it.towerPlays },
+    QuestDef("ball3", "shake the magic ball 3 times", 3, 60) { it.ballShakes },
+    QuestDef("custom2", "play 2 rounds of a mode you made", 2, 80) { it.customPlays },
     QuestDef("win3", "win 3 tickets of any kind", 3, 90) { it.wins },
 )
 
@@ -297,6 +299,12 @@ data class GameState(
     val flightBest: Int = 0, // best cashed multiplier x100
     val towerPlays: Int = 0,
     val towerBest: Int = 0,
+    // creator + magic ball
+    val customTickets: List<CustomTicket> = emptyList(),
+    val customModes: List<CustomMode> = emptyList(),
+    val customPlays: Int = 0,
+    val ballShakes: Int = 0,
+    val ballWins: Int = 0,
     // wardrobe
     val wardrobe: Set<String> = setOf("hat_cap", "shirt_mint"),
     val outfitHat: String = "hat_cap",
@@ -408,13 +416,21 @@ val Badges = listOf(
     BadgeDef("drip", "drip", "own 6 wardrobe items", "all") { it.wardrobe.size >= 6 },
     BadgeDef("royal", "royalty", "wear the crown", "all") { it.outfitHat == "hat_crown" },
     BadgeDef("ch6", "the sequel", "finish the bonus campaign chapter", "campaign") { it.campaignLevel >= 24 },
+    BadgeDef("maker", "ticket designer", "create your own scratch ticket", "creator") { it.customTickets.isNotEmpty() },
+    BadgeDef("testdrive", "test drive", "buy a ticket you designed", "creator") { "custombuy" in it.flags },
+    BadgeDef("modemaker", "game designer", "create your own game mode", "creator") { it.customModes.isNotEmpty() },
+    BadgeDef("custom10", "playtester", "play your own modes 10 times", "creator") { it.customPlays >= 10 },
+    BadgeDef("ball1", "seeker of truth", "ask the magic ball something", "ball") { it.ballShakes >= 1 },
+    BadgeDef("ballwin5", "fortune favors the shaky", "win 5 magic ball bets", "ball") { it.ballWins >= 5 },
+    BadgeDef("powershake", "power shake", "shake the magic ball really fast", "ball") { "powershake" in it.flags },
+    BadgeDef("annoyed", "you annoyed the ball", "keep shaking after it already answered", "ball") { "annoyed" in it.flags },
     BadgeDef("item1", "retail therapy", "buy your first item", "all") { it.items.isNotEmpty() },
     BadgeDef("item5", "shopaholic", "own 5 items", "all") { it.items.size >= 5 },
     BadgeDef("itemall", "fully loaded", "own every item", "all") { it.items.size >= Items.size },
     BadgeDef("quest1", "to-do list", "finish a daily quest", "all") { it.questsCompleted >= 1 },
     BadgeDef("quest15", "productive citizen", "finish 15 daily quests", "all") { it.questsCompleted >= 15 },
     BadgeDef("economist", "economist", "check what coins are worth in 3 currencies", "all") { it.currenciesSeen.size >= 3 },
-    BadgeDef("all", "jack of all trades", "play all 13 modes", "all") { it.modesPlayed.size >= 13 },
+    BadgeDef("all", "jack of all trades", "play all 14 modes", "all") { it.modesPlayed.size >= 14 },
 )
 
 // ---------- campaign ----------
@@ -492,3 +508,75 @@ val Cosmetics = listOf(
 )
 
 fun cosmetic(id: String) = Cosmetics.firstOrNull { it.id == id }
+
+// ---------- creator: custom tickets + custom modes ----------
+
+private val ticketWeights = listOf(40, 28, 18, 10, 4)
+private val ticketMults = listOf(1f, 2f, 4f, 10f, 40f)
+
+/** a scratch ticket designed by the player. prizes are worked out so it pays back ~85% on average */
+data class CustomTicket(
+    val id: Long,
+    val name: String,
+    val price: Int,
+    val chance: Float,
+    val syms: List<Sym>,
+    val paper: Long,
+    val accent: Long,
+) {
+    fun prizes(): List<Int> {
+        val sum = ticketWeights.indices.sumOf { (ticketWeights[it] * ticketMults[it]).toDouble() } / 100.0
+        val k = 0.85 / (chance * sum)
+        return ticketMults.map { (k * it * price).toInt().coerceAtLeast(1) }
+    }
+
+    fun toTier() = Tier(
+        (1000 + (id % 100000)).toInt(), name, price, Kind.MATCH3, chance,
+        syms.zip(prizes()), ticketWeights, Color(paper), Color(accent), "designed by you", flag = "custombuy",
+    )
+}
+
+/** template: "draw" (pick numbers), "wheel" (spin), "flip" (call coin flips in a row) */
+data class CustomMode(
+    val id: Long,
+    val name: String,
+    val template: String,
+    val color: Long,
+    val host: String,
+    val catchphrase: String,
+    val price: Int,
+    val pool: Int = 20,
+    val picks: Int = 3,
+    val draws: Int = 5,
+    val segments: Int = 8,
+    val flips: Int = 3,
+)
+
+private fun choose(n: Int, k: Int): Double {
+    if (k < 0 || k > n) return 0.0
+    var r = 1.0
+    for (i in 0 until k) r = r * (n - i) / (i + 1)
+    return r
+}
+
+/** prize for each number of matches in a draw mode, paying back ~90% overall */
+fun drawPrizes(m: CustomMode): List<Int> {
+    val p = (0..m.picks).map { k -> choose(m.picks, k) * choose(m.pool - m.picks, m.draws - k) / choose(m.pool, m.draws) }
+    val levels = (maxOf(1, (m.picks + 1) / 2)..m.picks).filter { p[it] > 0 }
+    if (levels.isEmpty()) return List(m.picks + 1) { 0 }
+    val share = 0.9 / levels.size
+    return (0..m.picks).map { k -> if (k in levels) (m.price * share / p[k]).toInt().coerceIn(1, 1_000_000) else 0 }
+}
+
+/** multipliers (x100) for each wheel segment, half of them pay nothing */
+fun wheelMults(m: CustomMode): List<Int> {
+    val n = m.segments
+    val paying = n / 2
+    val total = (1..paying).sum().toFloat()
+    val scale = 0.9f * n / total
+    val pays = (1..paying).map { (it * scale * 100).toInt() }
+    // interleave payers and blanks so it looks like a real wheel
+    return List(n) { i -> if (i % 2 == 0) pays.getOrElse(i / 2) { 0 } else 0 }
+}
+
+fun flipPayout(m: CustomMode) = (m.price * 0.95 * (1 shl m.flips)).toInt()

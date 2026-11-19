@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlin.math.sin
 
 @Composable
 fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
@@ -162,7 +163,32 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 }
                 drawRoundRect(ballColors[4], Offset(w * (0.1f + tt * 0.4f), h * 0.05f), Size(w * 0.3f, h * 0.16f), androidx.compose.ui.geometry.CornerRadius(4f))
             }, go = Screen.Tower),
+            ModeEntry("magic ball", "shake your phone to bet", Color(0xFF5C6BC0), art = { w, h, tt ->
+                val c = Offset(w / 2 + sin(tt * 40f) * 6f, h * 0.5f)
+                drawCircle(Color(0xFF111018), h * 0.4f, c)
+                drawCircle(Color.White, h * 0.15f, c)
+                label("8", c.x, c.y, h * 0.18f, Ink)
+            }, go = Screen.MagicBall),
         )
+        if (state.customModes.isNotEmpty()) {
+            Text("your modes", color = modeColor("creator"), fontWeight = FontWeight.Black, fontSize = 18.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp))
+            state.customModes.forEach { m ->
+                Panel(Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable { vm.currentMode = m; nav.go(Screen.CustomPlay) }, color = Card) {
+                    Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Canvas(Modifier.size(56.dp)) {
+                            drawRoundRect(Color(m.color).copy(alpha = 0.25f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(20f))
+                            drawHostChar(m.host, t * 10)
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text(m.name, color = Color(m.color), fontWeight = FontWeight.Black, fontSize = 18.sp)
+                            Text("\"${m.catchphrase}\"", color = Dim, fontSize = 12.sp, maxLines = 1)
+                        }
+                    }
+                }
+            }
+        }
+        ChunkyButton("creator studio: make tickets + modes", Modifier.fillMaxWidth().padding(bottom = 10.dp), color = modeColor("creator")) { nav.go(Screen.Creator) }
         modes.chunked(2).forEach { row ->
             Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { m -> ModeTile(m, t, Modifier.weight(1f)) { nav.go(m.go) } }
