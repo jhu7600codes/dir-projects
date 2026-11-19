@@ -221,7 +221,9 @@ private fun TicketCreator(vm: GameViewModel, state: GameState) {
                             Text(t.name, color = Color.White, fontWeight = FontWeight.Bold)
                             Text("${t.price}c · ${(t.chance * 100).toInt()}% · top ${fmt(t.prizes().last())}", color = Dim, fontSize = 12.sp)
                         }
-                        ChunkyButton("delete", Modifier.width(84.dp), color = Pink, height = 40.dp) { vm.deleteTicket(t.id) }
+                        ShareButton(vm, state, "ticket", t.name, t.toJson())
+                        Spacer(Modifier.width(6.dp))
+                        ChunkyButton("x", Modifier.width(44.dp), color = Pink, height = 40.dp) { vm.deleteTicket(t.id) }
                     }
                 }
             }
@@ -256,7 +258,10 @@ private fun Color.luminance() = 0.299f * red + 0.587f * green + 0.114f * blue
 
 // ================================ mode creator ================================
 
-private val templateNames = mapOf("draw" to "number draw", "wheel" to "wheel", "flip" to "coin flips")
+private val templateNames = mapOf(
+    "draw" to "number draw", "wheel" to "wheel", "flip" to "coin flips", "dice" to "dice",
+    "cups" to "cup shuffle", "race" to "race", "boxes" to "mystery boxes",
+)
 
 @Composable
 private fun ModeCreator(vm: GameViewModel, state: GameState, nav: Nav) {
@@ -271,6 +276,13 @@ private fun ModeCreator(vm: GameViewModel, state: GameState, nav: Nav) {
     var draws by remember { mutableFloatStateOf(5f) }
     var segments by remember { mutableFloatStateOf(8f) }
     var flips by remember { mutableFloatStateOf(3f) }
+    var dice by remember { mutableFloatStateOf(2f) }
+    var cups by remember { mutableFloatStateOf(3f) }
+    var swaps by remember { mutableFloatStateOf(6f) }
+    var runners by remember { mutableFloatStateOf(4f) }
+    var runnerType by remember { mutableStateOf("pigeon") }
+    var boxes by remember { mutableFloatStateOf(9f) }
+    var bombs by remember { mutableFloatStateOf(2f) }
     var clock by remember { mutableFloatStateOf(0f) }
     androidx.compose.runtime.LaunchedEffect(Unit) {
         var last = 0L
@@ -281,7 +293,10 @@ private fun ModeCreator(vm: GameViewModel, state: GameState, nav: Nav) {
     val draft = CustomMode(
         0, name.ifBlank { "my mode" }, template, color, host, phrase.ifBlank { "welcome to my game!" }, price,
         pool.toInt(), p, d, segments.toInt() / 2 * 2, flips.toInt(),
+        dice.toInt(), cups.toInt(), swaps.toInt(), runners.toInt(), runnerType, boxes.toInt(),
+        bombs.toInt().coerceIn(1, boxes.toInt() - 2), state.nickname,
     )
+    val sc = SliderDefaults.colors(thumbColor = Gold, activeTrackColor = Gold)
 
     Column(
         Modifier
@@ -293,7 +308,10 @@ private fun ModeCreator(vm: GameViewModel, state: GameState, nav: Nav) {
         Label("name")
         OutlinedTextField(name, { name = it.take(22) }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("e.g. grandma's revenge", color = Dim) }, colors = lotFieldColors())
         Label("game type")
-        ChipRow(templateNames.values.toList(), templateNames.getValue(template)) { v -> template = templateNames.entries.first { it.value == v }.key }
+        templateNames.values.toList().chunked(4).forEach { row ->
+            ChipRow(row, templateNames.getValue(template)) { v -> template = templateNames.entries.first { it.value == v }.key }
+            Spacer(Modifier.height(6.dp))
+        }
         when (template) {
             "draw" -> {
                 Label("numbers 1 to ${pool.toInt()}")
@@ -307,9 +325,31 @@ private fun ModeCreator(vm: GameViewModel, state: GameState, nav: Nav) {
                 Label("wheel slices ${segments.toInt() / 2 * 2}")
                 Slider(segments, { segments = it }, valueRange = 4f..12f, steps = 7, colors = SliderDefaults.colors(thumbColor = Gold, activeTrackColor = Gold))
             }
-            else -> {
+            "flip" -> {
                 Label("flips in a row to win: ${flips.toInt()}")
-                Slider(flips, { flips = it }, valueRange = 1f..8f, steps = 6, colors = SliderDefaults.colors(thumbColor = Gold, activeTrackColor = Gold))
+                Slider(flips, { flips = it }, valueRange = 1f..8f, steps = 6, colors = sc)
+            }
+            "dice" -> {
+                Label("number of dice: ${dice.toInt()}")
+                Slider(dice, { dice = it }, valueRange = 1f..3f, steps = 1, colors = sc)
+            }
+            "cups" -> {
+                Label("cups: ${cups.toInt()}")
+                Slider(cups, { cups = it }, valueRange = 3f..6f, steps = 2, colors = sc)
+                Label("shuffles: ${swaps.toInt()} (more = harder to follow)")
+                Slider(swaps, { swaps = it }, valueRange = 3f..20f, steps = 16, colors = sc)
+            }
+            "race" -> {
+                Label("runners: ${runners.toInt()}")
+                Slider(runners, { runners = it }, valueRange = 3f..6f, steps = 2, colors = sc)
+                Label("who races")
+                ChipRow(RunnerTypes, runnerType) { runnerType = it }
+            }
+            else -> {
+                Label("boxes: ${boxes.toInt()}")
+                Slider(boxes, { boxes = it; if (bombs > it - 2) bombs = it - 2 }, valueRange = 4f..12f, steps = 7, colors = sc)
+                Label("bombs: ${bombs.toInt().coerceIn(1, boxes.toInt() - 2)}")
+                Slider(bombs, { bombs = it }, valueRange = 1f..(boxes - 2f).coerceAtLeast(2f), colors = sc)
             }
         }
         Label("entry price")
@@ -351,7 +391,9 @@ private fun ModeCreator(vm: GameViewModel, state: GameState, nav: Nav) {
                             Text(m.name, color = Color.White, fontWeight = FontWeight.Bold)
                             Text("${templateNames[m.template]} · ${m.price}c", color = Dim, fontSize = 12.sp)
                         }
-                        ChunkyButton("play", Modifier.width(70.dp), color = Mint, height = 40.dp) { vm.currentMode = m; nav.go(Screen.CustomPlay) }
+                        ChunkyButton("play", Modifier.width(64.dp), color = Mint, height = 40.dp) { vm.currentMode = m; nav.go(Screen.CustomPlay) }
+                        Spacer(Modifier.width(6.dp))
+                        ShareButton(vm, state, "mode", m.name, m.toJson())
                         Spacer(Modifier.width(6.dp))
                         ChunkyButton("x", Modifier.width(44.dp), color = Pink, height = 40.dp) { vm.deleteMode(m.id) }
                     }
@@ -363,6 +405,11 @@ private fun ModeCreator(vm: GameViewModel, state: GameState, nav: Nav) {
 }
 
 fun modeSummary(m: CustomMode): String = when (m.template) {
+    "dice" -> "roll ${m.dice} di${if (m.dice > 1) "ce" else "e"}, call the total.\n" +
+        "rare totals pay more, up to ${fmt((m.dice..m.dice * 6).maxOf { dicePayout(m, it) })}c"
+    "cups" -> "follow the ball under ${m.cups} cups through ${m.swaps} shuffles.\nfind it: ${fmt(pickOnePayout(m, m.cups))}c"
+    "race" -> "${m.runners} ${m.runnerType}s race, pick the winner.\nwin: ${fmt(pickOnePayout(m, m.runners))}c"
+    "boxes" -> "${m.boxes} boxes, ${m.bombs} have a bomb.\nevery safe box grows the pot, cash out any time."
     "draw" -> {
         val pr = drawPrizes(m)
         "pick ${m.picks} of 1-${m.pool}, ${m.draws} balls drawn.\n" +
@@ -466,6 +513,10 @@ fun CustomPlayScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                             }
                         }
                     }
+                    "dice" -> DiceGame(m, state, busy, { busy = it }, { pay() }, { line = it }, { result(it) })
+                    "cups" -> CupsGame(m, state, busy, { busy = it }, { pay() }, { line = it }, { result(it) })
+                    "race" -> RaceGame(m, state, busy, { busy = it }, { pay() }, { line = it }, { result(it) })
+                    "boxes" -> BoxesGame(m, state, busy, { busy = it }, { pay() }, { line = it }, { result(it) })
                     else -> FlipGame(m, state, busy, { busy = it }, { pay() }, { line = it }, { result(it) })
                 }
             }

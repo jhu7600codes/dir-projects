@@ -188,7 +188,10 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 }
             }
         }
-        ChunkyButton("creator studio: make tickets + modes", Modifier.fillMaxWidth().padding(bottom = 10.dp), color = modeColor("creator")) { nav.go(Screen.Creator) }
+        Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ChunkyButton("creator studio", Modifier.weight(1f), color = modeColor("creator")) { nav.go(Screen.Creator) }
+            ChunkyButton("lottery locker", Modifier.weight(1f), color = modeColor("locker")) { nav.go(Screen.Locker) }
+        }
         modes.chunked(2).forEach { row ->
             Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { m -> ModeTile(m, t, Modifier.weight(1f)) { nav.go(m.go) } }

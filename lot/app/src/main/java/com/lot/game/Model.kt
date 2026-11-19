@@ -305,6 +305,11 @@ data class GameState(
     val customPlays: Int = 0,
     val ballShakes: Int = 0,
     val ballWins: Int = 0,
+    // lottery locker
+    val nickname: String = "",
+    val lockerSecret: String = "",
+    val lockerSaved: Set<String> = emptySet(),
+    val lockerUploads: Int = 0,
     // wardrobe
     val wardrobe: Set<String> = setOf("hat_cap", "shirt_mint"),
     val outfitHat: String = "hat_cap",
@@ -424,6 +429,10 @@ val Badges = listOf(
     BadgeDef("ballwin5", "fortune favors the shaky", "win 5 magic ball bets", "ball") { it.ballWins >= 5 },
     BadgeDef("powershake", "power shake", "shake the magic ball really fast", "ball") { "powershake" in it.flags },
     BadgeDef("annoyed", "you annoyed the ball", "keep shaking after it already answered", "ball") { "annoyed" in it.flags },
+    BadgeDef("locker1", "now online", "upload something to the lottery locker", "locker") { it.lockerUploads >= 1 },
+    BadgeDef("locker5", "content creator", "upload 5 things to the lottery locker", "locker") { it.lockerUploads >= 5 },
+    BadgeDef("lockerget", "window shopper", "get something from the lottery locker", "locker") { it.lockerSaved.isNotEmpty() },
+    BadgeDef("lockerget10", "collector", "get 10 things from the lottery locker", "locker") { it.lockerSaved.size >= 10 },
     BadgeDef("item1", "retail therapy", "buy your first item", "all") { it.items.isNotEmpty() },
     BadgeDef("item5", "shopaholic", "own 5 items", "all") { it.items.size >= 5 },
     BadgeDef("itemall", "fully loaded", "own every item", "all") { it.items.size >= Items.size },
@@ -536,7 +545,10 @@ data class CustomTicket(
     )
 }
 
-/** template: "draw" (pick numbers), "wheel" (spin), "flip" (call coin flips in a row) */
+/**
+ * templates: draw (pick numbers), wheel (spin), flip (call coin flips in a row), dice (call the total),
+ * cups (follow the ball), race (pick a runner), boxes (open boxes, avoid bombs, cash out)
+ */
 data class CustomMode(
     val id: Long,
     val name: String,
@@ -550,6 +562,14 @@ data class CustomMode(
     val draws: Int = 5,
     val segments: Int = 8,
     val flips: Int = 3,
+    val dice: Int = 2,
+    val cups: Int = 3,
+    val swaps: Int = 6,
+    val runners: Int = 4,
+    val runnerType: String = "pigeon",
+    val boxes: Int = 9,
+    val bombs: Int = 2,
+    val author: String = "",
 )
 
 private fun choose(n: Int, k: Int): Double {
@@ -580,3 +600,27 @@ fun wheelMults(m: CustomMode): List<Int> {
 }
 
 fun flipPayout(m: CustomMode) = (m.price * 0.95 * (1 shl m.flips)).toInt()
+
+/** chance of each total when rolling n dice, index = total */
+fun diceOdds(n: Int): DoubleArray {
+    var dist = doubleArrayOf(1.0)
+    repeat(n) {
+        val next = DoubleArray(dist.size + 6)
+        for (i in dist.indices) for (f in 1..6) next[i + f] += dist[i] / 6.0
+        dist = next
+    }
+    return dist
+}
+
+fun dicePayout(m: CustomMode, total: Int): Int {
+    val p = diceOdds(m.dice).getOrElse(total) { 0.0 }
+    return if (p <= 0.0) 0 else (m.price * 0.9 / p).toInt()
+}
+
+fun pickOnePayout(m: CustomMode, n: Int) = (m.price * 0.9 * n).toInt()
+
+/** pot multiplier for opening one more safe box when [closed] boxes are left */
+fun boxStep(closed: Int, bombs: Int) = 0.95 * closed / (closed - bombs)
+
+val ModeTemplates = listOf("draw", "wheel", "flip", "dice", "cups", "race", "boxes")
+val RunnerTypes = listOf("pigeon", "raccoon", "granny")

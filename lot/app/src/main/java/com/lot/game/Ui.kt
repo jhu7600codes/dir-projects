@@ -324,6 +324,7 @@ fun modeColor(mode: String) = when (mode) {
     "tower" -> Color(0xFFAED581)
     "creator" -> Color(0xFFBA68C8)
     "ball" -> Color(0xFF5C6BC0)
+    "locker" -> Color(0xFF4DD0E1)
     else -> Grape
 }
 

@@ -48,19 +48,10 @@ private fun GameState.toJson(): String = JSONObject().apply {
     put("campaignLevel", campaignLevel); put("campaignBase", campaignBase)
     put("clawPlays", clawPlays); put("clawWins", clawWins); put("flightPlays", flightPlays); put("flightBest", flightBest)
     put("towerPlays", towerPlays); put("towerBest", towerBest)
-    put("customTickets", JSONArray().apply {
-        customTickets.forEach {
-            put(JSONObject().put("id", it.id).put("n", it.name).put("p", it.price).put("c", it.chance.toDouble())
-                .put("s", JSONArray(it.syms.map { s -> s.name })).put("pa", it.paper).put("ac", it.accent))
-        }
-    })
-    put("customModes", JSONArray().apply {
-        customModes.forEach {
-            put(JSONObject().put("id", it.id).put("n", it.name).put("t", it.template).put("col", it.color).put("h", it.host)
-                .put("cp", it.catchphrase).put("p", it.price).put("pool", it.pool).put("picks", it.picks).put("draws", it.draws)
-                .put("seg", it.segments).put("flips", it.flips))
-        }
-    })
+    put("customTickets", JSONArray().apply { customTickets.forEach { put(it.toJson()) } })
+    put("customModes", JSONArray().apply { customModes.forEach { put(it.toJson()) } })
+    put("nickname", nickname); put("lockerSecret", lockerSecret); put("lockerUploads", lockerUploads)
+    put("lockerSaved", JSONArray(lockerSaved.toList()))
     put("customPlays", customPlays); put("ballShakes", ballShakes); put("ballWins", ballWins)
     put("wardrobe", JSONArray(wardrobe.toList())); put("outfitHat", outfitHat); put("outfitShirt", outfitShirt); put("outfitGlasses", outfitGlasses)
     put("slotSpins", slotSpins); put("slotSevens", slotSevens); put("inspected", inspected); put("inspectBest", inspectBest)
@@ -115,25 +106,10 @@ private fun parseState(s: String): GameState = try {
         wardrobe = o.optJSONArray("wardrobe")?.let { a -> (0 until a.length()).map { a.getString(it) }.toSet() } ?: d.wardrobe,
         outfitHat = o.optString("outfitHat", d.outfitHat), outfitShirt = o.optString("outfitShirt", d.outfitShirt),
         outfitGlasses = o.optBoolean("outfitGlasses"),
-        customTickets = o.optJSONArray("customTickets")?.let { a ->
-            (0 until a.length()).mapNotNull { i ->
-                val t = a.getJSONObject(i)
-                val syms = t.optJSONArray("s")?.let { sa -> (0 until sa.length()).mapNotNull { j -> Sym.entries.firstOrNull { it.name == sa.getString(j) } } } ?: emptyList()
-                if (syms.size != 5) null else CustomTicket(
-                    t.optLong("id"), t.optString("n"), t.optInt("p", 10), t.optDouble("c", 0.3).toFloat(), syms, t.optLong("pa"), t.optLong("ac"),
-                )
-            }
-        } ?: emptyList(),
-        customModes = o.optJSONArray("customModes")?.let { a ->
-            (0 until a.length()).map { i ->
-                val m = a.getJSONObject(i)
-                CustomMode(
-                    m.optLong("id"), m.optString("n"), m.optString("t", "draw"), m.optLong("col"), m.optString("h", "host"),
-                    m.optString("cp"), m.optInt("p", 10), m.optInt("pool", 20), m.optInt("picks", 3), m.optInt("draws", 5),
-                    m.optInt("seg", 8), m.optInt("flips", 3),
-                )
-            }
-        } ?: emptyList(),
+        customTickets = o.optJSONArray("customTickets")?.let { a -> (0 until a.length()).mapNotNull { ticketFromJson(a.getJSONObject(it)) } } ?: emptyList(),
+        customModes = o.optJSONArray("customModes")?.let { a -> (0 until a.length()).map { modeFromJson(a.getJSONObject(it)) } } ?: emptyList(),
+        nickname = o.optString("nickname"), lockerSecret = o.optString("lockerSecret"), lockerUploads = o.optInt("lockerUploads"),
+        lockerSaved = o.optJSONArray("lockerSaved").strings(),
         customPlays = o.optInt("customPlays"), ballShakes = o.optInt("ballShakes"), ballWins = o.optInt("ballWins"),
         slotSpins = o.optInt("slotSpins"), slotSevens = o.optInt("slotSevens"),
         inspected = o.optInt("inspected"), inspectBest = o.optInt("inspectBest"),
@@ -425,4 +401,45 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun deleteMode(id: Long) = update { s -> s.copy(customModes = s.customModes.filter { it.id != id }) }
 
     var currentMode by mutableStateOf<CustomMode?>(null)
+
+    // ---- lottery locker ----
+    fun ensureSecret(): String {
+        val s = _state.value.lockerSecret
+        if (s.length >= 16) return s
+        val fresh = java.util.UUID.randomUUID().toString().replace("-", "") + java.util.UUID.randomUUID().toString().replace("-", "")
+        update { it.copy(lockerSecret = fresh) }
+        return fresh
+    }
+
+    fun setNickname(n: String) = update { it.copy(nickname = n.trim().take(24)) }
+
+    /** saves a locker item into your local stuff. returns a message for the player */
+    fun saveFromLocker(item: LockerItem): String {
+        val s = _state.value
+        val msg = when (item.kind) {
+            "mode" -> {
+                val m = modeFromJson(item.data).copy(id = System.currentTimeMillis(), author = item.author)
+                saveMode(m); "\"${m.name}\" added to your modes"
+            }
+            "ticket" -> {
+                val t = ticketFromJson(item.data)?.copy(id = System.currentTimeMillis()) ?: return "this ticket is broken"
+                saveTicket(t); "\"${t.name}\" is in your shop now"
+            }
+            else -> {
+                val hat = item.data.optString("hat"); val shirt = item.data.optString("shirt")
+                val missing = listOf(hat, shirt).filter { it.isNotBlank() && it !in s.wardrobe }.mapNotNull { cosmetic(it)?.name }
+                if (missing.isNotEmpty()) return "you don't own: ${missing.joinToString()}"
+                update {
+                    it.copy(
+                        outfitHat = cosmetic(hat)?.takeIf { c -> c.kind == "hat" }?.id ?: it.outfitHat,
+                        outfitShirt = cosmetic(shirt)?.takeIf { c -> c.kind == "shirt" }?.id ?: it.outfitShirt,
+                        outfitGlasses = item.data.optBoolean("glasses") && "glasses" in it.wardrobe,
+                    )
+                }
+                "outfit equipped"
+            }
+        }
+        update { it.copy(lockerSaved = it.lockerSaved + item.id) }
+        return msg
+    }
 }

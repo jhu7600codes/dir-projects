@@ -580,6 +580,13 @@ fun ProfileScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     }
                 }
             }
+            item {
+                ShareButton(
+                    vm, state, "outfit", "${state.nickname.ifBlank { "my" }}'s fit",
+                    org.json.JSONObject().put("hat", state.outfitHat).put("shirt", state.outfitShirt).put("glasses", state.outfitGlasses),
+                    wide = true,
+                )
+            }
             listOf("hat" to "hats", "shirt" to "shirts", "glasses" to "extras").forEach { (kind, title) ->
                 item { Text(title, color = Gold, fontWeight = FontWeight.Black, fontSize = 18.sp) }
                 Cosmetics.filter { it.kind == kind }.chunked(2).forEach { row ->

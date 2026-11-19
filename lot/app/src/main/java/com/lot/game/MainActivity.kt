@@ -52,6 +52,7 @@ sealed interface Screen {
     data object Creator : Screen
     data object CustomPlay : Screen
     data object MagicBall : Screen
+    data object Locker : Screen
     data object Inspector : Screen
 }
 
@@ -132,6 +133,7 @@ fun App(vm: GameViewModel, fx: Fx) {
                     Screen.Creator -> CreatorScreen(vm, state, nav)
                     Screen.CustomPlay -> CustomPlayScreen(vm, state, nav)
                     Screen.MagicBall -> MagicBallScreen(vm, state, nav)
+                    Screen.Locker -> LockerScreen(vm, state, nav)
                     Screen.Inspector -> InspectorScreen(vm, state, nav)
                 }
             }

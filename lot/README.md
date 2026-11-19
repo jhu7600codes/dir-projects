@@ -1,6 +1,6 @@
 # lot
 
-a fake money lottery simulator for android. kotlin + jetpack compose + material 3, dark theme, single activity, no backend. everything is saved locally with datastore, all sounds are synthesized at runtime and all art is drawn with compose canvas.
+a fake money lottery simulator for android. kotlin + jetpack compose + material 3, dark theme, single activity. everything is saved locally with datastore, all sounds are synthesized at runtime and all art is drawn with compose canvas.
 
 ## modes
 
@@ -22,7 +22,13 @@ a fake money lottery simulator for android. kotlin + jetpack compose + material 
 ### creator studio
 
 - **ticket creator** - design your own scratch ticket (name, price, win chance, symbols, colors). prizes are balanced automatically and it shows up in the shop.
-- **mode creator** - build your own game mode from a template (number draw, wheel, coin flips) with its own rules, host, catchphrase and color. it shows up on the home screen.
+- **mode creator** - build your own game mode from 7 templates (number draw, wheel, coin flips, dice, cup shuffle, race, mystery boxes) with its own rules, host, catchphrase and color. it shows up on the home screen.
+
+### lottery locker
+
+an online browser for modes, tickets and outfits other players shared. browse, search, sort by new or top, play modes straight from the locker, save stuff, like, report, and delete your own uploads.
+
+backed by a supabase project (schema in `server/locker.sql`). the app only uses the publishable key: it can read items and call the `locker_*` functions, nothing else. uploads are tied to a random secret stored on the phone (only its hash is on the server), max 20 uploads a day, and items with 3+ reports get hidden. this is the only part of the app that needs internet, everything else still works offline.
 
 ### campaign
 
@@ -48,7 +54,7 @@ winning tickets don't pay out right away. you sign the back, walk to the stand i
 
 settings has a currency picker that shows what your coins are "worth" in usd, eur, rub, shawarmas, potatoes and more. it's fake, nothing can be cashed out.
 
-84 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
+88 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
 
 ## install
 
