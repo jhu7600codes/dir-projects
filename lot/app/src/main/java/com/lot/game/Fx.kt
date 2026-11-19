@@ -171,4 +171,90 @@ class Fx(context: Context) {
         }
         return ShortArray(b.data.size) { (b.data[it].coerceIn(-1f, 1f) * 32000).toInt().toShort() }
     }
+
+    // ---------------- background music ----------------
+
+    @Volatile private var musicWanted = false
+    @Volatile private var visible = true
+    private var musicTrack: AudioTrack? = null
+    private val musicLock = Any()
+
+    fun setMusic(on: Boolean) {
+        musicWanted = on
+        refreshMusic()
+    }
+
+    fun setVisible(v: Boolean) {
+        visible = v
+        refreshMusic()
+    }
+
+    private fun refreshMusic() {
+        pool.execute {
+            synchronized(musicLock) {
+                try {
+                    if (musicWanted && visible) {
+                        val t = musicTrack ?: buildMusic().also { musicTrack = it }
+                        if (t.playState != AudioTrack.PLAYSTATE_PLAYING) t.play()
+                    } else {
+                        musicTrack?.let { if (it.playState == AudioTrack.PLAYSTATE_PLAYING) it.pause() }
+                    }
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+
+    /** a little 8 bar chiptune loop: C, Am, F, G with bass, arpeggio, lead and hats */
+    private fun buildMusic(): AudioTrack {
+        val bpm = 112f
+        val step = 60f / bpm / 2f // eighth notes
+        val steps = 64
+        val n = (steps * step * rate).toInt()
+        val out = FloatArray(n)
+        fun midi(m: Int) = 440f * Math.pow(2.0, (m - 69) / 12.0).toFloat()
+        fun note(start: Int, len: Int, freq: Float, vol: Float, wave: Wave) {
+            val s0 = (start * step * rate).toInt()
+            val s1 = minOf(n, ((start + len) * step * rate).toInt())
+            var phase = 0.0
+            for (i in s0 until s1) {
+                val t = (i - s0).toFloat() / (s1 - s0)
+                phase += freq / rate
+                val p = (phase % 1.0).toFloat()
+                val v = when (wave) {
+                    Wave.SQUARE -> if (p < 0.25f) 0.6f else -0.6f
+                    Wave.TRI -> if (p < 0.5f) 4f * p - 1f else 3f - 4f * p
+                    Wave.NOISE -> Random.nextFloat() * 2f - 1f
+                    else -> sin(2 * PI * p).toFloat()
+                }
+                val env = (1f - t) * minOf(1f, t * 60f)
+                out[i] += v * vol * env
+            }
+        }
+        val chords = listOf(listOf(60, 64, 67), listOf(57, 60, 64), listOf(53, 57, 60), listOf(55, 59, 62))
+        val lead = listOf(
+            76, -1, 79, 76, 74, 72, -1, 72, 76, -1, 74, 72, 69, -1, 67, -1,
+            72, -1, 76, 72, 69, 67, -1, 69, 72, -1, 69, 67, 64, -1, -1, -1,
+            65, -1, 69, 72, 74, 72, -1, 69, 72, -1, 69, 65, 64, -1, 65, -1,
+            67, -1, 71, 74, 79, 77, -1, 74, 72, -1, 71, -1, 67, -1, -1, -1,
+        )
+        for (st in 0 until steps) {
+            val ch = chords[(st / 16) % 4]
+            if (st % 2 == 0) note(st, 2, midi(ch[0] - 24), 0.13f, Wave.SQUARE)
+            note(st, 1, midi(ch[st % 3] + 12), 0.05f, Wave.TRI)
+            if (lead[st] > 0) note(st, 2, midi(lead[st]), 0.07f, Wave.SQUARE)
+            if (st % 2 == 1) note(st, 1, 0f, 0.025f, Wave.NOISE)
+        }
+        val pcm = ShortArray(n) { (out[it].coerceIn(-1f, 1f) * 20000).toInt().toShort() }
+        val track = AudioTrack.Builder()
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+            .setAudioFormat(AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(rate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
+            .setTransferMode(AudioTrack.MODE_STATIC)
+            .setBufferSizeInBytes(pcm.size * 2)
+            .build()
+        track.write(pcm, 0, pcm.size)
+        track.setLoopPoints(0, pcm.size, -1)
+        track.setVolume(0.6f)
+        return track
+    }
 }

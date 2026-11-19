@@ -151,12 +151,12 @@ fun DerbyScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             )
             Box(Modifier.fillMaxWidth().weight(1f).padding(12.dp)) {
-                Canvas(Modifier.fillMaxSize()) {
+                Canvas(Modifier.fillMaxSize().sceneClip()) {
                     val w = size.width
                     val h = size.height
                     drawRoundRect(Color(0xFF3B7A3A), cornerRadius = CornerRadius(30f))
                     val laneH = h / racers.size
-                    val startX = w * 0.1f
+                    val startX = w * 0.18f
                     val endX = w * 0.88f
                     // finish line
                     for (i in 0 until 16) {
@@ -170,7 +170,8 @@ fun DerbyScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                         val x = startX + (endX - startX + w * 0.05f) * p
                         val flying = racing || (race > 0 && t < 1f)
                         drawPigeon(Offset(x, y), laneH * 0.55f, if (flying) abs(sin(clock * 16f + i)) else 0.2f, 1f, r.color)
-                        label("${i + 1}", w * 0.04f, y, laneH * 0.3f, Color.White, Ink)
+                        circleO(Offset(w * 0.065f, y), laneH * 0.2f, CardHi, 3f)
+                        label("${i + 1}", w * 0.065f, y, laneH * 0.24f, Color.White)
                         if (i == pick) drawCircle(Gold, laneH * 0.42f, Offset(x, y), style = androidx.compose.ui.graphics.drawscope.Stroke(5f))
                     }
                 }
@@ -264,20 +265,26 @@ fun QuestPanel(vm: GameViewModel, state: GameState) {
             quests.forEach { q ->
                 val prog = vm.questProgress(state, q)
                 val done = q.id in state.questsDone
-                Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(q.desc, color = if (done) Dim else Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Canvas(Modifier.fillMaxWidth().height(10.dp).padding(top = 3.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(q.desc, color = if (done) Dim else Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            Text("$prog/${q.target}", color = Dim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        Canvas(Modifier.fillMaxWidth().height(8.dp)) {
                             drawRoundRect(CardHi, cornerRadius = CornerRadius(10f))
                             drawRoundRect(if (done) Dim else Mint, size = Size(size.width * prog / q.target, size.height), cornerRadius = CornerRadius(10f))
                         }
-                        Text("$prog/${q.target}", color = Dim, fontSize = 11.sp)
                     }
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     when {
-                        done -> Text("done", color = Dim, fontWeight = FontWeight.Black, modifier = Modifier.width(84.dp), textAlign = TextAlign.Center)
-                        prog >= q.target -> ChunkyButton("+${q.reward}c", Modifier.width(84.dp), color = Mint, height = 40.dp, sfx = Sfx.COIN) { vm.collectQuest(q) }
-                        else -> Text("+${q.reward}c", color = Gold, fontWeight = FontWeight.Bold, modifier = Modifier.width(84.dp), textAlign = TextAlign.Center)
+                        done -> Text("done", color = Dim, fontWeight = FontWeight.Black, modifier = Modifier.width(72.dp), textAlign = TextAlign.Center)
+                        prog >= q.target -> ChunkyButton("+${q.reward}c", Modifier.width(72.dp), color = Mint, height = 38.dp, sfx = Sfx.COIN) { vm.collectQuest(q) }
+                        else -> Text(
+                            "+${q.reward}c", color = Gold, fontWeight = FontWeight.Black, fontSize = 14.sp, textAlign = TextAlign.Center,
+                            modifier = Modifier.width(72.dp).background(CardHi, RoundedCornerShape(50)).padding(vertical = 6.dp),
+                        )
                     }
                 }
             }

@@ -396,7 +396,7 @@ fun InspectorScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             StatBox("mistakes", "$strikes/3", Modifier.weight(1f), Pink)
         }
         Box(Modifier.fillMaxWidth().weight(1f).padding(12.dp)) {
-            Canvas(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize().sceneClip()) {
                 val w = size.width
                 val h = size.height
                 drawRoundRect(Color(0xFF2E2A45), cornerRadius = CornerRadius(30f))

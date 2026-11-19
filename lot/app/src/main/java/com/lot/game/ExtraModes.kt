@@ -175,8 +175,9 @@ fun BingoScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 verticalArrangement = Arrangement.Center,
             ) {
                 Canvas(Modifier.fillMaxWidth().height(160.dp)) {
-                    for (i in 0 until 3) drawDude(grannyDude(i), size.width * (0.2f + i * 0.3f), size.height, size.height * 0.85f, Mood.GRUMPY, look = 0f)
+                    for (i in 0 until 3) drawDude(grannyDude(i), size.width * (0.2f + i * 0.3f), size.height * 0.9f, size.height * 0.8f, Mood.GRUMPY, look = 0f)
                 }
+                Spacer(Modifier.height(12.dp))
                 Text("three grannies. one card each. no mercy.", color = Dim, fontSize = 15.sp, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(10.dp))
                 Text("wins: ${state.bingoWins} · played: ${state.bingoPlayed}", color = Dim, fontSize = 13.sp)
@@ -441,7 +442,7 @@ fun DumpsterScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 .weight(1f)
                 .padding(12.dp)
         ) {
-            Canvas(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize().sceneClip()) {
                 drawRoundRect(Color(0xFF1E1838), cornerRadius = CornerRadius(30f))
                 drawRect(Color(0xFF2A2240), Offset(0f, size.height * 0.62f), Size(size.width, size.height * 0.38f))
                 // street lamp

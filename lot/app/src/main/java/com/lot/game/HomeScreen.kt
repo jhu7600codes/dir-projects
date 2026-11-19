@@ -62,6 +62,7 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            LevelChip(state) { nav.go(Screen.Profile) }
             Spacer(Modifier.weight(1f))
             CoinPill(state.coins)
         }
@@ -169,9 +170,32 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 drawCircle(Color.White, h * 0.15f, c)
                 label("8", c.x, c.y, h * 0.18f, Ink)
             }, go = Screen.MagicBall),
+            ModeEntry("plinko", "pegs. gravity. regret.", Color(0xFFFFD54F), art = { w, h, tt ->
+                for (r in 0 until 4) for (j in 0..r) drawCircle(Color.White, h * 0.035f, Offset(w / 2 + (j - r / 2f) * w * 0.16f, h * (0.2f + r * 0.18f)))
+                circleO(Offset(w / 2 + (tt - 0.5f) * w * 0.3f, h * (0.12f + tt * 0.7f)), h * 0.07f, Gold, 3f)
+            }, go = Screen.Plinko),
+            ModeEntry("memory", "match the symbols, fast", Color(0xFF9575CD), art = { w, h, tt ->
+                for (i in 0 until 3) {
+                    val x = w * (0.22f + i * 0.28f)
+                    drawRoundRect(if (i == 1 && tt > 0.5f) Color.White else Grape, Offset(x - w * 0.1f, h * 0.2f), Size(w * 0.2f, h * 0.6f), androidx.compose.ui.geometry.CornerRadius(8f))
+                    if (i == 1 && tt > 0.5f) drawSymbol(Sym.SEVEN, Offset(x, h * 0.5f), h * 0.35f)
+                }
+            }, go = Screen.Memory),
+            ModeEntry("whack", "whack raccoons, not grannies", Color(0xFF8D6E63), art = { w, h, tt ->
+                drawRaccoon(Offset(w * 0.52f, h * (0.62f - tt * 0.2f)), h * 0.4f, tt * 5f, false)
+                drawRoundRect(Color(0xFF6E6A85), Offset(w * 0.3f, h * 0.62f), Size(w * 0.4f, h * 0.35f), androidx.compose.ui.geometry.CornerRadius(8f))
+            }, go = Screen.Whack),
         )
+        SectionTitle("modes")
+        modes.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { m -> ModeTile(m, t, Modifier.weight(1f)) { nav.go(m.go) } }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+        SectionTitle("community")
         if (state.customModes.isNotEmpty()) {
-            Text("your modes", color = modeColor("creator"), fontWeight = FontWeight.Black, fontSize = 18.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp))
+            Text("your modes", color = Dim, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp))
             state.customModes.forEach { m ->
                 Panel(Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable { vm.currentMode = m; nav.go(Screen.CustomPlay) }, color = Card) {
                     Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -192,20 +216,16 @@ fun HomeScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             ChunkyButton("creator studio", Modifier.weight(1f), color = modeColor("creator")) { nav.go(Screen.Creator) }
             ChunkyButton("lottery locker", Modifier.weight(1f), color = modeColor("locker")) { nav.go(Screen.Locker) }
         }
-        modes.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEach { m -> ModeTile(m, t, Modifier.weight(1f)) { nav.go(m.go) } }
-                if (row.size == 1) Spacer(Modifier.weight(1f))
-            }
-        }
-        Spacer(Modifier.height(18.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        SectionTitle("you")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             ChunkyButton("badges ${state.badges.size}/${Badges.size}", Modifier.weight(1f), color = Sky) { nav.go(Screen.Badges) }
             ChunkyButton("items ${state.items.size}/${Items.size}", Modifier.weight(1f), color = Pink) { nav.go(Screen.Items) }
-            ChunkyButton("settings", Modifier.weight(1f), color = CardHi, textColor = Color.White) { settings = true }
         }
         Spacer(Modifier.height(10.dp))
-        ChunkyButton("profile & wardrobe", Modifier.fillMaxWidth(), color = Mint) { nav.go(Screen.Profile) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ChunkyButton("profile & wardrobe", Modifier.weight(1f), color = Mint) { nav.go(Screen.Profile) }
+            ChunkyButton("settings", Modifier.weight(1f), color = CardHi, textColor = Color.White) { settings = true }
+        }
         Spacer(Modifier.height(24.dp))
     }
 
@@ -252,6 +272,7 @@ private fun SettingsDialog(vm: GameViewModel, state: GameState, onClose: () -> U
                 Spacer(Modifier.height(10.dp))
                 SettingRow("sound effects", state.sound) { vm.setSound(it) }
                 SettingRow("haptics", state.haptics) { vm.setHaptics(it) }
+                SettingRow("music", state.music) { vm.setMusic(it) }
                 Spacer(Modifier.height(8.dp))
                 Text("show coin \"value\" in", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Text("for fun only. coins are fake and can't be cashed out.", color = Dim, fontSize = 12.sp)
@@ -316,7 +337,7 @@ fun BadgesScreen(state: GameState, nav: Nav) {
         ) {
             items(Badges, key = { it.id }) { b ->
                 val got = b.id in state.badges
-                Panel(Modifier.fillMaxWidth(), color = if (got) CardHi else Card) {
+                Panel(Modifier.fillMaxWidth().height(200.dp), color = if (got) CardHi else Card) {
                     Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(Modifier.fillMaxWidth().aspectRatio(1.2f)) {
                             Canvas(Modifier.fillMaxSize()) {
@@ -327,7 +348,7 @@ fun BadgesScreen(state: GameState, nav: Nav) {
                             if (got) b.name else "???", color = if (got) Color.White else Dim,
                             fontWeight = FontWeight.Black, fontSize = 13.sp, textAlign = TextAlign.Center, maxLines = 2,
                         )
-                        Text(b.desc, color = Dim, fontSize = 11.sp, textAlign = TextAlign.Center, lineHeight = 13.sp)
+                        Text(b.desc, color = Dim, fontSize = 11.sp, textAlign = TextAlign.Center, lineHeight = 13.sp, maxLines = 3)
                         Text(b.mode, color = modeColor(b.mode), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -360,7 +381,7 @@ private fun ModeTile(m: ModeEntry, t: Float, modifier: Modifier, onClick: () -> 
         color = Card,
     ) {
         Column(Modifier.padding(10.dp)) {
-            Canvas(Modifier.fillMaxWidth().height(78.dp)) {
+            Canvas(Modifier.fillMaxWidth().height(78.dp).sceneClip()) {
                 drawRoundRect(m.color.copy(alpha = 0.18f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(24f))
                 m.art(this, size.width, size.height, t)
             }
@@ -397,4 +418,12 @@ private fun CampaignCard(state: GameState, t: Float, onClick: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text, color = Color.White, fontWeight = FontWeight.Black, fontSize = 20.sp,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp),
+    )
 }

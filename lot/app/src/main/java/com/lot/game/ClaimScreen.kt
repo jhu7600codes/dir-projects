@@ -401,7 +401,7 @@ private fun WalkStage(
                 .weight(1f)
                 .padding(12.dp)
         ) {
-            Canvas(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize().sceneClip()) {
                 @Suppress("UNUSED_EXPRESSION") frame
                 val w = size.width
                 val h = size.height
@@ -557,7 +557,7 @@ private fun ThiefStage(paused: Boolean, whistle: Boolean, onEnd: (Boolean) -> Un
 
     Column(Modifier.fillMaxSize().padding(12.dp)) {
         Box(Modifier.fillMaxWidth().weight(1f)) {
-            Canvas(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize().sceneClip()) {
                 val w = size.width
                 val h = size.height
                 drawRoundRect(Color(0xFF3A3550), cornerRadius = CornerRadius(30f))
@@ -745,7 +745,7 @@ internal fun FightStage(
                 .weight(1f)
                 .clickable(remember { MutableInteractionSource() }, null) { if (phase == FPhase.INTRO || phase == FPhase.ATTACK) taps.trySend(0) }
         ) {
-            Canvas(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize().sceneClip()) {
                 val w = size.width
                 val h = size.height
                 val shakeX = sin(clock * 60f) * 14f * hurtFlash
@@ -782,13 +782,15 @@ internal fun FightStage(
                     }
                 }
                 // hp bars
+                // health bars live on the counter, out of the way of the speech bubble
+                val bh = h * 0.05f
                 fun bar(y: Float, frac: Float, color: Color, name: String) {
-                    drawRoundRect(Ink, Offset(w * 0.05f, y), Size(w * 0.9f, 26f), CornerRadius(13f))
-                    drawRoundRect(color, Offset(w * 0.05f + 3f, y + 3f), Size((w * 0.9f - 6f) * frac.coerceIn(0f, 1f), 20f), CornerRadius(10f))
-                    label(name, w * 0.5f, y + 13f, 18f, Color.White, Ink)
+                    drawRoundRect(Ink, Offset(w * 0.05f, y), Size(w * 0.9f, bh), CornerRadius(bh / 2))
+                    drawRoundRect(color, Offset(w * 0.05f + 4f, y + 4f), Size((w * 0.9f - 8f) * frac.coerceIn(0f, 1f), bh - 8f), CornerRadius(bh / 2))
+                    label(name, w * 0.5f, y + bh / 2, bh * 0.55f, Color.White, Ink)
                 }
-                bar(h * 0.08f + 6f, hp / maxHp.toFloat(), Pink, "cashier patience $hp/$maxHp")
-                bar(h * 0.94f - 30f, myHp / 5f, Mint, "your nerve $myHp/5")
+                bar(h * 0.78f, hp / maxHp.toFloat(), Pink, "${if (boss == CashierDude) "cashier" else "his"} patience $hp/$maxHp")
+                bar(h * 0.88f, myHp / 5f, Mint, "your nerve $myHp/5")
                 // incoming stamp arrow
                 if (phase == FPhase.DEFEND) {
                     val c = Offset(w * 0.5f, h * 0.55f)

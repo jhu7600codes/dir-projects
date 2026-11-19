@@ -50,6 +50,9 @@ private fun GameState.toJson(): String = JSONObject().apply {
     put("towerPlays", towerPlays); put("towerBest", towerBest)
     put("customTickets", JSONArray().apply { customTickets.forEach { put(it.toJson()) } })
     put("customModes", JSONArray().apply { customModes.forEach { put(it.toJson()) } })
+    put("plinkoDrops", plinkoDrops); put("memoryPlays", memoryPlays); put("memoryBest", memoryBest)
+    put("whackPlays", whackPlays); put("whackBest", whackBest)
+    put("levelSeen", levelSeen); put("lastLoginDay", lastLoginDay); put("loginStreak", loginStreak); put("music", music)
     put("nickname", nickname); put("lockerSecret", lockerSecret); put("lockerUploads", lockerUploads)
     put("lockerSaved", JSONArray(lockerSaved.toList()))
     put("customPlays", customPlays); put("ballShakes", ballShakes); put("ballWins", ballWins)
@@ -108,6 +111,9 @@ private fun parseState(s: String): GameState = try {
         outfitGlasses = o.optBoolean("outfitGlasses"),
         customTickets = o.optJSONArray("customTickets")?.let { a -> (0 until a.length()).mapNotNull { ticketFromJson(a.getJSONObject(it)) } } ?: emptyList(),
         customModes = o.optJSONArray("customModes")?.let { a -> (0 until a.length()).map { modeFromJson(a.getJSONObject(it)) } } ?: emptyList(),
+        plinkoDrops = o.optInt("plinkoDrops"), memoryPlays = o.optInt("memoryPlays"), memoryBest = o.optInt("memoryBest"),
+        whackPlays = o.optInt("whackPlays"), whackBest = o.optInt("whackBest"),
+        levelSeen = o.optInt("levelSeen"), lastLoginDay = o.optLong("lastLoginDay", -1), loginStreak = o.optInt("loginStreak"), music = o.optBoolean("music", true),
         nickname = o.optString("nickname"), lockerSecret = o.optString("lockerSecret"), lockerUploads = o.optInt("lockerUploads"),
         lockerSaved = o.optJSONArray("lockerSaved").strings(),
         customPlays = o.optInt("customPlays"), ballShakes = o.optInt("ballShakes"), ballWins = o.optInt("ballWins"),
@@ -139,6 +145,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** badges waiting to be shown as a popup, oldest first */
     val badgeQueue = mutableStateListOf<BadgeDef>()
 
+    /** levels reached that still need their popup */
+    val levelUps = mutableStateListOf<Int>()
+
+    /** set after launch when today's login bonus was paid: streak to reward */
+    var loginBonus by mutableStateOf<Pair<Int, Int>?>(null)
+
     var currentScratch by mutableStateOf<ScratchTicket?>(null)
         private set
     var currentTv by mutableStateOf<TvTicket?>(null)
@@ -150,6 +162,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             val raw = ds.data.first()[KEY]
             _state.value = raw?.let { parseState(it) } ?: GameState()
             loaded = true
+            update { it } // settles the level baseline for older saves
+            checkLogin()
             _state.drop(1).collectLatest { s ->
                 launch(Dispatchers.IO) { ds.edit { it[KEY] = s.toJson() } }.join()
             }
@@ -162,9 +176,31 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val now = System.currentTimeMillis()
         val fresh = Badges.filter { it.id !in s.badges && it.check(s) }
         if (fresh.isNotEmpty()) s = s.copy(badges = s.badges + fresh.associate { it.id to now })
+        // level ups pay out coins. the first time we just remember where you are, so old saves don't get a huge dump
+        val lv = levelInfo(xpOf(s)).level
+        if (s.levelSeen == 0) {
+            s = s.copy(levelSeen = lv)
+        } else if (lv > s.levelSeen) {
+            val reward = (s.levelSeen + 1..lv).sumOf { levelReward(it) }
+            s = s.copy(levelSeen = lv, coins = s.coins + reward)
+            levelUps.add(lv)
+        }
         _state.value = s
         badgeQueue.addAll(fresh)
     }
+
+
+    private fun checkLogin() {
+        val day = today()
+        val s = _state.value
+        if (s.lastLoginDay == day) return
+        val streak = if (s.lastLoginDay == day - 1) s.loginStreak + 1 else 1
+        val reward = 25 * streak.coerceAtMost(7)
+        update { it.copy(lastLoginDay = day, loginStreak = streak, coins = it.coins + reward) }
+        loginBonus = streak to reward
+    }
+
+    fun setMusic(on: Boolean) = update { it.copy(music = on) }
 
     fun popBadge() {
         if (badgeQueue.isNotEmpty()) badgeQueue.removeAt(0)

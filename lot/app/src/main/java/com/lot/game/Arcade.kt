@@ -164,6 +164,7 @@ fun RainScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             Canvas(
                 Modifier
                     .fillMaxSize()
+                    .sceneClip()
                     .pointerInput(Unit) {
                         awaitPointerEventScope {
                             while (true) {

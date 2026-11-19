@@ -53,6 +53,9 @@ sealed interface Screen {
     data object CustomPlay : Screen
     data object MagicBall : Screen
     data object Locker : Screen
+    data object Plinko : Screen
+    data object Memory : Screen
+    data object Whack : Screen
     data object Inspector : Screen
 }
 
@@ -67,10 +70,22 @@ class Nav {
 
 class MainActivity : ComponentActivity() {
     private val vm: GameViewModel by viewModels()
+    private var fxRef: Fx? = null
+
+    override fun onResume() {
+        super.onResume()
+        fxRef?.setVisible(true)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        fxRef?.setVisible(false)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val fx = Fx(applicationContext)
+        fxRef = fx
         setContent {
             LotTheme {
                 CompositionLocalProvider(LocalFx provides fx) {
@@ -88,6 +103,7 @@ fun App(vm: GameViewModel, fx: Fx) {
         fx.soundOn = state.sound
         fx.hapticsOn = state.haptics
     }
+    LaunchedEffect(state.music) { fx.setMusic(state.music) }
     LaunchedEffect(state.outfitHat, state.outfitShirt, state.outfitGlasses) { YouDude = youDude(state) }
     val nav = remember { Nav() }
     BackHandler(nav.stack.size > 1) { nav.back() }
@@ -134,6 +150,9 @@ fun App(vm: GameViewModel, fx: Fx) {
                     Screen.CustomPlay -> CustomPlayScreen(vm, state, nav)
                     Screen.MagicBall -> MagicBallScreen(vm, state, nav)
                     Screen.Locker -> LockerScreen(vm, state, nav)
+                    Screen.Plinko -> PlinkoScreen(vm, state, nav)
+                    Screen.Memory -> MemoryScreen(vm, state, nav)
+                    Screen.Whack -> WhackScreen(vm, state, nav)
                     Screen.Inspector -> InspectorScreen(vm, state, nav)
                 }
             }
@@ -141,6 +160,8 @@ fun App(vm: GameViewModel, fx: Fx) {
         Box(Modifier.align(Alignment.TopCenter)) {
             BadgePopup(vm.badgeQueue.firstOrNull()) { vm.popBadge() }
         }
+        vm.levelUps.firstOrNull()?.let { lv -> LevelUpDialog(lv) { vm.levelUps.removeAt(0) } }
+        vm.loginBonus?.let { (streak, reward) -> LoginDialog(streak, reward) { vm.loginBonus = null } }
     }
 }
 

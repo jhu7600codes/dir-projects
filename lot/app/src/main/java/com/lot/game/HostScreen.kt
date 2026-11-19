@@ -377,7 +377,7 @@ fun HostScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 .weight(1f)
                 .padding(horizontal = 12.dp)
         ) {
-            Canvas(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize().sceneClip()) {
                 val w = size.width
                 val h = size.height
                 drawRoundRect(Brush.verticalGradient(listOf(Color(0xFF3B2B6E), Color(0xFFFF8C6B))), cornerRadius = CornerRadius(40f))

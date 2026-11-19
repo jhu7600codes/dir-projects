@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -119,7 +120,10 @@ fun LotTopBar(title: String, coins: Int?, onBack: () -> Unit, onHelp: (() -> Uni
         IconButton(onClick = { fx.play(Sfx.CLICK); onBack() }) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, "back", tint = Color.White)
         }
-        Text(title, fontWeight = FontWeight.Black, fontSize = 22.sp, color = Color.White, modifier = Modifier.weight(1f))
+        Text(
+            title, fontWeight = FontWeight.Black, fontSize = if (title.length > 15) 19.sp else 22.sp, color = Color.White,
+            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+        )
         if (onHelp != null) {
             IconButton(onClick = { fx.play(Sfx.CLICK); onHelp() }) {
                 Icon(Icons.Filled.Info, "how to play", tint = Dim)
@@ -325,6 +329,9 @@ fun modeColor(mode: String) = when (mode) {
     "creator" -> Color(0xFFBA68C8)
     "ball" -> Color(0xFF5C6BC0)
     "locker" -> Color(0xFF4DD0E1)
+    "plinko" -> Color(0xFFFFD54F)
+    "memory" -> Color(0xFF9575CD)
+    "whack" -> Color(0xFF8D6E63)
     else -> Grape
 }
 
@@ -372,4 +379,91 @@ fun StatBox(label: String, value: String, modifier: Modifier = Modifier, color: 
 fun coinValue(coins: Int, code: String): String {
     val c = currencyOf(code)
     return "%,.${c.decimals}f %s".format(coins * c.perCoin, c.code)
+}
+
+/** keeps scene drawings inside their rounded frame */
+fun Modifier.sceneClip() = this.clip(RoundedCornerShape(16.dp))
+
+@Composable
+fun LevelUpDialog(level: Int, onClose: () -> Unit) {
+    val fx = LocalFx.current
+    LaunchedEffect(level) { fx.play(Sfx.BIG_WIN); fx.buzz(Buzz.SUCCESS) }
+    Dialog(onDismissRequest = onClose) {
+        Box {
+            Panel(Modifier.fillMaxWidth(), color = CardHi) {
+                Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("level up!", color = Gold, fontWeight = FontWeight.Black, fontSize = 30.sp)
+                    Canvas(Modifier.size(110.dp)) {
+                        outlined(starPath(center, size.minDimension * 0.48f, size.minDimension * 0.22f), Gold, 6f)
+                        label("$level", center.x, center.y + 4f, size.minDimension * 0.28f, Ink)
+                    }
+                    Text("you're level $level now", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    Text("+${fmt(levelReward(level))} coins", color = Mint, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                    Spacer(Modifier.height(14.dp))
+                    ChunkyButton("nice", Modifier.fillMaxWidth(), onClick = onClose)
+                }
+            }
+            Confetti(level)
+        }
+    }
+}
+
+@Composable
+fun LoginDialog(streak: Int, reward: Int, onClose: () -> Unit) {
+    Dialog(onDismissRequest = onClose) {
+        Panel(Modifier.fillMaxWidth(), color = CardHi) {
+            Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("welcome back!", color = Gold, fontWeight = FontWeight.Black, fontSize = 26.sp)
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    for (d in 1..7) {
+                        val on = d <= streak.coerceAtMost(7)
+                        Column(
+                            Modifier
+                                .weight(1f)
+                                .background(if (on) Gold else Card, RoundedCornerShape(10.dp))
+                                .padding(vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text("$d", color = if (on) Ink else Dim, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                            Text("${25 * d}", color = if (on) Ink else Dim, fontSize = 9.sp)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Text("day $streak in a row", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text("+$reward coins", color = Mint, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                Text("come back tomorrow for more. miss a day and it resets.", color = Dim, fontSize = 12.sp, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(14.dp))
+                ChunkyButton("thanks", Modifier.fillMaxWidth(), onClick = onClose)
+            }
+        }
+    }
+}
+
+/** level, xp bar and your face. tap goes to the profile */
+@Composable
+fun LevelChip(state: GameState, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val info = levelInfo(xpOf(state))
+    Row(
+        modifier
+            .background(Ink, RoundedCornerShape(50))
+            .border(2.dp, Mint, RoundedCornerShape(50))
+            .clickable { onClick() }
+            .padding(start = 4.dp, end = 12.dp, top = 3.dp, bottom = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Canvas(Modifier.size(28.dp).clip(androidx.compose.foundation.shape.CircleShape)) {
+            drawCircle(CardHi, size.minDimension / 2)
+            drawDude(YouDude, size.width / 2, size.height * 1.35f, size.height * 1.15f, Mood.HAPPY)
+        }
+        Spacer(Modifier.width(6.dp))
+        Column {
+            Text("lv ${info.level}", color = Mint, fontWeight = FontWeight.Black, fontSize = 14.sp, lineHeight = 14.sp)
+            Canvas(Modifier.width(56.dp).height(5.dp)) {
+                drawRoundRect(CardHi, cornerRadius = androidx.compose.ui.geometry.CornerRadius(5f))
+                drawRoundRect(Mint, size = androidx.compose.ui.geometry.Size(size.width * info.into / info.need, size.height), cornerRadius = androidx.compose.ui.geometry.CornerRadius(5f))
+            }
+        }
+    }
 }

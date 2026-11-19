@@ -244,6 +244,9 @@ val QuestPool = listOf(
     QuestDef("tower2", "build 2 ticket towers", 2, 60) { it.towerPlays },
     QuestDef("ball3", "shake the magic ball 3 times", 3, 60) { it.ballShakes },
     QuestDef("custom2", "play 2 rounds of a mode you made", 2, 80) { it.customPlays },
+    QuestDef("plinko10", "drop 10 plinko balls", 10, 60) { it.plinkoDrops },
+    QuestDef("memory2", "play 2 rounds of memory match", 2, 60) { it.memoryPlays },
+    QuestDef("whack2", "play 2 rounds of whack-a-raccoon", 2, 60) { it.whackPlays },
     QuestDef("win3", "win 3 tickets of any kind", 3, 90) { it.wins },
 )
 
@@ -305,6 +308,17 @@ data class GameState(
     val customPlays: Int = 0,
     val ballShakes: Int = 0,
     val ballWins: Int = 0,
+    // plinko, memory, whack
+    val plinkoDrops: Int = 0,
+    val memoryPlays: Int = 0,
+    val memoryBest: Int = 0, // best score
+    val whackPlays: Int = 0,
+    val whackBest: Int = 0,
+    // login streak + music
+    val lastLoginDay: Long = -1,
+    val loginStreak: Int = 0,
+    val music: Boolean = true,
+    val levelSeen: Int = 0,
     // lottery locker
     val nickname: String = "",
     val lockerSecret: String = "",
@@ -433,13 +447,22 @@ val Badges = listOf(
     BadgeDef("locker5", "content creator", "upload 5 things to the lottery locker", "locker") { it.lockerUploads >= 5 },
     BadgeDef("lockerget", "window shopper", "get something from the lottery locker", "locker") { it.lockerSaved.isNotEmpty() },
     BadgeDef("lockerget10", "collector", "get 10 things from the lottery locker", "locker") { it.lockerSaved.size >= 10 },
+    BadgeDef("plinko50", "gravity enjoyer", "drop 50 plinko balls", "plinko") { it.plinkoDrops >= 50 },
+    BadgeDef("plinkoedge", "edge lord", "land a plinko ball in a 13x slot", "plinko") { "plinkoedge" in it.flags },
+    BadgeDef("memoryperfect", "photographic memory", "finish memory match without a single mistake", "memory") { "memoryperfect" in it.flags },
+    BadgeDef("memory300", "big brain", "score 300+ in memory match", "memory") { it.memoryBest >= 300 },
+    BadgeDef("whack30", "pest control", "score 30+ in whack-a-raccoon", "whack") { it.whackBest >= 30 },
+    BadgeDef("whackgranny", "you monster", "whack a granny", "whack") { "whackgranny" in it.flags },
+    BadgeDef("streak7", "regular", "log in 7 days in a row", "all") { it.loginStreak >= 7 },
+    BadgeDef("lv10", "level 10", "reach level 10", "all") { levelInfo(xpOf(it)).level >= 10 },
+    BadgeDef("lv25", "level 25", "reach level 25", "all") { levelInfo(xpOf(it)).level >= 25 },
     BadgeDef("item1", "retail therapy", "buy your first item", "all") { it.items.isNotEmpty() },
     BadgeDef("item5", "shopaholic", "own 5 items", "all") { it.items.size >= 5 },
     BadgeDef("itemall", "fully loaded", "own every item", "all") { it.items.size >= Items.size },
     BadgeDef("quest1", "to-do list", "finish a daily quest", "all") { it.questsCompleted >= 1 },
     BadgeDef("quest15", "productive citizen", "finish 15 daily quests", "all") { it.questsCompleted >= 15 },
     BadgeDef("economist", "economist", "check what coins are worth in 3 currencies", "all") { it.currenciesSeen.size >= 3 },
-    BadgeDef("all", "jack of all trades", "play all 14 modes", "all") { it.modesPlayed.size >= 14 },
+    BadgeDef("all", "jack of all trades", "play all 17 modes", "all") { it.modesPlayed.size >= 17 },
 )
 
 // ---------- campaign ----------
@@ -624,3 +647,29 @@ fun boxStep(closed: Int, bombs: Int) = 0.95 * closed / (closed - bombs)
 
 val ModeTemplates = listOf("draw", "wheel", "flip", "dice", "cups", "race", "boxes")
 val RunnerTypes = listOf("pigeon", "raccoon", "granny")
+
+// ---------- xp + levels ----------
+
+/** xp is worked out from everything you've done, so it never gets out of sync */
+fun xpOf(s: GameState): Int =
+    s.ticketsBought * 2 + s.wins * 5 + s.claims * 20 + s.served * 3 + s.hostDays * 25 + s.steals * 15 +
+        s.bingoWins * 20 + s.bagsSearched * 2 + s.derbyBets * 2 + s.derbyWins * 5 + s.slotSpins + s.inspected +
+        s.rainPlays * 5 + s.clawPlays * 2 + s.flightPlays * 2 + s.towerPlays * 3 + s.ballShakes * 2 + s.customPlays * 2 +
+        s.lockerUploads * 10 + s.questsCompleted * 15 + s.campaignLevel * 30 + s.badges.size * 10 +
+        s.plinkoDrops + s.memoryPlays * 5 + s.whackPlays * 5
+
+data class LevelInfo(val level: Int, val into: Int, val need: Int)
+
+fun levelInfo(xp: Int): LevelInfo {
+    var level = 1
+    var left = xp
+    var need = 100
+    while (left >= need) {
+        left -= need
+        level++
+        need = 100 + (level - 1) * 50
+    }
+    return LevelInfo(level, left, need)
+}
+
+fun levelReward(level: Int) = 50 * level

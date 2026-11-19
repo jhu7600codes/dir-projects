@@ -523,7 +523,7 @@ fun TvPickScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             Modifier
                 .weight(1f)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         ) {
             for (row in 0 until 5) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -711,7 +711,7 @@ fun TvShowScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     .weight(1f)
                     .padding(horizontal = 12.dp)
             ) {
-                Canvas(Modifier.fillMaxSize()) {
+                Canvas(Modifier.fillMaxSize().sceneClip()) {
                     @Suppress("UNUSED_EXPRESSION") frame
                     val w = size.width
                     val h = size.height

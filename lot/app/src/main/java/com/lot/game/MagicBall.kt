@@ -223,8 +223,8 @@ fun MagicBallScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("yes 1.9x", "maybe 3.8x", "no 3.8x").forEachIndexed { i, l ->
-                            ChunkyButton(l, Modifier.weight(1f), color = if (pick == i) listOf(Sky, Grape, Pink)[i] else CardHi, textColor = if (pick == i) Ink else Color.White, height = 48.dp) { pick = i }
+                        listOf("yes\n1.9x", "maybe\n3.8x", "no\n3.8x").forEachIndexed { i, l ->
+                            ChunkyButton(l, Modifier.weight(1f), color = if (pick == i) listOf(Sky, Grape, Pink)[i] else CardHi, textColor = if (pick == i) Ink else Color.White, height = 58.dp) { pick = i }
                         }
                     }
                     Spacer(Modifier.height(8.dp))

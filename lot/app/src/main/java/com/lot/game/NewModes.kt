@@ -228,7 +228,7 @@ fun ClawScreen(vm: GameViewModel, state: GameState, nav: Nav) {
         Column(Modifier.fillMaxSize()) {
             LotTopBar("claw machine", state.coins, { nav.back() }, { help = true })
             Box(Modifier.fillMaxWidth().weight(1f).padding(12.dp)) {
-                Canvas(Modifier.fillMaxSize()) {
+                Canvas(Modifier.fillMaxSize().sceneClip()) {
                     @Suppress("UNUSED_EXPRESSION") frame
                     val w = size.width
                     val h = size.height
@@ -242,7 +242,7 @@ fun ClawScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                     drawRect(Color(0xFF3A2E5C), Offset(gl.x, gl.y + gs.height * 0.55f), Size(gs.width * 0.14f, gs.height * 0.45f))
                     drawRect(Ink, Offset(gl.x, gl.y + gs.height * 0.55f), Size(gs.width * 0.14f, gs.height * 0.45f), style = Stroke(4f))
                     // pit
-                    val ps = gs.width * 0.1f
+                    val ps = gs.width * 0.13f
                     pit.forEach { p ->
                         drawClawPrize(p.prize, Offset(gl.x + gs.width * p.x, gl.y + gs.height * 0.86f), ps, p.tilt)
                     }
@@ -344,7 +344,7 @@ fun FlightScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 }
             }
             Box(Modifier.fillMaxWidth().weight(1f).padding(12.dp)) {
-                Canvas(Modifier.fillMaxSize()) {
+                Canvas(Modifier.fillMaxSize().sceneClip()) {
                     val w = size.width
                     val h = size.height
                     val alt = (kotlin.math.ln(mult) / kotlin.math.ln(30f)).coerceIn(0f, 1f)
@@ -516,7 +516,7 @@ fun TowerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                 .padding(12.dp)
                 .clickable(remember { MutableInteractionSource() }, null) { dropBlock() }
         ) {
-            Canvas(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize().sceneClip()) {
                 @Suppress("UNUSED_EXPRESSION") frame
                 val w = size.width
                 val h = size.height
@@ -601,13 +601,14 @@ fun ProfileScreen(vm: GameViewModel, state: GameState, nav: Nav) {
                                 }
                                 Panel(Modifier.weight(1f), color = if (wearing) CardHi else Card) {
                                     Column(Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Canvas(Modifier.size(64.dp)) {
+                                        Canvas(Modifier.size(92.dp)) {
                                             val d = when (kind) {
                                                 "hat" -> me.copy(hat = c.value.toInt(), hatColor = if (c.value.toInt() == 7) Gold else Pink)
                                                 "shirt" -> me.copy(shirt = Color(c.value))
                                                 else -> me.copy(glasses = true)
                                             }
-                                            drawDude(d, size.width / 2, size.height * 1.05f, size.height * 0.75f, Mood.HAPPY, t = clock)
+                                            drawCircle(Gold.copy(alpha = 0.1f), size.minDimension / 2)
+                                            drawDude(d, size.width / 2, size.height * 0.94f, size.height * 0.8f, Mood.HAPPY, t = clock)
                                         }
                                         Text(c.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, textAlign = TextAlign.Center)
                                         Spacer(Modifier.height(6.dp))

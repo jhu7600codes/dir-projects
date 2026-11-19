@@ -18,6 +18,9 @@ a fake money lottery simulator for android. kotlin + jetpack compose + material 
 - **pigeon flight** - the multiplier climbs while a pigeon carries your bet. cash out before it sees a fry.
 - **ticket tower** - stack sliding tickets, overhang gets cut off, perfect drops keep the size.
 - **magic ball** - bet on whether it says yes, maybe or no, then physically shake your phone to make it answer.
+- **plinko** - drop balls through pegs into multiplier slots, several at once.
+- **memory match** - flip cards to match 8 pairs of lottery symbols against the clock.
+- **whack-a-raccoon** - bonk raccoons popping out of trash cans. leave the grannies alone.
 
 ### creator studio
 
@@ -40,6 +43,7 @@ backed by a supabase project (schema in `server/locker.sql`). the app only uses 
 - 3 daily quests with coin rewards
 - a news ticker on the home screen
 - a rank title that grows with your badges
+- xp and levels (level ups pay coins), daily login streak bonus, background chiptune music (toggle in settings)
 - profile screen with a wardrobe (hats, shirts, glasses) that changes how you look everywhere, and all your stats
 
 ### tickets
@@ -54,7 +58,7 @@ winning tickets don't pay out right away. you sign the back, walk to the stand i
 
 settings has a currency picker that shows what your coins are "worth" in usd, eur, rub, shawarmas, potatoes and more. it's fake, nothing can be cashed out.
 
-88 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
+97 badges across all modes, unlock popup, tutorials on first launch of each mode, sound + haptics toggles in settings.
 
 ## install
 

@@ -299,6 +299,7 @@ fun StealerScreen(vm: GameViewModel, state: GameState, nav: Nav) {
             Canvas(
                 Modifier
                     .fillMaxSize()
+                    .sceneClip()
                     .pointerInput(Unit) {
                         detectDragGestures(onDragStart = { p -> lens = p }) { ch, drag ->
                             ch.consume()
