@@ -44,6 +44,10 @@ sealed interface Screen {
     data class Setup(val mode: Mode) : Screen
     data class Fight(val config: FightConfig) : Screen
     data object Bracket : Screen
+    data object LanHome : Screen
+    data object HostLobby : Screen
+    data object Join : Screen
+    data object ClientFight : Screen
 }
 
 class MainActivity : ComponentActivity() {
@@ -63,7 +67,17 @@ class MainActivity : ComponentActivity() {
                 var bracketVersion by remember { mutableIntStateOf(0) }
                 val screen = stack.last()
                 fun push(s: Screen) { stack.add(s) }
-                fun pop() { if (stack.size > 1) stack.removeAt(stack.lastIndex) }
+                // wifi game objects live outside the screens so going into a fight doesn't close them
+                var lanHost by remember { mutableStateOf<com.patternbox.core.NetHost?>(null) }
+                var lanClient by remember { mutableStateOf<com.patternbox.core.NetClient?>(null) }
+                fun pop() {
+                    if (stack.size <= 1) return
+                    when (stack.removeAt(stack.lastIndex)) {
+                        Screen.HostLobby -> { lanHost?.close(); lanHost = null }
+                        Screen.Join -> { lanClient?.close(); lanClient = null }
+                        else -> {}
+                    }
+                }
 
                 BackHandler(enabled = stack.size > 1) { pop() }
 
@@ -83,6 +97,10 @@ class MainActivity : ComponentActivity() {
                                             is Screen.Setup -> screen.mode.label
                                             is Screen.Fight -> screen.config.mode.label
                                             Screen.Bracket -> "tournament"
+                                            Screen.LanHome -> "with friends"
+                                            Screen.HostLobby -> "hosting"
+                                            Screen.Join -> "join a game"
+                                            Screen.ClientFight -> "online"
                                             Screen.Tabs -> ""
                                         },
                                         maxLines = 1,
@@ -114,7 +132,7 @@ class MainActivity : ComponentActivity() {
                     when (val s = screen) {
                         Screen.Tabs -> when (tab) {
                             0 -> RosterScreen(state, padding) { push(Screen.Editor(it)) }
-                            1 -> PlayScreen(state, padding) { push(Screen.Setup(it)) }
+                            1 -> PlayScreen(state, padding, onFriends = { push(Screen.LanHome) }) { push(Screen.Setup(it)) }
                             else -> SettingsScreen(state, padding)
                         }
                         is Screen.Editor -> EditorScreen(
@@ -149,6 +167,23 @@ class MainActivity : ComponentActivity() {
                             },
                             onExit = { pop() },
                         )
+                        Screen.LanHome -> LanHomeScreen(
+                            padding,
+                            onHost = {
+                                val h = com.patternbox.core.NetHost()
+                                val ok = runCatching { h.start() }.isSuccess
+                                if (ok) { lanHost = h; push(Screen.HostLobby) }
+                            },
+                            onJoin = { lanClient = com.patternbox.core.NetClient(); push(Screen.Join) },
+                        )
+                        Screen.HostLobby -> lanHost?.let { h -> HostLobbyScreen(state, h, padding) { push(Screen.Fight(it)) } }
+                        Screen.Join -> lanClient?.let { c ->
+                            JoinScreen(state, c, padding) { if (stack.last() != Screen.ClientFight) push(Screen.ClientFight) }
+                        }
+                        Screen.ClientFight -> lanClient?.let { c ->
+                            // a rematch from the host re-keys the screen by itself
+                            ClientFightScreen(state, sfx, c, padding) { pop() }
+                        }
                         Screen.Bracket -> tournament?.let { t ->
                             TournamentScreen(state, t, padding, bracketVersion, onWatch = { push(Screen.Fight(it)) }, onChanged = { bracketVersion++ })
                         }

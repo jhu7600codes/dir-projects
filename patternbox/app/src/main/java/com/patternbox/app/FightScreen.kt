@@ -63,6 +63,10 @@ import com.patternbox.core.Gravity
 import com.patternbox.core.Match
 import com.patternbox.core.Mode
 import com.patternbox.core.Tool
+import com.patternbox.core.NetHost
+import com.patternbox.core.Peer
+import com.patternbox.core.Snapshot
+import com.patternbox.core.applyPeerInput
 
 /** everything needed to start a fight. humans = indices into entries driven by the on-screen pads */
 data class FightConfig(
@@ -71,6 +75,9 @@ data class FightConfig(
     val map: GameMap,
     val humans: List<Int> = emptyList(),
     val tournamentMatch: Pair<Int, Int>? = null,
+    /** hosting a wifi game: every friend's phone and the fighter index they drive */
+    val net: NetHost? = null,
+    val peers: List<Pair<Peer, Int>> = emptyList(),
 )
 
 private val FIGHT_TOOLS = listOf(Tool.GRAB, Tool.BOOM, Tool.POKE, Tool.FIRE, Tool.FREEZE, Tool.ZAP, Tool.HEAL)
@@ -101,7 +108,9 @@ fun FightScreen(
     var paused by remember { mutableStateOf(false) }
     var gravity by remember(match) { mutableStateOf(Gravity.EARTH) }
     var frame by remember { mutableLongStateOf(0L) }
-    var botFlags by remember(match) { mutableStateOf(List(config.entries.size) { it !in config.humans }) }
+    var botFlags by remember(match) { mutableStateOf(List(config.entries.size) { i -> i !in config.humans && config.peers.none { it.second == i } }) }
+    val pending = remember(match) { mutableListOf<com.patternbox.core.Event>() }
+    var netFrame by remember(match) { mutableIntStateOf(0) }
     var showResult by remember(match) { mutableStateOf(false) }
     var recorded by remember(match) { mutableStateOf(false) }
     val view = LocalView.current
@@ -116,6 +125,7 @@ fun FightScreen(
     }
 
     LaunchedEffect(match) {
+        state.justUnlocked = emptyList()
         var last = 0L
         var acc = 0f
         while (true) {
@@ -125,13 +135,27 @@ fun FightScreen(
                     started = arena.width > 0
                     if (started) {
                         match.start()
+                        gravity = arena.gravity
                         arena.fighters.forEachIndexed { i, f -> f.bot = botFlags.getOrElse(i) { true } }
+                        config.net?.sendStart(config.mode, config.map, config.entries) { p -> config.peers.firstOrNull { it.first === p }?.second ?: -1 }
                     }
                 }
                 if (last != 0L && started && !paused) {
                     val dt = ((now - last) / 1e9f).coerceAtMost(.1f)
                     acc += dt * (if (slow) .3f else 1f) * speed
-                    while (acc >= 1f / 60f) { match.step(); acc -= 1f / 60f }
+                    while (acc >= 1f / 60f) {
+                        for ((p, i) in config.peers) arena.fighters.getOrNull(i)?.let { applyPeerInput(arena, it, p) }
+                        match.step(); acc -= 1f / 60f
+                    }
+                }
+                val net = config.net
+                if (net != null && started) {
+                    pending += arena.events
+                    // ~30 snapshots a second is plenty on wifi
+                    if (netFrame++ % 2 == 0) {
+                        net.sendSnapshot(Snapshot.write(arena, pending.toList(), modeLine(config.mode, match, if (paused) "paused" else null)))
+                        pending.clear()
+                    }
                 }
                 last = now
                 frame = now
@@ -158,6 +182,8 @@ fun FightScreen(
         recorded = true
         val ids = config.entries.map { it.rosterId }
         val kos = arena.fighters.mapIndexedNotNull { i, f -> ids.getOrNull(i)?.takeIf { it >= 0 }?.let { it to f.kos } }.toMap()
+        val wonIdx = match.winners().toSet()
+        state.notePlayed(config.mode, online = config.net != null, humanWonSpecial = config.humans.any { it in wonIdx })
         when (config.mode) {
             Mode.SURVIVAL -> {
                 state.recordWave(match.wave - 1)
@@ -176,8 +202,7 @@ fun FightScreen(
         Column(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val extra = when (config.mode) {
                 Mode.SURVIVAL -> "wave ${match.wave}   best ${state.bestWave}"
-                Mode.SANDBOX -> "${arena.fighters.count { !it.dead }} alive, ${arena.props.size} props"
-                else -> config.map.label
+                else -> modeLine(config.mode, match, null)
             }
             ArenaView(arena, tool, { frame }, state.screenShake, if (paused) "paused" else extra, Modifier.weight(1f).fillMaxWidth())
 
@@ -213,7 +238,7 @@ fun FightScreen(
                     for (slot in config.humans.indices.reversed()) {
                         val idx = config.humans[slot]
                         ControlPad(
-                            team = if (config.mode == Mode.TEAMS) idx % 2 else idx,
+                            team = arena.fighters.getOrNull(idx)?.team ?: idx,
                             size = state.controlSize.dp,
                             label = if (config.humans.size > 1) "p${slot + 1}" else null,
                             fighter = { humanFighter(slot) },
@@ -241,6 +266,15 @@ fun FightScreen(
     }
 }
 
+/** the little status line under the arena, also sent to friends' phones */
+fun modeLine(mode: Mode, match: Match, override: String?): String = override ?: when (mode) {
+    Mode.SURVIVAL -> "wave ${match.wave}"
+    Mode.SANDBOX -> "${match.arena.fighters.count { !it.dead }} alive, ${match.arena.props.size} props"
+    Mode.KOTH -> "first to ${match.goal.toInt()} in the zone"
+    Mode.BOSS -> "take down the boss"
+    else -> match.map.label
+}
+
 @Composable
 private fun ResultCard(match: Match, config: FightConfig, state: GameState, onRematch: () -> Unit, onContinue: () -> Unit, onExit: () -> Unit) {
     val arena = match.arena
@@ -254,6 +288,9 @@ private fun ResultCard(match: Match, config: FightConfig, state: GameState, onRe
             }
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
             if (config.mode == Mode.SURVIVAL) Text("best: ${state.bestWave}", color = cs.onSurfaceVariant)
+            for (a in state.justUnlocked) {
+                Text("achievement: ${a.title}", color = cs.primary, fontWeight = FontWeight.Bold)
+            }
             for (f in arena.fighters.filter { config.mode != Mode.SURVIVAL || it.team == 0 }.sortedByDescending { it.dmgDealt }.take(6)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.size(10.dp).clip(RoundedCornerShape(50)).background(teamColor(cs, f.team)))
@@ -274,7 +311,7 @@ private fun ResultCard(match: Match, config: FightConfig, state: GameState, onRe
 }
 
 @Composable
-private fun ControlPad(
+internal fun ControlPad(
     team: Int,
     size: Dp,
     label: String?,

@@ -40,6 +40,8 @@ fun weaponColor(mat: WeaponMat, pal: FighterPalette): Color = when (mat) {
     WeaponMat.SHOCK -> Color(0xFFFFE14D)
     WeaponMat.BOUNCY -> Color(0xFFFF7AC8)
     WeaponMat.GLASS -> Color(0xFFBFF4FF).copy(alpha = .75f)
+    WeaponMat.POISON -> Color(0xFF8BD450)
+    WeaponMat.VAMPIRE -> Color(0xFFB0203A)
 }
 
 fun armourColor(mat: ArmourMat, pal: FighterPalette): Color = when (mat) {
@@ -49,6 +51,8 @@ fun armourColor(mat: ArmourMat, pal: FighterPalette): Color = when (mat) {
     ArmourMat.RUBBER -> Color(0xFF3A3A44)
     ArmourMat.SPIKY -> pal.metal
     ArmourMat.ICE -> Color(0xFFA8E2FF)
+    ArmourMat.MIRROR -> Color(0xFFE8F4FF)
+    ArmourMat.BALLOON -> Color(0xFFFF8FB8)
 }
 
 fun DrawScope.polyline(pts: List<Vec>, color: Color, width: Float) {
@@ -73,6 +77,7 @@ class FighterLook(
     val rage: Boolean = false,
     val bubble: Boolean = false,
     val time: Float = 0f,
+    val poisoned: Boolean = false,
 )
 
 /** draws a fighter in its local space: caller already translated / rotated / mirrored */
@@ -84,6 +89,7 @@ fun DrawScope.drawFighter(l: Loadout, pal: FighterPalette, look: FighterLook = F
         else -> pal.body
     }
     if (look.burning && ((look.time * 10).toInt() % 2 == 0)) bodyColor = Color(0xFFFF9A3D)
+    if (look.poisoned && ((look.time * 6).toInt() % 2 == 0)) bodyColor = Color(0xFF8BD450)
     val body = Geo.body(l.body)
     polyline(body, bodyColor, 9f)
     for (p in body) drawCircle(bodyColor, 6f, Offset(p.x, p.y))

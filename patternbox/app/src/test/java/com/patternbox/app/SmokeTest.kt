@@ -10,6 +10,10 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click as touchClick
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.onNodeWithContentDescription
 import org.junit.Rule
 import org.junit.Test
@@ -46,6 +50,10 @@ class SmokeTest {
     }
 
     private fun scrollTo(text: String) {
+        // performScrollToNode spins forever when nothing matches, so fail fast instead
+        val found = rule.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() ||
+            rule.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        if (!found) throw AssertionError("nothing says \"$text\" on screen: " + rule.onAllNodes(androidx.compose.ui.test.hasClickAction()).fetchSemanticsNodes().take(15).map { it.config.toString().substringAfter("Text : ").take(40) })
         rule.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText(text))
         tick()
     }
@@ -71,17 +79,23 @@ class SmokeTest {
         click("random")
         scrollTo("try it")
         click("hammer")
-        click("bomb")
-        click("teleport")
+        click("saw")
+        click("vampire")
+        click("balloon")
+        click("summon")
         click("try it", wait = 6000)
         click("boom"); click("spawn"); click("crate"); click("tnt")
         tick(4000)
         systemBack(); systemBack()
         node("presets").assertExists()
 
-        for (mode in listOf("1v1", "2v2", "free for all", "survival", "sandbox")) {
+        for (mode in listOf("1v1", "2v2", "free for all", "survival", "king of the hill", "boss fight", "sandbox")) {
             click("play")
-            click(mode)
+            scrollTo(mode)
+            // semantics click: cards scrolled to the bottom sit under the nav bar
+            // bottom cards hide under the nav bar until you scroll all the way, like a real thumb would
+            rule.onAllNodes(hasScrollAction()).onFirst().performTouchInput { swipeUp() }; tick()
+            node(mode).performTouchInput { touchClick(androidx.compose.ui.geometry.Offset(centerX, top + 12f)) }; tick()
             scrollTo("fight")
             press("fight", 25000)
             back(); back()
@@ -99,5 +113,68 @@ class SmokeTest {
         click("settings")
         click("huge")
         click("medium")
+    }
+
+    @Test fun hostAWifiGame() {
+        rule.mainClock.autoAdvance = false
+        tick(500)
+        click("play")
+        click("play with friends")
+        click("host a game", wait = 500)
+        // a friend joins from "another phone" (same jvm, real socket)
+        val friend = com.patternbox.core.NetClient()
+        val t = Thread { friend.connect("127.0.0.1", "friend", com.patternbox.core.Presets.all[3].second.encode()) }
+        t.start(); t.join(5000)
+        org.junit.Assert.assertTrue(friend.connected)
+        repeat(30) { tick(100); Thread.sleep(20) }
+        node("friend").assertExists()
+        scrollTo("start")
+        press("start", 300)
+        repeat(60) { tick(50); Thread.sleep(10) }
+        org.junit.Assert.assertNotNull("friend got the start", friend.start)
+        org.junit.Assert.assertEquals(1, friend.start!!.yourFighter)
+        // friend walks right for a bit, snapshots flow back
+        friend.sendInput(left = false, right = true, jump = false)
+        repeat(60) { tick(50); Thread.sleep(10) }
+        org.junit.Assert.assertNotNull("snapshots arrive", friend.latestSnap.get())
+        friend.close()
+        repeat(10) { tick(100); Thread.sleep(10) }
+        back(); back(); back()
+    }
+
+    @Test fun joinAWifiGame() {
+        rule.mainClock.autoAdvance = false
+        val host = com.patternbox.core.NetHost()
+        host.start()
+        try {
+            tick(500)
+            click("play")
+            click("play with friends")
+            click("join a game", wait = 500)
+            rule.onAllNodes(androidx.compose.ui.test.hasSetTextAction()).onFirst().performTextInput("127.0.0.1")
+            tick()
+            press("join", 300)
+            var waited = 0
+            while (host.readyPeers.isEmpty() && waited++ < 100) { Thread.sleep(30); tick(30) }
+            org.junit.Assert.assertEquals(1, host.readyPeers.size)
+            val peer = host.readyPeers[0]
+            val entries = listOf(com.patternbox.core.Entry("host", com.patternbox.core.Loadout.DEFAULT_P1), com.patternbox.core.Entry(peer.name, peer.loadout!!))
+            host.sendStart(com.patternbox.core.Mode.VERSUS, com.patternbox.core.GameMap.LAVA, entries) { 1 }
+            val m = com.patternbox.core.Match(com.patternbox.core.Mode.VERSUS, entries, com.patternbox.core.GameMap.LAVA)
+            m.start()
+            repeat(120) {
+                com.patternbox.core.applyPeerInput(m.arena, m.arena.fighters[1], peer)
+                m.step()
+                if (it % 2 == 0) host.sendSnapshot(com.patternbox.core.Snapshot.write(m.arena, emptyList(), "lava"))
+                Thread.sleep(5); tick(16)
+            }
+            // the joined phone is drawing the fight and has its buttons
+            node("hit").assertExists()
+            click("hit")
+            repeat(20) { Thread.sleep(10); tick(16) }
+            org.junit.Assert.assertEquals("hit reached the host", 1, peer.swings)
+        } finally {
+            host.close()
+        }
     }
 }

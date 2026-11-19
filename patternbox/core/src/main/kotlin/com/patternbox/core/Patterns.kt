@@ -103,6 +103,8 @@ data class Loadout(
             WeaponType.BOW -> Names.pick(Names.BOW, weapon)
             WeaponType.BOOMERANG -> Names.pick(Names.BOOMERANG, weapon)
             WeaponType.BOMB -> Names.pick(Names.BOMB, weapon)
+            WeaponType.LASER -> Names.pick(Names.LASER, weapon)
+            WeaponType.SAW -> Names.pick(Names.SAW, weapon)
         }
     val armourName: String get() = (if (armourMat == ArmourMat.STEEL) "" else armourMat.label + " ") + Names.pick(Names.ARMOUR, armour)
     val hatName: String get() = if (hat.isEmpty()) "no hat" else Names.pick(Names.HAT, hat)
@@ -114,7 +116,8 @@ data class Loadout(
      */
     fun encode(): String {
         val pats = listOf(body, weapon, armour, hat).joinToString("-") { p -> p.joinToString("") { (it + 1).toString() } }
-        return pats + "-" + listOf(weaponType.ordinal, weaponMat.ordinal, armourMat.ordinal, ability.ordinal).joinToString("")
+        // one base 36 char each, so lists can grow past 10 options and old codes stay valid
+        return pats + "-" + listOf(weaponType.ordinal, weaponMat.ordinal, armourMat.ordinal, ability.ordinal).joinToString("") { it.toString(36) }
     }
 
     companion object {
@@ -130,8 +133,8 @@ data class Loadout(
             if (parts.size == 5) {
                 l = l.copy(hat = pat(parts[3]))
                 val f = parts[4]
-                if (f.length != 4 || f.any { !it.isDigit() }) return null
-                fun <T> pick(vals: Array<T>, c: Char): T? = vals.getOrNull(c - '0')
+                if (f.length != 4) return null
+                fun <T> pick(vals: Array<T>, c: Char): T? = c.digitToIntOrNull(36)?.let { vals.getOrNull(it) }
                 l = l.copy(
                     weaponType = pick(WeaponType.values(), f[0]) ?: return null,
                     weaponMat = pick(WeaponMat.values(), f[1]) ?: return null,
@@ -197,6 +200,8 @@ object Names {
     val BOW = listOf("pattern bow", "slingshot", "nerf thing", "rubber band", "pea shooter", "crossbow-ish")
     val BOOMERANG = listOf("comeback", "frisbee", "boomer rang", "return policy", "the ex", "bluetooth disc")
     val BOMB = listOf("pattern bomb", "spicy ball", "mystery box", "notification", "battery 1%", "airpod case")
+    val LASER = listOf("laser pointer", "barcode scanner", "flashlight", "death ray", "remote control", "ir blaster")
+    val SAW = listOf("buzzsaw", "blender", "fidget spinner", "ceiling fan", "pizza cutter", "cd of doom")
     val ARMOUR = listOf("tin foil", "screen protector", "cardboard plate", "rubber case", "fridge door", "spaghetti mail", "bubble wrap", "pizza box", "dish rack")
     val HAT = listOf("crown", "traffic cone", "propeller cap", "tiny top hat", "antenna", "party hat", "ushanka", "halo", "lampshade")
     val KO = listOf("unlocked.", "wrong pattern.", "try again in 30 seconds", "bricked", "factory reset", "too many attempts", "battery died", "app not responding")
@@ -225,6 +230,11 @@ object Presets {
         "sniper olga" to Loadout(patternOf(0, 3, 6, 7, 8, 5), patternOf(0, 4, 8, 7, 6), patternOf(1, 2), patternOf(3, 4, 5), WeaponType.BOW, WeaponMat.GLASS, ArmourMat.PAPER, Ability.TELEPORT),
         "goldie" to Loadout(patternOf(0, 1, 2, 4, 6, 7, 8), patternOf(1, 4, 7), patternOf(0, 4, 8, 5, 2), patternOf(0, 4, 2), WeaponType.BLADE, WeaponMat.STEEL, ArmourMat.GOLD, Ability.HEAL),
         "bomb squad" to Loadout(patternOf(0, 3, 4, 5, 8), patternOf(0, 1, 4), patternOf(3, 4), emptyList(), WeaponType.BOMB, WeaponMat.SHOCK, ArmourMat.RUBBER, Ability.DASH),
+        "dracula" to Loadout(patternOf(1, 4, 7, 6, 8, 3, 5), patternOf(0, 4, 8), patternOf(3, 4, 5), patternOf(0, 4, 2), WeaponType.BLADE, WeaponMat.VAMPIRE, ArmourMat.STEEL, Ability.INVISIBLE),
+        "chainsaw kevin" to Loadout(patternOf(0, 3, 6, 7, 8, 5), patternOf(0, 1, 4, 3), patternOf(0, 1, 2), patternOf(1, 4), WeaponType.SAW, WeaponMat.STEEL, ArmourMat.RUBBER, Ability.MAGNET),
+        "pew pew" to Loadout(patternOf(2, 4, 6, 7, 8), patternOf(3, 4, 5), patternOf(0, 1), patternOf(0, 2), WeaponType.LASER, WeaponMat.SHOCK, ArmourMat.MIRROR, Ability.TELEPORT),
+        "party balloon" to Loadout(patternOf(4, 1, 0, 3, 6, 7, 8, 5, 2), patternOf(0, 4), patternOf(0, 1, 2, 5), patternOf(0, 4, 2), WeaponType.BOMB, WeaponMat.BOUNCY, ArmourMat.BALLOON, Ability.DOUBLE_JUMP),
+        "swamp thing" to Loadout(patternOf(0, 4, 8, 7, 6), patternOf(6, 4, 2, 1), patternOf(3, 4, 5, 2), emptyList(), WeaponType.SPEAR, WeaponMat.POISON, ArmourMat.SPIKY, Ability.SUMMON),
         "wifi" to Loadout(patternOf(6, 4, 2, 1, 0, 3), patternOf(0, 4, 8, 5), patternOf(6, 7, 8), patternOf(0, 4), WeaponType.SPEAR, WeaponMat.FIRE, ArmourMat.ICE, Ability.SLAM),
     )
 }

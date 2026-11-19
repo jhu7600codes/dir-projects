@@ -39,7 +39,7 @@ import com.patternbox.core.GameMap
 import com.patternbox.core.Mode
 
 @Composable
-fun PlayScreen(state: GameState, padding: PaddingValues, onMode: (Mode) -> Unit) {
+fun PlayScreen(state: GameState, padding: PaddingValues, onFriends: () -> Unit = {}, onMode: (Mode) -> Unit) {
     val cs = MaterialTheme.colorScheme
     LazyColumn(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 4.dp, bottom = padding.calculateBottomPadding() + 24.dp),
@@ -50,6 +50,17 @@ fun PlayScreen(state: GameState, padding: PaddingValues, onMode: (Mode) -> Unit)
                 "${state.matchesPlayed} matches played · ${state.totalKos} kos · best survival wave ${state.bestWave}",
                 style = MaterialTheme.typography.labelMedium, color = cs.onSurfaceVariant,
             )
+        }
+        item {
+            ElevatedCard(
+                onClick = onFriends, modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.CardDefaults.elevatedCardColors(containerColor = cs.primaryContainer),
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("play with friends", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = cs.onPrimaryContainer)
+                    Text("wifi multiplayer, up to 6 phones", style = MaterialTheme.typography.bodyMedium, color = cs.onPrimaryContainer)
+                }
+            }
         }
         items(Mode.values().toList()) { m ->
             ElevatedCard(onClick = { onMode(m) }, modifier = Modifier.fillMaxWidth()) {
@@ -71,7 +82,7 @@ fun PlayScreen(state: GameState, padding: PaddingValues, onMode: (Mode) -> Unit)
 @Composable
 fun SetupScreen(state: GameState, mode: Mode, padding: PaddingValues, onStart: (FightConfig) -> Unit, onTournament: (List<RosterFighter>, GameMap, Int) -> Unit) {
     val cs = MaterialTheme.colorScheme
-    var count by remember { mutableIntStateOf(if (mode == Mode.FFA) 4 else if (mode == Mode.SANDBOX) 2 else mode.minFighters) }
+    var count by remember { mutableIntStateOf(when (mode) { Mode.FFA, Mode.KOTH, Mode.BOSS -> 4; Mode.SANDBOX -> 2; else -> mode.minFighters }) }
     if (mode == Mode.TOURNAMENT) {
         TournamentSetup(state, padding, onTournament)
         return
@@ -102,13 +113,17 @@ fun SetupScreen(state: GameState, mode: Mode, padding: PaddingValues, onStart: (
         }
         for (i in 0 until count) {
             val f = picks[i]?.let { state.byId(it) }
-            val team = when (mode) { Mode.TEAMS -> i % 2; Mode.SURVIVAL -> 0; else -> i }
+            val team = when (mode) { Mode.TEAMS -> i % 2; Mode.SURVIVAL -> 0; Mode.BOSS -> if (i == 0) 1 else 0; else -> i }
             OutlinedCard(onClick = { choosing = i }, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (f != null) MiniFighter(f.loadout, Modifier.size(56.dp), team)
                     Column(Modifier.weight(1f)) {
                         Text(
-                            when (mode) { Mode.TEAMS -> "team ${i % 2 + 1}"; Mode.SURVIVAL -> "you"; else -> "slot ${i + 1}" },
+                            when (mode) {
+                                Mode.TEAMS -> "team ${i % 2 + 1}"; Mode.SURVIVAL -> "you"
+                                Mode.BOSS -> if (i == 0) "the boss" else "hero $i"
+                                else -> "slot ${i + 1}"
+                            },
                             style = MaterialTheme.typography.labelMedium, color = teamColor(cs, team),
                         )
                         Text(f?.displayName ?: "random", style = MaterialTheme.typography.titleMedium, maxLines = 1)
@@ -146,7 +161,7 @@ fun SetupScreen(state: GameState, mode: Mode, padding: PaddingValues, onStart: (
 }
 
 @Composable
-private fun FighterPicker(state: GameState, onPick: (Long?) -> Unit, onDismiss: () -> Unit) {
+internal fun FighterPicker(state: GameState, onPick: (Long?) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("pick a fighter") },

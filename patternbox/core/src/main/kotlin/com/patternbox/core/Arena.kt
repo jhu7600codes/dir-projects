@@ -1,5 +1,6 @@
 package com.patternbox.core
 
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -89,7 +90,7 @@ class Fighter(
     hpMult: Float = 1f,
 ) {
     val stats = loadout.stats
-    val maxHp = stats.hp * hpMult
+    var maxHp = stats.hp * hpMult
     var x = 0f; var y = 0f; var vx = 0f; var vy = 0f
     var prevY = 0f
     var ang = 0f; var av = 0f
@@ -125,6 +126,18 @@ class Fighter(
     var weaponThrown = false // boomerang is out
     var spikeCd = 0f
     var sayCd = 0f
+    var poisonT = 0f
+    var invisT = 0f
+    /** > 0 for summoned minions: seconds left before they poof */
+    var minionT = 0f
+    val isMinion get() = minionT > 0f || minionDone
+    var minionDone = false
+    /** boss mode makes one fighter big */
+    var scale = 1f
+    var dmgMult = 1f
+    val r get() = Geo.R * scale
+    /** saw: per-enemy cooldown so it ticks instead of hitting every frame */
+    val sawCd = mutableMapOf<Int, Float>()
 
     // record keeping for the results screen
     var dmgDealt = 0f
@@ -136,14 +149,15 @@ class Fighter(
     val reach: Float
         get() = when (loadout.weaponType) {
             WeaponType.BOW, WeaponType.BOMB -> 380f
+            WeaponType.LASER -> 420f
             WeaponType.BOOMERANG -> 300f
-            WeaponType.SPEAR -> Geo.weapon(loadout.weapon).reach + 70f
-            else -> Geo.weapon(loadout.weapon).reach + 30f
+            WeaponType.SPEAR -> Geo.weapon(loadout.weapon).reach * scale + 70f
+            else -> Geo.weapon(loadout.weapon).reach * scale + 30f
         }
     val speed get() = stats.speed * (if (freezeT > 0) .45f else 1f) * (if (rageT > 0) 1.4f else 1f)
     val swingTime get() = stats.swing * (if (freezeT > 0) 1.6f else 1f) * (if (rageT > 0) .75f else 1f)
     val swingProgress get() = if (swingT < 0) -1f else swingT / swingTime
-    val hot get() = !loadout.weaponType.ranged && swingProgress in 0.3f..0.75f && hasWeapon
+    val hot get() = hasWeapon && (loadout.weaponType == WeaponType.SAW || !loadout.weaponType.ranged && swingProgress in 0.3f..0.75f)
 }
 
 class Debris(
@@ -156,10 +170,12 @@ class Debris(
     var life = 6f
 }
 
-class Particle(var x: Float, var y: Float, var vx: Float, var vy: Float, val kind: Kind, var life: Float) {
-    enum class Kind { SPARK, FIRE, ICE, ZAP, SMOKE, HEAL, MAGIC }
-    val maxLife = life
+class Particle(var x: Float, var y: Float, var vx: Float, var vy: Float, val kind: Kind, var life: Float, val maxLife: Float = life) {
+    enum class Kind { SPARK, FIRE, ICE, ZAP, SMOKE, HEAL, MAGIC, POISON }
 }
+
+/** laser beam, purely visual (damage is instant) */
+class Beam(val x1: Float, val y1: Float, val x2: Float, val y2: Float, val team: Int, var life: Float = .25f)
 
 class FloatText(var x: Float, var y: Float, val text: String, val tone: Tone, var life: Float = 1.1f) {
     enum class Tone { NORMAL, CRIT, METAL, GOOD, FIRE, ICE, ZAP, SPEECH }
@@ -168,7 +184,7 @@ class FloatText(var x: Float, var y: Float, val text: String, val tone: Tone, va
 class Boom(val x: Float, val y: Float, val radius: Float) { var t = 0f }
 
 class Projectile(
-    val owner: Fighter,
+    var owner: Fighter,
     val kind: WeaponType,
     var x: Float, var y: Float, var vx: Float, var vy: Float,
     val shape: List<Vec>,
@@ -182,7 +198,7 @@ class Projectile(
 }
 
 class Prop(val kind: Kind, var x: Float, var y: Float, val w: Float, val h: Float) {
-    enum class Kind(val dynamic: Boolean) { PLATFORM(false), CRATE(true), TNT(true), PAD(false), SPIKES(false) }
+    enum class Kind(val dynamic: Boolean) { PLATFORM(false), CRATE(true), TNT(true), PAD(false), SPIKES(false), LAVA(false) }
     var vx = 0f; var vy = 0f
     var hp = if (kind == Kind.TNT) 1f else 30f
     var dead = false
@@ -202,11 +218,14 @@ enum class GameMap(val label: String, val blurb: String) {
     TRAMPOLINE("trampoline", "bounce pads everywhere"),
     ICE("ice rink", "you can't stop sliding"),
     CRATES("warehouse", "crates and a couple of tnt barrels"),
+    LAVA("lava", "the floor in the middle is lava. literally"),
+    WINDY("windy", "gusts of wind push everyone around"),
+    MOON("moon base", "low gravity, big jumps, long falls"),
 }
 
 enum class Tool(val label: String) {
     GRAB("grab"), BOOM("boom"), POKE("poke"), FIRE("fire"), FREEZE("freeze"), ZAP("zap"),
-    CRATE("crate"), TNT("tnt"), PAD("pad"), SPIKES("spikes"), PLATFORM("ledge"),
+    CRATE("crate"), TNT("tnt"), PAD("pad"), SPIKES("spikes"), LAVA("lava"), PLATFORM("ledge"),
     SPAWN("spawn"), ERASE("erase"), HEAL("heal")
 }
 
@@ -233,14 +252,24 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
     val projectiles = mutableListOf<Projectile>()
     val props = mutableListOf<Prop>()
     val events = mutableListOf<Event>()
+    val beams = mutableListOf<Beam>()
     var shake = 0f
+    /** windy map: current push, negative = left */
+    var wind = 0f
+    private var windT = 3f
+    /** king of the hill zone centre, null when the mode has none */
+    var zoneX: Float? = null
+    val zoneW = 170f
+    val scores = mutableMapOf<Int, Float>()
+    /** set by the client when this arena is a mirror of someone else's game */
+    var remote = false
     var gravity = Gravity.EARTH
-    var map = GameMap.FLAT; private set
+    var map = GameMap.FLAT; internal set
     /** sandbox: nobody ever wins */
     var endless = false
-    var winnerTeam: Int? = null; private set
-    var winT = 0f; private set
-    var time = 0f; private set
+    var winnerTeam: Int? = null; internal set
+    var winT = 0f; internal set
+    var time = 0f; internal set
     var friction = 1f
     var showDamage = true
     var nextId = 0
@@ -262,14 +291,25 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
 
     fun reset(map: GameMap) {
         fighters.clear(); debris.clear(); particles.clear(); texts.clear(); booms.clear()
-        projectiles.clear(); props.clear(); events.clear()
+        projectiles.clear(); props.clear(); events.clear(); beams.clear(); scores.clear()
+        wind = 0f; windT = 3f; zoneX = null
         winnerTeam = null; winT = 0f; grabbed = null; grabbedProp = null; time = 0f; nextId = 0
         this.map = map
         friction = if (map == GameMap.ICE) .08f else 1f
+        gravity = if (map == GameMap.MOON) Gravity.MOON else Gravity.EARTH
         val w = width
         val fl = floorY
         when (map) {
-            GameMap.FLAT, GameMap.ICE -> {}
+            GameMap.FLAT, GameMap.ICE, GameMap.WINDY -> {}
+            GameMap.MOON -> {
+                props += Prop(Prop.Kind.PLATFORM, w * .25f, fl - 260, 120f, 12f)
+                props += Prop(Prop.Kind.PLATFORM, w * .75f, fl - 260, 120f, 12f)
+            }
+            GameMap.LAVA -> {
+                props += Prop(Prop.Kind.LAVA, w * .5f, fl - 6, w * .34f, 12f)
+                props += Prop(Prop.Kind.PLATFORM, w * .5f, fl - 140, 120f, 12f)
+                props += Prop(Prop.Kind.PLATFORM, w * .5f, fl - 280, 90f, 12f)
+            }
             GameMap.PLATFORMS -> {
                 props += Prop(Prop.Kind.PLATFORM, w * .2f, fl - 120, 140f, 12f)
                 props += Prop(Prop.Kind.PLATFORM, w * .8f, fl - 120, 140f, 12f)
@@ -298,7 +338,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         val f = Fighter(nextId++, l, name, team, hpMult)
         val n = fighters.size
         f.x = x ?: (width * (.15f + .7f * ((n * 0.618f) % 1f)))
-        f.y = floorY - Geo.R - 60f - Random.nextFloat() * 40
+        f.y = floorY - f.r - 60f - Random.nextFloat() * 40
         f.prevY = f.y
         f.face = if (f.x < width / 2) 1f else -1f
         f.jumpsLeft = maxJumps(f)
@@ -336,19 +376,21 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         if (f.dead || f.swingT >= 0 || f.cd > 0 || f.held || winnerTeam != null || f.stun > 0) return
         if (f.loadout.weaponType == WeaponType.BOOMERANG && f.weaponThrown) return
         f.swingT = 0f; f.hitSet.clear(); f.fired = false
+        if (f.loadout.weaponType == WeaponType.SAW) { f.vx = f.face * 13f; f.vy = min(f.vy, -2f) }
     }
 
     fun swingAngle(f: Fighter): Float {
         val wt = f.loadout.weaponType
+        if (wt == WeaponType.SAW) return time * 14f + f.id
         if (f.swingT < 0) return when (wt) {
             WeaponType.SPEAR -> -.35f + sin(time * 2.5f + f.id) * .05f
-            WeaponType.BOW -> -.15f
+            WeaponType.BOW, WeaponType.LASER -> -.15f
             else -> Geo.REST_SWING + sin(time * 2.5f + f.id) * 0.08f
         }
         val t = f.swingProgress
         return when (wt) {
             WeaponType.SPEAR -> -.1f
-            WeaponType.BOW -> -.15f - (if (t < .5f) t * .3f else (1 - t) * .3f)
+            WeaponType.BOW, WeaponType.LASER -> -.15f - (if (t < .5f) t * .3f else (1 - t) * .3f)
             WeaponType.BOOMERANG, WeaponType.BOMB -> when {
                 t < .4f -> -.9f - (t / .4f) * 1.4f
                 t < .6f -> -2.3f + ((t - .4f) / .2f) * 2.6f
@@ -378,7 +420,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         return Geo.weaponLocal(f.loadout.body, f.loadout.weapon, swingAngle(f), thrust(f))
     }
 
-    fun toWorld(f: Fighter, p: Vec) = Vec(f.x, f.y) + Vec(p.x * f.face, p.y).rot(f.ang)
+    fun toWorld(f: Fighter, p: Vec) = Vec(f.x, f.y) + Vec(p.x * f.face * f.scale, p.y * f.scale).rot(f.ang)
 
     fun weaponWorld(f: Fighter): List<Vec> {
         val local = weaponLocal(f) ?: listOf(Geo.body(f.loadout.body).last(), Geo.body(f.loadout.body).last() + Vec(10f, 0f))
@@ -403,7 +445,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         val alive = t.plates.count { it }
         val frac = if (t.plates.isNotEmpty()) alive.toFloat() / t.plates.size else 0f
         val block = t.stats.def * frac
-        val rage = if (from != null && from.rageT > 0) 1.6f else 1f
+        val rage = (if (from != null && from.rageT > 0) 1.6f else 1f) * (from?.dmgMult ?: 1f)
         var dmg = max(1, (amount * rage * (1 - block) * (.85f + Random.nextFloat() * .3f)).toInt())
         val crit = Random.nextFloat() < .08f
         if (crit) dmg *= 2
@@ -421,6 +463,12 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
             WeaponMat.FIRE -> { if (t.burnT <= 0) say(t.x, t.y - 74, "on fire", FloatText.Tone.FIRE); t.burnT = 3f }
             WeaponMat.ICE -> { if (t.freezeT <= 0) say(t.x, t.y - 74, "frozen", FloatText.Tone.ICE); t.freezeT = 2.2f; puff(t.x, t.y, Particle.Kind.ICE, 8) }
             WeaponMat.SHOCK -> { t.stun = max(t.stun, .9f); t.swingT = -1f; say(t.x, t.y - 74, "zapped", FloatText.Tone.ZAP); puff(t.x, t.y, Particle.Kind.ZAP, 8, 5f) }
+            WeaponMat.POISON -> { if (t.poisonT <= 0) say(t.x, t.y - 74, "poisoned", FloatText.Tone.GOOD); t.poisonT = 5f; puff(t.x, t.y, Particle.Kind.POISON, 6) }
+            WeaponMat.VAMPIRE -> if (from != null && !from.dead) {
+                val heal = dmg * .35f
+                from.hp = min(from.maxHp, from.hp + heal)
+                puff(from.x, from.y, Particle.Kind.HEAL, 4)
+            }
             else -> {}
         }
 
@@ -476,13 +524,13 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         puff(t.x, t.y, Particle.Kind.SMOKE, 14, 3f, 1f)
         shake = 18f
         events += Event.Ko
-        if (by != null && by !== t) { by.kos++; speak(by, Names.TAUNT, .7f) }
+        if (by != null && by !== t && !t.isMinion) { by.kos++; speak(by, Names.TAUNT, .7f) }
         checkWinner()
     }
 
     private fun checkWinner() {
         if (endless || winnerTeam != null) return
-        val teams = living.map { it.team }.toSet()
+        val teams = living.filter { !it.isMinion }.map { it.team }.toSet()
         if (teams.size <= 1) {
             winnerTeam = teams.firstOrNull() ?: -1
             winT = 0f
@@ -492,6 +540,26 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
 
     /** sandbox / survival can add fighters after a win was decided */
     fun clearWinner() { winnerTeam = null; winT = 0f }
+
+    /** bring a ko'd fighter back (king of the hill respawns) */
+    fun revive(f: Fighter, x: Float) {
+        f.dead = false; f.hp = f.maxHp; f.plates.fill(true)
+        f.burnT = 0f; f.freezeT = 0f; f.poisonT = 0f; f.stun = 0f; f.swingT = -1f
+        f.weaponGone = 0f; f.weaponThrown = false
+        f.x = x; f.y = 60f; f.vx = 0f; f.vy = 0f; f.ang = 0f; f.av = 0f; f.prevY = f.y
+        puff(f.x, f.y, Particle.Kind.MAGIC, 14)
+        say(f.x, f.y + 30, "back", FloatText.Tone.GOOD)
+    }
+
+    /** for modes that decide the winner themselves (king of the hill) */
+    fun declareWinner(team: Int) {
+        if (winnerTeam != null) return
+        winnerTeam = team; winT = 0f
+        events += Event.Win
+    }
+
+    /** remote arenas get their winner from the host */
+    fun setWinnerRemote(team: Int?, t: Float) { winnerTeam = team; winT = t }
 
     fun explode(x: Float, y: Float, radius: Float, dmg: Float, owner: Fighter?, label: String) {
         booms += Boom(x, y, radius)
@@ -553,7 +621,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
     // ---------- abilities ----------
     fun useAbility(f: Fighter) {
         val ab = f.loadout.ability
-        if (f.dead || f.held || f.abilityCd > 0 || ab.cooldown == 0f || winnerTeam != null || f.stun > 0) return
+        if (f.dead || f.held || f.abilityCd > 0 || ab.cooldown == 0f || (winnerTeam != null && !endless) || f.stun > 0 || f.isMinion) return
         f.abilityCd = ab.cooldown
         events += Event.Ability
         when (ab) {
@@ -574,7 +642,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                 val t = f.target ?: enemiesOf(f).minByOrNull { abs(it.x - f.x) }
                 puff(f.x, f.y, Particle.Kind.MAGIC, 12)
                 if (t != null) {
-                    f.x = (t.x - t.face * 75).coerceIn(Geo.R, width - Geo.R)
+                    f.x = (t.x - t.face * 75).coerceIn(f.r, width - f.r)
                     f.y = t.y - 10
                 } else f.x = width - f.x
                 f.vx = 0f; f.vy = 0f
@@ -590,12 +658,34 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                 f.bubbleT = 1.6f
                 puff(f.x, f.y, Particle.Kind.MAGIC, 10)
             }
+            Ability.SUMMON -> {
+                val l = Loadout.random()
+                val m = add(l, "mini " + Names.pick(Names.BODY, l.body), f.team, (f.x + f.face * 50).coerceIn(40f, width - 40), .35f)
+                m.minionT = 12f; m.scale = .7f; m.y = f.y - 20
+                puff(m.x, m.y, Particle.Kind.MAGIC, 14)
+                say(m.x, m.y - 50, "minion!", FloatText.Tone.GOOD)
+            }
+            Ability.MAGNET -> {
+                for (e in enemiesOf(f)) {
+                    val dx = f.x - e.x
+                    val dy = f.y - e.y
+                    val d = max(hypot(dx, dy), 1f)
+                    if (d < 340 && !e.held) { e.vx += dx / d * 16; e.vy += dy / d * 8 - 4; e.stun = max(e.stun, .3f) }
+                }
+                booms += Boom(f.x, f.y, 340f)
+                say(f.x, f.y - 60, "magnet", FloatText.Tone.ZAP)
+                puff(f.x, f.y, Particle.Kind.ZAP, 14, 6f)
+            }
+            Ability.INVISIBLE -> {
+                f.invisT = 3f
+                puff(f.x, f.y, Particle.Kind.SMOKE, 12, 3f, .8f)
+            }
             Ability.DOUBLE_JUMP, Ability.NONE -> {}
         }
     }
 
     // ---------- sandbox tools ----------
-    fun fighterAt(x: Float, y: Float) = fighters.firstOrNull { !it.dead && hypot(it.x - x, it.y - y) < Geo.R + 18 }
+    fun fighterAt(x: Float, y: Float) = fighters.firstOrNull { !it.dead && hypot(it.x - x, it.y - y) < it.r + 18 }
     fun propAt(x: Float, y: Float) = props.firstOrNull {
         !it.dead && abs(it.x - x) < it.w / 2 + 10 && abs(it.y - y) < it.h / 2 + 14
     }
@@ -624,16 +714,17 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
             Tool.TNT -> props += Prop(Prop.Kind.TNT, x, y, 34f, 34f)
             Tool.PAD -> props += Prop(Prop.Kind.PAD, x.coerceIn(35f, width - 35), floorY - 6, 70f, 12f)
             Tool.SPIKES -> props += Prop(Prop.Kind.SPIKES, x.coerceIn(50f, width - 50), floorY - 7, 100f, 14f)
+            Tool.LAVA -> props += Prop(Prop.Kind.LAVA, x.coerceIn(60f, width - 60), floorY - 6, 120f, 12f)
             Tool.PLATFORM -> props += Prop(Prop.Kind.PLATFORM, x, y.coerceAtMost(floorY - 40), 120f, 12f)
             Tool.SPAWN -> {
                 val (l, n) = spawnLoadout()
                 val f = add(l, n, (fighters.maxOfOrNull { it.team } ?: 0) + 1, x.coerceIn(Geo.R, width - Geo.R))
-                f.y = y.coerceIn(Geo.R, floorY - Geo.R)
+                f.y = y.coerceIn(f.r, floorY - f.r)
                 puff(f.x, f.y, Particle.Kind.MAGIC, 12)
                 clearWinner()
             }
             Tool.ERASE -> {
-                val f = fighters.firstOrNull { hypot(it.x - x, it.y - y) < Geo.R + 18 }
+                val f = fighters.firstOrNull { hypot(it.x - x, it.y - y) < it.r + 18 }
                 if (f != null && fighters.size > 1) { fighters.remove(f); puff(f.x, f.y, Particle.Kind.SMOKE, 10) }
                 else propAt(x, y)?.let { props.remove(it); puff(it.x, it.y, Particle.Kind.SMOKE, 8) }
             }
@@ -680,6 +771,19 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         time += dt
         val g = gravity.g
         val fl = floorY
+        if (map == GameMap.WINDY) {
+            windT -= dt
+            if (windT <= 0) {
+                windT = 3f + Random.nextFloat() * 4
+                wind = if (Random.nextFloat() < .3f) 0f else (if (Random.nextBoolean()) 1f else -1f) * (.4f + Random.nextFloat() * .6f)
+                if (wind != 0f) say(width / 2, 70f, if (wind > 0) "wind  >>>" else "<<<  wind", FloatText.Tone.ICE)
+            }
+            if (wind != 0f && Random.nextFloat() < .5f) {
+                particles += Particle(if (wind > 0) 0f else width, Random.nextFloat() * fl, wind * 14, 0f, Particle.Kind.SMOKE, 1.2f)
+            }
+        }
+        for (b in beams) b.life -= dt
+        beams.removeAll { it.life <= 0 }
         for (f in fighters.toList()) stepFighter(f, dt, g, fl)
         separate()
         stepProjectiles(dt, g, fl)
@@ -695,7 +799,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         for (p in particles) {
             p.x += p.vx; p.y += p.vy; p.life -= dt
             when (p.kind) {
-                Particle.Kind.FIRE, Particle.Kind.SMOKE, Particle.Kind.HEAL -> p.vy -= .08f
+                Particle.Kind.FIRE, Particle.Kind.SMOKE, Particle.Kind.HEAL, Particle.Kind.POISON -> p.vy -= .08f
                 else -> p.vy += g * .3f
             }
             p.vx *= .97f
@@ -707,21 +811,26 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         for (bm in booms) bm.t += dt
         booms.removeAll { it.t >= .5f }
         props.removeAll { it.dead }
+        // minions that ran out leave no corpse
+        fighters.removeAll { it.minionDone || (it.dead && it.isMinion) }
         if (winnerTeam != null) winT += dt
         shake *= .88f
     }
 
     private fun pickTarget(f: Fighter): Fighter? {
         val cur = f.target
-        if (cur != null && !cur.dead && cur.team != f.team && f.aiThinkT > 0) return cur
+        if (cur != null && !cur.dead && cur.team != f.team && f.aiThinkT > 0 && cur.invisT <= 0) return cur
         f.aiThinkT = 1.5f + Random.nextFloat()
-        return enemiesOf(f).minByOrNull { hypot(it.x - f.x, it.y - f.y) * (if (it.held) 3 else 1) }
+        // invisible enemies only get noticed up close
+        return enemiesOf(f).filter { it.invisT <= 0 || hypot(it.x - f.x, it.y - f.y) < 90 }
+            .minByOrNull { hypot(it.x - f.x, it.y - f.y) * (if (it.held) 3 else 1) }
     }
 
     private fun stepFighter(f: Fighter, dt: Float, g: Float, fl: Float) {
         f.cd = max(0f, f.cd - dt); f.stun = max(0f, f.stun - dt); f.sayCd -= dt
         f.abilityCd = max(0f, f.abilityCd - dt); f.aiThinkT -= dt; f.spikeCd -= dt
-        f.rageT -= dt; f.bubbleT -= dt; f.freezeT -= dt; f.dashT -= dt
+        f.rageT -= dt; f.bubbleT -= dt; f.freezeT -= dt; f.dashT -= dt; f.invisT -= dt
+        for (k in f.sawCd.keys.toList()) f.sawCd[k] = f.sawCd[k]!! - dt
         if (f.weaponGone > 0) f.weaponGone -= dt
         if (f.dead) {
             stepBody(f, 0f, g, fl)
@@ -733,6 +842,23 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
             if (Random.nextFloat() < .4f) particles += Particle(f.x + (Random.nextFloat() - .5f) * 40, f.y + (Random.nextFloat() - .5f) * 40, 0f, -1f, Particle.Kind.FIRE, .5f)
             if (f.hp <= 0) { ko(f, 1f, null); return }
         }
+        if (f.poisonT > 0) {
+            f.poisonT -= dt
+            f.hp -= 2.5f * dt
+            if (Random.nextFloat() < .25f) particles += Particle(f.x + (Random.nextFloat() - .5f) * 40, f.y + (Random.nextFloat() - .5f) * 40, 0f, -.6f, Particle.Kind.POISON, .6f)
+            if (f.hp <= 0) { ko(f, 1f, null); return }
+        }
+        if (f.minionT > 0) {
+            f.minionT -= dt
+            if (f.minionT <= 0) {
+                f.dead = true; f.minionDone = true
+                puff(f.x, f.y, Particle.Kind.MAGIC, 12)
+                say(f.x, f.y - 40, "poof", FloatText.Tone.METAL)
+                checkWinner()
+                return
+            }
+        }
+        if (wind != 0f && !f.held) f.vx += wind * (if (f.ground) .06f else .16f) / f.scale
         val o = pickTarget(f)
         f.target = o
         if (!f.held) {
@@ -770,6 +896,9 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                         !ranged && adx < f.reach * .5f -> -sign(dx) * .6f
                         else -> 0f
                     }
+                    // king of the hill: head for the zone unless someone's right in front of us
+                    val z = zoneX
+                    if (z != null && abs(f.x - z) > zoneW / 2 - 25 && adx > f.reach * .7f) mv = sign(z - f.x)
                     val inRange = adx < f.reach + 40 && (ranged || abs(o.y - f.y) < 90)
                     if (inRange && Random.nextFloat() < .08f) swing(f)
                     val ab = f.loadout.ability
@@ -781,6 +910,9 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                             Ability.TELEPORT -> adx > 220
                             Ability.RAGE -> adx < 220
                             Ability.BUBBLE -> o.swingT >= 0 && adx < 160
+                            Ability.SUMMON -> adx < 320
+                            Ability.MAGNET -> !ranged && adx in 110f..320f
+                            Ability.INVISIBLE -> f.hp < f.maxHp * .6f
                             else -> false
                         }
                         if (use) useAbility(f)
@@ -791,7 +923,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                         if (Random.nextFloat() < .45f || o.y < f.y - 50) jump = true
                     }
                     // don't walk into spikes on purpose
-                    if (props.any { it.kind == Prop.Kind.SPIKES && abs(it.x - (f.x + mv * 40)) < it.w / 2 + 20 } && f.ground) jump = true
+                    if (props.any { (it.kind == Prop.Kind.SPIKES || it.kind == Prop.Kind.LAVA) && abs(it.x - (f.x + mv * 40)) < it.w / 2 + 20 } && f.ground) jump = true
                 }
             } else {
                 if (f.input.left) mv -= 1
@@ -815,7 +947,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
 
         // dash contact damage
         if (f.dashT > 0) {
-            for (e in enemiesOf(f)) if (e !in f.hitSet && hypot(e.x - f.x, e.y - f.y) < Geo.R * 2) {
+            for (e in enemiesOf(f)) if (e !in f.hitSet && hypot(e.x - f.x, e.y - f.y) < f.r + e.r) {
                 f.hitSet += e
                 damage(e, 6f + f.stats.dmg * .5f, f, f.x, 9f, "dash")
             }
@@ -828,8 +960,32 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
             val wt = f.loadout.weaponType
             if (wt.ranged) {
                 if (!f.fired && t >= .5f) { f.fired = true; fire(f, o) }
-            } else if (t > .3f && t < .75f && (wt != WeaponType.SPEAR || t > .3f)) meleeHits(f)
+            } else if (wt != WeaponType.SAW && t > .3f && t < .75f) meleeHits(f)
             if (t >= 1) { f.swingT = -1f; f.cd = .15f }
+        }
+        if (f.loadout.weaponType == WeaponType.SAW && f.hasWeapon) sawHits(f)
+    }
+
+    private fun sawHits(f: Fighter) {
+        val ws = weaponWorld(f)
+        for (e in enemiesOf(f)) {
+            if (e.held || (f.sawCd[e.id] ?: 0f) > 0) continue
+            for (i in 1 until ws.size) {
+                if (segDist(e.x, e.y, ws[i - 1], ws[i]) < e.r) {
+                    f.sawCd[e.id] = .3f
+                    damage(e, f.stats.dmg.toFloat(), f, f.x, 3f * f.stats.kb, "", f.loadout.weaponMat, melee = true)
+                    puff(ws[i].x, ws[i].y, Particle.Kind.SPARK, 6, 4f, .25f)
+                    break
+                }
+            }
+        }
+        for (p in props) {
+            if (p.dead || !p.kind.dynamic || (f.sawCd[-1 - props.indexOf(p)] ?: 0f) > 0) continue
+            for (i in 1 until ws.size) if (segDist(p.x, p.y, ws[i - 1], ws[i]) < p.w / 2 + 4) {
+                f.sawCd[-1 - props.indexOf(p)] = .3f
+                hurtProp(p, f.stats.dmg.toFloat())
+                break
+            }
         }
     }
 
@@ -841,7 +997,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         for (e in enemiesOf(f)) {
             if (e in f.hitSet || e.held) continue
             for (i in 1 until ws.size) {
-                if (segDist(e.x, e.y, ws[i - 1], ws[i]) < Geo.R) {
+                if (segDist(e.x, e.y, ws[i - 1], ws[i]) < e.r) {
                     f.hitSet += e
                     damage(e, dmg, f, f.x, (4 + dmg * .25f) * f.stats.kb, if (f.loadout.weaponType == WeaponType.HAMMER) "bonk" else "", mat, melee = true)
                     if (f.loadout.weaponType == WeaponType.HAMMER) shake = min(18f, shake + 6)
@@ -910,6 +1066,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                 val vy = ((dy - .5f * g * tt * tt) / tt).coerceIn(-18f, 6f)
                 projectiles += Projectile(f, wt, hand.x, hand.y, dx / tt, vy, shape).also { it.av = .25f * f.face }
             }
+            WeaponType.LASER -> laser(f, hand, if (target != null) atan2(dy, dx) else if (f.face > 0) 0f else PI.toFloat())
             WeaponType.BOOMERANG -> {
                 f.weaponThrown = true
                 projectiles += Projectile(f, wt, hand.x, hand.y, f.face * 14f, (dy / 30f).coerceIn(-3f, 3f), shape).also { it.av = .45f }
@@ -917,6 +1074,34 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
             else -> {}
         }
         events += Event.Shoot
+    }
+
+    /** instant beam. mirror armour sends it back once */
+    private fun laser(f: Fighter, from: Vec, angle: Float, bounced: Boolean = false) {
+        val len = 520f
+        val dir = Vec(cos(angle), sin(angle))
+        var end = from + dir * len
+        var hit: Fighter? = null
+        var best = len
+        for (e in fighters) {
+            if (e.dead || e.team == f.team || e.held) continue
+            // distance along the beam to the closest point to e
+            val t = ((e.x - from.x) * dir.x + (e.y - from.y) * dir.y)
+            if (t < 0 || t > best) continue
+            val px = from.x + dir.x * t
+            val py = from.y + dir.y * t
+            if (hypot(e.x - px, e.y - py) < e.r) { best = t; hit = e }
+        }
+        if (hit != null) end = from + dir * best
+        beams += Beam(from.x, from.y, end.x, end.y, f.team)
+        if (hit != null) {
+            if (!bounced && hit.loadout.armourMat == ArmourMat.MIRROR && hit.plates.any { it } && Random.nextFloat() < .5f) {
+                say(hit.x, hit.y - 70, "reflected", FloatText.Tone.METAL)
+                laser(hit, end, angle + PI.toFloat(), bounced = true)
+            } else {
+                damage(hit, f.stats.dmg.toFloat(), f, from.x, 2f * f.stats.kb, "", f.loadout.weaponMat)
+            }
+        }
     }
 
     private fun stepProjectiles(dt: Float, g: Float, fl: Float) {
@@ -940,15 +1125,16 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                     if (p.y > fl - 8) { p.y = fl - 8; p.vy *= -.45f; p.vx *= .7f; p.av *= .8f }
                     if (p.x < 8 || p.x > width - 8) { p.vx *= -.6f; p.x = p.x.coerceIn(8f, width - 8) }
                     if (Random.nextFloat() < .5f) particles += Particle(p.x, p.y - 8, 0f, -1f, Particle.Kind.FIRE, .3f)
-                    val touching = fighters.any { !it.dead && it.team != owner.team && hypot(it.x - p.x, it.y - p.y) < Geo.R }
+                    val touching = fighters.any { !it.dead && it.team != owner.team && hypot(it.x - p.x, it.y - p.y) < it.r }
                     if (p.life > 1.4f || (touching && p.life > .25f)) {
                         explode(p.x, p.y, 120f, max(10f, owner.stats.dmg * 1.4f), owner, "bomb")
-                        if (owner.loadout.weaponMat == WeaponMat.FIRE || owner.loadout.weaponMat == WeaponMat.ICE || owner.loadout.weaponMat == WeaponMat.SHOCK) {
+                        if (owner.loadout.weaponMat in listOf(WeaponMat.FIRE, WeaponMat.ICE, WeaponMat.SHOCK, WeaponMat.POISON)) {
                             for (f in fighters) if (!f.dead && hypot(f.x - p.x, f.y - p.y) < 120 && f !== owner) {
                                 when (owner.loadout.weaponMat) {
                                     WeaponMat.FIRE -> f.burnT = 3f
                                     WeaponMat.ICE -> f.freezeT = 2f
                                     WeaponMat.SHOCK -> f.stun = .9f
+                                    WeaponMat.POISON -> f.poisonT = 5f
                                     else -> {}
                                 }
                             }
@@ -985,8 +1171,16 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         val owner = p.owner
         for (e in fighters) {
             if (e.dead || e.team == owner.team || e in p.hit || e.held) continue
-            if (hypot(e.x - p.x, e.y - p.y) < Geo.R + 6) {
+            if (hypot(e.x - p.x, e.y - p.y) < e.r + 6) {
                 p.hit += e
+                if (e.loadout.armourMat == ArmourMat.MIRROR && e.plates.any { it } && Random.nextFloat() < .5f) {
+                    // bounce it back at whoever threw it
+                    p.vx = -p.vx; p.vy = -abs(p.vy) * .5f - 2; p.owner = e; p.hit.clear(); p.hit += e
+                    p.returning = false
+                    say(e.x, e.y - 70, "reflected", FloatText.Tone.METAL)
+                    events += Event.Clang
+                    return
+                }
                 damage(e, dmg, owner, p.x - p.vx, (4 + dmg * .2f) * owner.stats.kb, "", owner.loadout.weaponMat)
                 if (removeOnHit) { p.stuck = true; p.life = 99f; return }
             }
@@ -1008,7 +1202,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
     private fun stepBody(f: Fighter, mv: Float, g: Float, fl: Float) {
         f.prevY = f.y
         if (f.held) return
-        f.vy += g
+        f.vy += g * (if (f.loadout.armourMat == ArmourMat.BALLOON && !f.dead) .55f else 1f)
         if (g == 0f) { f.vx *= .995f; f.vy *= .995f }
         if (f.slamming && !f.ground) f.vy += g * 1.5f
         f.x += f.vx; f.y += f.vy
@@ -1020,7 +1214,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         }
         val wasGround = f.ground
         f.ground = false
-        val r = Geo.R
+        val r = f.r
         // platforms (one way, from above)
         if (f.vy >= 0) for (p in props) {
             if (p.kind != Prop.Kind.PLATFORM || p.dead) continue
@@ -1057,6 +1251,13 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                     damage(f, 9f, null, p.x + (if (f.x < p.x) 30 else -30), 6f, "spikes")
                     f.vy = -9f
                 }
+                if (p.kind == Prop.Kind.LAVA && !f.dead && f.spikeCd <= 0 && abs((f.y + r) - fl) < 4) {
+                    f.spikeCd = .5f
+                    f.burnT = max(f.burnT, 3f)
+                    damage(f, 7f, null, p.x + (if (f.x < p.x) 30 else -30), 4f, "lava")
+                    f.vy = -12f
+                    puff(f.x, fl, Particle.Kind.FIRE, 10, 4f)
+                }
             }
         }
         if (f.y < r) { impact(-f.vy, "bonk"); f.y = r; f.vy = -f.vy * .4f }
@@ -1067,8 +1268,8 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
     private fun landed(f: Fighter, vy: Float) {
         if (f.slamming && !f.dead) {
             f.slamming = false
-            booms += Boom(f.x, f.y + Geo.R, 140f)
-            puff(f.x, f.y + Geo.R, Particle.Kind.SMOKE, 14, 5f, .6f)
+            booms += Boom(f.x, f.y + f.r, 140f * f.scale)
+            puff(f.x, f.y + f.r, Particle.Kind.SMOKE, 14, 5f, .6f)
             shake = 14f
             events += Event.Boom(false)
             for (e in enemiesOf(f)) {
@@ -1093,7 +1294,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         val dx = b.x - a.x
         val dy = b.y - a.y
         val d = max(hypot(dx, dy), 1f)
-        val ov = Geo.R * 2 - d
+        val ov = a.r + b.r - d
         if (ov > 0) {
             val nx = dx / d
             val ny = dy / d
@@ -1146,7 +1347,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                 val dx = f.x - p.x
                 val dy = f.y - p.y
                 val d = max(hypot(dx, dy), 1f)
-                val ov = Geo.R + p.w / 2 - d
+                val ov = f.r + p.w / 2 - d
                 if (ov > 0) {
                     val speed = hypot(p.vx, p.vy)
                     if (speed > 12 && p !in f.hitSet) {
@@ -1157,7 +1358,7 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
                     val ny = dy / d
                     // fighters standing on crates
                     if (ny < -.6f && f.vy >= 0) {
-                        f.y = p.y - p.h / 2 - Geo.R + 2; f.vy = 0f; f.ground = true
+                        f.y = p.y - p.h / 2 - f.r + 2; f.vy = 0f; f.ground = true
                         f.jumpsLeft = maxJumps(f) - 1
                     } else {
                         f.x += nx * ov * .6f; p.x -= nx * ov * .4f
@@ -1176,12 +1377,13 @@ class Arena(var width: Float = 900f, var height: Float = 500f) {
         width = w; height = h
         val dy = floorY - oldFloor
         for (f in fighters) {
-            f.x = (f.x * kx).coerceIn(Geo.R, w - Geo.R)
-            f.y = (f.y + dy).coerceIn(Geo.R, floorY - Geo.R); f.prevY = f.y
+            f.x = (f.x * kx).coerceIn(f.r, w - f.r)
+            f.y = (f.y + dy).coerceIn(f.r, floorY - f.r); f.prevY = f.y
         }
         for (p in props) { p.x *= kx; p.y += dy }
         for (d in debris) { d.x *= kx; d.y += dy }
         for (p in projectiles) { p.x *= kx; p.y += dy }
+        zoneX = zoneX?.let { it * kx }
     }
 
     companion object {

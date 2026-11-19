@@ -23,6 +23,22 @@ data class RosterFighter(
     fun entry() = Entry(displayName, loadout, id)
 }
 
+enum class Achievement(val title: String, val how: String) {
+    FIRST_WIN("first blood", "win a match"),
+    KOS_10("warming up", "10 kos total"),
+    KOS_100("menace", "100 kos total"),
+    WAVE_5("survivor", "reach survival wave 5"),
+    WAVE_10("unkillable", "reach survival wave 10"),
+    CUP("champion", "win a tournament"),
+    CUPS_5("dynasty", "win 5 tournaments"),
+    TOURIST("tourist", "play every mode"),
+    ONLINE("friends!", "play a wifi game"),
+    GIANT_SLAYER("giant slayer", "beat the boss as a hero"),
+    KING("king of the hill", "win king of the hill"),
+    ADDICTED("addicted", "play 50 matches"),
+    COLLECTOR("collector", "have 20 fighters"),
+}
+
 enum class ThemeMode(val label: String) { SYSTEM("system"), LIGHT("light"), DARK("dark") }
 
 /** everything that gets saved: the roster, records and settings */
@@ -43,6 +59,44 @@ class GameState(context: Context) {
     var bestWave by mutableIntStateOf(prefs.getInt("bestwave", 0)); private set
     var totalKos by mutableIntStateOf(prefs.getInt("totalkos", 0)); private set
     var matchesPlayed by mutableIntStateOf(prefs.getInt("matches", 0)); private set
+    val unlocked = mutableStateListOf<Achievement>().apply {
+        val saved = prefs.getStringSet("achievements", emptySet()) ?: emptySet()
+        addAll(Achievement.values().filter { it.name in saved })
+    }
+    /** shown on the results card, cleared when read */
+    var justUnlocked by mutableStateOf<List<Achievement>>(emptyList())
+    private val modesPlayed = (prefs.getStringSet("modes", emptySet()) ?: emptySet()).toMutableSet()
+
+    fun unlock(a: Achievement) {
+        if (a in unlocked) return
+        unlocked += a
+        justUnlocked = justUnlocked + a
+        prefs.edit().putStringSet("achievements", unlocked.map { it.name }.toSet()).apply()
+    }
+
+    /** after every match: what was played, online or not, and whether a human won the special modes */
+    fun notePlayed(mode: com.patternbox.core.Mode, online: Boolean, humanWonSpecial: Boolean) {
+        modesPlayed += mode.name
+        prefs.edit().putStringSet("modes", modesPlayed.toSet()).apply()
+        if (online) unlock(Achievement.ONLINE)
+        if (humanWonSpecial && mode == com.patternbox.core.Mode.BOSS) unlock(Achievement.GIANT_SLAYER)
+        if (humanWonSpecial && mode == com.patternbox.core.Mode.KOTH) unlock(Achievement.KING)
+        if (com.patternbox.core.Mode.values().all { it.name in modesPlayed }) unlock(Achievement.TOURIST)
+        checkAchievements()
+    }
+
+    fun checkAchievements() {
+        if (roster.any { it.wins > 0 }) unlock(Achievement.FIRST_WIN)
+        if (totalKos >= 10) unlock(Achievement.KOS_10)
+        if (totalKos >= 100) unlock(Achievement.KOS_100)
+        if (bestWave >= 5) unlock(Achievement.WAVE_5)
+        if (bestWave >= 10) unlock(Achievement.WAVE_10)
+        val cups = roster.sumOf { it.cups }
+        if (cups >= 1) unlock(Achievement.CUP)
+        if (cups >= 5) unlock(Achievement.CUPS_5)
+        if (matchesPlayed >= 50) unlock(Achievement.ADDICTED)
+        if (roster.size >= 20) unlock(Achievement.COLLECTOR)
+    }
 
     private var idCounter = prefs.getLong("idcounter", 1L)
     private fun newId(): Long {
@@ -70,6 +124,7 @@ class GameState(context: Context) {
         val f = RosterFighter(newId(), name, l)
         roster.add(0, f)
         save()
+        if (roster.size >= 20) unlock(Achievement.COLLECTOR)
         return f
     }
 
@@ -104,6 +159,7 @@ class GameState(context: Context) {
         totalKos += kos.values.sum()
         prefs.edit().putInt("matches", matchesPlayed).putInt("totalkos", totalKos).apply()
         save()
+        checkAchievements()
     }
 
     fun recordWave(w: Int) {
@@ -111,6 +167,7 @@ class GameState(context: Context) {
             bestWave = w
             prefs.edit().putInt("bestwave", w).apply()
         }
+        checkAchievements()
     }
 
     fun resetStats() {

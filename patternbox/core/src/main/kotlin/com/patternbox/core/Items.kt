@@ -8,6 +8,8 @@ enum class WeaponType(val label: String, val blurb: String, val dmg: Float, val 
     BOW("bow", "shoots your weapon pattern as an arrow", .65f, 1.3f, .6f, true),
     BOOMERANG("boomerang", "throw it, it comes back. hits on the way out and in", .75f, 1.2f, .9f, true),
     BOMB("bomb", "lobs a pattern bomb. it hurts you too if you're close", 1.3f, 2f, 1.5f, true),
+    LASER("laser", "instant beam straight ahead, low damage, long range", .5f, .9f, .3f, true),
+    SAW("saw", "always spinning, shreds anyone who touches it. hit = lunge", .3f, 1.2f, .5f, false),
 }
 
 enum class WeaponMat(val label: String, val blurb: String, val dmg: Float, val kb: Float) {
@@ -17,6 +19,8 @@ enum class WeaponMat(val label: String, val blurb: String, val dmg: Float, val k
     SHOCK("shock", "stuns for a moment", .8f, 1f),
     BOUNCY("bouncy", "barely hurts, launches them", .55f, 2.3f),
     GLASS("glass", "huge damage, sometimes shatters", 1.8f, 1f),
+    POISON("poison", "slow damage that lasts a long time", .75f, 1f),
+    VAMPIRE("vampire", "heals you for part of the damage you deal", .85f, 1f),
 }
 
 enum class ArmourMat(val label: String, val blurb: String, val def: Float, val speed: Float, val jump: Float) {
@@ -26,6 +30,8 @@ enum class ArmourMat(val label: String, val blurb: String, val def: Float, val s
     RUBBER("rubber", "bounces attackers away", .75f, 0f, .5f),
     SPIKY("spiky", "melee attackers get hurt too", .85f, -.1f, 0f),
     ICE("ice", "freezes whoever hits you", .9f, 0f, 0f),
+    MIRROR("mirror", "can bounce arrows, lasers and bombs back", .8f, 0f, 0f),
+    BALLOON("balloon", "floaty, you fall slow and jump high", .5f, .2f, 2f),
 }
 
 enum class Ability(val label: String, val blurb: String, val cooldown: Float) {
@@ -37,4 +43,7 @@ enum class Ability(val label: String, val blurb: String, val cooldown: Float) {
     TELEPORT("teleport", "pop up behind the enemy", 6f),
     RAGE("rage", "4 seconds of more damage and speed", 14f),
     BUBBLE("bubble", "can't be hurt for a moment", 9f),
+    SUMMON("summon", "spawns a tiny random minion on your side for 12s", 15f),
+    MAGNET("magnet", "yanks every enemy nearby toward you", 8f),
+    INVISIBLE("invisible", "vanish for 3 seconds, bots lose track of you", 12f),
 }

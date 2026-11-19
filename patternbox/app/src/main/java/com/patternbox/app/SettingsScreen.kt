@@ -63,6 +63,15 @@ fun SettingsScreen(state: GameState, padding: PaddingValues) {
             Text("${state.matchesPlayed} matches, ${state.totalKos} kos, best survival wave ${state.bestWave}", color = cs.onSurfaceVariant)
             val top = state.roster.maxByOrNull { it.wins * 3 + it.cups * 10 }
             if (top != null && top.wins > 0) Text("best fighter: ${top.displayName} (${top.wins} wins, ${top.cups} cups)", color = cs.onSurfaceVariant)
+            Text("achievements ${state.unlocked.size}/${Achievement.values().size}", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+            for (a in Achievement.values()) {
+                val got = a in state.unlocked
+                Text(
+                    (if (got) "✓ " else "· ") + a.title + "  ·  " + a.how,
+                    color = if (got) cs.primary else cs.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             OutlinedButton(onClick = { confirm = true }) { Text("reset stats") }
             Text("patternbox ${BuildConfigVersion.NAME}", style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
         }
@@ -76,7 +85,7 @@ fun SettingsScreen(state: GameState, padding: PaddingValues) {
     )
 }
 
-object BuildConfigVersion { const val NAME = "0.2.4" }
+object BuildConfigVersion { const val NAME = "0.3.0" }
 
 @Composable
 private fun Toggle(title: String, sub: String, value: Boolean, onChange: (Boolean) -> Unit) {

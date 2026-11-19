@@ -19,18 +19,24 @@ then pick:
 
 | | options |
 |---|---|
-| weapon type | blade, hammer (slow, huge knockback), spear (fast poke, long reach), bow (shoots the pattern), boomerang (comes back), bomb (lobbed, hurts you too) |
-| weapon material | steel, fire (burns), ice (slows), shock (stuns), bouncy (launches), glass (huge damage, can shatter) |
-| armour material | steel, gold (tanky, heavy), paper (light, fast), rubber (bounces attackers), spiky (hurts attackers), ice (freezes attackers) |
-| ability | dash, double jump, slam, heal, teleport, rage, bubble |
+| weapon type | blade, hammer (slow, huge knockback), spear (fast poke, long reach), bow (shoots the pattern), boomerang (comes back), bomb (lobbed, hurts you too), laser (instant beam), saw (always spinning, hit = lunge) |
+| weapon material | steel, fire (burns), ice (slows), shock (stuns), bouncy (launches), glass (huge damage, can shatter), poison (long slow damage), vampire (heals you) |
+| armour material | steel, gold (tanky, heavy), paper (light, fast), rubber (bounces attackers), spiky (hurts attackers), ice (freezes attackers), mirror (reflects shots), balloon (floaty) |
+| ability | dash, double jump, slam, heal, teleport, rage, bubble, summon (tiny minion), magnet (pulls enemies in), invisible |
 
 share codes look like `14789-159-456-123-0000`: body-weapon-armour-hat, dots numbered 1-9 like a pin, then the four picks. old 3 part codes still load.
 
 ## modes
 
-1v1, 2v2, free for all (up to 6), survival (endless waves, best wave saved), tournament (4 or 8 bracket, watch or simulate each match, winner gets a cup), sandbox.
+1v1, 2v2, free for all (up to 6), survival (endless waves, best wave saved), tournament (4 or 8 bracket, watch or simulate each match, winner gets a cup), king of the hill (hold the zone, respawns, first to 30), boss fight (one giant vs everyone), sandbox.
 
-maps: flat, platforms, spike pit, trampoline, ice rink, warehouse (crates + tnt).
+maps: flat, platforms, spike pit, trampoline, ice rink, warehouse (crates + tnt), lava, windy, moon base.
+
+## wifi multiplayer
+
+play > play with friends. one phone hosts (it runs the real game), up to 5 others join from the same wifi or the host's hotspot. games show up by themselves (nsd), or type the ip the host screen shows. friends send their buttons, the host sends the whole arena back ~30 times a second. port 47474, plain tcp, code in `core/.../Net.kt`.
+
+13 achievements, listed in settings.
 
 sandbox tools: grab and throw (walls and floor deal impact damage), boom, poke, fire, freeze, zap, heal, spawn crates / tnt / bounce pads / spikes / ledges / fighters, erase. plus gravity (earth / moon / off / jupiter), slowmo, pause, chaos.
 

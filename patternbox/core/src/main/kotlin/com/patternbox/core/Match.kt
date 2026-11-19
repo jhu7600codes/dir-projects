@@ -11,6 +11,8 @@ enum class Mode(val label: String, val blurb: String, val minFighters: Int, val 
     FFA("free for all", "up to six fighters, everyone vs everyone", 3, 6),
     SURVIVAL("survival", "you vs endless waves of random fighters", 1, 1),
     TOURNAMENT("tournament", "8 fighter bracket, watch or simulate each match", 2, 8),
+    KOTH("king of the hill", "hold the zone (closest to its middle) to score. first to 30 wins, you respawn", 2, 6),
+    BOSS("boss fight", "slot 1 is a giant boss, everyone else teams up against it", 2, 6),
     SANDBOX("sandbox", "no rules. spawn stuff, blow stuff up", 1, 6),
 }
 
@@ -19,15 +21,19 @@ enum class Mode(val label: String, val blurb: String, val minFighters: Int, val 
  * the arena does the physics, this does the rules.
  */
 class Match(val mode: Mode, val entries: List<Entry>, val map: GameMap, val arena: Arena = Arena()) {
-    var wave = 0; private set
+    var wave = 0; internal set
     private var waveDelay = 0f
     var bestWave = 0; private set
     val over get() = mode != Mode.SANDBOX && arena.winnerTeam != null && (mode != Mode.SURVIVAL || player?.dead == true)
+    private val respawn = mutableMapOf<Int, Float>()
+    private var zoneMoveT = 0f
+    val goal = 30f
     val player get() = arena.fighters.firstOrNull { it.team == 0 }
 
     fun start() {
-        arena.endless = mode == Mode.SANDBOX
+        arena.endless = mode == Mode.SANDBOX || mode == Mode.KOTH
         arena.reset(map)
+        respawn.clear()
         when (mode) {
             Mode.VERSUS, Mode.TOURNAMENT -> {
                 arena.add(entries[0].loadout, entries[0].name, 0, arena.width * .25f)
@@ -43,6 +49,18 @@ class Match(val mode: Mode, val entries: List<Entry>, val map: GameMap, val aren
             Mode.SURVIVAL -> {
                 arena.add(entries[0].loadout, entries[0].name, 0, arena.width * .5f)
                 nextWave()
+            }
+            Mode.KOTH -> {
+                entries.forEachIndexed { i, e -> arena.add(e.loadout, e.name, i, arena.width * ((i + .5f) / entries.size)) }
+                arena.zoneX = arena.width / 2
+                zoneMoveT = 20f
+            }
+            Mode.BOSS -> {
+                val heroes = entries.size - 1
+                arena.add(entries[0].loadout, entries[0].name, 1, arena.width * .8f, hpMult = 2.2f * heroes).also {
+                    it.scale = 1.7f; it.dmgMult = 1.4f
+                }
+                for (i in 1 until entries.size) arena.add(entries[i].loadout, entries[i].name, 0, arena.width * (.1f + .1f * i))
             }
         }
     }
@@ -64,6 +82,7 @@ class Match(val mode: Mode, val entries: List<Entry>, val map: GameMap, val aren
 
     fun step(dt: Float = 1f / 60f) {
         arena.step(dt)
+        if (mode == Mode.KOTH) stepKoth(dt)
         if (mode == Mode.SURVIVAL) {
             val p = player ?: return
             if (p.dead) { bestWave = wave - 1; return }
@@ -82,13 +101,43 @@ class Match(val mode: Mode, val entries: List<Entry>, val map: GameMap, val aren
         }
     }
 
+    private fun stepKoth(dt: Float) {
+        if (arena.winnerTeam != null) return
+        val zx = arena.zoneX ?: return
+        // zone hops somewhere else every 20 seconds
+        zoneMoveT -= dt
+        if (zoneMoveT <= 0) {
+            zoneMoveT = 20f
+            arena.zoneX = arena.width * (.2f + Random.nextFloat() * .6f)
+            arena.say(arena.zoneX!!, arena.floorY - 120, "the zone moved", FloatText.Tone.ZAP)
+        }
+        val inside = arena.fighters.filter { !it.dead && !it.isMinion && kotlin.math.abs(it.x - zx) < arena.zoneW / 2 && it.y > arena.floorY - 220 }
+        // whoever stands closest to the middle of the zone holds it
+        val king = inside.minByOrNull { kotlin.math.abs(it.x - zx) }
+        if (king != null) {
+            val t = king.team
+            val v = (arena.scores[t] ?: 0f) + dt
+            arena.scores[t] = v
+            if (v >= goal) arena.declareWinner(t)
+        }
+        for (f in arena.fighters) {
+            if (!f.dead || f.isMinion) continue
+            val left = (respawn[f.id] ?: 3f) - dt
+            if (left <= 0) {
+                respawn.remove(f.id)
+                arena.revive(f, arena.width * (.1f + Random.nextFloat() * .8f))
+            } else respawn[f.id] = left
+        }
+    }
+
     /** index into entries of each fighter that won (for records) */
     fun winners(): List<Int> {
         val t = arena.winnerTeam ?: return emptyList()
         return when (mode) {
             Mode.VERSUS, Mode.TOURNAMENT -> listOf(t)
             Mode.TEAMS -> entries.indices.filter { (if (it % 2 == 0) 0 else 1) == t }
-            Mode.FFA -> listOf(t)
+            Mode.FFA, Mode.KOTH -> listOf(t)
+            Mode.BOSS -> if (t == 1) listOf(0) else (1 until entries.size).toList()
             else -> emptyList()
         }
     }

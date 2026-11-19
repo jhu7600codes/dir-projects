@@ -94,14 +94,18 @@ fun ArenaView(
             }
     ) {
         frame() // read so the canvas redraws every frame
-        val k = size.width / max(MIN_WORLD_W, size.width / density)
+        // a mirrored online game keeps the host's world size and gets letterboxed instead
+        val k = if (arena.remote) minOf(size.width / arena.width, size.height / arena.height)
+        else size.width / max(MIN_WORLD_W, size.width / density)
         scaleK = k
-        val ww = size.width / k
-        val wh = size.height / k
-        arena.resize(ww, wh)
+        val ww = if (arena.remote) arena.width else size.width / k
+        val wh = if (arena.remote) arena.height else size.height / k
+        if (!arena.remote) arena.resize(ww, wh)
+        val ox = if (arena.remote) (size.width - ww * k) / 2 else 0f
+        val oy = if (arena.remote) (size.height - wh * k) / 2 else 0f
 
         val sh = if (shakeOn && arena.shake > .2f) Offset((Random.nextFloat() - .5f) * arena.shake * k, (Random.nextFloat() - .5f) * arena.shake * k) else Offset.Zero
-        translate(sh.x, sh.y) {
+        translate(sh.x + ox, sh.y + oy) {
             scale(k, pivot = Offset.Zero) {
                 // lock screen dot grid
                 var gx = 30f
@@ -112,6 +116,18 @@ fun ArenaView(
                 }
                 drawRect(floor, Offset(-20f, arena.floorY), Size(ww + 40, 80f))
                 drawLine(grid, Offset(0f, arena.floorY), Offset(ww, arena.floorY), 2f)
+
+                // king of the hill zone
+                arena.zoneX?.let { zx ->
+                    val zw = arena.zoneW
+                    val owner = arena.fighters.filter { !it.dead && !it.isMinion && kotlin.math.abs(it.x - zx) < zw / 2 && it.y > arena.floorY - 220 }
+                        .minByOrNull { kotlin.math.abs(it.x - zx) }
+                    val c = owner?.let { pals[it.team.mod(6)].body } ?: onSurface
+                    drawRect(c.copy(alpha = .12f), Offset(zx - zw / 2, arena.floorY - 220), Size(zw, 220f))
+                    drawRect(c.copy(alpha = .7f), Offset(zx - zw / 2, arena.floorY - 4), Size(zw, 4f))
+                    val lay = measurer.measure("zone", TextStyle(fontSize = (11f / k).sp, color = c, fontFamily = FontFamily.Monospace))
+                    drawText(lay, topLeft = Offset(zx - lay.size.width / 2f, arena.floorY - 236))
+                }
 
                 for (p in arena.props) drawProp(p, grid, onSurface)
 
@@ -134,21 +150,26 @@ fun ArenaView(
 
                 for (f in arena.fighters) {
                     if (f.dead) continue
-                    val s = max(.3f, 1 - (arena.floorY - f.y) / 400f)
-                    drawOval(Color.Black.copy(alpha = .22f), Offset(f.x - 34 * s, arena.floorY - 4 * s), Size(68 * s, 12 * s))
+                    val s = max(.3f, 1 - (arena.floorY - f.y) / 400f) * f.scale
+                    val invis = f.invisT > 0
+                    if (!invis) drawOval(Color.Black.copy(alpha = .22f), Offset(f.x - 34 * s, arena.floorY - 4 * s), Size(68 * s, 12 * s))
                     withTransform({
                         translate(f.x, f.y)
                         rotateRad(f.ang, Offset.Zero)
-                        scale(f.face, 1f, Offset.Zero)
+                        scale(f.face * f.scale, f.scale, Offset.Zero)
                     }) {
+                        // invisible fighters are a faint shimmer
+                        if (invis) drawContext.canvas.saveLayer(androidx.compose.ui.geometry.Rect(-120f, -120f, 120f, 120f), androidx.compose.ui.graphics.Paint().apply { alpha = .16f })
                         drawFighter(
                             f.loadout, pals[f.team.mod(6)],
                             FighterLook(
                                 weapon = arena.weaponLocal(f) ?: emptyList(), plates = f.plates, look = f.look,
                                 hot = f.hot, flash = f.stun > .25f && f.stun < .4f, frozen = f.freezeT > 0,
                                 burning = f.burnT > 0, rage = f.rageT > 0, bubble = f.bubbleT > 0, time = arena.time,
+                                poisoned = f.poisonT > 0,
                             ),
                         )
+                        if (invis) drawContext.canvas.restore()
                     }
                     if (f.stun > .4f) {
                         // little stars over the head when stunned
@@ -157,6 +178,13 @@ fun ArenaView(
                             drawCircle(Color(0xFFFFE14D), 3f, Offset(f.x + kotlin.math.cos(a) * 18, f.y - 52 + kotlin.math.sin(a) * 5))
                         }
                     }
+                }
+
+                for (b in arena.beams) {
+                    val c = pals[b.team.mod(6)].body
+                    val a = (b.life / .25f).coerceIn(0f, 1f)
+                    drawLine(c.copy(alpha = .35f * a), Offset(b.x1, b.y1), Offset(b.x2, b.y2), 14f, StrokeCap.Round)
+                    drawLine(Color.White.copy(alpha = a), Offset(b.x1, b.y1), Offset(b.x2, b.y2), 4f, StrokeCap.Round)
                 }
 
                 for (p in arena.projectiles) {
@@ -182,6 +210,7 @@ fun ArenaView(
                         Particle.Kind.SMOKE -> dim.copy(alpha = .6f) to 6f + (1 - a) * 10
                         Particle.Kind.HEAL -> Color(0xFF6FCF8E) to 3.5f
                         Particle.Kind.MAGIC -> Color(0xFFC77DFF) to 3f
+                        Particle.Kind.POISON -> Color(0xFF8BD450) to 4f
                     }
                     drawCircle(c.copy(alpha = c.alpha * a), r, Offset(pt.x, pt.y))
                 }
@@ -203,7 +232,7 @@ fun ArenaView(
                         FloatText.Tone.NORMAL, FloatText.Tone.SPEECH -> onSurface
                     }
                     val speech = t.tone == FloatText.Tone.SPEECH
-                    val lay = measurer.measure(t.text, TextStyle(fontSize = if (speech) 13.sp else 15.sp, fontWeight = FontWeight.Bold, fontFamily = if (speech) FontFamily.Default else FontFamily.Monospace, color = c))
+                    val lay = measurer.measure(t.text, TextStyle(fontSize = ((if (speech) 13f else 15f) / k).sp, fontWeight = FontWeight.Bold, fontFamily = if (speech) FontFamily.Default else FontFamily.Monospace, color = c))
                     val tl = Offset(t.x - lay.size.width / 2f, t.y - lay.size.height)
                     val alpha = (t.life * 2).coerceIn(0f, 1f)
                     if (speech) {
@@ -232,6 +261,10 @@ private fun DrawScope.drawProp(p: Prop, grid: Color, ink: Color) {
                 for (i in 0..6) lineTo(p.x - 24 + i * 8f, p.y + 6 + (if (i % 2 == 0) 0f else 8f))
             }
             drawPath(path, ink.copy(alpha = .6f), style = Stroke(2f))
+        }
+        Prop.Kind.LAVA -> {
+            drawRoundRect(Color(0xFFFF5A1F), tl, Size(p.w, p.h + 6), CornerRadius(6f))
+            drawRoundRect(Color(0xFFFFB13D).copy(alpha = .8f), tl + Offset(6f, 2f), Size(p.w - 12, 4f), CornerRadius(2f))
         }
         Prop.Kind.SPIKES -> {
             val n = (p.w / 14).toInt()
@@ -263,7 +296,7 @@ private fun DrawScope.drawHud(
     arena: Arena, pals: List<FighterPalette>, measurer: androidx.compose.ui.text.TextMeasurer,
     ink: Color, track: Color, extra: String?, dim: Color,
 ) {
-    val fs = arena.fighters.filter { !it.dead || arena.fighters.size <= 6 }.take(8)
+    val fs = arena.fighters.filter { !it.isMinion }.take(8)
     val pad = 14.dp.toPx()
     val colW = (size.width - pad * 3) / 2
     val rowH = 30.dp.toPx()
@@ -275,7 +308,7 @@ private fun DrawScope.drawHud(
         val y = pad + row * rowH
         val right = col == 1
         val name = measurer.measure(
-            "${f.name}  ${max(0, ceil(f.hp).toInt())}",
+            "${f.name}  ${max(0, ceil(f.hp).toInt())}" + (arena.scores[f.team]?.let { "  ·  ${it.toInt()}/30" } ?: if (arena.zoneX != null) "  ·  0/30" else ""),
             TextStyle(fontSize = if (many) 11.sp else 13.sp, fontWeight = FontWeight.Bold, color = if (f.dead) dim else ink),
             overflow = TextOverflow.Ellipsis, maxLines = 1, constraints = Constraints(maxWidth = colW.toInt()),
         )
