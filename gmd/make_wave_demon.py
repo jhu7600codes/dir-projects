@@ -14,7 +14,7 @@ SECTIONS = [
     (0, 1, 4, 25, 6), (0, 1, 3, 30, 5), (0, 2, 3, 30, 5), (1, 2, 4, 30, 4),
     (0, 2, 2, 30, 4), (1, 1, 3, 30, 3), (0, 3, 3, 30, 4), (0, 2, 2, 30, 3),
     (1, 2, 3, 30, 3), (0, 3, 2, 30, 3), (1, 3, 3, 30, 3), (0, 2, 2, 30, 2),
-    (1, 2, 3, 25, 2), (0, 3, 2, 40, 2),
+    (1, 2, 3, 25, 2), (0, 3, 2, 25, 2), (0, 3, 2, 15, 1),
 ]
 
 def o(oid, gx, gy, extra=""):
@@ -22,7 +22,7 @@ def o(oid, gx, gy, extra=""):
 
 def build(seed=1337):
     rnd = random.Random(seed)
-    objs = [o(WAVE, 6, 1)]
+    objs = []
     x, c = 14, 0          # c = lowest free row of the corridor
     pb, pt = -1, 4        # previous bottom/top wall rows
     for i in range(14):   # intro: flat corridor on the ground
@@ -57,7 +57,7 @@ def build(seed=1337):
     header = ("kS38,1_40_2_40_3_60_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|"
               "1_0_2_0_3_20_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|,"
               "kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,0,kA17,0,kA18,0,kS39,0,"
-              "kA2,0,kA3,0,kA8,0,kA4,0,kA9,0,kA10,0,kA11,0;")
+              "kA2,4,kA3,0,kA8,0,kA4,0,kA9,0,kA10,0,kA11,0;")
     return header + "".join(objs), len(objs), x
 
 def to_gmd(name, desc, level):
