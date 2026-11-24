@@ -11,8 +11,8 @@ android {
         applicationId = "com.patternbox.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "0.3.0"
+        versionCode = 8
+        versionName = "0.4.0"
     }
 
     // release key comes from the environment (github actions secrets), never from the repo.
@@ -44,6 +44,8 @@ android {
     kotlinOptions { jvmTarget = "17" }
 
     buildFeatures { compose = true }
+    // screens shared with the linux app
+    sourceSets["main"].java.srcDir("../ui/src")
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     testOptions { unitTests.isIncludeAndroidResources = true; unitTests.all { it.testLogging.showStandardStreams = true } }

@@ -14,7 +14,7 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /** all sounds are made from maths at startup, no audio files in the apk */
-class Sfx(context: Context) {
+class Sfx(context: Context) : Feedback {
     private val pool = SoundPool.Builder()
         .setMaxStreams(8)
         .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
@@ -49,7 +49,20 @@ class Sfx(context: Context) {
         }
     }
 
-    fun play(e: Event) {
+    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+
+    override fun buzz(big: Boolean) {
+        val v = vibrator ?: return
+        runCatching {
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                v.vibrate(android.os.VibrationEffect.createPredefined(if (big) android.os.VibrationEffect.EFFECT_HEAVY_CLICK else android.os.VibrationEffect.EFFECT_TICK))
+            } else {
+                v.vibrate(android.os.VibrationEffect.createOneShot(if (big) 40L else 12L, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+            }
+        }
+    }
+
+    override fun play(e: Event) {
         val name = when (e) {
             is Event.Hit -> if (e.crit) "crit" else "hit"
             Event.Clang -> "clang"

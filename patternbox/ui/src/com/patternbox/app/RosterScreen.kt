@@ -3,6 +3,7 @@ package com.patternbox.app
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +39,13 @@ import androidx.compose.ui.unit.dp
 import com.patternbox.core.Loadout
 import com.patternbox.core.Presets
 
+fun importMessage(n: Int, from: String) = when (n) {
+    0 -> "no fighter codes found in the $from"
+    1 -> "imported 1 fighter"
+    else -> "imported $n fighters"
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun RosterScreen(state: GameState, padding: PaddingValues, onOpen: (Long) -> Unit) {
     var presets by remember { mutableStateOf(false) }
@@ -54,14 +62,29 @@ fun RosterScreen(state: GameState, padding: PaddingValues, onOpen: (Long) -> Uni
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            val platform = LocalPlatform.current
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 AssistChip(onClick = { presets = true }, label = { Text("presets") })
                 AssistChip(onClick = {
-                    val d = Loadout.decode(clipboard.getText()?.text.orEmpty())
-                    msg = if (d != null) { state.add(d.autoName, d); "added from clipboard" } else "clipboard has no fighter code"
-                }, label = { Text("paste code") })
-                Text("${state.roster.size} fighters", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = cs.onSurfaceVariant)
+                    msg = importMessage(state.importText(clipboard.getText()?.text.orEmpty()), "clipboard")
+                }, label = { Text("paste codes") })
+                AssistChip(onClick = {
+                    clipboard.setText(AnnotatedString(state.exportText()))
+                    msg = "copied all ${state.roster.size} fighters, paste them into patternbox on another device"
+                }, label = { Text("copy all") })
+                platform.openTextFile?.let { open ->
+                    AssistChip(onClick = { open()?.let { msg = importMessage(state.importText(it), "file") } }, label = { Text("import file") })
+                }
+                platform.saveTextFile?.let { save ->
+                    AssistChip(onClick = {
+                        if (save("patternbox-fighters.txt", state.exportText())) msg = "saved ${state.roster.size} fighters"
+                    }, label = { Text("export file") })
+                }
             }
+            Text(
+                "${state.roster.size} fighters" + if (!platform.touchControls) "  ·  drop a file or text with codes anywhere on this window to import, or press ctrl+i to import from the clipboard" else "",
+                Modifier.padding(top = 4.dp), style = MaterialTheme.typography.labelMedium, color = cs.onSurfaceVariant,
+            )
             msg?.let { Text(it, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant) }
         }
         items(state.roster, key = { it.id }) { f -> RosterCard(state, f, onOpen) }

@@ -1,196 +1,76 @@
 package com.patternbox.app
 
+import android.content.Context
+import android.content.SharedPreferences
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import com.patternbox.core.Entry
-import com.patternbox.core.GameMap
-import com.patternbox.core.Mode
-import com.patternbox.core.Presets
-import com.patternbox.core.Tournament
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.ui.platform.LocalContext
 
-sealed interface Screen {
-    data object Tabs : Screen
-    data class Editor(val id: Long) : Screen
-    data class Setup(val mode: Mode) : Screen
-    data class Fight(val config: FightConfig) : Screen
-    data object Bracket : Screen
-    data object LanHome : Screen
-    data object HostLobby : Screen
-    data object Join : Screen
-    data object ClientFight : Screen
+/** SharedPreferences already has the exact shape of Store */
+class AndroidStore(private val p: SharedPreferences) : Store {
+    override fun getString(key: String, def: String?) = p.getString(key, def)
+    override fun getBoolean(key: String, def: Boolean) = p.getBoolean(key, def)
+    override fun getInt(key: String, def: Int) = p.getInt(key, def)
+    override fun getLong(key: String, def: Long) = p.getLong(key, def)
+    override fun getFloat(key: String, def: Float) = p.getFloat(key, def)
+    override fun getStringSet(key: String, def: Set<String>?): Set<String>? = p.getStringSet(key, def)
+    override fun edit(): Store.Editor = object : Store.Editor {
+        val e = p.edit()
+        override fun putString(key: String, v: String?) = apply { e.putString(key, v) }
+        override fun putBoolean(key: String, v: Boolean) = apply { e.putBoolean(key, v) }
+        override fun putInt(key: String, v: Int) = apply { e.putInt(key, v) }
+        override fun putLong(key: String, v: Long) = apply { e.putLong(key, v) }
+        override fun putFloat(key: String, v: Float) = apply { e.putFloat(key, v) }
+        override fun putStringSet(key: String, v: Set<String>?) = apply { e.putStringSet(key, v) }
+        override fun apply() = e.apply()
+    }
 }
 
 class MainActivity : ComponentActivity() {
     private var sfx: Sfx? = null
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        sfx = runCatching { Sfx(applicationContext) }.getOrNull()
-        val state = GameState(applicationContext)
-        setContent {
-            PatternboxTheme(state) {
-                val stack = remember { mutableStateListOf<Screen>(Screen.Tabs) }
-                var tab by rememberSaveable { mutableIntStateOf(0) }
-                var tournament by remember { mutableStateOf<Tournament?>(null) }
-                var bracketVersion by remember { mutableIntStateOf(0) }
-                val screen = stack.last()
-                fun push(s: Screen) { stack.add(s) }
-                // wifi game objects live outside the screens so going into a fight doesn't close them
-                var lanHost by remember { mutableStateOf<com.patternbox.core.NetHost?>(null) }
-                var lanClient by remember { mutableStateOf<com.patternbox.core.NetClient?>(null) }
-                fun pop() {
-                    if (stack.size <= 1) return
-                    when (stack.removeAt(stack.lastIndex)) {
-                        Screen.HostLobby -> { lanHost?.close(); lanHost = null }
-                        Screen.Join -> { lanClient?.close(); lanClient = null }
-                        else -> {}
-                    }
-                }
+        val fx = runCatching { Sfx(applicationContext) }.getOrNull()
+        sfx = fx
+        val state = GameState(AndroidStore(applicationContext.getSharedPreferences("patternbox", Context.MODE_PRIVATE)))
+        val platform = Platform(
+            name = "android",
+            touchControls = true,
+            hasDynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+            dynamicScheme = { dark ->
+                val ctx = LocalContext.current
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) (if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)) else null
+            },
+            feedback = fx ?: object : Feedback {},
+            lan = NsdLanFinder(applicationContext),
+            backHandler = { enabled, onBack -> BackHandler(enabled, onBack) },
+        )
+        importShared(intent, state)
+        this.state = state
+        setContent { PatternboxApp(state, platform) }
+    }
 
-                BackHandler(enabled = stack.size > 1) { pop() }
+    private var state: GameState? = null
 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    topBar = {
-                        if (screen == Screen.Tabs) {
-                            CenterAlignedTopAppBar(title = {
-                                Text("patternbox", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleLarge)
-                            })
-                        } else {
-                            TopAppBar(
-                                title = {
-                                    Text(
-                                        when (screen) {
-                                            is Screen.Editor -> state.byId(screen.id)?.displayName ?: "fighter"
-                                            is Screen.Setup -> screen.mode.label
-                                            is Screen.Fight -> screen.config.mode.label
-                                            Screen.Bracket -> "tournament"
-                                            Screen.LanHome -> "with friends"
-                                            Screen.HostLobby -> "hosting"
-                                            Screen.Join -> "join a game"
-                                            Screen.ClientFight -> "online"
-                                            Screen.Tabs -> ""
-                                        },
-                                        maxLines = 1,
-                                    )
-                                },
-                                navigationIcon = { IconButton(onClick = { pop() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "back") } },
-                            )
-                        }
-                    },
-                    bottomBar = {
-                        if (screen == Screen.Tabs) NavigationBar {
-                            NavigationBarItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Icon(Icons.Filled.Face, null) }, label = { Text("fighters") })
-                            NavigationBarItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Icon(Icons.Filled.PlayArrow, null) }, label = { Text("play") })
-                            NavigationBarItem(selected = tab == 2, onClick = { tab = 2 }, icon = { Icon(Icons.Filled.Settings, null) }, label = { Text("settings") })
-                        }
-                    },
-                    floatingActionButton = {
-                        if (screen == Screen.Tabs && tab == 0) ExtendedFloatingActionButton(
-                            onClick = {
-                                val l = com.patternbox.core.Loadout.random()
-                                val f = state.add(l.autoName, l)
-                                push(Screen.Editor(f.id))
-                            },
-                            icon = { Icon(Icons.Filled.Add, null) },
-                            text = { Text("new") },
-                        )
-                    },
-                ) { padding ->
-                    when (val s = screen) {
-                        Screen.Tabs -> when (tab) {
-                            0 -> RosterScreen(state, padding) { push(Screen.Editor(it)) }
-                            1 -> PlayScreen(state, padding, onFriends = { push(Screen.LanHome) }) { push(Screen.Setup(it)) }
-                            else -> SettingsScreen(state, padding)
-                        }
-                        is Screen.Editor -> EditorScreen(
-                            state, s.id, padding,
-                            onTry = { f ->
-                                val dummy = Presets.all.random()
-                                push(Screen.Fight(FightConfig(Mode.SANDBOX, listOf(f.entry(), Entry(dummy.first, dummy.second)), GameMap.FLAT, humans = listOf(0))))
-                            },
-                            onDeleted = { pop() },
-                        )
-                        is Screen.Setup -> SetupScreen(
-                            state, s.mode, padding,
-                            onStart = { push(Screen.Fight(it)) },
-                            onTournament = { picks, map, size ->
-                                tournament = Tournament(picks.map { it.entry() }, map, size)
-                                bracketVersion++
-                                stack.removeAt(stack.lastIndex)
-                                push(Screen.Bracket)
-                            },
-                        )
-                        is Screen.Fight -> FightScreen(
-                            state, sfx, s.config, padding,
-                            onDone = { winner ->
-                                val t = tournament
-                                val tm = s.config.tournamentMatch
-                                if (t != null && tm != null) {
-                                    val w = winner?.takeIf { it == 0 || it == 1 } ?: (0..1).random()
-                                    t.record(tm.first, tm.second, w)
-                                    bracketVersion++
-                                }
-                                pop()
-                            },
-                            onExit = { pop() },
-                        )
-                        Screen.LanHome -> LanHomeScreen(
-                            padding,
-                            onHost = {
-                                val h = com.patternbox.core.NetHost()
-                                val ok = runCatching { h.start() }.isSuccess
-                                if (ok) { lanHost = h; push(Screen.HostLobby) }
-                            },
-                            onJoin = { lanClient = com.patternbox.core.NetClient(); push(Screen.Join) },
-                        )
-                        Screen.HostLobby -> lanHost?.let { h -> HostLobbyScreen(state, h, padding) { push(Screen.Fight(it)) } }
-                        Screen.Join -> lanClient?.let { c ->
-                            JoinScreen(state, c, padding) { if (stack.last() != Screen.ClientFight) push(Screen.ClientFight) }
-                        }
-                        Screen.ClientFight -> lanClient?.let { c ->
-                            // a rematch from the host re-keys the screen by itself
-                            ClientFightScreen(state, sfx, c, padding) { pop() }
-                        }
-                        Screen.Bracket -> tournament?.let { t ->
-                            TournamentScreen(state, t, padding, bracketVersion, onWatch = { push(Screen.Fight(it)) }, onChanged = { bracketVersion++ })
-                        }
-                    }
-                }
-            }
-        }
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        state?.let { importShared(intent, it) }
+    }
+
+    /** text shared from another app (a chat message with codes, the "copy all" export...) */
+    private fun importShared(intent: android.content.Intent?, state: GameState) {
+        if (intent?.action != android.content.Intent.ACTION_SEND) return
+        val text = intent.getStringExtra(android.content.Intent.EXTRA_TEXT) ?: return
+        android.widget.Toast.makeText(this, importMessage(state.importText(text), "shared text"), android.widget.Toast.LENGTH_LONG).show()
+        intent.action = null
     }
 
     override fun onDestroy() {

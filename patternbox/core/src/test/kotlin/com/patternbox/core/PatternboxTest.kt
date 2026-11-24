@@ -123,4 +123,19 @@ class PatternboxTest {
         repeat(60) { arena.step() }
         assertTrue(f.hp < hp)
     }
+
+    @Test fun importFindsCodesAnywhere() {
+        val a = Presets.all[0]
+        val b = Presets.all[5]
+        val text = Codes.export(listOf(a.first to a.second, b.first to b.second)) +
+            "yo check my guy 14789-159-456 and this one too\n" +
+            "big boi: ${Presets.all[1].second.encode()}\n" +
+            "garbage 12-34-56 999-1-1\n"
+        val found = Codes.parse(text)
+        assertEquals(4, found.size)
+        assertEquals(a.first, found[0].name); assertEquals(a.second, found[0].loadout)
+        assertEquals(b.first, found[1].name)
+        assertEquals(Loadout.decode("14789-159-456"), found[2].loadout)
+        assertEquals("big boi", found[3].name)
+    }
 }

@@ -50,6 +50,8 @@ import kotlin.random.Random
 
 /** world is at least this many units wide so fighters aren't tiny on a portrait phone */
 private const val MIN_WORLD_W = 560f
+/** and at most this wide, so on a big pc window fighters get bigger instead of tiny */
+private const val MAX_WORLD_W = 760f
 
 @Composable
 fun ArenaView(
@@ -96,7 +98,7 @@ fun ArenaView(
         frame() // read so the canvas redraws every frame
         // a mirrored online game keeps the host's world size and gets letterboxed instead
         val k = if (arena.remote) minOf(size.width / arena.width, size.height / arena.height)
-        else size.width / max(MIN_WORLD_W, size.width / density)
+        else size.width / (size.width / density).coerceIn(MIN_WORLD_W, MAX_WORLD_W)
         scaleK = k
         val ww = if (arena.remote) arena.width else size.width / k
         val wh = if (arena.remote) arena.height else size.height / k

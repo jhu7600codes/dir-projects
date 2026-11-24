@@ -1,16 +1,12 @@
 package com.patternbox.app
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
 private val FallbackDark = darkColorScheme(
     primary = Color(0xFFFF8A65), onPrimary = Color(0xFF3B0E00),
@@ -32,12 +28,8 @@ fun PatternboxTheme(state: GameState, content: @Composable () -> Unit) {
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false
     }
-    val ctx = LocalContext.current
-    val scheme = when {
-        state.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
-        dark -> FallbackDark
-        else -> FallbackLight
-    }
+    val wallpaper = if (state.dynamicColor) LocalPlatform.current.dynamicScheme(dark) else null
+    val scheme = wallpaper ?: if (dark) FallbackDark else FallbackLight
     MaterialTheme(colorScheme = scheme, content = content)
 }
 

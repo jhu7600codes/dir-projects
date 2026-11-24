@@ -238,3 +238,33 @@ object Presets {
         "wifi" to Loadout(patternOf(6, 4, 2, 1, 0, 3), patternOf(0, 4, 8, 5), patternOf(6, 7, 8), patternOf(0, 4), WeaponType.SPEAR, WeaponMat.FIRE, ArmourMat.ICE, Ability.SLAM),
     )
 }
+
+/**
+ * importing and exporting fighters as text. anything with codes in it works: a chat message,
+ * a file, the roster export. "name: code" on a line keeps the name, a bare code gets an auto name.
+ */
+object Codes {
+    // body-weapon-armour, optionally -hat-xxxx
+    private val CODE = Regex("""(?<![0-9a-z-])([1-9]{4,9}-[1-9]{2,9}-[1-9]{2,9}(?:-[1-9]{0,9}-[0-9a-z]{4})?)(?![0-9a-z-])""", RegexOption.IGNORE_CASE)
+
+    data class Found(val name: String, val loadout: Loadout)
+
+    fun parse(text: String): List<Found> {
+        val out = mutableListOf<Found>()
+        for (line in text.lines()) {
+            for (m in CODE.findAll(line)) {
+                val l = Loadout.decode(m.value) ?: continue
+                // a name is whatever comes before the code on the same line, minus separators
+                // only "name: code" or "name = code" counts, so chat text doesn't become a name
+                val raw = line.substring(0, m.range.first).trim()
+                val name = if (raw.endsWith(":") || raw.endsWith("=")) raw.dropLast(1).trim().takeIf { it.isNotBlank() && it.length <= 24 && !CODE.containsMatchIn(it) } else null
+                out += Found(name ?: l.autoName, l)
+            }
+        }
+        return out
+    }
+
+    fun export(fighters: List<Pair<String, Loadout>>): String =
+        "# patternbox fighters. paste this into patternbox (phone or pc) to import them\n" +
+            fighters.joinToString("\n") { (n, l) -> "${n.replace(":", "").replace("\n", " ")}: ${l.encode()}" } + "\n"
+}

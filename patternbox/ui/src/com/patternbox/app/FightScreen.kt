@@ -1,6 +1,6 @@
 package com.patternbox.app
 
-import android.view.HapticFeedbackConstants
+import androidx.compose.ui.input.key.key
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -50,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -85,7 +84,6 @@ private val FIGHT_TOOLS = listOf(Tool.GRAB, Tool.BOOM, Tool.POKE, Tool.FIRE, Too
 @Composable
 fun FightScreen(
     state: GameState,
-    sfx: Sfx?,
     config: FightConfig,
     padding: PaddingValues,
     onDone: (winner: Int?) -> Unit,
@@ -113,7 +111,7 @@ fun FightScreen(
     var netFrame by remember(match) { mutableIntStateOf(0) }
     var showResult by remember(match) { mutableStateOf(false) }
     var recorded by remember(match) { mutableStateOf(false) }
-    val view = LocalView.current
+    val fx = LocalPlatform.current.feedback
     val speed by rememberUpdatedState(state.gameSpeed)
     val haptics by rememberUpdatedState(state.haptics)
     val soundOn by rememberUpdatedState(state.sound)
@@ -162,18 +160,38 @@ fun FightScreen(
                 if (arena.events.isNotEmpty()) {
                     var bigHit = false
                     for (e in arena.events) {
-                        if (soundOn) sfx?.play(e)
+                        if (soundOn) fx.play(e)
                         if (e is com.patternbox.core.Event.Boom || e == com.patternbox.core.Event.Ko) bigHit = true
                         if (e is com.patternbox.core.Event.Hit && e.dmg > 12) bigHit = true
                     }
                     if (haptics && arena.events.any { it !is com.patternbox.core.Event.Jump && it !is com.patternbox.core.Event.Shoot }) {
-                        view.performHapticFeedback(if (bigHit) HapticFeedbackConstants.LONG_PRESS else HapticFeedbackConstants.CONTEXT_CLICK)
+                        fx.buzz(bigHit)
                     }
                     arena.events.clear()
                 }
                 if (match.over && !showResult && arena.winT > 1.2f) showResult = true
             }
         }
+    }
+
+    // keyboard (pc, or a phone with a keyboard plugged in)
+    androidx.compose.runtime.DisposableEffect(match) {
+        KeyBus.handler = handler@{ ev ->
+            val down = ev.pressed() ?: return@handler false
+            val (slot, act) = keyAction(ev.key, config.humans.size) ?: return@handler false
+            val idx = config.humans.getOrNull(slot) ?: return@handler false
+            val f = arena.fighters.getOrNull(idx) ?: return@handler false
+            if (f.bot) { f.bot = false; botFlags = botFlags.toMutableList().also { it[idx] = false } }
+            when (act) {
+                Act.LEFT -> f.input.left = down
+                Act.RIGHT -> f.input.right = down
+                Act.JUMP -> f.input.jump = down
+                Act.HIT -> if (down) arena.swing(f)
+                Act.ABILITY -> if (down) arena.useAbility(f)
+            }
+            true
+        }
+        onDispose { KeyBus.handler = null }
     }
 
     // save results once per match
@@ -232,7 +250,10 @@ fun FightScreen(
                 AssistChip(onClick = { round++ }, label = { Text("restart") })
             }
 
-            if (config.humans.isNotEmpty()) {
+            if (config.humans.isNotEmpty() && !LocalPlatform.current.touchControls) {
+                Text(keyHints(config.humans.size), Modifier.padding(bottom = 10.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (config.humans.isNotEmpty() && LocalPlatform.current.touchControls) {
                 // one full width row per player, p2 on top so p1 sits under the thumbs
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     for (slot in config.humans.indices.reversed()) {

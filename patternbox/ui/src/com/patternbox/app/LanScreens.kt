@@ -1,8 +1,6 @@
 package com.patternbox.app
 
-import android.os.Handler
-import android.os.Looper
-import android.view.HapticFeedbackConstants
+import androidx.compose.ui.input.key.key
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,8 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -104,7 +100,7 @@ private fun MyFighterRow(state: GameState, id: Long?, onPick: (Long) -> Unit) {
 @Composable
 fun HostLobbyScreen(state: GameState, host: NetHost, padding: PaddingValues, onFight: (FightConfig) -> Unit) {
     val cs = MaterialTheme.colorScheme
-    val ctx = LocalContext.current
+    val lan = LocalPlatform.current.lan
     var version by remember { mutableIntStateOf(0) }
     var myId by remember { mutableStateOf(state.roster.firstOrNull()?.id) }
     var mode by remember { mutableStateOf(Mode.FFA) }
@@ -114,10 +110,9 @@ fun HostLobbyScreen(state: GameState, host: NetHost, padding: PaddingValues, onF
     val me = myId?.let { state.byId(it) } ?: state.roster.firstOrNull()
 
     DisposableEffect(host) {
-        val main = Handler(Looper.getMainLooper())
-        host.onChange = { main.post { version++ } }
-        val ad = Advertiser(ctx, me?.displayName ?: "game", host.localPort).also { it.start() }
-        onDispose { host.onChange = {}; ad.stop() }
+        host.onChange = { onMain { version++ } }
+        lan.advertise(me?.displayName ?: "game", host.localPort)
+        onDispose { host.onChange = {}; lan.stopAdvertising() }
     }
     val peers = remember(version) { host.readyPeers }
     LaunchedEffect(version, mode, map, myId) {
@@ -198,19 +193,18 @@ fun HostLobbyScreen(state: GameState, host: NetHost, padding: PaddingValues, onF
 @Composable
 fun JoinScreen(state: GameState, client: NetClient, padding: PaddingValues, onStarted: () -> Unit) {
     val cs = MaterialTheme.colorScheme
-    val ctx = LocalContext.current
+    val lan = LocalPlatform.current.lan
     var version by remember { mutableIntStateOf(0) }
     var myId by remember { mutableStateOf(state.roster.firstOrNull()?.id) }
     var ip by remember { mutableStateOf("") }
     var connecting by remember { mutableStateOf(false) }
-    val discovery = remember { Discovery(ctx) }
+    val discovery = LocalPlatform.current.lan
     val me = myId?.let { state.byId(it) } ?: state.roster.firstOrNull()
 
     DisposableEffect(client) {
-        val main = Handler(Looper.getMainLooper())
-        client.onChange = { main.post { version++ } }
-        discovery.start()
-        onDispose { client.onChange = {}; discovery.stop() }
+        client.onChange = { onMain { version++ } }
+        discovery.startDiscovery()
+        onDispose { client.onChange = {}; discovery.stopDiscovery() }
     }
     // jump into the fight whenever the host starts one
     var seenStart by remember { mutableIntStateOf(client.startCount) }
@@ -223,7 +217,7 @@ fun JoinScreen(state: GameState, client: NetClient, padding: PaddingValues, onSt
         connecting = true
         thread {
             client.connect(host, mine.displayName, mine.loadout.encode(), port)
-            Handler(Looper.getMainLooper()).post { connecting = false; version++ }
+            onMain { connecting = false; version++ }
         }
     }
 
@@ -254,7 +248,10 @@ fun JoinScreen(state: GameState, client: NetClient, padding: PaddingValues, onSt
         MyFighterRow(state, myId) { myId = it }
         client.error?.let { Text(it, color = cs.error) }
         Text("games on this wifi", style = MaterialTheme.typography.titleSmall)
-        if (discovery.games.isEmpty()) Text("looking... (make sure the host pressed \"host a game\")", color = cs.onSurfaceVariant)
+        if (discovery.games.isEmpty()) Text(
+            if (LocalPlatform.current.touchControls) "looking... (make sure the host pressed \"host a game\")" else "on pc, type the ip the host's screen shows",
+            color = cs.onSurfaceVariant,
+        )
         for (g in discovery.games) {
             OutlinedCard(onClick = { connect(g.host, g.port) }, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -281,14 +278,14 @@ fun JoinScreen(state: GameState, client: NetClient, padding: PaddingValues, onSt
 
 /** a friend's phone: draws the host's arena and sends buttons back */
 @Composable
-fun ClientFightScreen(state: GameState, sfx: Sfx?, client: NetClient, padding: PaddingValues, onLeave: () -> Unit) {
+fun ClientFightScreen(state: GameState, client: NetClient, padding: PaddingValues, onLeave: () -> Unit) {
     val start = client.start ?: return
     val startCount = client.startCount
     val arena = remember(startCount) { Arena().also { it.remote = true } }
     var frame by remember { mutableLongStateOf(0L) }
     var extra by remember { mutableStateOf("") }
     var lost by remember { mutableStateOf(false) }
-    val view = LocalView.current
+    val fx = LocalPlatform.current.feedback
     val soundOn by rememberUpdatedState(state.sound)
     val haptics by rememberUpdatedState(state.haptics)
     val mine = start.yourFighter
@@ -303,11 +300,11 @@ fun ClientFightScreen(state: GameState, sfx: Sfx?, client: NetClient, padding: P
                     extra = line
                     var big = false
                     for (e in events) {
-                        if (soundOn) sfx?.play(e)
+                        if (soundOn) fx.play(e)
                         if (e is Event.Boom || e == Event.Ko) big = true
                     }
                     if (haptics && events.any { it !is Event.Jump && it !is Event.Shoot }) {
-                        view.performHapticFeedback(if (big) HapticFeedbackConstants.LONG_PRESS else HapticFeedbackConstants.CONTEXT_CLICK)
+                        fx.buzz(big)
                     }
                 }
                 val f = arena.fighters.getOrNull(mine)
@@ -326,10 +323,29 @@ fun ClientFightScreen(state: GameState, sfx: Sfx?, client: NetClient, padding: P
         }
     }
 
+    androidx.compose.runtime.DisposableEffect(startCount) {
+        KeyBus.handler = handler@{ ev ->
+            val down = ev.pressed() ?: return@handler false
+            val (_, act) = keyAction(ev.key, 1) ?: return@handler false
+            val f = arena.fighters.getOrNull(mine) ?: return@handler false
+            when (act) {
+                Act.LEFT -> f.input.left = down
+                Act.RIGHT -> f.input.right = down
+                Act.JUMP -> f.input.jump = down
+                Act.HIT -> if (down) { client.swing(); client.sendInput(f.input.left, f.input.right, f.input.jump) }
+                Act.ABILITY -> if (down) { client.ability(); client.sendInput(f.input.left, f.input.right, f.input.jump) }
+            }
+            true
+        }
+        onDispose { KeyBus.handler = null }
+    }
+
     Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding())) {
         Column(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ArenaView(arena, null, { frame }, state.screenShake, extra.ifEmpty { "connected" }, Modifier.weight(1f).fillMaxWidth())
-            if (mine >= 0) {
+            if (mine >= 0 && !LocalPlatform.current.touchControls) {
+                Text(keyHints(1), Modifier.padding(bottom = 10.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else if (mine >= 0) {
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                     ControlPad(
                         team = arena.fighters.getOrNull(mine)?.team ?: 0,

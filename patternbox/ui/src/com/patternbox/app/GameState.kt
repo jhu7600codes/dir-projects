@@ -1,6 +1,5 @@
 package com.patternbox.app
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -42,8 +41,7 @@ enum class Achievement(val title: String, val how: String) {
 enum class ThemeMode(val label: String) { SYSTEM("system"), LIGHT("light"), DARK("dark") }
 
 /** everything that gets saved: the roster, records and settings */
-class GameState(context: Context) {
-    private val prefs = context.getSharedPreferences("patternbox", Context.MODE_PRIVATE)
+class GameState(private val prefs: Store) {
 
     val roster = mutableStateListOf<RosterFighter>()
 
@@ -138,6 +136,15 @@ class GameState(context: Context) {
         roster.removeAll { it.id == id }
         save()
     }
+
+    /** adds every fighter code found in [text], returns how many */
+    fun importText(text: String): Int {
+        val found = com.patternbox.core.Codes.parse(text)
+        for (f in found.reversed()) add(f.name, f.loadout)
+        return found.size
+    }
+
+    fun exportText(): String = com.patternbox.core.Codes.export(roster.map { it.displayName to it.loadout })
 
     fun duplicate(id: Long): RosterFighter? {
         val f = byId(id) ?: return null

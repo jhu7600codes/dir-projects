@@ -1,6 +1,5 @@
 package com.patternbox.app
 
-import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -39,7 +38,7 @@ fun SettingsScreen(state: GameState, padding: PaddingValues) {
         Toggle("vibration", "buzz on hits and pattern dots", state.haptics, state::changeHaptics)
         Toggle("damage numbers", "the little -12 popups", state.damageNumbers, state::changeDamageNumbers)
         Toggle("screen shake", "turn off if it makes you dizzy", state.screenShake, state::changeScreenShake)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (LocalPlatform.current.hasDynamicColor) {
             Toggle("wallpaper colours", "material you. fighters and the app take your wallpaper colours", state.dynamicColor, state::changeDynamicColor)
         }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -85,7 +84,7 @@ fun SettingsScreen(state: GameState, padding: PaddingValues) {
     )
 }
 
-object BuildConfigVersion { const val NAME = "0.3.0" }
+object BuildConfigVersion { const val NAME = "0.4.0" }
 
 @Composable
 private fun Toggle(title: String, sub: String, value: Boolean, onChange: (Boolean) -> Unit) {
