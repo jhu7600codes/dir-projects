@@ -24,10 +24,14 @@ func build() -> void:
 	add_child(panel)
 	panel.flipped.connect(_powered)
 	# something in the way so the panel isn't the first thing you see
+	# (pipes first, so the crates can keep out of their way)
+	var crates := []
 	for k in rng.randi_range(2, 4):
-		crate(Vector3(rng.randf_range(-3.0, 3.0), 0, rng.randf_range(2.5, length - 2.5)), rng.randf_range(0.7, 1.0))
+		crates.append([Vector3(rng.randf_range(-3.0, 3.0), 0, rng.randf_range(2.5, length - 2.5)), rng.randf_range(0.7, 1.0)])
 	for k in 2:
 		box(Vector3(0.45, 3.4, 0.45), Vector3(rng.randf_range(-2.0, 2.0), 1.7, rng.randf_range(3.0, length - 3.0)), Mats.get_mat("pipe"), true)
+	for c in crates:
+		crate(c[0], c[1])
 	pipes_along(-w / 2 if left else w / 2, length, 3.4)
 	raw_wires([Vector3(rng.randf_range(-2.5, 2.5), 0, rng.randf_range(3.0, length - 3.0))], 3.4)
 	scatter_loot([Vector3(rng.randf_range(-3.0, 3.0), 0, length * 0.4)])

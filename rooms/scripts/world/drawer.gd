@@ -46,6 +46,7 @@ func build() -> void:
 	for key in _top_cache:
 		_shared(_top_cache[key], key, _drawer)
 	_nameplate()
+	_clutter()
 	var it := Interactable.make(Vector3(0.6, 0.4, 0.4), "open drawer")
 	it.position = Vector3(0.45, Props.TABLE_H - 0.2, 0.4)
 	it.used.connect(_open.bind(it))
@@ -103,6 +104,50 @@ static func _box(into: Dictionary, key: String, size: Vector3, xf: Transform3D) 
 	(into[key] as SurfaceTool).append_from(bm, 0, xf)
 
 
+## what's on the desk: usually a monitor and keyboard, sometimes a mug and a stack of
+## papers. static, so it's merged with the room like the desk itself. the screens are on
+## in the powered office. (the room can take it off again: it's the "Clutter" node)
+func _clutter() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = loot_seed + 33
+	var c := Node3D.new()
+	c.name = "Clutter"
+	_static.add_child(c)
+	var h := Props.TABLE_H
+	if rng.randf() < 0.8:
+		var mx := rng.randf_range(-0.05, 0.15)
+		var yaw := rng.randf_range(-0.2, 0.2)
+		var b := Basis(Vector3.UP, yaw)
+		var m := Vector3(mx, h, -0.18)
+		_part(c, Vector3(0.2, 0.015, 0.14), m + Vector3(0, 0.008, 0), "monitor", yaw)
+		_part(c, Vector3(0.05, 0.2, 0.03), m + b * Vector3(0, 0.1, -0.02), "monitor", yaw)
+		_part(c, Vector3(0.56, 0.34, 0.035), m + b * Vector3(0, 0.36, 0.0), "monitor", yaw)
+		Screens.quad(c, Vector2(0.52, 0.3), m + b * Vector3(0, 0.36, 0.019), Screens.pick(rng, Game.office_powered()), b)
+		_part(c, Vector3(0.44, 0.022, 0.15), Vector3(mx + rng.randf_range(-0.05, 0.05), h + 0.011, 0.1), "monitor", rng.randf_range(-0.1, 0.1))
+		for k in 4:
+			_part(c, Vector3(0.4, 0.004, 0.02), Vector3(mx, h + 0.024, 0.05 + k * 0.032), "dark", 0.0)
+	if rng.randf() < 0.45:
+		var mug := Vector3(rng.randf_range(0.42, 0.55), h, rng.randf_range(-0.1, 0.15))
+		var cyl := PropModels._cyl(c, 0.04, 0.035, 0.1, mug + Vector3(0, 0.05, 0), Mats.get_mat("mug"))
+		cyl.name = "mug"
+		_part(c, Vector3(0.015, 0.05, 0.035), mug + Vector3(0.045, 0.05, 0), "mug", 0.0)
+	if rng.randf() < 0.5:
+		var pz := rng.randf_range(-0.2, -0.02)
+		for k in rng.randi_range(2, 6):
+			_part(c, Vector3(0.21, 0.004, 0.297), Vector3(-0.45, h + 0.003 + k * 0.005, pz), "paper", rng.randf_range(-0.15, 0.15))
+
+
+func _part(parent: Node3D, size: Vector3, pos: Vector3, mat: String, yaw: float) -> void:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = size
+	mi.mesh = bm
+	mi.material_override = Mats.get_mat(mat)
+	mi.position = pos
+	mi.rotation.y = yaw
+	parent.add_child(mi)
+
+
 ## a little name sign on the desk. it almost always says worker.
 func _nameplate() -> void:
 	var rng := RandomNumberGenerator.new()
@@ -128,7 +173,7 @@ func _open(player, it: Interactable) -> void:
 		return
 	_opened = true
 	it.queue_free()
-	create_tween().tween_property(_drawer, "position:z", FRONT_Z + 0.38, 0.25)
+	create_tween().tween_property(_drawer, "position:z", FRONT_Z + 0.38, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	Net.send_event(self, "opened")
 	if gives_key:
 		Game.has_key = true
@@ -164,4 +209,4 @@ func net_event(what: String, _arg) -> void:
 	for c in get_children():
 		if c is Interactable:
 			c.queue_free()
-	create_tween().tween_property(_drawer, "position:z", FRONT_Z + 0.38, 0.25)
+	create_tween().tween_property(_drawer, "position:z", FRONT_Z + 0.38, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

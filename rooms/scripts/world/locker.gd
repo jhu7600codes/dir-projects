@@ -194,28 +194,35 @@ func break_open(silent := false) -> void:
 	broken = true
 	_it.enabled = false
 	_it.prompt = "broken"
-	var squish := Vector3(randf_range(1.02, 1.06), randf_range(0.82, 0.9), randf_range(0.9, 0.96))
-	var tilt := randf_range(-0.05, 0.05)
-	var dents := Node3D.new()
-	add_child(dents)
+	# the whole locker crumples as one piece, from the floor up (each part used to squish
+	# around its own middle, so the top floated off and the parts came apart)
+	var squish := Vector3(randf_range(1.0, 1.03), randf_range(0.86, 0.92), randf_range(0.92, 0.97))
+	var tilt := randf_range(-0.025, 0.025)
+	var pivot := Node3D.new()
+	pivot.name = "Crumpled"
+	add_child(pivot)
 	for c in get_children():
-		if c is StaticBody3D or c is Interactable or c is AudioStreamPlayer3D:
+		if c == pivot or c is StaticBody3D or c is Interactable or c is AudioStreamPlayer3D:
 			continue
-		if silent:
-			c.scale = squish
-			c.rotation.z = tilt
-		else:
-			var tw := create_tween()
-			tw.tween_property(c, "scale", squish, 0.12).set_trans(Tween.TRANS_BOUNCE)
-			tw.parallel().tween_property(c, "rotation:z", tilt, 0.12)
-	# dents: dark dimples on the door and the sides
+		remove_child(c)
+		pivot.add_child(c)
+	if silent:
+		pivot.scale = squish
+		pivot.rotation.z = tilt
+	else:
+		var tw := create_tween()
+		tw.tween_property(pivot, "scale", squish, 0.12).set_trans(Tween.TRANS_BOUNCE)
+		tw.parallel().tween_property(pivot, "rotation:z", tilt, 0.12)
+	# dents: dark dimples on the door and the sides (inside the pivot, so they crumple too)
+	var dents := Node3D.new()
+	pivot.add_child(dents)
 	var dark := Mats.get_mat("dark")
 	for i in randi_range(4, 7):
 		var size := randf_range(0.08, 0.2)
-		_mesh(Vector3(size, size * randf_range(0.5, 1.2), 0.012), Vector3(randf_range(-0.32, 0.32), randf_range(0.3, 1.7) * squish.y, 0.33), dark, dents)
+		_mesh(Vector3(size, size * randf_range(0.5, 1.2), 0.012), Vector3(randf_range(-0.32, 0.32), randf_range(0.3, 1.7), 0.33), dark, dents)
 	for i in randi_range(2, 4):
 		var sx := 0.465 if randf() < 0.5 else -0.465
-		_mesh(Vector3(0.012, randf_range(0.1, 0.3), randf_range(0.08, 0.2)), Vector3(sx, randf_range(0.4, 1.6) * squish.y, randf_range(-0.2, 0.2)), dark, dents)
+		_mesh(Vector3(0.012, randf_range(0.1, 0.3), randf_range(0.08, 0.2)), Vector3(sx, randf_range(0.4, 1.6), randf_range(-0.2, 0.2)), dark, dents)
 	if silent:
 		return
 	_audio.stream = Assets.sound("locker")

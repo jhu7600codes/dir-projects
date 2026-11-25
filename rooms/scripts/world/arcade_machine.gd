@@ -13,7 +13,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	_box(Vector3(0.7, 1.75, 0.6), Vector3(0, 0.875, 0), "car_blue")
-	_box(Vector3(0.56, 0.45, 0.03), Vector3(0, 1.32, 0.31), "screen")
+	_box(Vector3(0.56, 0.45, 0.03), Vector3(0, 1.32, 0.31), "monitor")
+	Screens.quad(self, Vector2(0.54, 0.42), Vector3(0, 1.32, 0.327), "arcade")
 	_box(Vector3(0.66, 0.12, 0.3), Vector3(0, 0.98, 0.42), "dark")  # the control panel
 	var l := Label3D.new()
 	l.text = "OUTLET DODGE"

@@ -97,7 +97,7 @@ func _pull(i: int, it) -> void:
 	a.volume_db = -6.0
 	dr.add_child(a)
 	a.play()
-	create_tween().tween_property(dr, "position:z", D * 0.75, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	create_tween().tween_property(dr, "position:z", D * 0.75, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = loot_seed + i * 101
 	var n := rng.randi_range(0, 2)

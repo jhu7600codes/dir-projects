@@ -13,15 +13,22 @@ func build() -> void:
 	# table by the entrance, two plants
 	var t1 := Vector3(flip * 2.2, 0, 1.4)
 	Props.table(self, t1, 0.0, Vector3(1.6, Props.TABLE_H, 0.8))
-	Props.plant(self, t1 + Vector3(-0.45, Props.TABLE_H + 0.02, 0))
-	Props.plant(self, t1 + Vector3(0.45, Props.TABLE_H + 0.02, 0))
+	Props.plant(self, t1 + Vector3(-0.55, Props.TABLE_H + 0.02, 0))
+	Props.plant(self, t1 + Vector3(0.55, Props.TABLE_H + 0.02, 0))
 	# the cubicle against the side wall
-	var cp := Vector3(flip * (w / 2 - 1.1), 0, length * 0.55)
+	var cp := Vector3(flip * (w / 2 - 1.15), 0, length * 0.55)
 	var yaw := -flip * PI / 2  # back against the side wall, open toward the room
 	Props.cubicle(self, cp, yaw)
+	# this desk has its own things on it (below)
+	for d in get_children():
+		if d is Drawer and d.position.distance_to(cp) < 1.0:
+			var cl := d.get_node_or_null("Static/Clutter")
+			if cl:
+				cl.free()
 	var b := Basis(Vector3.UP, yaw)
 	var top := cp + b * Vector3(0, Props.TABLE_H + 0.02, -0.75)
-	box(Vector3(0.55, 0.36, 0.04), top + b * Vector3(0, 0.3, -0.05) , Mats.get_mat("screen"), false, yaw)
+	box(Vector3(0.55, 0.36, 0.04), top + b * Vector3(0, 0.3, -0.05) , Mats.get_mat("monitor"), false, yaw)
+	Screens.quad(self, Vector2(0.51, 0.32), top + b * Vector3(0, 0.3, -0.029), "sheet", b)
 	box(Vector3(0.08, 0.12, 0.08), top + b * Vector3(0, 0.06, -0.05), Mats.get_mat("dark"), false, yaw)
 	box(Vector3(0.08, 0.1, 0.08), top + b * Vector3(0.45, 0.05, 0.1), Mats.get_mat("fridge_white"), false)
 	box(Vector3(0.065, 0.01, 0.065), top + b * Vector3(0.45, 0.1, 0.1), Mats.get_mat("cocoa"), false)

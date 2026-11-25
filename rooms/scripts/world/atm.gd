@@ -9,7 +9,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	_box(Vector3(0.75, 1.6, 0.5), Vector3(0, 0.8, 0), "metal")
-	_box(Vector3(0.5, 0.35, 0.03), Vector3(0, 1.3, 0.26), "screen")
+	_box(Vector3(0.5, 0.35, 0.03), Vector3(0, 1.3, 0.26), "monitor")
+	Screens.quad(self, Vector2(0.48, 0.33), Vector3(0, 1.3, 0.277), "atm")
 	_box(Vector3(0.4, 0.06, 0.15), Vector3(0, 0.95, 0.3), "dark")
 	var l := Label3D.new()
 	l.text = "ATM"

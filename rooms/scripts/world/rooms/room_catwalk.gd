@@ -46,7 +46,7 @@ func build() -> void:
 	var lz := rng.randf_range(length * 0.55, length - 2.5)
 	var side := 1.0 if rng.randf() < 0.5 else -1.0
 	add_locker(Vector3(side * (w / 2 - 0.4), -DROP, lz), -side * PI / 2)
-	Props.cubicle(self, Vector3(-side * (w / 2 - 1.1), -DROP, lz - 1.0), side * PI / 2)
+	Props.cubicle(self, Vector3(-side * (w / 2 - 1.15), -DROP, lz - 1.0), side * PI / 2)
 	for j in 3:
 		ceiling_light(Vector3(-3.0, H, length * (j + 0.5) / 3.0))
 		ceiling_light(Vector3(3.0, H, length * (j + 0.5) / 3.0))

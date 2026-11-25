@@ -42,6 +42,7 @@ var _hold: ProgressBar
 var _toast: Label
 var _subtitle: Label
 var _flash: ColorRect
+var _flash_tw: Tween
 var _tint: ColorRect
 var _slits: ColorRect
 var _star: TextureRect
@@ -78,7 +79,9 @@ func _ready() -> void:
 	tm.shader = _shader(TINT_SHADER)
 	_tint.material = tm
 
+	_tint.visible = false  # full screen overlays cost a lot on phones: only drawn while used
 	_flash = _rect(root, Color(0, 0, 0, 0))
+	_flash.visible = false
 
 	_door = UIKit.label("A-000", 36, Color(0.95, 0.85, 0.4))
 	_door.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
@@ -150,7 +153,9 @@ func _ready() -> void:
 
 	Game.door_changed.connect(func(n): _door.text = Game.counter_label(n))
 	Game.subtitle.connect(show_subtitle)
-	Game.screen_tint.connect(func(c): _tint.material.set_shader_parameter("tint", c))
+	Game.screen_tint.connect(func(c: Color):
+		_tint.material.set_shader_parameter("tint", c)
+		_tint.visible = c.a > 0.001)
 
 
 func _shader(code: String) -> Shader:
@@ -285,8 +290,12 @@ func show_subtitle(text: String, color := Color.WHITE) -> void:
 
 func flash(color: Color, seconds: float) -> void:
 	_flash.color = color
-	var tw := create_tween()
-	tw.tween_property(_flash, "color:a", 0.0, seconds)
+	_flash.visible = true
+	if _flash_tw:
+		_flash_tw.kill()
+	_flash_tw = create_tween()
+	_flash_tw.tween_property(_flash, "color:a", 0.0, seconds)
+	_flash_tw.tween_callback(func(): _flash.visible = false)
 
 
 func set_locker_view(on: bool) -> void:

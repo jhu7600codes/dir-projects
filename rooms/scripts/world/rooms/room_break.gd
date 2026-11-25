@@ -7,7 +7,7 @@ func build() -> void:
 	var length := rng.randf_range(8.0, 10.0)
 	var w := 7.0
 	shell(-w / 2, w / 2, length, 3.0, "front", -1.5)
-	Props.counter(self, Vector3(w / 2 - 0.35, 0, length * 0.5), PI / 2, 4.0)
+	Props.counter(self, Vector3(w / 2 - 0.45, 0, length * 0.5), PI / 2, 4.0)
 	# the white fridge: you can hide in it
 	add_locker(Vector3(w / 2 - 0.4, 0, 1.2), -PI / 2, "fridge")
 	var c := Vector3(-1.0, 0, length * 0.6)

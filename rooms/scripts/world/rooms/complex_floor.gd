@@ -223,10 +223,34 @@ func _apt_shell(w: float, z0: float, z1: float, floor_mat: String, wall_mat := "
 			ceiling_light(Vector3(ax0 + w * (i + 0.5) / maxi(1, int(w / 5.0)), UP + APT_H, z0 + d * (j + 0.5) / maxi(1, int(d / 5.0))))
 
 
+## nothing solid (furniture, inner walls) on the 2x2 square around this spot
+func _square_clear(c: Vector3) -> bool:
+	var sq := AABB(c + Vector3(-FireEscape.SAFE, 0.05, -FireEscape.SAFE), Vector3(FireEscape.SAFE * 2, 1.5, FireEscape.SAFE * 2))
+	for cs in _body.get_children():
+		if not (cs is CollisionShape3D and cs.shape is BoxShape3D):
+			continue
+		var sz: Vector3 = (cs.shape as BoxShape3D).size
+		var bb: AABB = cs.transform * AABB(-sz / 2.0, sz)
+		if bb.size.y <= 0.25 and (bb.size.x > 2.5 or bb.size.z > 2.5):
+			continue  # floor / ceiling
+		var i := sq.intersection(bb)
+		if i.size.x > 0.05 and i.size.z > 0.05 and i.size.y > 0.0:
+			# the wall the box hangs on only touches the square's back edge
+			if minf(i.size.x, i.size.z) <= 0.12:
+				continue
+			return false
+	return true
+
+
 ## puts the fire escape box on a wall far from the front door, and the anomaly somewhere
 func _finish_apt(spots: Array) -> void:
 	var door := Vector3(X1, UP, _door_z)
 	spots.sort_custom(func(a, b): return a[0].distance_to(door) > b[0].distance_to(door))
+	# the safe square in front of the box has to be clear floor: you need to stand in it
+	# (it used to end up under a bed or a counter)
+	var clear := spots.filter(func(sp): return _square_clear(sp[0] + Basis(Vector3.UP, sp[1]) * Vector3(0, 0, 0.9)))
+	if not clear.is_empty():
+		spots = clear
 	var pick: Array = spots[rng.randi() % mini(2, spots.size())]
 	fire = FireEscape.new()
 	fire.position = pick[0]
@@ -258,7 +282,7 @@ func _apartment() -> void:
 	Props.table(self, Vector3(X1 + 2.3, UP, _door_z + 2.5), 0.0, Vector3(1.2, Props.TABLE_H, 0.8))
 	Props.plant(self, Vector3(X1 + 0.5, UP, z1 - 0.6))
 	# kitchen and bedroom on the far side
-	Props.counter(self, Vector3(X1 + w - 0.35, UP, z0 + (z1 - z0) * 0.3), -PI / 2, 2.5)
+	Props.counter(self, Vector3(X1 + w - 0.45, UP, z0 + (z1 - z0) * 0.3), -PI / 2, 2.5)
 	Props.fridge(self, Vector3(X1 + w - 0.45, UP, z0 + 0.6), -PI / 2)
 	box(Vector3(1.6, 0.5, 2.1), Vector3(X1 + w - 1.2, UP + 0.25, z1 - 1.5), Mats.get_mat("fabric"))
 	box(Vector3(1.6, 0.9, 0.12), Vector3(X1 + w - 1.2, UP + 0.45, z1 - 0.5), Mats.get_mat("wood_dark"))

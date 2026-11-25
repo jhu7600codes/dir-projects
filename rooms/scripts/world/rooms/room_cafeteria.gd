@@ -34,6 +34,9 @@ func build() -> void:
 				box(Vector3(0.06, 0.74, 0.06), Vector3(x + lx, 0.37, z), Mats.get_mat("metal"), false)
 			for bz in [-0.75, 0.75]:
 				box(Vector3(2.4, 0.06, 0.3), Vector3(x, 0.45, z + bz), Mats.get_mat("wood"), true)
+				# bench legs (the benches used to hover)
+				for lx in [-1.0, 1.0]:
+					box(Vector3(0.05, 0.42, 0.22), Vector3(x + lx, 0.21, z + bz), Mats.get_mat("metal"), false)
 			if rng.randf() < 0.4:
 				box(Vector3(0.35, 0.02, 0.45), Vector3(x + rng.randf_range(-0.8, 0.8), 0.8, z), Mats.get_mat("poster_grey"), false, rng.randf())
 		z += 2.6

@@ -140,9 +140,7 @@ static func _floor_item(room: RoomBase, rng: RandomNumberGenerator, base: Vector
 		# filing cabinet
 		var at := base + n * 0.42 + Vector3.UP * 0.65
 		if _free(taken, at, Vector3(0.55, 1.3, 0.65), yaw):
-			room.box(_sz(0.5, 1.3, 0.6, yaw), at, Mats.get_mat("cabinet"), true)
-			for k in 4:
-				room.box(_sz(0.2, 0.025, 0.62, yaw), at + Vector3.UP * (0.5 - k * 0.32) + n * 0.005, Mats.get_mat("dark"), false)
+			Props.filing_cabinet(room, at - Vector3.UP * 0.65, atan2(n.x, n.z))
 			taken.append(_aabb(at, Vector3(0.6, 1.3, 0.7), yaw))
 	elif r < 0.75 and not once.has("cooler"):
 		var at := base + n * 0.4
@@ -182,6 +180,11 @@ static func _occupied(room: RoomBase) -> Array:
 	for c in room.get_children():
 		if c is Locker or c is Drawer or c is ShopStand or c is Dispenser or c is LootCabinet or c is Atm or c is ExitDoor or c is ArcadeMachine:
 			out.append(AABB(c.position - Vector3(0.9, 0, 0.9), Vector3(1.8, 2.4, 1.8)))
+		elif c is Node3D and c.has_meta("unclip"):
+			# plants, couches, shelves, chairs the room put down itself
+			var bb: AABB = c.transform * room._model_aabb(c, Transform3D.IDENTITY)
+			if bb.size != Vector3.ZERO:
+				out.append(bb)
 	out.append_array(room.decor_block)
 	# doorways
 	out.append(AABB(Vector3(-1.1, 0, -0.2), Vector3(2.2, 3.0, 1.8)))

@@ -18,7 +18,7 @@ func build() -> void:
 		else:
 			Props.table(self, Vector3(side * (w / 2 - 1.3), 0, z), 0.0, Vector3(2.2, Props.TABLE_H, 0.9))
 			_boxes(Vector3(side * (w / 2 - 1.3), Props.TABLE_H, z), 3)
-		_boxes(Vector3(side * (w / 2 - 0.5), 0, z + 1.1), 2)
+		_boxes(Vector3(side * (w / 2 - 0.62), 0, z + 1.1), 2)
 		side = -side
 		z += 2.3
 	scatter_loot([Vector3(-w / 2 + 0.4, 0, length - 1.0), Vector3(w / 2 - 0.4, 0, 1.2)])
@@ -29,5 +29,7 @@ func _boxes(pos: Vector3, n: int) -> void:
 	var y := pos.y
 	for i in n:
 		var s := Vector3(rng.randf_range(0.4, 0.7), rng.randf_range(0.3, 0.5), rng.randf_range(0.4, 0.6))
-		box(s, Vector3(pos.x + rng.randf_range(-0.3, 0.3), y + s.y / 2, pos.z + rng.randf_range(-0.15, 0.15)), Mats.get_mat("cardboard"), i == 0 and pos.y < 0.1, rng.randf_range(-0.3, 0.3))
+		# a stack leans a little, but each box sits mostly on the one under it
+		var wob := 0.3 if i == 0 and pos.y > 0.1 else 0.08
+		box(s, Vector3(pos.x + rng.randf_range(-wob, wob), y + s.y / 2, pos.z + rng.randf_range(-0.12, 0.12)), Mats.get_mat("cardboard"), i == 0 and pos.y < 0.1, rng.randf_range(-0.3, 0.3))
 		y += s.y

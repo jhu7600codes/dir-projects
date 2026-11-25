@@ -14,7 +14,15 @@ func build() -> void:
 	box(Vector3(DOOR_W + 0.3, DOOR_H + 0.1, 0.15), Vector3(0, DOOR_H / 2, 0.02), Mats.get_mat("metal"))
 	box(Vector3(0.02, DOOR_H, 0.16), Vector3(0, DOOR_H / 2, 0.03), Mats.get_mat("dark"), false)
 	# skylight: bright panel + light pouring down
-	box(Vector3(3.5, 0.06, 4.0), Vector3(0, 3.57, length * 0.5), Mats.get_mat("skylight"), false)
+	var sky_c := Vector3(0, 3.59, length * 0.5)
+	Screens.quad(self, Vector2(3.5, 4.0), sky_c, "sky", Basis(Vector3.RIGHT, PI / 2))
+	var fr := Mats.get_mat("frame")
+	for sx in [-1.0, 1.0]:
+		box(Vector3(0.12, 0.08, 4.12), sky_c + Vector3(sx * 1.81, -0.03, 0), fr, false)
+		box(Vector3(3.74, 0.08, 0.12), sky_c + Vector3(0, -0.03, sx * 2.06), fr, false)
+	box(Vector3(0.05, 0.05, 4.0), sky_c + Vector3(0, -0.03, 0), fr, false)
+	for k in [-1.0, 0.0, 1.0]:
+		box(Vector3(3.5, 0.05, 0.05), sky_c + Vector3(0, -0.03, k * 1.0), fr, false)
 	var sun := SpotLight3D.new()
 	sun.position = Vector3(0, 3.5, length * 0.5)
 	sun.rotation.x = -PI / 2

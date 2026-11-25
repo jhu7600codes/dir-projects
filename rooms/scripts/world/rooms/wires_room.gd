@@ -38,7 +38,25 @@ func wall_cables(x: float, length: float) -> void:
 		box(Vector3(0.04, 0.04, length - 0.4), Vector3(x - signf(x) * 0.12, y, length / 2.0), Mats.get_mat("wire"), false)
 
 
+var _crates: Array[AABB] = []
+
+
+## a wooden crate on the floor. skipped if it would end up inside another crate, a pipe
+## or a pillar (they used to be dropped anywhere and went through each other)
 func crate(pos: Vector3, s := 0.8) -> void:
+	var r := s * 0.72  # half of the diagonal: room it needs whichever way it's turned
+	var spot := AABB(pos + Vector3(-r, 0.05, -r), Vector3(r * 2, s, r * 2))
+	for bb in _crates:
+		if spot.intersects(bb):
+			return
+	for cs in _body.get_children():
+		if cs is CollisionShape3D and cs.shape is BoxShape3D:
+			var sz: Vector3 = (cs.shape as BoxShape3D).size
+			if sz.y <= 0.25 and (sz.x > 2.5 or sz.z > 2.5):
+				continue
+			if spot.intersects(cs.transform * AABB(-sz / 2.0, sz)):
+				return
+	_crates.append(spot)
 	box(Vector3(s, s, s), pos + Vector3(0, s / 2.0, 0), Mats.get_mat("wood_old"), true, rng.randf_range(-0.3, 0.3))
 
 

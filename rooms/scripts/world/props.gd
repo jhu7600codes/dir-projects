@@ -51,6 +51,7 @@ static func chair(room: RoomBase, pos: Vector3, yaw := 0.0, fallen := false) -> 
 		# tipped over backwards, lying on its back
 		c.rotation.x = -PI / 2 + 0.15
 		c.position.y += 0.28
+	c.set_meta("unclip", true)
 	room.add_child(c)
 
 
@@ -58,7 +59,10 @@ static func plant(room: RoomBase, pos: Vector3, fallen := false) -> void:
 	if _model(room, "plant_fallen" if fallen else "plant", pos, room.rng.randf() * TAU):
 		return
 	var kinds := ["fern", "fern", "snake", "bush"]
+	if pos.y > 0.1:
+		kinds = ["snake", "bush"]  # on a table: ferns droop their leaves through the top
 	var p := PropModels.plant(kinds[room.rng.randi() % kinds.size()], room.rng.randi() % 3)
+	p.set_meta("unclip", true)
 	p.position = pos
 	p.rotation.y = room.rng.randf() * TAU
 	if fallen:
@@ -74,6 +78,7 @@ static func couch(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
 		var c := PropModels.couch()
 		c.position = pos
 		c.rotation.y = yaw
+		c.set_meta("unclip", true)
 		room.add_child(c)
 	# collision only
 	var b := Basis(Vector3.UP, yaw)
@@ -86,6 +91,7 @@ static func shelf(room: RoomBase, pos: Vector3, yaw := 0.0, clear_spot := false)
 		var s := PropModels.shelf(room.rng, clear_spot)
 		s.position = pos
 		s.rotation.y = yaw
+		s.set_meta("unclip", true)
 		room.add_child(s)
 	room.box(Vector3(1.4, 2.0, 0.45), pos + Vector3(0, 1.0, 0), Mats.get_mat("metal"), true, yaw).visible = false
 
@@ -110,6 +116,7 @@ static func fridge(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
 		var f := PropModels.fridge()
 		f.position = pos
 		f.rotation.y = yaw
+		f.set_meta("unclip", true)
 		room.add_child(f)
 	room.box(Vector3(0.8, 1.9, 0.7), pos + Vector3(0, 0.95, 0), Mats.get_mat("plastic"), true, yaw).visible = false
 
@@ -122,22 +129,47 @@ static func counter(room: RoomBase, pos: Vector3, yaw := 0.0, length := 3.0) -> 
 static func water_dispenser(room: RoomBase, pos: Vector3, broken := false) -> void:
 	if _model(room, "water_dispenser", pos, 0.0):
 		return
+	# a floor-standing cooler: cabinet, a dark recess with a red and a blue tap over a drip
+	# tray, and a blue bottle upside down on top
 	var holder := Node3D.new()
 	holder.position = pos
+	holder.set_meta("unclip", true)
 	if broken:
 		holder.rotation.x = PI / 2.2
 		holder.position.y += 0.2
 	room.add_child(holder)
-	room.box(Vector3(0.4, 1.0, 0.4), Vector3(0, 0.5, 0), Mats.get_mat("plastic"), false, 0.0, holder)
-	var jug := MeshInstance3D.new()
-	var cm := CylinderMesh.new()
-	cm.top_radius = 0.15
-	cm.bottom_radius = 0.15
-	cm.height = 0.45
-	jug.mesh = cm
-	jug.material_override = Mats.get_mat("glass")
-	jug.position = Vector3(0, 1.22, 0)
-	holder.add_child(jug)
+	room.box(Vector3(0.34, 0.9, 0.34), Vector3(0, 0.45, 0), Mats.get_mat("plastic"), false, 0.0, holder)
+	room.box(Vector3(0.36, 0.04, 0.36), Vector3(0, 0.02, 0), Mats.get_mat("dark"), false, 0.0, holder)
+	room.box(Vector3(0.3, 0.06, 0.3), Vector3(0, 0.93, 0), Mats.get_mat("plastic"), false, 0.0, holder)
+	room.box(Vector3(0.24, 0.22, 0.02), Vector3(0, 0.72, 0.165), Mats.get_mat("dark"), false, 0.0, holder)
+	room.box(Vector3(0.035, 0.05, 0.05), Vector3(-0.06, 0.78, 0.18), Mats.get_mat("tap_blue"), false, 0.0, holder)
+	room.box(Vector3(0.035, 0.05, 0.05), Vector3(0.06, 0.78, 0.18), Mats.get_mat("tap_red"), false, 0.0, holder)
+	room.box(Vector3(0.22, 0.025, 0.07), Vector3(0, 0.62, 0.19), Mats.get_mat("metal"), false, 0.0, holder)
+	room.box(Vector3(0.2, 0.004, 0.012), Vector3(0, 0.634, 0.19), Mats.get_mat("dark"), false, 0.0, holder)
+	if not broken:
+		PropModels._cyl(holder, 0.05, 0.05, 0.08, Vector3(0, 1.0, 0), Mats.get_mat("jug"))
+		PropModels._cyl(holder, 0.15, 0.06, 0.08, Vector3(0, 1.08, 0), Mats.get_mat("jug"))
+		PropModels._cyl(holder, 0.15, 0.15, 0.3, Vector3(0, 1.27, 0), Mats.get_mat("jug"))
+		PropModels._cyl(holder, 0.13, 0.15, 0.04, Vector3(0, 1.44, 0), Mats.get_mat("jug"))
+
+
+## a grey filing cabinet: four drawers with a dark gap between them, a pull handle and a
+## little white label holder on each. stands on the floor at pos, drawers facing +z
+static func filing_cabinet(room: RoomBase, pos: Vector3, yaw := 0.0) -> void:
+	var holder := Node3D.new()
+	holder.position = pos
+	holder.rotation.y = yaw
+	room.add_child(holder)
+	var cab := Mats.get_mat("cabinet")
+	room.box(Vector3(0.5, 1.3, 0.58), Vector3(0, 0.65, -0.01), cab, false, 0.0, holder)
+	room.box(Vector3(0.46, 0.04, 0.02), Vector3(0, 0.02, 0.28), Mats.get_mat("dark"), false, 0.0, holder)
+	var dh := 0.305
+	for k in 4:
+		var y := 0.07 + dh * (k + 0.5)
+		room.box(Vector3(0.46, dh - 0.02, 0.025), Vector3(0, y, 0.285), cab, false, 0.0, holder)
+		room.box(Vector3(0.2, 0.022, 0.03), Vector3(0, y + 0.04, 0.31), Mats.get_mat("metal"), false, 0.0, holder)
+		room.box(Vector3(0.12, 0.045, 0.006), Vector3(0, y + 0.1, 0.3), Mats.get_mat("paper"), false, 0.0, holder)
+	room.box(Vector3(0.5, 1.3, 0.6), Vector3(0, 0.65, 0), cab, true, 0.0, holder).visible = false
 
 
 static func pillar(room: RoomBase, pos: Vector3, height: float, size := 0.7) -> void:

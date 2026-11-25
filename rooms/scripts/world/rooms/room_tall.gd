@@ -42,7 +42,7 @@ func build() -> void:
 		_rail(Vector3(s * 1.0, UP, length - land), Vector3(s * w / 2, UP, length - land), true)
 		_stairs(s * (w / 2 - 0.75), top0)
 	# the pillar holding up the catwalk
-	box(Vector3(0.5, UP, 0.5), Vector3(0, UP / 2, cz0 + (length - land - cz0) / 2), plate)
+	box(Vector3(0.5, UP - 0.15, 0.5), Vector3(0, (UP - 0.15) / 2, cz0 + (length - land - cz0) / 2), plate)  # stops under the catwalk
 	# downstairs: two lockers at the back, and remi's cubicle
 	add_locker(Vector3(-1.6, 0, length - 0.45), PI)
 	add_locker(Vector3(1.6, 0, length - 0.45), PI)

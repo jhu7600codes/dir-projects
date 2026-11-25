@@ -76,6 +76,25 @@ func start(seed_value: int, first_door := 0) -> void:
 	_update_seal()
 
 
+## a room behind a door that is still shut can't be seen, so it isn't drawn (or lit).
+## that's the newest room most of the time: it sits right in front of you behind the next
+## door, so the camera can't cull it on its own. (not in the city: its gates are see-through)
+func _process(_delta: float) -> void:
+	if Game.floor != "offices" and Game.floor != "wires":
+		return
+	for i in rooms.size():
+		var r := rooms[i]
+		if not is_instance_valid(r):
+			continue
+		var shown := true
+		# (only rooms ahead of you: seek's slammed door shuts the one you're standing in)
+		if i > 0 and r.number > Game.door and is_instance_valid(rooms[i - 1]):
+			var d: Door = rooms[i - 1].exit_door
+			shown = d == null or d.is_open
+		if r.visible != shown:
+			r.visible = shown
+
+
 func room(n: int) -> RoomBase:
 	for r in rooms:
 		if r.number == n and is_instance_valid(r):

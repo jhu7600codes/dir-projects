@@ -237,7 +237,8 @@ func open() -> void:
 	_audio.stream = Assets.sound("door_open")
 	_audio.play()
 	var tw := create_tween()
-	tw.tween_property(_hinge, "rotation:y", -PI * 0.55, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# swings a touch past open and settles back, like a real door
+	tw.tween_property(_hinge, "rotation:y", -PI * 0.55, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	opened.emit(self)
 
 

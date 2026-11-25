@@ -70,8 +70,10 @@ func setup(num: int, seed_value: int) -> void:
 		_build_side_room()
 	if Sightings.has_extras() and theme == "office" and not is_special and not shell_info.is_empty() and num >= 20 and rng.randf() < 0.2:
 		_add_fake_doors()
+	_unclip_from_walls()  # before the dressing, so it knows where things really are
 	if theme == "office" and not is_special and not shell_info.is_empty():
 		Dressing.dress(self, not Game.fixed_office)
+		_unclip_from_walls()  # and the plants / coolers it added
 	if Game.office_powered():
 		_populate()
 
@@ -160,6 +162,87 @@ func _clear_doorways() -> void:
 	has_lockers = not lockers.is_empty()
 	if not has_lockers:
 		entity_spawn_ok = false  # nothing to hide in, so a-60 / a-120 can't come here
+
+
+## furniture placed a bit too close to a wall gets pushed out of it, so nothing sinks into
+## the walls: lockers, dressers, arcade cabinets, atms and the props (plants, couches,
+## shelves, chairs...). footprints are in the thing's own space, before it's rotated.
+const _FOOTPRINT := {
+	"locker": [Vector3(-0.47, 0, -0.38), Vector3(0.47, 2.14, 0.36)],
+	"cabinet": [Vector3(-0.85, 0, -0.26), Vector3(0.85, 0.95, 0.3)],
+	"arcade": [Vector3(-0.35, 0, -0.31), Vector3(0.35, 1.75, 0.57)],
+	"atm": [Vector3(-0.38, 0, -0.26), Vector3(0.38, 1.6, 0.33)],
+}
+
+
+func _unclip_from_walls() -> void:
+	var walls: Array[AABB] = []
+	for cs in _body.get_children():
+		if cs is CollisionShape3D and cs.shape is BoxShape3D and not cs.disabled:
+			var sz: Vector3 = (cs.shape as BoxShape3D).size
+			if absf(sz.x - WALL_T) < 0.01 or absf(sz.z - WALL_T) < 0.01:
+				walls.append(cs.transform * AABB(-sz / 2.0, sz))
+	if walls.is_empty():
+		return
+	for c in get_children():
+		var local := AABB()
+		if c is Locker:
+			if c.style == "table":
+				continue
+			local = AABB(_FOOTPRINT.locker[0], _FOOTPRINT.locker[1] - _FOOTPRINT.locker[0])
+		elif c is LootCabinet:
+			local = AABB(_FOOTPRINT.cabinet[0], _FOOTPRINT.cabinet[1] - _FOOTPRINT.cabinet[0])
+		elif c is ArcadeMachine:
+			local = AABB(_FOOTPRINT.arcade[0], _FOOTPRINT.arcade[1] - _FOOTPRINT.arcade[0])
+		elif c is Atm:
+			local = AABB(_FOOTPRINT.atm[0], _FOOTPRINT.atm[1] - _FOOTPRINT.atm[0])
+		elif c is Node3D and c.has_meta("unclip"):
+			local = _model_aabb(c, Transform3D.IDENTITY)
+			if local.size == Vector3.ZERO:
+				continue
+		else:
+			continue
+		var n3 := c as Node3D
+		for pass_i in 3:
+			var bb: AABB = n3.transform * local
+			var moved := false
+			for w in walls:
+				var i := bb.intersection(w)
+				if i.size.x <= 0.005 or i.size.z <= 0.005 or i.size.y <= 0.05:
+					continue
+				# out along whichever floor axis needs the smaller push, away from the wall
+				var wc := w.get_center()
+				var bc := bb.get_center()
+				# (by as much as it takes to clear the wall's face: plant leaves can reach right through)
+				var px := (w.end.x - bb.position.x) if bc.x > wc.x else -(bb.end.x - w.position.x)
+				var pz := (w.end.z - bb.position.z) if bc.z > wc.z else -(bb.end.z - w.position.z)
+				if absf(px) < absf(pz):
+					n3.position.x += px + signf(px) * 0.01
+				else:
+					n3.position.z += pz + signf(pz) * 0.01
+				moved = true
+				break
+			if not moved:
+				break
+
+
+## the box around every mesh under a model, in the model's parent space
+func _model_aabb(n: Node, xf: Transform3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for c in n.get_children():
+		if not c is Node3D:
+			continue
+		var cxf: Transform3D = xf * (c as Node3D).transform
+		if c is MeshInstance3D and c.mesh:
+			var bb: AABB = cxf * (c as MeshInstance3D).mesh.get_aabb()
+			out = bb if first else out.merge(bb)
+			first = false
+		var sub_bb := _model_aabb(c, cxf)
+		if sub_bb.size != Vector3.ZERO:
+			out = sub_bb if first else out.merge(sub_bb)
+			first = false
+	return out
 
 
 ## performance: after building, every static mesh in the room (walls, floor, ceiling,
@@ -324,11 +407,24 @@ func _process(delta: float) -> void:
 
 # ---- geometry helpers -----------------------------------------------------
 
+## box meshes are shared by size: rooms use the same few sizes over and over (trim, light
+## louvers, steps...), and making a new mesh for every box was a good part of the build time
+static var _box_meshes := {}
+
+
+static func box_mesh(size: Vector3) -> BoxMesh:
+	var bm: BoxMesh = _box_meshes.get(size)
+	if bm == null:
+		bm = BoxMesh.new()
+		bm.size = size
+		if _box_meshes.size() < 2048:
+			_box_meshes[size] = bm
+	return bm
+
+
 func box(size: Vector3, pos: Vector3, mat: Material, collide := true, yaw := 0.0, parent: Node3D = null) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = size
-	mi.mesh = bm
+	mi.mesh = box_mesh(size)
 	mi.material_override = mat
 	mi.position = pos
 	mi.rotation.y = yaw
@@ -479,8 +575,14 @@ func ceiling_light(pos: Vector3) -> void:
 		cage_lamp(pos)
 		return
 	var broken := rng.randf() < darkness * 0.6
-	box(Vector3(1.2, 0.04, 0.6), pos - Vector3(0, 0.02, 0), Mats.get_mat("light_off" if broken else "light_panel"), false)
-	box(Vector3(1.26, 0.03, 0.66), pos - Vector3(0, 0.01, 0), Mats.get_mat("frame"), false)
+	# a recessed troffer: metal frame, the glowing panel, and a louver grid in front of it
+	box(Vector3(1.26, 0.03, 0.66), pos - Vector3(0, 0.012, 0), Mats.get_mat("frame"), false)
+	box(Vector3(1.18, 0.02, 0.58), pos - Vector3(0, 0.022, 0), Mats.get_mat("light_off" if broken else "light_panel"), false)
+	var lv := Mats.get_mat("louver")
+	for k in [-1, 1]:
+		box(Vector3(1.18, 0.035, 0.015), pos + Vector3(0, -0.035, k * 0.1), lv, false)
+	for k in [-2, -1, 0, 1, 2]:
+		box(Vector3(0.015, 0.035, 0.58), pos + Vector3(k * 0.2, -0.035, 0), lv, false)
 	if broken:
 		return
 	var energy := lerpf(1.0, 0.45, darkness)
