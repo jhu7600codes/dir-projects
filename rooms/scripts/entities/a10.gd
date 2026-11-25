@@ -1,89 +1,116 @@
 class_name A10
-extends Rusher
-## a-10 "the locker and table kicker" (the sightings): heavy kicks bang closer and closer,
-## then it storms through the rooms and kicks every locker and table it passes.
-## if you're hiding in one when it gets kicked, you're dead. stay out in the open.
+extends Entity
+## a-10 (the sightings): it doesn't like you hiding. stay in a locker or under a table for
+## too long and it comes for you: the room goes dark, it stares in at you and tells you to
+## get out, louder and louder, banging on the door. get out in time and it leaves. don't,
+## and it kicks you out itself, and that hurts.
+## the manager starts it after you've been hidden a while (not while something's hunting
+## you, that wouldn't be fair). each player has their own.
 
 const RULES := {
-	"trigger": "door", "min_door": 10, "chance": 0.16,
-	"rare_min": 4, "rare_chance": 0.03,
-	"cooldown": 45.0, "group": "rusher", "blocked_by": ["a60b"],
+	"trigger": "hiding", "min_door": 10,
+	"cooldown": 30.0, "group": "hide",
 	"needs_sightings": true,
+	"hide_after": [16.0, 24.0],  # seconds hidden before it comes
 }
-const KICK_RANGE := 5.0
+const WARN := 6.0      # seconds from "get out" to the kick
+const DAMAGE := 40.0
+const LINES := [[0.4, "get out."], [2.4, "get out!"], [4.4, "GET OUT."]]
 
-var glitch_k := 1.0
-var _kicked := {}
+var sprite: Sprite3D
+var _t := -1.0         # -1: waiting for you to hide (training spawns it any time)
+var _wait := 0.0
+var _said := 0
 var _bang_t := 0.0
+var _locker: Locker
+var _leaving := false
 
 
 func begin() -> void:
 	id = "a10"
-	speed = 22.0
-	place(true)
-	setup_look("a10_face", Color(0.9, 0.6, 0.3), 2.4)
+	sprite = make_sprite("a10_face", 2.0)
 	set_sprite_texture(sprite, Faces.a10_tex())
-	sprite.pixel_size = 2.4 / maxf(1.0, sprite.texture.get_height())
-	set_visible_body(false)
-	_bang_t = 0.2
-	after(4.0, func():
-		set_visible_body(true)
-		moving = true)
+	sprite.pixel_size = 2.0 / maxf(1.0, sprite.texture.get_height())
+	sprite.modulate.a = 0.0
+	if player and player.hidden:
+		_start()
+
+
+func _start() -> void:
+	_t = 0.0
+	_locker = player.current_locker
+	# right outside the hiding spot, looking in through the slits
+	global_transform = _locker.global_transform * Transform3D(Basis(), Vector3(0, 1.3 if _locker.style != "table" else 0.6, 1.0))
+	Game.screen_tint.emit(Color(0.12, 0.02, 0.18, 0.5))
 
 
 func _process(delta: float) -> void:
-	if is_frozen():
+	if is_frozen() or player == null or _done or _leaving:
 		return
-	# the warning: kicks banging somewhere behind you, faster and louder
-	if not moving:
-		_bang_t -= delta
-		if _bang_t <= 0.0:
-			_bang_t = randf_range(0.35, 0.7)
-			_bang(global_position, -16.0)
+	if player.dead:
+		_leave()
 		return
-	if sprite:
-		sprite.offset = Vector2(randf_range(-3, 3), randf_range(-2, 2))
-	if remote:
+	if _t < 0.0:
+		_wait += delta
+		if player.hidden and player.current_locker:
+			_start()
+		elif _wait > 15.0:
+			finish()
 		return
-	var r: RoomBase = generator.room(room_n)
-	if r == null:
+	if not player.hidden:
+		_leave()  # you got out. it lets you go
 		return
-	for lk in r.lockers + r.tables:
-		if not is_instance_valid(lk) or _kicked.has(lk):
-			continue
-		var d := Vector2(lk.global_position.x - global_position.x, lk.global_position.z - global_position.z).length()
-		if d < KICK_RANGE:
-			_kicked[lk] = true
-			_kick(lk)
+	_t += delta
+	sprite.modulate.a = minf(0.9, _t * 0.5)
+	sprite.offset = Vector2(randf_range(-2, 2), randf_range(-2, 2)) * (1.0 + _t)
+	while _said < LINES.size() and _t >= LINES[_said][0]:
+		Game.subtitle.emit(Loc.t(LINES[_said][1]), Color(0.85, 0.55, 1.0))
+		_said += 1
+	# it bangs on the door, faster and louder
+	_bang_t -= delta
+	if _bang_t <= 0.0 and _t > 1.0:
+		_bang_t = lerpf(1.1, 0.25, _t / WARN)
+		_bang(lerpf(-12.0, 2.0, _t / WARN))
+		if _locker:
+			_locker.play_door()
+	if _t >= WARN:
+		_kick_out()
 
 
-func _kick(lk: Locker) -> void:
-	_bang(lk.global_position + Vector3.UP, -2.0)
-	# the hiding spot jumps from the kick
-	var tw := lk.create_tween()
-	tw.tween_property(lk, "position", lk.position + lk.basis.z * -0.06, 0.05)
-	tw.tween_property(lk, "position", lk.position, 0.12)
-	lk.play_door()
-	if player and not player.dead and player.hidden and player.current_locker == lk:
-		hit_player = true
-		Game.death_details[id] = "table" if lk.style == "table" else "locker"
-		player.take_damage(999, id)
+func _kick_out() -> void:
+	_bang(6.0)
+	hit_player = true
+	Game.death_details[id] = "table" if _locker and _locker.style == "table" else "locker"
+	player.exit_locker()
+	if player.hud:
+		player.hud.flash(Color(0.4, 0.05, 0.5, 0.6), 0.6)
+	player.take_damage(DAMAGE, id)
+	_leave()
 
 
-func _bang(at: Vector3, db: float) -> void:
+func _leave() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	Game.screen_tint.emit(Color(0, 0, 0, 0))
+	var tw := create_tween()
+	tw.tween_property(sprite, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(finish)
+
+
+func finish() -> void:
+	Game.screen_tint.emit(Color(0, 0, 0, 0))
+	super.finish()
+
+
+func _bang(db: float) -> void:
 	var a := AudioStreamPlayer3D.new()
 	a.stream = Assets.sound("a10_kick")
 	a.bus = "SFX"
-	a.unit_size = 12.0
-	a.max_distance = 120.0
+	a.unit_size = 10.0
 	a.volume_db = db
 	a.pitch_scale = randf_range(0.85, 1.1)
 	get_parent().add_child(a)
-	a.global_position = at
+	a.global_position = global_position
 	a.play()
 	a.finished.connect(a.queue_free)
-
-
-## out in the open you're fine. it only cares about lockers and tables
-func should_kill(_dist: float) -> bool:
-	return false

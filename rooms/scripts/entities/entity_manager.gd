@@ -49,6 +49,8 @@ var time := 0.0
 var _timers := {}        # id -> seconds until the next timer roll
 var _cooldown := {}      # id -> time when it may spawn again
 var _once_done := {}     # door_number entities that already came
+var _hidden_t := 0.0     # a-10: how long you've been hiding
+var _hide_limit := -1.0
 
 
 func _ready() -> void:
@@ -80,6 +82,7 @@ func _process(delta: float) -> void:
 	if frozen or not natural_spawns or Game.player == null or Game.player.dead:
 		return
 	time += delta
+	_watch_hiding(delta)
 	for id in _timers:
 		var paused := false
 		for other in rules(id).get("pause_timer_while", []):
@@ -92,6 +95,27 @@ func _process(delta: float) -> void:
 			_timers[id] = _roll_timer(id)
 			if can_spawn(id) and randf() < _chance(id):
 				spawn(id)
+
+
+## a-10: hide too long and it comes. the clock stops while something that hunts you is
+## around (you're supposed to hide from that), and only starts over once you're out
+func _watch_hiding(delta: float) -> void:
+	if not Game.player.hidden:
+		_hidden_t = 0.0
+		return
+	for other in active:
+		if rules(other).get("group", "") == "rusher":
+			_hidden_t = minf(_hidden_t, maxf(0.0, _hide_limit - 4.0))  # a few seconds after it's gone
+			return
+	if _hide_limit < 0.0:
+		var r: Array = rules("a10").get("hide_after", [16.0, 24.0])
+		_hide_limit = randf_range(r[0], r[1])
+	_hidden_t += delta
+	if _hidden_t >= _hide_limit:
+		_hidden_t = 0.0
+		_hide_limit = -1.0
+		if can_spawn("a10"):
+			spawn("a10")
 
 
 ## called by the generator every time a door is opened
@@ -185,7 +209,7 @@ func can_spawn(id: String, room: RoomBase = null) -> bool:
 
 
 ## entities that only concern one player (your own staring, your own fake locker)
-const LOCAL_IDS := ["a70", "worker"]
+const LOCAL_IDS := ["a70", "worker", "a10"]
 
 
 func spawn(id: String, opts := {}) -> Entity:

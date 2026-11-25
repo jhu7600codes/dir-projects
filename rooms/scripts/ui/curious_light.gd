@@ -25,8 +25,8 @@ const HINTS := {
 		"lurker": ["it was hiding, and you walked right up to it.", "crouch when you walk through the apartment. it can't hear you then."],
 	},
 	"a10": {
-		"locker": ["it kicked the locker you were in.", "A-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
-		"table": ["it kicked the table you were under.", "A-10 kicks every locker and table. when you hear the kicks, stay out in the open."],
+		"locker": ["you stayed in the locker too long.", "A-10 hates it when you hide too long. when it says get out, get out."],
+		"table": ["you stayed under the table too long.", "A-10 hates it when you hide too long. when it says get out, get out."],
 	},
 	"a20": {
 		"": ["that door wasn't a door.", "A-20 wears doors with almost the right number. remember which door you're at."],

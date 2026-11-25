@@ -25,7 +25,7 @@ const CAUSES := {
 	"seek": "A-300 caught you. keep running.",
 	"anomaly": "the thing in the apartment got you. pull the fire alarm.",
 	"fire": "you burned. stand in the fire escape square.",
-	"a10": "A-10 kicked your hiding spot. don't hide when you hear the kicks.",
+	"a10": "A-10 kicked you out of your hiding spot. don't hide for too long, and get out when it tells you to.",
 	"a20": "A-20 was wearing that door. count the doors yourself.",
 	"friend": "your friend got you. battle mode.",
 	"seeker": "the seeker caught you.",
