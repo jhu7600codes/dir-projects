@@ -25,8 +25,8 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
+      # ubuntu runners ship the android sdk (ANDROID_HOME), and agp fetches the platform it needs.
+      # android-actions/setup-android@v3 broke: it asks sdkmanager for the removed "tools" package.
       - uses: gradle/actions/setup-gradle@v4
 
       - name: unit tests
