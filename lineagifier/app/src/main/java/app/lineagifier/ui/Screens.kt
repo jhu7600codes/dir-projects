@@ -157,7 +157,7 @@ fun TweaksScreen(s: UiState, vm: AppViewModel) {
                 Card {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(t.title, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                        if (!t.available) Chip("unavailable", Bad) else t.current?.let { Chip("now: ${it.take(24)}", Dim) }
+                        if (!t.available) Chip("unavailable", Bad) else t.current?.let { cur -> Chip("now: " + (t.options.firstOrNull { it.value == cur }?.label ?: if (cur == "null") "default" else cur.take(24)), Dim) }
                     }
                     Text(t.reason, color = Dim, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
                     if (t.available) {
@@ -226,9 +226,9 @@ fun ManageScreen(s: UiState, vm: AppViewModel) {
                     Text("${row.entry.category} · ${if (enabled) "enabled" else "disabled/removed"}", color = Dim, fontSize = 12.sp)
                     Text(row.decision.reason, color = if (row.decision.allowed) Good else Dim, fontSize = 13.sp)
                     Spacer(Modifier.height(6.dp))
+                    if (!row.decision.allowed && row.decision.replacement != null && row.entry.role != null)
+                        Button(onClick = { vm.setDefault(row) }, enabled = !s.manageBusy, modifier = Modifier.padding(bottom = 6.dp)) { Text("make ${row.decision.replacement} default") }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (!row.decision.allowed && row.decision.replacement != null && row.entry.role != null)
-                            OutlinedButton(onClick = { vm.setDefault(row) }, enabled = !s.manageBusy) { Text("make default") }
                         OutlinedButton(onClick = { vm.removeStock(row, Actions.Removal.DISABLE) }, enabled = row.decision.allowed && !s.manageBusy) { Text("disable") }
                         OutlinedButton(onClick = { vm.removeStock(row, Actions.Removal.UNINSTALL) }, enabled = row.decision.allowed && !s.manageBusy) { Text("remove") }
                     }

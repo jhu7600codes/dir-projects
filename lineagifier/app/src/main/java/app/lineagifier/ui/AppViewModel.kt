@@ -81,6 +81,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun go(screen: Screen) {
         _s.update { it.copy(screen = screen) }
         when (screen) {
+            Screen.PICK -> refreshPackages()
             Screen.TWEAKS -> if (_s.value.tweaks.isEmpty()) loadTweaks()
             Screen.MANAGE -> refreshManage()
             else -> {}
@@ -127,7 +128,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 add(Step("install ${it.name}"))
                 if (e.role != null) add(Step("make ${it.name} the default"))
             }
-            tw.forEach { (id, v) -> add(Step("tweak: ${_s.value.tweaks.firstOrNull { it.id == id }?.title ?: id} -> $v")) }
+            tw.forEach { (id, v) ->
+                val t = _s.value.tweaks.firstOrNull { it.id == id }
+                add(Step("${t?.title ?: id}: ${t?.options?.firstOrNull { it.value == v }?.label ?: v}"))
+            }
         }
         _s.update { it.copy(steps = steps, running = true, screen = Screen.APPLY) }
 

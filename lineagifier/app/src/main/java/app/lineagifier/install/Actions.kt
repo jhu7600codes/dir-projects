@@ -14,6 +14,7 @@ import app.lineagifier.system.Roles
 import app.lineagifier.system.Services
 import app.lineagifier.undo.Kind
 import app.lineagifier.undo.UndoLog
+import kotlinx.coroutines.delay
 import java.io.File
 
 /** the real side effects: install, set default, disable/remove stock. every step reports back. */
@@ -80,12 +81,23 @@ class Actions(private val ctx: Context, private val shell: ShellRunner, private 
         if (Roles.available(shell, services)) {
             val before = Roles.holders(shell, role).getOrDefault(emptyList())
             if (pkg in before) return@runCatching "$pkg is already the default"
+            // log before: on a slow device the change can land after cmd already gave up with a timeout
+            val entry = log.add(Kind.role, role, previous = before.joinToString(";"), added = pkg)
             val r = shell.run("cmd role add-role-holder --user 0 ${safeToken(role)} ${safeToken(pkg)}")
-            val after = Roles.holders(shell, role).getOrDefault(emptyList())
+            // aosp 13's role controller often answers "TimeoutException" and applies the change seconds later,
+            // so the exit code means nothing: poll the real holders for up to ~20s
+            var after = Roles.holders(shell, role).getOrDefault(emptyList())
+            var tries = 0
+            while (pkg !in after && tries++ < 10) {
+                delay(2_000)
+                after = Roles.holders(shell, role).getOrDefault(emptyList())
+            }
             if (pkg in after) {
-                log.add(Kind.role, role, previous = before.joinToString(";"), added = pkg)
                 done = true; msgs += "role $role -> $pkg"
-            } else msgs += "cmd role didn't take: ${r.message}"
+            } else {
+                log.markRestored(entry.id)
+                msgs += "cmd role didn't take: ${r.message}"
+            }
         } else msgs += "no `cmd role` on this image"
 
         if (role == Safety.HOME && !done) {

@@ -255,3 +255,61 @@ class TweaksTest {
         assertEquals("no", t[Tweaks.DARK]!!.current)
     }
 }
+
+class DumpsysRoleTest {
+    // trimmed from a real aosp 13 emulator (sdk 33)
+    private val out = """
+        ROLE STATE (dumpsys role):
+        {
+          user_states={
+            user_id=0
+            roles=[
+              {
+                name=android.app.role.SYSTEM_CONTACTS
+              }
+              {
+                name=android.app.role.HOME
+                holders=com.android.sdksetup
+              }
+              {
+                name=android.app.role.SYSTEM_SETTINGS_INTELLIGENCE
+                holders=com.android.settings.intelligence
+                holders=com.android.bluetooth
+              }
+            ]
+            user_id=10
+            roles=[
+              {
+                name=android.app.role.HOME
+                holders=other.launcher
+              }
+            ]
+          }
+        }
+    """.trimIndent()
+
+    @Test fun readsUser0Only() {
+        assertEquals(listOf("com.android.sdksetup"), Roles.parseDumpsys(out, "android.app.role.HOME"))
+        assertEquals(listOf("other.launcher"), Roles.parseDumpsys(out, "android.app.role.HOME", 10))
+        assertEquals(listOf("com.android.settings.intelligence", "com.android.bluetooth"), Roles.parseDumpsys(out, "android.app.role.SYSTEM_SETTINGS_INTELLIGENCE"))
+        assertEquals(emptyList<String>(), Roles.parseDumpsys(out, "android.app.role.SYSTEM_CONTACTS"))
+    }
+}
+
+class RoleTimeoutTest {
+    @Test fun restoreTrustsHoldersNotExitCode() = runBlocking {
+        val l = UndoLog(File(Files.createTempDirectory("rt").toFile(), "u.json"))
+        l.add(Kind.role, "android.app.role.DIALER", previous = "com.android.dialer", added = "org.fossify.phone")
+        // what aosp 13 really does: the command "fails" with a timeout, the change lands anyway
+        val sh = FakeShell { cmd ->
+            when {
+                cmd.startsWith("cmd role add-role-holder") -> ShellResult(255, "", "Error: see logcat for details.\njava.util.concurrent.TimeoutException")
+                cmd.startsWith("cmd role get-role-holders") -> ShellResult(255, "", "Unknown command: get-role-holders")
+                cmd == "dumpsys role" -> ShellResult(0, "user_id=0\n{\nname=android.app.role.DIALER\nholders=com.android.dialer\n}\n", "")
+                else -> ShellResult(0, "", "")
+            }
+        }
+        assertTrue(Restore.everything(l, sh).single().ok)
+        assertTrue(l.pending().isEmpty())
+    }
+}

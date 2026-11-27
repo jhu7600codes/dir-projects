@@ -57,9 +57,33 @@ object Roles {
     fun parseHolders(out: String): List<String> =
         out.split(';', '\n', ' ', ',').map { it.trim() }.filter { it.isNotEmpty() && it.contains('.') }
 
+    /**
+     * `dumpsys role` (android 10-13 has no get-role-holders):
+     *   user_id=0 ... { name=android.app.role.HOME \n holders=pkg \n holders=pkg2 }
+     */
+    fun parseDumpsys(out: String, role: String, user: Int = 0): List<String> {
+        var curUser = -1
+        var inRole = false
+        val res = mutableListOf<String>()
+        for (raw in out.lineSequence()) {
+            val t = raw.trim()
+            when {
+                t.startsWith("user_id=") -> { curUser = t.removePrefix("user_id=").toIntOrNull() ?: -1; inRole = false }
+                t.startsWith("name=") -> inRole = curUser == user && t.removePrefix("name=") == role
+                inRole && t.startsWith("holders=") -> res += t.removePrefix("holders=").split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                t == "}" -> inRole = false
+            }
+        }
+        return res
+    }
+
+    /** android 14+ has `cmd role get-role-holders`; 10-13 only have it in dumpsys */
     suspend fun holders(shell: ShellRunner, role: String): Result<List<String>> {
         val r = shell.run("cmd role get-role-holders --user 0 ${safeToken(role)}")
-        return if (r.okStrict) Result.success(parseHolders(r.out)) else Result.failure(IllegalStateException(r.message))
+        if (r.okStrict && !r.out.contains("Unknown command")) return Result.success(parseHolders(r.out))
+        val d = shell.run("dumpsys role")
+        if (d.ok && d.out.contains("name=")) return Result.success(parseDumpsys(d.out, role))
+        return Result.failure(IllegalStateException("can't read role holders: ${r.message}"))
     }
 }
 

@@ -56,3 +56,8 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
 }
+
+tasks.withType<Test>().configureEach {
+    // pass the opt-in switch for the network test through to the test jvm
+    environment("LINEAGIFIER_NET_TEST", System.getenv("LINEAGIFIER_NET_TEST") ?: "0")
+}

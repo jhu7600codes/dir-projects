@@ -91,6 +91,24 @@ each one is probed first (`cmd -l`, `cmd overlay list`, `settings get`), then ap
 - the twoyi i know of runs android 8.1 on android hosts. lineagifier reads the real sdk at runtime and turns off what doesn't exist (`cmd role` is 10+, monet is 12+), so it should still run there, but most of the catalog's alternatives need sdk 26+ and the role/theme bits won't work on 8.1
 - shizuku has to be started inside the container. if the container has no adb or wireless debugging, shizuku can't start, and lineagifier can't do anything. none of this has been tested inside twoyi yet
 
+## what's been tested
+
+on the aosp 13 emulator image (`system-images;android-33;default;x86_64`, sdk 33, userdebug), with shizuku 13.6 started over adb, so lineagifier ran as uid 2000 like it would in a container:
+
+- shizuku permission grant, the shell user service, `pm list packages -s -u` detection
+- etar: sha256 check of the apk, then install by streaming it into `pm install -S` through shizuku
+- dark mode, animation scale, gestural nav (`enable-exclusive --category`), lineage teal accent (systemui generated its monet overlays)
+- icon shape correctly reported as unavailable (that image has no shape overlays)
+- removing gallery3d and disabling calendar once fossify gallery / etar were installed; launcher and camera stayed locked
+- dialer stayed locked until fossify phone held the dialer role, then "make default" set it
+- "restore everything" put all 14 logged changes back, checked one by one afterwards
+
+two real things that came out of that:
+- aosp 13 has no `cmd role get-role-holders` (it's 14+), so holders are read from `dumpsys role`
+- on a slow device `cmd role add-role-holder` fails with `TimeoutException` and then applies the change a few seconds later, so lineagifier polls the real holders instead of trusting the exit code
+
+**not tested**: inside twoyi itself, a real (non-emulator) device, the in-app download over the network (the test emulator had no internet; the downloader is tested on the jvm against f-droid instead: `LINEAGIFIER_NET_TEST=1 ./gradlew testDebugUnitTest`), the launcher path end to end (there's no prebuilt launcher in the catalog, only the safety rules are unit tested), android 8.1-11 images.
+
 ## build
 
 ```

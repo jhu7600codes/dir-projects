@@ -3,6 +3,8 @@ package app.lineagifier.undo
 import app.lineagifier.shell.ShellRunner
 import app.lineagifier.shell.safeToken
 import app.lineagifier.shell.shQuote
+import app.lineagifier.system.Roles
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -101,6 +103,15 @@ object Restore {
             for (cmd in commands(e)) {
                 val r = shell.run(cmd)
                 if (!r.okStrict) { ok = false; msgs += "$cmd -> ${r.message}" }
+            }
+            // role commands time out on aosp 13 and still apply later, so judge them by the real holders
+            if (!ok && e.kind == Kind.role) {
+                val want = e.previous?.split(';')?.filter { it.isNotBlank() }.orEmpty()
+                for (i in 0 until 10) {
+                    val now = Roles.holders(shell, e.target).getOrDefault(emptyList())
+                    if (if (want.isNotEmpty()) want.all { it in now } else e.added !in now) { ok = true; break }
+                    delay(2_000)
+                }
             }
             if (ok) log.markRestored(e.id)
             out += RestoreLine(e, ok, if (ok) "restored" else msgs.joinToString("\n"))

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Lineagifier" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF0E1213</item>
+        <item name="android:statusBarColor">#FF0E1213</item>
+        <item name="android:navigationBarColor">#FF0E1213</item>
+        <item name="android:windowSplashScreenBackground">#FF0E1213</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#FF167C80</item>
+    </style>
+</resources>
