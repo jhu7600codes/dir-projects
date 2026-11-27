@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "verifiedOn": "2026-11-27",
+  "verificationNotes": "lineage package ids read from each repo's build.gradle.kts / AndroidManifest.xml on raw.githubusercontent.com (default branch). aosp stock ids read from android.googlesource.com android13-release manifests. f-droid sha256 computed from the downloaded apk and matched against f-droid.org/repo/index-v2.json. f-droid moves old versions to /archive, so every prebuilt has an archive fallback url.",
+  "entries": [
+    {
+      "id": "launcher",
+      "category": "launcher",
+      "name": "Trebuchet",
+      "packageId": "com.android.launcher3",
+      "status": "build_from_source",
+      "source": "https://github.com/LineageOS/android_packages_apps_Trebuchet",
+      "notes": "soong (Android.bp) build inside a lineage tree only. it uses the same package id as aosp launcher3, so even a self-built apk can't replace the system one without the platform key. aosp launcher3 on your image is the code trebuchet is forked from.",
+      "role": "android.app.role.HOME",
+      "replaces": ["com.android.launcher3"],
+      "alternatives": []
+    },
+    {
+      "id": "camera",
+      "category": "camera",
+      "name": "Aperture",
+      "packageId": "org.lineageos.aperture",
+      "status": "build_from_source",
+      "source": "https://github.com/LineageOS/android_packages_apps_Aperture",
+      "notes": "has a gradle build (app/build.gradle.kts). lineage publishes no apk. debug builds install as org.lineageos.aperture.dev.",
+      "role": null,
+      "replaces": ["com.android.camera2"],
+      "alternatives": []
+    },
+    {
+      "id": "gallery",
+      "category": "gallery",
+      "name": "Glimpse",
+      "packageId": "org.lineageos.glimpse",
+      "status": "build_from_source",
+      "source": "https://github.com/LineageOS/android_packages_apps_Glimpse",
+      "notes": "has a gradle build. lineage publishes no apk. debug builds install as org.lineageos.glimpse.dev.",
+      "role": null,
+      "replaces": ["com.android.gallery3d"],
+      "alternatives": [
+        {
+          "name": "Fossify Gallery",
+          "packageId": "org.fossify.gallery",
+          "versionName": "1.14.3",
+          "versionCode": 50,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.gallery_50.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.gallery_50.apk",
+          "sha256": "2d330eda61579d2ae499bc2accab6e4d6bb77de96d2877ff90e481fac96e1b76",
+          "size": 38543199
+        }
+      ]
+    },
+    {
+      "id": "browser",
+      "category": "browser",
+      "name": "Jelly",
+      "packageId": "org.lineageos.jelly",
+      "status": "build_from_source",
+      "source": "https://github.com/LineageOS/android_packages_apps_Jelly",
+      "notes": "has a gradle build. lineage publishes no apk. debug builds install as org.lineageos.jelly.dev. needs a working system webview.",
+      "role": "android.app.role.BROWSER",
+      "replaces": ["org.chromium.webview_shell"],
+      "alternatives": []
+    },
+    {
+      "id": "calendar",
+      "category": "calendar",
+      "name": "Etar",
+      "packageId": "ws.xsoh.etar",
+      "status": "prebuilt",
+      "source": "https://f-droid.org/packages/ws.xsoh.etar/",
+      "notes": "lineage ships its own fork of etar (github.com/LineageOS/android_packages_apps_Etar, same ws.xsoh.etar id in its gradle file). this is upstream etar from f-droid, the closest prebuilt.",
+      "role": null,
+      "replaces": ["com.android.calendar"],
+      "download": {
+        "versionName": "1.0.58",
+        "versionCode": 58,
+        "minSdk": 24,
+        "url": "https://f-droid.org/repo/ws.xsoh.etar_58.apk",
+        "fallbackUrl": "https://f-droid.org/archive/ws.xsoh.etar_58.apk",
+        "sha256": "b5f3bb907fd8d6a1aa2689e34f2cf16bce0be8ae681cf78d02d10a3f82aeb77a",
+        "size": 8786698
+      },
+      "alternatives": []
+    },
+    {
+      "id": "recorder",
+      "category": "recorder",
+      "name": "Recorder",
+      "packageId": "org.lineageos.recorder",
+      "status": "build_from_source",
+      "source": "https://github.com/LineageOS/android_packages_apps_Recorder",
+      "notes": "has a gradle build. lineage publishes no apk. aosp 13 has no stock recorder, so nothing gets replaced.",
+      "role": null,
+      "replaces": [],
+      "alternatives": [
+        {
+          "name": "Fossify Voice Recorder",
+          "packageId": "org.fossify.voicerecorder",
+          "versionName": "1.7.5",
+          "versionCode": 22,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.voicerecorder_22.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.voicerecorder_22.apk",
+          "sha256": "4327681aa24a272d85b900344009ea9f4c04f2414e18eb2686c7ebf332a22d78",
+          "size": 7309028
+        }
+      ]
+    },
+    {
+      "id": "clock",
+      "category": "clock",
+      "name": "Clock (DeskClock)",
+      "packageId": "com.android.deskclock",
+      "status": "same_as_stock",
+      "source": "https://github.com/LineageOS/android_packages_apps_DeskClock",
+      "notes": "lineage's clock is a fork of aosp deskclock with the same package id. your stock clock is already the base app; a lineage build can't install over it without the platform key.",
+      "role": null,
+      "replaces": ["com.android.deskclock"],
+      "alternatives": [
+        {
+          "name": "Fossify Clock",
+          "packageId": "org.fossify.clock",
+          "versionName": "1.6.0",
+          "versionCode": 10,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.clock_10.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.clock_10.apk",
+          "sha256": "43cf9f0ec45f1f1ff2df47286622e5b8f3acedaeb07b7f7641b5243dbedca079",
+          "size": 9110265
+        }
+      ]
+    },
+    {
+      "id": "calculator",
+      "category": "calculator",
+      "name": "Calculator (ExactCalculator)",
+      "packageId": "com.android.calculator2",
+      "status": "same_as_stock",
+      "source": "https://github.com/LineageOS/android_packages_apps_ExactCalculator",
+      "notes": "lineage's calculator is a fork of aosp exactcalculator with the same package id. stock is already the base app.",
+      "role": null,
+      "replaces": ["com.android.calculator2"],
+      "alternatives": [
+        {
+          "name": "Fossify Calculator",
+          "packageId": "org.fossify.math",
+          "versionName": "1.4.0",
+          "versionCode": 10,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.math_10.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.math_10.apk",
+          "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
+          "size": 7047681
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "category": "files",
+      "name": "Files (DocumentsUI)",
+      "packageId": "com.android.documentsui",
+      "status": "same_as_stock",
+      "source": "https://android.googlesource.com/platform/packages/apps/DocumentsUI",
+      "notes": "lineage's files app is aosp documentsui. it's also the system file picker, so lineagifier never disables or removes it. an alternative installs next to it.",
+      "role": null,
+      "replaces": [],
+      "alternatives": [
+        {
+          "name": "Fossify File Manager",
+          "packageId": "org.fossify.filemanager",
+          "versionName": "1.6.5",
+          "versionCode": 17,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.filemanager_17.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.filemanager_17.apk",
+          "sha256": "ba653eade09420992b7d0168febf2bf2b7c0b5392c0c1199a5c2a752d20dc9f4",
+          "size": 10033818
+        }
+      ]
+    },
+    {
+      "id": "contacts",
+      "category": "contacts",
+      "name": "Contacts",
+      "packageId": "com.android.contacts",
+      "status": "same_as_stock",
+      "source": "https://github.com/LineageOS/android_packages_apps_Contacts",
+      "notes": "lineage fork of aosp contacts, same package id. only the ui app is ever touched, never the contacts provider.",
+      "role": null,
+      "replaces": ["com.android.contacts"],
+      "alternatives": [
+        {
+          "name": "Fossify Contacts",
+          "packageId": "org.fossify.contacts",
+          "versionName": "1.6.0",
+          "versionCode": 13,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.contacts_13.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.contacts_13.apk",
+          "sha256": "6a89be96b5ec39f5e2b11bd61dc7031f4b88261b324ab13af5743fbc62f0cddb",
+          "size": 8602985
+        }
+      ]
+    },
+    {
+      "id": "dialer",
+      "category": "dialer",
+      "name": "Dialer",
+      "packageId": "com.android.dialer",
+      "status": "same_as_stock",
+      "source": "https://github.com/LineageOS/android_packages_apps_Dialer",
+      "notes": "lineage fork of aosp dialer, same package id. a container usually has no telephony, so this mostly matters for looks.",
+      "role": "android.app.role.DIALER",
+      "replaces": ["com.android.dialer"],
+      "alternatives": [
+        {
+          "name": "Fossify Phone",
+          "packageId": "org.fossify.phone",
+          "versionName": "1.11.1",
+          "versionCode": 22,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.phone_22.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.phone_22.apk",
+          "sha256": "d1ad08467034e5138a6e68f03b6e150f0bb010dfcbf490ff3d2bd4822b755728",
+          "size": 9165050
+        }
+      ]
+    },
+    {
+      "id": "messaging",
+      "category": "messaging",
+      "name": "Messaging",
+      "packageId": "com.android.messaging",
+      "status": "same_as_stock",
+      "source": "https://github.com/LineageOS/android_packages_apps_Messaging",
+      "notes": "lineage fork of aosp messaging, same package id.",
+      "role": "android.app.role.SMS",
+      "replaces": ["com.android.messaging"],
+      "alternatives": [
+        {
+          "name": "Fossify Messages",
+          "packageId": "org.fossify.messages",
+          "versionName": "1.10.3",
+          "versionCode": 27,
+          "minSdk": 26,
+          "url": "https://f-droid.org/repo/org.fossify.messages_27.apk",
+          "fallbackUrl": "https://f-droid.org/archive/org.fossify.messages_27.apk",
+          "sha256": "76cb0756d22fae9b8b24683d550d7391963b9b856d331dd536f74de8bf628674",
+          "size": 6791323
+        }
+      ]
+    },
+    {
+      "id": "backgrounds",
+      "category": "wallpapers",
+      "name": "Backgrounds",
+      "packageId": "org.lineageos.backgrounds",
+      "status": "build_from_source",
+      "source": "https://github.com/LineageOS/android_packages_apps_Backgrounds",
+      "notes": "soong (Android.bp) build only, no gradle file and no published apk. it adds a wallpaper source, it doesn't replace the aosp picker.",
+      "role": null,
+      "replaces": [],
+      "alternatives": []
+    },
+    {
+      "id": "backup",
+      "category": "backup",
+      "name": "Seedvault",
+      "packageId": "com.stevesoltys.seedvault",
+      "status": "unsupported",
+      "source": "https://github.com/seedvault-app/seedvault",
+      "notes": "seedvault is a system backup transport. it needs android.permission.BACKUP (signature|privileged) and a priv-app install, which an unprivileged app with shell access can't grant. not possible here.",
+      "role": null,
+      "replaces": [],
+      "alternatives": []
+    }
+  ]
+}
