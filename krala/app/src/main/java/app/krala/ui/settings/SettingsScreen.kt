@@ -427,10 +427,11 @@ private fun EmbeddingsDialog(
 fun PersonalityScreen(vm: SettingsViewModel, onBack: () -> Unit) {
     val s by vm.settings.collectAsStateWithLifecycle()
     val h = LocalHaptics.current
-    var prompt by remember(s.settingsUpdatedAt) { mutableStateOf(s.effectiveSystemPrompt) }
+    val basePrompt = s.systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT
+    var prompt by remember(s.settingsUpdatedAt) { mutableStateOf(basePrompt) }
     var instructions by remember(s.settingsUpdatedAt) { mutableStateOf(s.customInstructions) }
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val changed = prompt != s.effectiveSystemPrompt || instructions != s.customInstructions
+    val changed = prompt != basePrompt || instructions != s.customInstructions
     Scaffold(
         topBar = {
             BackTopBar(stringResource(R.string.personality), onBack, scroll) {
@@ -445,6 +446,17 @@ fun PersonalityScreen(vm: SettingsViewModel, onBack: () -> Unit) {
             OutlinedTextField(prompt, { prompt = it }, minLines = 8, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = { prompt = Personality.DEFAULT_SYSTEM_PROMPT }, enabled = prompt != Personality.DEFAULT_SYSTEM_PROMPT) {
                 Icon(Icons.Rounded.RestartAlt, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.reset_default))
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.thief_jokes), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                val opts = listOf("off" to R.string.jokes_off, "rare" to R.string.jokes_rare, "often" to R.string.jokes_often)
+                opts.forEachIndexed { i, (id, label) ->
+                    SegmentedButton(
+                        selected = s.thiefJokes == id, onClick = { h.tick(); vm.setThiefJokes(id) },
+                        shape = SegmentedButtonDefaults.itemShape(i, opts.size), label = { Text(stringResource(label)) },
+                    )
+                }
             }
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.custom_instructions), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)

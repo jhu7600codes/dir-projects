@@ -108,7 +108,7 @@ class ChatEngine @Inject constructor(
         return KralaTags.build(
             KralaTags.Block(
                 memory = mem,
-                systemPrompt = conv.systemPrompt ?: s.effectiveSystemPrompt,
+                systemPrompt = conv.systemPrompt?.let { s.withJokes(it) } ?: s.effectiveSystemPrompt,
                 userInstructions = s.customInstructions,
             )
         )
@@ -355,7 +355,7 @@ class ChatEngine @Inject constructor(
         val prefix = first.hiddenPrefix ?: return
         val parsed = KralaTags.parse(prefix) ?: return
         val s = settings.current()
-        val prompt = conv.systemPrompt ?: s.effectiveSystemPrompt
+        val prompt = conv.systemPrompt?.let { s.withJokes(it) } ?: s.effectiveSystemPrompt
         if (parsed.systemPrompt != prompt.trim() || parsed.userInstructions != s.customInstructions.trim()) {
             messages.setPrefix(first.id, KralaTags.updatePrompts(prefix, prompt, s.customInstructions), System.currentTimeMillis())
         }

@@ -128,6 +128,9 @@
     <string name="incognito_body">здесь крала не читает и не пишет память, а чат не покидает телефон.</string>
     <string name="incognito_chat">инкогнито</string>
     <string name="incognito_title">чат инкогнито</string>
+    <string name="jokes_off">выкл</string>
+    <string name="jokes_often">часто</string>
+    <string name="jokes_rare">редко</string>
     <string name="key_stays_on_device">хранится только на телефоне, зашифрован</string>
     <string name="krala">крала</string>
     <string name="language">язык</string>
@@ -273,6 +276,7 @@
     <string name="theme_dark">тёмная</string>
     <string name="theme_light">светлая</string>
     <string name="theme_system">система</string>
+    <string name="thief_jokes">шутки про воровство и еду</string>
     <string name="thinking">думаю…</string>
     <string name="thinking_balanced">средне</string>
     <string name="thinking_deep">глубоко: думает сколько хочет (медленно)</string>

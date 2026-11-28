@@ -128,6 +128,9 @@
     <string name="incognito_body">krala won’t read or write memory here, and this chat never leaves your phone.</string>
     <string name="incognito_chat">incognito</string>
     <string name="incognito_title">incognito chat</string>
+    <string name="jokes_off">off</string>
+    <string name="jokes_often">often</string>
+    <string name="jokes_rare">rare</string>
     <string name="key_stays_on_device">stays on this phone, encrypted</string>
     <string name="krala">krala</string>
     <string name="language">language</string>
@@ -273,6 +276,7 @@
     <string name="theme_dark">dark</string>
     <string name="theme_light">light</string>
     <string name="theme_system">system</string>
+    <string name="thief_jokes">thief and snack jokes</string>
     <string name="thinking">thinking…</string>
     <string name="thinking_balanced">balanced</string>
     <string name="thinking_deep">deep: thinks as long as it wants (slow)</string>

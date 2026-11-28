@@ -89,6 +89,7 @@ class SettingsViewModel @Inject constructor(
 
     val routeStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
+    fun setThiefJokes(v: String) = viewModelScope.launch { repo.setThiefJokes(v) }
     fun setNotifyReplies(v: Boolean) = viewModelScope.launch { repo.setNotifyReplies(v) }
     fun setRandomMessages(v: String, context: android.content.Context) = viewModelScope.launch {
         repo.setRandomMessages(v)

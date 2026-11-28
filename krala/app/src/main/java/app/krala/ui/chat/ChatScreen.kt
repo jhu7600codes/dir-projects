@@ -312,11 +312,11 @@ fun ChatScreen(
         val current = conv?.systemPrompt ?: if (conv == null) draft.systemPrompt else null
         TextEditDialog(
             title = stringResource(R.string.chat_prompt),
-            initial = current ?: settings.effectiveSystemPrompt,
+            initial = current ?: (settings.systemPrompt ?: app.krala.data.settings.Personality.DEFAULT_SYSTEM_PROMPT),
             label = stringResource(R.string.chat_prompt_hint),
             singleLine = false,
             extraAction = stringResource(R.string.use_default) to { vm.setChatPrompt(null) },
-            onConfirm = { text -> vm.setChatPrompt(if (text.trim() == settings.effectiveSystemPrompt.trim()) null else text) },
+            onConfirm = { text -> vm.setChatPrompt(if (text.trim() == (settings.systemPrompt ?: app.krala.data.settings.Personality.DEFAULT_SYSTEM_PROMPT).trim()) null else text) },
             onDismiss = { showPrompt = false },
         )
     }

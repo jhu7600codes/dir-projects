@@ -66,8 +66,13 @@ data class AppSettings(
     val notifyReplies: Boolean = true,
     /** krala texting first: off, rare, sometimes */
     val randomMessages: String = "rare",
+    /** thief / snack jokes: rare, off, often */
+    val thiefJokes: String = "rare",
 ) {
-    val effectiveSystemPrompt: String get() = systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT
+    val effectiveSystemPrompt: String get() = withJokes(systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT)
+
+    /** a system prompt with the thief jokes setting applied */
+    fun withJokes(prompt: String): String = Personality.jokesLine(thiefJokes)?.let { prompt.trimEnd() + " " + it } ?: prompt
 }
 
 /** the part of the settings that follows the account to other devices */
@@ -86,6 +91,7 @@ data class SyncedSettings(
     val memoryModel: String? = null,
     val autoRecall: Boolean? = null,
     val sendOnEnter: Boolean? = null,
+    val thiefJokes: String? = null,
 )
 
 private val Context.store: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -132,6 +138,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val notifyReplies = booleanPreferencesKey("notify_replies")
         val randomMessages = stringPreferencesKey("random_messages")
         val askedNotify = booleanPreferencesKey("asked_notify")
+        val thiefJokes = stringPreferencesKey("thief_jokes")
     }
 
     val settings: Flow<AppSettings> = context.store.data
@@ -176,6 +183,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
                 geminiThinking = p[K.geminiThinking] ?: "fast",
                 notifyReplies = p[K.notifyReplies] ?: true,
                 randomMessages = p[K.randomMessages] ?: "rare",
+                thiefJokes = p[K.thiefJokes] ?: "rare",
             )
         }
 
@@ -233,6 +241,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun setTtsEngine(v: String?) = context.store.edit { it.setOrRemove(K.ttsEngine, v); it.remove(K.ttsVoiceEn); it.remove(K.ttsVoiceRu) }
     suspend fun setTtsVoice(russian: Boolean, name: String?) = context.store.edit { it.setOrRemove(if (russian) K.ttsVoiceRu else K.ttsVoiceEn, name) }
     suspend fun setVoiceTuning(rate: Float, pitch: Float) = context.store.edit { it[K.voiceRate] = rate; it[K.voicePitch] = pitch }
+    suspend fun setThiefJokes(v: String) = editSynced { it[K.thiefJokes] = v }
     suspend fun setNotifyReplies(v: Boolean) = context.store.edit { it[K.notifyReplies] = v }
     suspend fun setRandomMessages(v: String) = context.store.edit { it[K.randomMessages] = v }
     suspend fun askedNotifyOnce(): Boolean {
@@ -274,6 +283,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         memoryModel = s.memoryModel,
         autoRecall = s.autoRecall,
         sendOnEnter = s.sendOnEnter,
+        thiefJokes = s.thiefJokes,
     )
 
     /** applies settings from the cloud without bumping the local timestamp past the remote one */
@@ -290,6 +300,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         p.setOrRemove(K.memoryModel, r.memoryModel)
         r.autoRecall?.let { p[K.autoRecall] = it }
         r.sendOnEnter?.let { p[K.sendOnEnter] = it }
+        r.thiefJokes?.let { p[K.thiefJokes] = it }
         p[K.settingsUpdated] = remoteUpdatedAt
     }
 }
