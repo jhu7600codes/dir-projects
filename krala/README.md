@@ -15,6 +15,11 @@ an ai chat app for android. kotlin, jetpack compose, material 3. dark red on bla
 - incognito chats: no memory read or write, never synced, never in recall
 - quick ask home screen widget with a floating answer sheet
 
+**talk mode**
+- hands-free voice chat: tap the wave button in an empty composer. you talk, krala answers out loud sentence by sentence while the reply streams, then listens again. tap the star to cut in
+- expressive voice: talk turns ask the model for cues the app performs with the system tts: [laughs] [giggles] [sighs] [pause], tone tags ([excited] [soft] [whisper] [sad] [teasing] [calm]) that change pitch, speed and volume, held words (sooo, нууу), beats on "...", hype on ALL CAPS
+- the star lives: it spins up with a fading afterimage and a trail of tiny orbiting stars while thinking, sways side to side with a bob and motion ghosts while talking (livelier on excited tones), swells with your voice while listening. the top bar star does the same in text chats
+
 **providers**
 - add any openai compatible source: name, base url, api key, models (fetched from `/models`), default model, custom headers, context size, vision flag
 - presets: google ai studio (gemini), groq, cerebras, mistral, openrouter, cloudflare workers ai (asks for your account id), nvidia, and the built in no key default `krala free` (`https://api.apisfreellm.com/v1`, key `free`, model `free-ai`)
@@ -75,10 +80,10 @@ cp local.properties.example local.properties   # set sdk.dir
 without supabase settings krala runs fully local and the account screen says so.
 
 1. create a supabase project
-2. run `supabase/migrations/20261128000000_krala_init.sql` (sql editor, or `supabase db push`)
+2. run `supabase/migrations/20261128000000_krala_init.sql` (sql editor, or `supabase db push`) and deploy `supabase/functions/delete-account` (used for account deletion)
 3. authentication → sign in / providers: enable **email** and **anonymous sign-ins**
 4. authentication → url configuration: add `krala://auth-callback` to the redirect urls so confirmation links open the app
-5. put the project url and anon (publishable) key in `local.properties`:
+5. put the project url and anon (publishable) key in `local.properties` (without them the build uses krala's own project from `gradle.properties`):
 
    ```
    SUPABASE_URL=https://xxxx.supabase.co

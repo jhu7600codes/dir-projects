@@ -108,7 +108,7 @@ class ChatEngine @Inject constructor(
         )
     }
 
-    fun send(conversationId: String, text: String, images: List<String>, extraRecall: List<KralaTags.RecallLine>) {
+    fun send(conversationId: String, text: String, images: List<String>, extraRecall: List<KralaTags.RecallLine>, voice: Boolean = false) {
         if (isBusy(conversationId)) return
         scope.launch {
             val conv = conversations.get(conversationId) ?: return@launch
@@ -125,7 +125,7 @@ class ChatEngine @Inject constructor(
                 conversations.setTitle(conversationId, heuristicTitle(text, images.isNotEmpty()), auto = true, now = now)
             }
             conversations.touch(conversationId, now)
-            generate(conversationId, text, extraRecall)
+            generate(conversationId, text, extraRecall, voice)
         }
     }
 
@@ -155,7 +155,7 @@ class ChatEngine @Inject constructor(
         jobs[conversationId]?.cancel()
     }
 
-    private fun generate(conversationId: String, queryText: String, extraRecall: List<KralaTags.RecallLine>) {
+    private fun generate(conversationId: String, queryText: String, extraRecall: List<KralaTags.RecallLine>, voice: Boolean = false) {
         val job = scope.launch {
             val conv = conversations.get(conversationId) ?: return@launch
             val s = settings.current()
@@ -186,7 +186,10 @@ class ChatEngine @Inject constructor(
                     finalError = "no provider with a model is set up. add one in settings → providers."
                     return@launch
                 }
-                val api = toApi(history, recallLines)
+                val api = toApi(history, recallLines).let { list ->
+                    if (!voice || list.isEmpty() || list.last().role != Role.USER) list
+                    else list.dropLast(1) + list.last().copy(text = KralaTags.withVoice(list.last().text, VOICE_RULES))
+                }
                 var lastError: ProviderException? = null
                 for ((index, attempt) in attempts.withIndex()) {
                     if (index > 0) {
@@ -335,6 +338,15 @@ class ChatEngine @Inject constructor(
     }
 
     companion object {
+        /** sent with talk mode turns only; the app performs these cues with the tts voice */
+        const val VOICE_RULES =
+            "this turn is talk mode: your reply is spoken out loud by a voice, like a phone call. " +
+                "keep it short and natural, one to four sentences, no markdown, lists, links, code or emojis. " +
+                "you can act it out and the app performs it: [laughs] [giggles] [chuckles] [sighs] [pause], " +
+                "tone tags [excited] [soft] [whisper] [sad] [teasing] [calm] that last until the next tone tag, " +
+                "stretched words to hold them (sooo, nooo, hmmm, нууу), ... for a beat, and ALL CAPS for hype words. " +
+                "use them like a real person would, not in every sentence."
+
         fun heuristicTitle(text: String, hasImage: Boolean): String {
             val words = text.trim().replace(Regex("\\s+"), " ").split(' ').filter { it.isNotBlank() }
             if (words.isEmpty()) return if (hasImage) "image" else "new chat"

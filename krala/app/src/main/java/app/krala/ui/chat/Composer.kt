@@ -63,6 +63,7 @@ fun ChatComposer(
     onRemoveImage: (String) -> Unit,
     onRemoveRecall: (KralaTags.RecallLine) -> Unit,
     onCancelEdit: () -> Unit,
+    onTalk: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val cs = MaterialTheme.colorScheme
@@ -158,6 +159,8 @@ fun ChatComposer(
                 ) { isBusy ->
                     if (isBusy) {
                         FilledTonalIconButton(onClick = { h.click(); onStop() }) { Icon(Icons.Rounded.Stop, stringResource(R.string.stop)) }
+                    } else if (onTalk != null && text.isBlank() && state.images.isEmpty() && state.editingId == null) {
+                        FilledTonalIconButton(onClick = { h.click(); onTalk() }) { Icon(Icons.Rounded.GraphicEq, stringResource(R.string.talk_mode)) }
                     } else {
                         FilledIconButton(
                             onClick = { h.confirm(); onSend() },

@@ -159,22 +159,5 @@ $$;
 
 -- ---------------------------------------------------------------- account deletion
 
--- lets a signed in user delete their own auth user. every table above references auth.users
--- with on delete cascade, so all of their cloud data goes with it.
-create or replace function public.delete_my_account()
-returns void
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare uid uuid := auth.uid();
-begin
-    if uid is null then
-        raise exception 'not signed in';
-    end if;
-    delete from auth.users where id = uid;
-end;
-$$;
-
-revoke all on function public.delete_my_account() from public, anon;
-grant execute on function public.delete_my_account() to authenticated;
+-- handled by the delete-account edge function (supabase/functions/delete-account): it deletes the
+-- caller's auth user with the service role, and every table above cascades from auth.users.

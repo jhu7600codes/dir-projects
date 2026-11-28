@@ -83,6 +83,7 @@
     <string name="embeddings_body">по желанию. готовые сообщения прогоняются через /embeddings этого провайдера и хранятся на телефоне, так поиск находит то же самое другими словами.</string>
     <string name="embeddings_off">выкл (только по словам)</string>
     <string name="enabled">включён</string>
+    <string name="end_talk">закончить</string>
     <string name="err_already_registered">на эту почту уже есть аккаунт, лучше войди</string>
     <string name="err_anon_disabled">гостевой режим выключен на сервере</string>
     <string name="err_email_not_confirmed">сначала подтверди почту, ссылка в письме</string>
@@ -110,6 +111,7 @@
     <string name="guest_title">гость</string>
     <string name="guest_upgrade_pending">подтверди почту по ссылке в письме, потом задай пароль через «сменить пароль»</string>
     <string name="guest_upgraded">готово, гостевые чаты теперь в твоём аккаунте. подтверди почту по ссылке.</string>
+    <string name="hands_free">без рук</string>
     <string name="haptics">вибрация</string>
     <string name="header">заголовок</string>
     <string name="incognito">инкогнито</string>
@@ -123,6 +125,7 @@
     <string name="last_latency">%1$d мс последний ответ</string>
     <string name="last_synced">синхронизировано %1$s</string>
     <string name="latency_ms">%1$d мс</string>
+    <string name="listening">слушаю…</string>
     <string name="locked_body">разблокируй, чтобы продолжить</string>
     <string name="locked_title">крала заблокирована</string>
     <string name="manage_providers">провайдеры</string>
@@ -137,6 +140,7 @@
     <string name="memory_writer">кто пишет заметки</string>
     <string name="memory_writer_auto">автоматически (по приоритету)</string>
     <string name="memory_writer_body">модель, которая пишет заметки после каждого чата. чем больше контекст, тем лучше.</string>
+    <string name="mic_permission">крале нужен микрофон, чтобы тебя слышать</string>
     <string name="min_chars">минимум %1$d символов</string>
     <string name="model_auto">авто</string>
     <string name="model_auto_hint">сначала верхний провайдер, при ошибках и лимитах следующий</string>
@@ -227,6 +231,9 @@
     <string name="syncing">синхронизация…</string>
     <string name="system_prompt">системный промпт</string>
     <string name="system_prompt_hint">кто такая крала. отправляется в начале каждого чата.</string>
+    <string name="talk_mode">голосом</string>
+    <string name="tap_to_interrupt">нажми, чтобы перебить</string>
+    <string name="tap_to_talk">нажми на звезду и говори</string>
     <string name="test_connection">проверить подключение</string>
     <string name="test_failed">не подключилось</string>
     <string name="test_ok">подключено</string>
@@ -235,6 +242,7 @@
     <string name="theme_dark">тёмная</string>
     <string name="theme_light">светлая</string>
     <string name="theme_system">система</string>
+    <string name="thinking">думаю…</string>
     <string name="type_delete">напиши удалить</string>
     <string name="unlock">разблокировать</string>
     <string name="unlock_krala">разблокировать кралу</string>
@@ -252,6 +260,8 @@
     <string name="value">значение</string>
     <string name="vision">зрение</string>
     <string name="vision_hint">понимает картинки</string>
+    <string name="voice_error">не расслышала (ошибка %1$d)</string>
+    <string name="voice_unavailable">на телефоне нет распознавания речи</string>
     <string name="widget_description">спроси кралу что угодно прямо с рабочего стола</string>
     <string name="widget_hint">спроси кралу…</string>
     <string-array name="greetings">

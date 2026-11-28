@@ -22,8 +22,9 @@ object KralaTags {
     const val SYSTEM_PROMPT = "--system prompt--"
     const val USER_INSTRUCTIONS = "--user instructions--"
     const val RECALL = "--recall--"
+    const val VOICE = "--voice--"
 
-    private val sectionNames = listOf(MEMORY, SYSTEM_PROMPT, USER_INSTRUCTIONS, RECALL)
+    private val sectionNames = listOf(MEMORY, SYSTEM_PROMPT, USER_INSTRUCTIONS, RECALL, VOICE)
 
     data class MemoryLine(val chatName: String, val notes: String)
     data class RecallLine(val label: String, val excerpt: String)
@@ -33,6 +34,7 @@ object KralaTags {
         val systemPrompt: String = "",
         val userInstructions: String = "",
         val recall: String? = null,
+        val voice: String? = null,
     )
 
     fun formatMemory(entries: List<MemoryLine>): String =
@@ -54,6 +56,10 @@ object KralaTags {
         if (block.recall != null) {
             append(RECALL).append('\n')
             if (block.recall.isNotBlank()) append(block.recall.trim()).append('\n')
+        }
+        if (block.voice != null) {
+            append(VOICE).append('\n')
+            if (block.voice.isNotBlank()) append(block.voice.trim()).append('\n')
         }
         append(CLOSE)
     }
@@ -80,6 +86,23 @@ object KralaTags {
         val parsed = parse(text.substring(range)) ?: return text
         val rebuilt = build(parsed.copy(recall = recall))
         return text.replaceRange(range, rebuilt)
+    }
+
+    /** adds a --voice-- section (talk mode instructions) for one request */
+    fun withVoice(text: String, voice: String): String {
+        val range = findBlock(text)
+        if (range == null) {
+            return buildString {
+                append(OPEN).append('\n').append(VOICE).append('\n').append(voice.trim()).append('\n').append(CLOSE)
+            } + "\n\n" + text
+        }
+        val inner = text.substring(range)
+        // a recall-only block has no memory/prompt sections: keep it minimal
+        if (!inner.contains(MEMORY, ignoreCase = true)) {
+            return text.replaceRange(range, inner.dropLast(CLOSE.length).trimEnd() + "\n" + VOICE + "\n" + voice.trim() + "\n" + CLOSE)
+        }
+        val parsed = parse(inner) ?: return text
+        return text.replaceRange(range, build(parsed.copy(voice = voice)))
     }
 
     /** position of the first complete block in [text], or null */
@@ -116,6 +139,7 @@ object KralaTags {
             systemPrompt = sections[SYSTEM_PROMPT]?.toString()?.trim().orEmpty(),
             userInstructions = sections[USER_INSTRUCTIONS]?.toString()?.trim().orEmpty(),
             recall = sections[RECALL]?.toString()?.trim(),
+            voice = sections[VOICE]?.toString()?.trim(),
         )
     }
 
@@ -143,6 +167,6 @@ object KralaTags {
     /** replaces the system prompt + instructions of the block in [prefix], keeping memory */
     fun updatePrompts(prefix: String, systemPrompt: String, instructions: String): String {
         val parsed = parse(prefix) ?: return prefix
-        return build(parsed.copy(systemPrompt = systemPrompt, userInstructions = instructions, recall = null))
+        return build(parsed.copy(systemPrompt = systemPrompt, userInstructions = instructions, recall = null, voice = null))
     }
 }

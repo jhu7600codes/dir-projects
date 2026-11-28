@@ -83,6 +83,7 @@
     <string name="embeddings_body">optional. finished messages get embedded with this provider’s /embeddings endpoint and stored on the phone, so recall also finds things said in other words.</string>
     <string name="embeddings_off">off (keyword search only)</string>
     <string name="enabled">enabled</string>
+    <string name="end_talk">end talk</string>
     <string name="err_already_registered">that email already has an account, sign in instead</string>
     <string name="err_anon_disabled">guest mode is turned off on the server</string>
     <string name="err_email_not_confirmed">confirm your email first, the link is in your inbox</string>
@@ -110,6 +111,7 @@
     <string name="guest_title">guest</string>
     <string name="guest_upgrade_pending">tap the link in your email to confirm, then set a password with change password</string>
     <string name="guest_upgraded">done, your guest chats now belong to your account. check your email to confirm.</string>
+    <string name="hands_free">hands-free</string>
     <string name="haptics">haptics</string>
     <string name="header">header</string>
     <string name="incognito">incognito</string>
@@ -123,6 +125,7 @@
     <string name="last_latency">%1$d ms last reply</string>
     <string name="last_synced">last synced %1$s</string>
     <string name="latency_ms">%1$d ms</string>
+    <string name="listening">listening…</string>
     <string name="locked_body">unlock to keep chatting</string>
     <string name="locked_title">krala is locked</string>
     <string name="manage_providers">manage providers</string>
@@ -137,6 +140,7 @@
     <string name="memory_writer">notes writer</string>
     <string name="memory_writer_auto">automatic (provider priority)</string>
     <string name="memory_writer_body">the model that writes the notes after each chat. a big context and a good memory help.</string>
+    <string name="mic_permission">krala needs the microphone to hear you</string>
     <string name="min_chars">at least %1$d characters</string>
     <string name="model_auto">auto</string>
     <string name="model_auto_hint">top provider first, falls back on errors and rate limits</string>
@@ -227,6 +231,9 @@
     <string name="syncing">syncing…</string>
     <string name="system_prompt">system prompt</string>
     <string name="system_prompt_hint">who krala is. sent at the start of every chat.</string>
+    <string name="talk_mode">talk mode</string>
+    <string name="tap_to_interrupt">tap to cut in</string>
+    <string name="tap_to_talk">tap the star to talk</string>
     <string name="test_connection">test connection</string>
     <string name="test_failed">connection failed</string>
     <string name="test_ok">connected</string>
@@ -235,6 +242,7 @@
     <string name="theme_dark">dark</string>
     <string name="theme_light">light</string>
     <string name="theme_system">system</string>
+    <string name="thinking">thinking…</string>
     <string name="type_delete">type delete</string>
     <string name="unlock">unlock</string>
     <string name="unlock_krala">unlock krala</string>
@@ -252,6 +260,8 @@
     <string name="value">value</string>
     <string name="vision">vision</string>
     <string name="vision_hint">can read images</string>
+    <string name="voice_error">couldn’t hear you (error %1$d)</string>
+    <string name="voice_unavailable">no speech recognition on this phone</string>
     <string name="widget_description">ask krala anything from your home screen</string>
     <string name="widget_hint">ask krala…</string>
     <string-array name="greetings">

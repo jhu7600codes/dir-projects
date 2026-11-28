@@ -5,15 +5,16 @@ import io.github.jan.supabase.auth.SignOutScope
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.rpc
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.serialization.json.buildJsonObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,6 +31,7 @@ sealed interface AuthState {
 @Singleton
 class AuthRepository @Inject constructor(
     private val holder: SupabaseHolder,
+    private val http: io.ktor.client.HttpClient,
     @AppScope scope: CoroutineScope,
 ) {
     val configured get() = holder.configured && holder.client != null
@@ -114,10 +116,15 @@ class AuthRepository @Inject constructor(
         runCatching { c.auth.signOut(SignOutScope.LOCAL) }.onFailure { c.auth.clearSession() }
     }
 
-    /** deletes the auth user server side; every table cascades, so all cloud data goes with it */
+    /** deletes the auth user server side (delete-account edge function); every table cascades */
     suspend fun deleteAccount() {
         val c = client()
-        c.postgrest.rpc("delete_my_account", buildJsonObject { })
+        val token = c.auth.currentSessionOrNull()?.accessToken ?: error("not signed in")
+        val resp = http.post(app.krala.BuildConfig.SUPABASE_URL.trimEnd('/') + "/functions/v1/delete-account") {
+            header("Authorization", "Bearer $token")
+            header("apikey", app.krala.BuildConfig.SUPABASE_ANON_KEY)
+        }
+        if (!resp.status.isSuccess()) error(resp.bodyAsText().take(200).ifBlank { "delete failed (${resp.status.value})" })
         runCatching { c.auth.signOut(SignOutScope.LOCAL) }
         runCatching { c.auth.clearSession() }
     }

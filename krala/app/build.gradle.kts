@@ -13,8 +13,9 @@ val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
+// local.properties wins, then env vars, then the defaults in gradle.properties (krala's own project)
 fun prop(name: String): String =
-    (localProps.getProperty(name) ?: System.getenv(name) ?: "").trim()
+    (localProps.getProperty(name) ?: System.getenv(name) ?: (findProperty("krala.$name") as String?) ?: "").trim()
 
 android {
     namespace = "app.krala"
@@ -24,8 +25,8 @@ android {
         applicationId = "app.krala"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
 

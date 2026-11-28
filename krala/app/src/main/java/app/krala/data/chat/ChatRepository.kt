@@ -26,6 +26,7 @@ class ChatRepository @Inject constructor(
     fun messages(id: String): Flow<List<MessageEntity>> = messages.observeFor(id)
 
     suspend fun get(id: String) = conversations.get(id)
+    suspend fun messagesOnce(id: String) = messages.listFor(id)
 
     suspend fun rename(id: String, title: String) =
         conversations.setTitle(id, title.trim().ifBlank { "chat" }, auto = false, now = System.currentTimeMillis())

@@ -50,6 +50,7 @@ fun ChatScreen(
     onMemory: () -> Unit,
     onAccount: () -> Unit,
     onProviders: () -> Unit,
+    onTalk: (String?) -> Unit,
 ) {
     val context = LocalContext.current
     val h = LocalHaptics.current
@@ -171,7 +172,14 @@ fun ChatScreen(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { showModels = true }) {
                             if (incognito) Icon(Icons.Rounded.VisibilityOff, null, Modifier.size(22.dp), tint = cs.primary)
-                            else KralaLogo(size = 24.dp)
+                            else app.krala.ui.components.KralaStar(
+                                mode = when {
+                                    live == null -> app.krala.ui.components.StarMode.IDLE
+                                    live?.started == true -> app.krala.ui.components.StarMode.TALKING
+                                    else -> app.krala.ui.components.StarMode.THINKING
+                                },
+                                size = 30.dp,
+                            )
                             Column(Modifier.padding(start = 10.dp)) {
                                 Text(
                                     conv?.title?.takeIf { it.isNotBlank() } ?: stringResource(if (incognito) R.string.incognito_chat else R.string.app_name),
@@ -273,6 +281,7 @@ fun ChatScreen(
                     onRemoveImage = vm::removeImage,
                     onRemoveRecall = vm::removeRecall,
                     onCancelEdit = vm::cancelEdit,
+                    onTalk = if (incognito) null else ({ onTalk(currentId) }),
                 )
             }
         }

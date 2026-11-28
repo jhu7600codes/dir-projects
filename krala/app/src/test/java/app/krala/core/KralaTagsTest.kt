@@ -75,4 +75,17 @@ class KralaTagsTest {
         assertEquals("new", updated.systemPrompt)
         assertEquals("new i", updated.userInstructions)
     }
+
+    @Test
+    fun voiceSection() {
+        val first = KralaTags.compose(KralaTags.build(KralaTags.Block("", "p", "")), "q")
+        val v = KralaTags.withVoice(KralaTags.withRecall(first, "[a] b"), "talk short")
+        val parsed = KralaTags.parse(v)!!
+        assertEquals("talk short", parsed.voice)
+        assertEquals("[a] b", parsed.recall)
+        val later = KralaTags.withVoice(KralaTags.withRecall("hi", "[a] b"), "talk short")
+        assertTrue(later.contains("--recall--") && later.contains("--voice--") && later.endsWith("hi"))
+        assertEquals("hi", KralaTags.strip(later))
+        assertEquals("--krala tags--\n--voice--\ntalk short\n--krala tags end--\n\nyo", KralaTags.withVoice("yo", "talk short"))
+    }
 }
