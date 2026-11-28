@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
             LineageTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val s by vm.state.collectAsStateWithLifecycle()
-                    BackHandler(enabled = s.screen != Screen.HOME && !s.running) {
+                    BackHandler(enabled = s.screen != Screen.HOME && s.screen != Screen.BROWSER && !s.running) {
                         vm.go(if (s.screen == Screen.TWEAKS && s.picks.isNotEmpty()) Screen.PICK else Screen.HOME)
                     }
                     when (s.screen) {
@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
                         Screen.MANAGE -> ManageScreen(s, vm)
                         Screen.MICROG -> MicrogScreen(s, vm)
                         Screen.CONTROL -> ControlScreen(s, vm)
+                        Screen.BROWSER -> BrowserScreen(s, vm)
                     }
                 }
             }

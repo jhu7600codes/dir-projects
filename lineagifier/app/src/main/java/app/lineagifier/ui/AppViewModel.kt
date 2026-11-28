@@ -33,7 +33,7 @@ import app.lineagifier.statusbar.OverlayService
 import app.lineagifier.undo.Kind
 import java.io.File
 
-enum class Screen { HOME, PICK, TWEAKS, APPLY, MANAGE, MICROG, CONTROL }
+enum class Screen { HOME, PICK, TWEAKS, APPLY, MANAGE, MICROG, CONTROL, BROWSER }
 
 enum class StepState { WAITING, RUNNING, OK, FAILED, SKIPPED }
 
@@ -72,6 +72,9 @@ data class UiState(
     val apkBusy: Boolean = false,
     val apkMessage: String? = null,
     val pendingSwap: PendingSwap? = null,
+    /** the catalog entry the apkmirror browser is open for */
+    val browserEntry: Entry? = null,
+    val downloadProgress: Float? = null,
 )
 
 data class PendingSwap(val entry: Entry, val apk: ApkInfo, val plan: SystemSwap.Plan, val backupLauncher: String?)
@@ -282,6 +285,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun dismissApk() = _s.update { it.copy(apkMessage = null, pendingSwap = null) }
 
     /** copies the picked file, checks it's really the lineage app, then installs it or asks before a system swap */
+    /** a file picked by hand (downloaded in another browser) */
     fun pickedApk(entry: Entry, uri: android.net.Uri) = viewModelScope.launch {
         _s.update { it.copy(apkBusy = true, apkMessage = null, pendingSwap = null) }
         val msg = try {
@@ -289,26 +293,72 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             withContext(Dispatchers.IO) {
                 app.contentResolver.openInputStream(uri)?.use { i -> f.outputStream().use { i.copyTo(it) } } ?: error("can't read that file")
             }
-            val a = SystemSwap.inspect(app, f)
-            SystemSwap.refuse(entry, a)?.let { error(it) }
-            val plan = withContext(Dispatchers.IO) { SystemSwap.plan(Root, entry, a) }
-            if (plan.swap) {
-                val backup = if (a.packageId == "com.android.launcher3") SystemSwap.backupLauncher(actions.homePackages(), a.packageId) else null
-                if (a.packageId == "com.android.launcher3" && backup == null)
-                    error("no backup launcher installed. trebuchet replaces the stock launcher, so lineagifier wants another one (like lawnchair) first")
-                _s.update { it.copy(pendingSwap = PendingSwap(entry, a, plan, backup)) }
-                null
-            } else {
-                val r = withContext(Dispatchers.IO) { Root.installApk(f) }
-                f.delete()
-                if (!r.out.contains("Success")) error("pm install: ${r.message}")
-                var m = "installed ${a.packageId} ${a.versionName}"
-                if (entry.role != null) m += "\n" + actions.setDefault(entry, a.packageId).fold({ it }, { "default not set: ${it.message}" })
-                m
-            }
+            processApk(entry, f)
         } catch (t: Throwable) { "refused: ${t.message}" }
-        _s.update { it.copy(apkBusy = false, apkMessage = msg, pendingSwap = it.pendingSwap) }
+        _s.update { it.copy(apkBusy = false, apkMessage = msg) }
         refreshPackages()
+    }
+
+    fun openBrowser(entry: Entry) { _s.update { it.copy(browserEntry = entry, screen = Screen.BROWSER, apkMessage = null) } }
+
+    /**
+     * the in-app apkmirror browser hit a download. fetched with the webview's own cookies and user agent
+     * (so cloudflare and apkmirror's download token carry over), then checked and installed like a picked file.
+     */
+    fun browserDownload(url: String, userAgent: String, disposition: String?, mime: String?) = viewModelScope.launch {
+        val entry = _s.value.browserEntry ?: return@launch
+        val name = android.webkit.URLUtil.guessFileName(url, disposition, mime)
+        if (name.endsWith(".apkm", true) || name.endsWith(".xapk", true) || name.endsWith(".apks", true)) {
+            _s.update { it.copy(apkMessage = "refused: that's a split apk bundle ($name). go back and pick a variant marked APK, not BUNDLE") }
+            return@launch
+        }
+        _s.update { it.copy(apkBusy = true, apkMessage = null, pendingSwap = null, downloadProgress = 0f) }
+        val msg = try {
+            val f = File(app.cacheDir, "browser-${entry.id}.apk")
+            withContext(Dispatchers.IO) {
+                val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                conn.setRequestProperty("User-Agent", userAgent)
+                android.webkit.CookieManager.getInstance().getCookie(url)?.let { conn.setRequestProperty("Cookie", it) }
+                conn.setRequestProperty("Referer", "https://www.apkmirror.com/")
+                conn.connectTimeout = 20_000; conn.readTimeout = 60_000
+                try {
+                    if (conn.responseCode != 200) error("http ${conn.responseCode}")
+                    val total = conn.contentLengthLong
+                    var done = 0L
+                    conn.inputStream.use { i -> f.outputStream().use { o ->
+                        val buf = ByteArray(64 * 1024)
+                        while (true) {
+                            val n = i.read(buf); if (n < 0) break
+                            o.write(buf, 0, n); done += n
+                            if (total > 0) _s.update { it.copy(downloadProgress = done.toFloat() / total) }
+                        }
+                    } }
+                } finally { conn.disconnect() }
+            }
+            processApk(entry, f)
+        } catch (t: Throwable) { "refused: ${t.message}" }
+        _s.update { it.copy(apkBusy = false, apkMessage = msg, downloadProgress = null) }
+        refreshPackages()
+    }
+
+    /** checks a downloaded apk is really the lineage app, then installs it or asks before a system swap. null = waiting on the swap dialog */
+    private suspend fun processApk(entry: Entry, f: File): String? {
+        val a = SystemSwap.inspect(app, f)
+        SystemSwap.refuse(entry, a)?.let { f.delete(); error(it) }
+        val plan = withContext(Dispatchers.IO) { SystemSwap.plan(Root, entry, a) }
+        if (plan.swap) {
+            val backup = if (a.packageId == "com.android.launcher3") SystemSwap.backupLauncher(actions.homePackages(), a.packageId) else null
+            if (a.packageId == "com.android.launcher3" && backup == null)
+                error("no backup launcher installed. trebuchet replaces the stock launcher, so lineagifier wants another one (like lawnchair) first")
+            _s.update { it.copy(pendingSwap = PendingSwap(entry, a, plan, backup)) }
+            return null
+        }
+        val r = withContext(Dispatchers.IO) { Root.installApk(f) }
+        f.delete()
+        if (!r.out.contains("Success")) error("pm install: ${r.message}")
+        var m = "installed ${a.packageId} ${a.versionName}"
+        if (entry.role != null) m += "\n" + actions.setDefault(entry, a.packageId).fold({ it }, { "default not set: ${it.message}" })
+        return m
     }
 
     fun confirmSwap() = viewModelScope.launch {
