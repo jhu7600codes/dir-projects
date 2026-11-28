@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Hearing
 import androidx.compose.material.icons.rounded.TouchApp
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Subtitles
 import androidx.compose.material.icons.rounded.SubtitlesOff
 import androidx.compose.foundation.rememberScrollState
@@ -39,7 +40,7 @@ import app.krala.ui.components.StarMode
 import app.krala.ui.theme.LocalHaptics
 
 @Composable
-fun TalkScreen(vm: TalkViewModel, onClose: (chatId: String?) -> Unit) {
+fun TalkScreen(vm: TalkViewModel, onVoiceSettings: () -> Unit = {}, onClose: (chatId: String?) -> Unit) {
     val context = LocalContext.current
     val h = LocalHaptics.current
     val cs = MaterialTheme.colorScheme
@@ -83,6 +84,9 @@ fun TalkScreen(vm: TalkViewModel, onClose: (chatId: String?) -> Unit) {
                     title.ifBlank { stringResource(R.string.talk_mode) }, style = MaterialTheme.typography.titleMedium,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(start = 4.dp),
                 )
+                IconButton(onClick = { h.click(); vm.close(); onVoiceSettings() }) {
+                    Icon(Icons.Rounded.Tune, stringResource(R.string.voice), tint = cs.onSurfaceVariant)
+                }
                 IconToggleButton(checked = transcript, onCheckedChange = { h.tick(); vm.setTranscript(it) }) {
                     Icon(if (transcript) Icons.Rounded.Subtitles else Icons.Rounded.SubtitlesOff, stringResource(R.string.live_transcript), tint = if (transcript) cs.primary else cs.onSurfaceVariant)
                 }
@@ -147,6 +151,7 @@ fun TalkScreen(vm: TalkViewModel, onClose: (chatId: String?) -> Unit) {
                 ) { st ->
                     Text(st, style = MaterialTheme.typography.labelLarge, color = if (state.phase == TalkPhase.ERROR) cs.error else cs.primary, textAlign = TextAlign.Center)
                 }
+                if (state.phase == TalkPhase.ERROR) TextButton(onClick = { vm.close(); onVoiceSettings() }) { Text(stringResource(R.string.voice_open_settings)) }
                 Spacer(Modifier.height(14.dp))
                 if (transcript && state.heard.isNotBlank()) {
                     Text(

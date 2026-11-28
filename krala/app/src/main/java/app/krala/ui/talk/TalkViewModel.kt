@@ -151,7 +151,8 @@ class TalkViewModel @Inject constructor(
         if (closed) return
         speaker.stop()
         set { it.copy(phase = TalkPhase.LISTENING, heard = "", error = null) }
-        if (useWhisper || services.isEmpty() || !listener.available && serviceIndex == 0) {
+        val mode = sttMode.value
+        if (mode == "whisper" || (mode == "auto" && (useWhisper || services.isEmpty() || !listener.available && serviceIndex == 0))) {
             useWhisper = true
             listenWhisper()
             return
@@ -182,6 +183,7 @@ class TalkViewModel @Inject constructor(
             12, 13 -> when {
                 !systemLanguage -> { systemLanguage = true; listen() }
                 serviceIndex + 1 < services.size -> { serviceIndex++; listen() }
+                settingsMode() == "phone" -> set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.voice_language)) }
                 else -> { useWhisper = true; listen() }
             }
             // 11 recognizer service dropped, 8 busy: try once more
@@ -213,6 +215,9 @@ class TalkViewModel @Inject constructor(
             }
         }
     }
+
+    private val sttMode: StateFlow<String> = settings.settings.map { it.sttMode }.stateIn(viewModelScope, SharingStarted.Eagerly, "auto")
+    private fun settingsMode() = sttMode.value
 
     /** no working recognizer on the phone: record and transcribe with a provider's whisper */
     private fun listenWhisper() {
@@ -261,6 +266,7 @@ class TalkViewModel @Inject constructor(
             var tone = VoiceScript.Tone.NEUTRAL
             var seen = false
             var started = false
+            var watchdog: Job? = null
             fun feed(textNow: String, final: Boolean) {
                 val end = if (final) textNow.length else VoiceScript.sentenceEnd(textNow, spoken)
                 if (end > spoken) {
@@ -268,8 +274,17 @@ class TalkViewModel @Inject constructor(
                     val r = VoiceScript.parse(textNow.substring(spoken, end), tone)
                     tone = r.endTone
                     spoken = end
+                    val before = speaker.started.value
                     speaker.speak(r.segments)
                     set { it.copy(phase = TalkPhase.SPEAKING) }
+                    // if no sound starts, don't sit on "tap to cut in" forever
+                    if (watchdog == null) watchdog = viewModelScope.launch {
+                        kotlinx.coroutines.delay(5_000)
+                        if (speaker.started.value == before && speaker.speaking.value) {
+                            speaker.stop()
+                            set { it.copy(phase = TalkPhase.ERROR, error = speaker.problem.value ?: context.getString(app.krala.R.string.voice_silent)) }
+                        }
+                    }
                 }
             }
             // follow the stream until the reply is finished
@@ -290,6 +305,9 @@ class TalkViewModel @Inject constructor(
             if (_state.value.phase == TalkPhase.ERROR) return@launch
             // let her finish talking, then listen again
             speaker.speaking.first { !it }
+            watchdog?.cancel()
+            if (_state.value.phase == TalkPhase.ERROR) return@launch
+            speaker.problem.value?.let { p -> set { it.copy(phase = TalkPhase.ERROR, error = p) }; return@launch }
             if (_state.value.handsFree && !closed) listen() else set { it.copy(phase = TalkPhase.IDLE) }
         }
     }

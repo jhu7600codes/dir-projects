@@ -51,6 +51,14 @@ data class AppSettings(
     val webPages: Int = 3,
     /** talk mode shows what was said; off by default */
     val talkTranscript: Boolean = false,
+    /** text to speech engine package, null = phone default */
+    val ttsEngine: String? = null,
+    val ttsVoiceEn: String? = null,
+    val ttsVoiceRu: String? = null,
+    val voiceRate: Float = 1f,
+    val voicePitch: Float = 1f,
+    /** how talk mode listens: auto, phone or whisper */
+    val sttMode: String = "auto",
 ) {
     val effectiveSystemPrompt: String get() = systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT
 }
@@ -106,6 +114,12 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val webSearx = stringPreferencesKey("web_searx")
         val webPages = androidx.datastore.preferences.core.intPreferencesKey("web_pages")
         val transcript = booleanPreferencesKey("talk_transcript")
+        val ttsEngine = stringPreferencesKey("tts_engine")
+        val ttsVoiceEn = stringPreferencesKey("tts_voice_en")
+        val ttsVoiceRu = stringPreferencesKey("tts_voice_ru")
+        val voiceRate = androidx.datastore.preferences.core.floatPreferencesKey("voice_rate")
+        val voicePitch = androidx.datastore.preferences.core.floatPreferencesKey("voice_pitch")
+        val sttMode = stringPreferencesKey("stt_mode")
     }
 
     val settings: Flow<AppSettings> = context.store.data
@@ -140,6 +154,12 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
                 webSearxUrl = p[K.webSearx] ?: "",
                 webPages = p[K.webPages] ?: 3,
                 talkTranscript = p[K.transcript] ?: false,
+                ttsEngine = p[K.ttsEngine],
+                ttsVoiceEn = p[K.ttsVoiceEn],
+                ttsVoiceRu = p[K.ttsVoiceRu],
+                voiceRate = p[K.voiceRate] ?: 1f,
+                voicePitch = p[K.voicePitch] ?: 1f,
+                sttMode = p[K.sttMode] ?: "auto",
             )
         }
 
@@ -193,6 +213,11 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         it[K.webSearx] = searxUrl.trim()
         it[K.webPages] = pages.coerceIn(0, 5)
     }
+
+    suspend fun setTtsEngine(v: String?) = context.store.edit { it.setOrRemove(K.ttsEngine, v); it.remove(K.ttsVoiceEn); it.remove(K.ttsVoiceRu) }
+    suspend fun setTtsVoice(russian: Boolean, name: String?) = context.store.edit { it.setOrRemove(if (russian) K.ttsVoiceRu else K.ttsVoiceEn, name) }
+    suspend fun setVoiceTuning(rate: Float, pitch: Float) = context.store.edit { it[K.voiceRate] = rate; it[K.voicePitch] = pitch }
+    suspend fun setSttMode(v: String) = context.store.edit { it[K.sttMode] = v }
 
     suspend fun setTalkTranscript(v: Boolean) = context.store.edit { it[K.transcript] = v }
 

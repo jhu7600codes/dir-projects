@@ -50,6 +50,7 @@ fun SettingsScreen(
     onUsage: () -> Unit,
     onMemory: () -> Unit,
     onAccount: () -> Unit,
+    onVoice: () -> Unit = {},
 ) {
     val s by vm.settings.collectAsStateWithLifecycle()
     val providers by vm.providers.collectAsStateWithLifecycle()
@@ -146,6 +147,7 @@ fun SettingsScreen(
                     SettingRow(stringResource(R.string.providers), stringResource(R.string.providers_count, providers.size), Icons.Rounded.Hub, onClick = onProviders)
                     SettingRow(stringResource(R.string.usage), stringResource(R.string.usage_hint), Icons.Rounded.BarChart, onClick = onUsage)
                     SettingRow(stringResource(R.string.web_search), webLabel(s.webProvider), Icons.Rounded.TravelExplore, onClick = { webDialog = true })
+                    SettingRow(stringResource(R.string.voice), stringResource(R.string.voice_hint), Icons.Rounded.RecordVoiceOver, onClick = onVoice)
                 }
             }
 
