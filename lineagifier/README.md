@@ -88,7 +88,7 @@ each one is probed first (`cmd -l`, `cmd overlay list`, `settings get`), then ap
 
 ## twoyi notes
 
-- the twoyi i know of runs android 8.1 on android hosts. lineagifier reads the real sdk at runtime and turns off what doesn't exist (`cmd role` is 10+, monet is 12+), so it should still run there, but most of the catalog's alternatives need sdk 26+ and the role/theme bits won't work on 8.1
+- the target is the ios build of twoyi, which runs android 13 (sdk 33). that's the same sdk as the emulator lineagifier was tested on, so roles (read via `dumpsys role`), monet accent and the navbar overlays should all apply. the android-host twoyi (android 8.1) is a different thing; lineagifier still reads the sdk at runtime and turns off what an image doesn't have
 - shizuku has to be started inside the container. if the container has no adb or wireless debugging, shizuku can't start, and lineagifier can't do anything. none of this has been tested inside twoyi yet
 
 ## what's been tested
