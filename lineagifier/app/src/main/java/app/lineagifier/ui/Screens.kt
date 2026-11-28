@@ -44,7 +44,7 @@ fun Chip(text: String, color: Color) =
 @Composable
 fun PickScreen(s: UiState, vm: AppViewModel) {
     val cat = s.catalog ?: return
-    Page("pick apps", "only verified apks can be installed. the rest is listed honestly.", bottom = {
+    Page("lineage apps", "lineage builds from apkmirror, verified prebuilts from f-droid", bottom = {
         OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") }
         Button(onClick = { vm.go(Screen.TWEAKS) }) { Text("next: tweaks") }
     }) {
@@ -85,7 +85,7 @@ private fun EntryCard(e: Entry, s: UiState, vm: AppViewModel) {
                 Text(e.name, fontWeight = FontWeight.Medium)
                 Text(e.category, color = Dim, fontSize = 12.sp)
             }
-            when (e.status) {
+            if (e.apkmirror != null && e.status != Status.prebuilt) Chip("apkmirror", Good) else when (e.status) {
                 Status.prebuilt -> Chip("prebuilt", Good)
                 Status.build_from_source -> Chip("build from source", Color(0xFFFFB74D))
                 Status.same_as_stock -> Chip("same as stock", TealLight)

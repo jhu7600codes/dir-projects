@@ -10,7 +10,7 @@
       "packageId": "com.android.launcher3",
       "status": "build_from_source",
       "source": "https://github.com/LineageOS/android_packages_apps_Trebuchet",
-      "notes": "soong (Android.bp) build inside a lineage tree only. it uses the same package id as aosp launcher3, so even a self-built apk can't replace the system one without the platform key. aosp launcher3 on your image is the code trebuchet is forked from.",
+      "notes": "lineage's launcher. same package id as aosp launcher3, so with root it replaces the stock launcher through a kernelsu module. needs a backup launcher (like lawnchair), which becomes home first.",
       "role": "android.app.role.HOME",
       "replaces": [
         "com.android.launcher3"
@@ -28,7 +28,7 @@
       "packageId": "org.lineageos.aperture",
       "status": "build_from_source",
       "source": "https://github.com/LineageOS/android_packages_apps_Aperture",
-      "notes": "has a gradle build (app/build.gradle.kts). lineage publishes no apk. debug builds install as org.lineageos.aperture.dev.",
+      "notes": "lineage's camera (aperture, org.lineageos.aperture). own package id, installs as a normal app.",
       "role": null,
       "replaces": [
         "com.android.camera2"
@@ -46,7 +46,7 @@
       "packageId": "org.lineageos.glimpse",
       "status": "build_from_source",
       "source": "https://github.com/LineageOS/android_packages_apps_Glimpse",
-      "notes": "has a gradle build. lineage publishes no apk. debug builds install as org.lineageos.glimpse.dev.",
+      "notes": "lineage's gallery (glimpse, org.lineageos.glimpse). own package id, installs as a normal app.",
       "role": null,
       "replaces": [
         "com.android.gallery3d"
@@ -76,7 +76,7 @@
       "packageId": "org.lineageos.jelly",
       "status": "build_from_source",
       "source": "https://github.com/LineageOS/android_packages_apps_Jelly",
-      "notes": "has a gradle build. lineage publishes no apk. debug builds install as org.lineageos.jelly.dev. needs a working system webview.",
+      "notes": "lineage's browser (jelly, org.lineageos.jelly). own package id, installs as a normal app and becomes the default browser. needs a working system webview.",
       "role": "android.app.role.BROWSER",
       "replaces": [
         "org.chromium.webview_shell"
@@ -94,7 +94,7 @@
       "packageId": "ws.xsoh.etar",
       "status": "prebuilt",
       "source": "https://f-droid.org/packages/ws.xsoh.etar/",
-      "notes": "lineage ships its own fork of etar (github.com/LineageOS/android_packages_apps_Etar, same ws.xsoh.etar id in its gradle file). this is upstream etar from f-droid, the closest prebuilt.",
+      "notes": "lineage ships its own fork of etar (github.com/LineageOS/android_packages_apps_Etar, same ws.xsoh.etar id in its gradle file). this is upstream etar from f-droid, the closest prebuilt. lineage's own build is on apkmirror too.",
       "role": null,
       "replaces": [
         "com.android.calendar"
@@ -123,7 +123,7 @@
       "packageId": "org.lineageos.recorder",
       "status": "build_from_source",
       "source": "https://github.com/LineageOS/android_packages_apps_Recorder",
-      "notes": "has a gradle build. lineage publishes no apk. aosp 13 has no stock recorder, so nothing gets replaced.",
+      "notes": "lineage's recorder (org.lineageos.recorder). own package id, installs as a normal app. aosp 13 has no stock recorder.",
       "role": null,
       "replaces": [],
       "alternatives": [
@@ -151,7 +151,7 @@
       "packageId": "com.android.deskclock",
       "status": "same_as_stock",
       "source": "https://github.com/LineageOS/android_packages_apps_DeskClock",
-      "notes": "lineage's clock is a fork of aosp deskclock with the same package id. your stock clock is already the base app; a lineage build can't install over it without the platform key.",
+      "notes": "lineage's clock is a fork of aosp deskclock with the same package id, so with root it replaces the stock clock through a kernelsu module.",
       "role": null,
       "replaces": [
         "com.android.deskclock"
@@ -181,7 +181,7 @@
       "packageId": "com.android.calculator2",
       "status": "same_as_stock",
       "source": "https://github.com/LineageOS/android_packages_apps_ExactCalculator",
-      "notes": "lineage's calculator is a fork of aosp exactcalculator with the same package id. stock is already the base app.",
+      "notes": "lineage's calculator is a fork of aosp exactcalculator with the same package id, so with root it replaces the stock one through a kernelsu module.",
       "role": null,
       "replaces": [
         "com.android.calculator2"
@@ -287,7 +287,7 @@
       "packageId": "com.android.messaging",
       "status": "same_as_stock",
       "source": "https://github.com/LineageOS/android_packages_apps_Messaging",
-      "notes": "lineage fork of aosp messaging, same package id.",
+      "notes": "lineage's messaging is a fork of aosp messaging with the same package id, so with root it replaces the stock one through a kernelsu module.",
       "role": "android.app.role.SMS",
       "replaces": [
         "com.android.messaging"

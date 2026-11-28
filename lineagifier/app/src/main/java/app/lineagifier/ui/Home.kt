@@ -56,7 +56,7 @@ fun HomeScreen(s: UiState, vm: AppViewModel) {
                 }
             }
             item { Section("apps") }
-            item { FeatureRow("lineage apps", "install etar + closest prebuilts, set defaults", enabled = ready && s.catalog != null, onOpen = { vm.go(Screen.PICK) }) }
+            item { FeatureRow("lineage apps", "lineage builds from apkmirror + verified prebuilts, set defaults", enabled = ready && s.catalog != null, onOpen = { vm.go(Screen.PICK) }) }
             item { FeatureRow("stock apps", "disable or remove stock apps once they're replaced", enabled = ready, onOpen = { vm.go(Screen.MANAGE) }) }
             item { FeatureRow("microG", microgLine(s.microg), enabled = ready, onOpen = { vm.go(Screen.MICROG) }) }
             item { Section("look") }
