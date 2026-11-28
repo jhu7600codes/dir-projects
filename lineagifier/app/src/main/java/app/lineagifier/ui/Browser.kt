@@ -39,6 +39,9 @@ fun BrowserScreen(s: UiState, vm: AppViewModel) {
     var title by remember { mutableStateOf("apkmirror") }
     var loading by remember { mutableStateOf(true) }
     var url by remember { mutableStateOf(entry.apkmirror ?: "") }
+    // bumping this recreates the webview after its renderer died
+    var generation by remember { mutableIntStateOf(0) }
+    var crashed by remember { mutableStateOf(false) }
     val external = LocalUriHandler.current
     BackHandler { if (web?.canGoBack() == true) web?.goBack() else vm.go(Screen.PICK) }
 
@@ -57,7 +60,14 @@ fun BrowserScreen(s: UiState, vm: AppViewModel) {
             loading || s.apkBusy -> LinearProgressIndicator(Modifier.fillMaxWidth())
             else -> Spacer(Modifier.height(4.dp))
         }
-        AndroidView(
+        if (crashed) {
+            Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("the page crashed (android's webview renderer stopped).", color = Dim)
+                Button(onClick = { crashed = false; generation++ }, modifier = Modifier.padding(top = 12.dp)) { Text("reload") }
+                OutlinedButton(onClick = { try { external.openUri(url) } catch (_: Throwable) {} }, modifier = Modifier.padding(top = 8.dp)) { Text("open in your browser instead") }
+                Text("if it keeps crashing: download there, then use \"pick a file\" on the lineage apps page.", color = Dim, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+            }
+        } else key(generation) { AndroidView(
             modifier = Modifier.fillMaxSize().background(Color.White),
             factory = { ctx ->
                 WebView(ctx).apply {
@@ -76,13 +86,21 @@ fun BrowserScreen(s: UiState, vm: AppViewModel) {
                         }
                         override fun onPageStarted(view: WebView, u: String, favicon: Bitmap?) { loading = true; url = u }
                         override fun onPageFinished(view: WebView, u: String) { loading = false; title = view.title ?: title; url = u }
+                        // without this, a crashed renderer takes the whole app down with it
+                        override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                            (view.parent as? android.view.ViewGroup)?.removeView(view)
+                            view.destroy()
+                            if (web === view) web = null
+                            loading = false; crashed = true
+                            return true
+                        }
                     }
                     setDownloadListener { dlUrl, userAgent, disposition, mime, _ -> vm.browserDownload(dlUrl, userAgent, disposition, mime) }
-                    loadUrl(entry.apkmirror ?: "https://www.apkmirror.com/apk/lineageos/")
+                    loadUrl(if (generation > 0 && url.isNotEmpty()) url else entry.apkmirror ?: "https://www.apkmirror.com/apk/lineageos/")
                     web = this
                 }
             },
-        )
+        ) }
     }
     ApkDialogs(s, vm)
 }
