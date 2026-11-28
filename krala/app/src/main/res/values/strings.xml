@@ -269,6 +269,7 @@
     <string name="vision_hint">can read images</string>
     <string name="voice_error">couldn’t hear you (error %1$d)</string>
     <string name="voice_language">your phone’s speech recognition doesn’t have this language. add it in settings → system → languages → speech</string>
+    <string name="voice_need_whisper">no speech recognition works on this phone. add groq (free key at console.groq.com) in providers and talk mode will use whisper instead</string>
     <string name="voice_network">speech recognition needs internet right now</string>
     <string name="voice_unavailable">no speech recognition on this phone</string>
     <string name="web_key_hint">needs an api key</string>

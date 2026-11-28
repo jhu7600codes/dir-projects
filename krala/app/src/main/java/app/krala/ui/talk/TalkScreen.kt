@@ -136,7 +136,6 @@ fun TalkScreen(vm: TalkViewModel, onClose: (chatId: String?) -> Unit) {
                 AnimatedContent(
                     targetState = when {
                         !granted -> stringResource(R.string.mic_permission)
-                        !vm.recognitionAvailable -> stringResource(R.string.voice_unavailable)
                         state.phase == TalkPhase.ERROR -> state.error ?: stringResource(R.string.reply_failed)
                         speaking -> stringResource(R.string.tap_to_interrupt)
                         state.phase == TalkPhase.LISTENING -> stringResource(R.string.listening)

@@ -19,15 +19,33 @@ class Listener(private val context: Context) {
 
     private var recognizer: SpeechRecognizer? = null
 
+    /**
+     * Every speech service on the phone, google's app first. Some phones' default service has no
+     * usable language (error 12), so the caller walks this list until one works.
+     */
+    fun services(): List<android.content.ComponentName?> {
+        val found = context.packageManager.queryIntentServices(Intent(android.speech.RecognitionService.SERVICE_INTERFACE), 0)
+            .map { android.content.ComponentName(it.serviceInfo.packageName, it.serviceInfo.name) }
+            .sortedBy {
+                when (it.packageName) {
+                    "com.google.android.googlequicksearchbox" -> 0
+                    "com.google.android.tts" -> 1
+                    "com.google.android.as" -> 2
+                    else -> 3
+                }
+            }
+        return listOf<android.content.ComponentName?>(null) + found  // null = the phone's default
+    }
+
     private val _level = MutableStateFlow(0f)
     /** mic loudness 0..1 */
     val level: StateFlow<Float> = _level
 
     val available: Boolean get() = SpeechRecognizer.isRecognitionAvailable(context)
 
-    fun start(language: String?, onEvent: (Event) -> Unit) {
+    fun start(language: String?, service: android.content.ComponentName? = null, onEvent: (Event) -> Unit) {
         stop()
-        val r = SpeechRecognizer.createSpeechRecognizer(context)
+        val r = if (service == null) SpeechRecognizer.createSpeechRecognizer(context) else SpeechRecognizer.createSpeechRecognizer(context, service)
         recognizer = r
         r.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {}

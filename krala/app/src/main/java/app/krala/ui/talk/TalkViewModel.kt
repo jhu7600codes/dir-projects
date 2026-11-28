@@ -58,20 +58,39 @@ class TalkViewModel @Inject constructor(
     private val scheduler: MemoryScheduler,
     private val activeChat: ActiveChat,
     private val codeRunner: app.krala.code.CodeRunner,
+    private val whisper: app.krala.voice.Whisper,
     handle: SavedStateHandle,
 ) : ViewModel() {
     private val listener = Listener(context)
+    private val recorder = app.krala.voice.Recorder(context)
+    private val services = listener.services()
     private var chatId: String? = handle["chatId"]
     private var turn: Job? = null
     private var misses = 0
     /** set once the recognizer refused the app's language; from then on use the phone's own */
-    private var systemLanguage = false
+    private var systemLanguage
+        get() = remembered.systemLanguage
+        set(v) { remembered.systemLanguage = v }
+    private var serviceIndex
+        get() = remembered.serviceIndex
+        set(v) { remembered.serviceIndex = v }
+    private var useWhisper
+        get() = remembered.whisper
+        set(v) { remembered.whisper = v }
+
+    /** what worked last time, so the next talk doesn't walk the whole list again */
+    private object remembered {
+        var systemLanguage = false
+        var serviceIndex = 0
+        var whisper = false
+    }
     private var closed = false
 
     private val _state = MutableStateFlow(TalkState())
     val state: StateFlow<TalkState> = _state
 
-    val level: StateFlow<Float> = listener.level
+    val level: StateFlow<Float> = kotlinx.coroutines.flow.combine(listener.level, recorder.level) { a, b -> maxOf(a, b) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0f)
     val speaking: StateFlow<Boolean> = speaker.speaking
     val energy: StateFlow<Float> = speaker.tone.map {
         when (it) {
@@ -111,7 +130,7 @@ class TalkViewModel @Inject constructor(
     fun tapStar() {
         when (_state.value.phase) {
             TalkPhase.IDLE, TalkPhase.ERROR -> listen()
-            TalkPhase.LISTENING -> listener.finish()
+            TalkPhase.LISTENING -> { listener.finish(); recorder.finish() }
             TalkPhase.THINKING -> {
                 chatId?.let { engine.stop(it) }
                 turn?.cancel()
@@ -132,9 +151,14 @@ class TalkViewModel @Inject constructor(
         if (closed) return
         speaker.stop()
         set { it.copy(phase = TalkPhase.LISTENING, heard = "", error = null) }
+        if (useWhisper || services.isEmpty() || !listener.available && serviceIndex == 0) {
+            useWhisper = true
+            listenWhisper()
+            return
+        }
         viewModelScope.launch {
             val lang = if (systemLanguage) null else when (settings.current().language) { "ru" -> "ru-RU"; "en" -> "en-US"; else -> null }
-            listener.start(lang) { ev ->
+            listener.start(lang, services.getOrNull(serviceIndex)) { ev ->
                 when (ev) {
                     is Listener.Event.Partial -> set { it.copy(heard = ev.text) }
                     is Listener.Event.Final -> { misses = 0; send(ev.text) }
@@ -153,9 +177,13 @@ class TalkViewModel @Inject constructor(
             }
             SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.mic_permission)) }
             SpeechRecognizer.ERROR_CLIENT -> set { it.copy(phase = TalkPhase.IDLE) }
-            // 12 language not supported, 13 language not downloaded: listen in the phone's language
-            12, 13 -> if (!systemLanguage) { systemLanguage = true; listen() }
-                else set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.voice_language)) }
+            // 12 language not supported, 13 language not downloaded: first drop the forced
+            // language, then try the next speech service, then fall back to whisper
+            12, 13 -> when {
+                !systemLanguage -> { systemLanguage = true; listen() }
+                serviceIndex + 1 < services.size -> { serviceIndex++; listen() }
+                else -> { useWhisper = true; listen() }
+            }
             // 11 recognizer service dropped, 8 busy: try once more
             SpeechRecognizer.ERROR_SERVER_DISCONNECTED, SpeechRecognizer.ERROR_RECOGNIZER_BUSY ->
                 if (misses++ < 2) viewModelScope.launch { kotlinx.coroutines.delay(400); listen() } else set { it.copy(phase = TalkPhase.IDLE) }
@@ -186,8 +214,38 @@ class TalkViewModel @Inject constructor(
         }
     }
 
+    /** no working recognizer on the phone: record and transcribe with a provider's whisper */
+    private fun listenWhisper() {
+        turn?.cancel()
+        turn = viewModelScope.launch {
+            if (whisper.target() == null) {
+                set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.voice_need_whisper)) }
+                return@launch
+            }
+            val file = runCatching { recorder.record() }.getOrElse {
+                set { s -> s.copy(phase = TalkPhase.ERROR, error = it.message ?: "mic error") }
+                return@launch
+            }
+            if (file == null) {
+                misses++
+                if (_state.value.handsFree && misses < 3) listen() else set { it.copy(phase = TalkPhase.IDLE) }
+                return@launch
+            }
+            set { it.copy(phase = TalkPhase.THINKING) }
+            val text = runCatching { whisper.transcribe(file) }.getOrElse {
+                set { s -> s.copy(phase = TalkPhase.ERROR, error = it.message ?: "transcription failed") }
+                return@launch
+            }
+            file.delete()
+            if (text.isBlank()) { misses++; if (_state.value.handsFree && misses < 3) listen() else set { it.copy(phase = TalkPhase.IDLE) }; return@launch }
+            misses = 0
+            send(text)
+        }
+    }
+
     private fun send(text: String) {
         listener.stop()
+        recorder.stop()
         set { it.copy(phase = TalkPhase.THINKING, heard = text, reply = "", code = emptyList()) }
         turn?.cancel()
         turn = viewModelScope.launch {
@@ -240,6 +298,7 @@ class TalkViewModel @Inject constructor(
         closed = true
         turn?.cancel()
         listener.stop()
+        recorder.stop()
         speaker.stop()
     }
 
