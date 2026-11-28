@@ -123,6 +123,15 @@ fun TalkScreen(vm: TalkViewModel, onClose: (chatId: String?) -> Unit) {
                     )
                 }
             }
+            if (state.code.isNotEmpty()) {
+                Column(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp).heightIn(max = 240.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    state.code.forEach { c -> CodeCard(c, onSend = { h.confirm(); vm.sendCode(c) }) }
+                }
+                Spacer(Modifier.height(12.dp))
+            }
             Column(Modifier.fillMaxWidth().padding(horizontal = 28.dp).heightIn(min = 120.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 AnimatedContent(
                     targetState = when {
@@ -147,6 +156,45 @@ fun TalkScreen(vm: TalkViewModel, onClose: (chatId: String?) -> Unit) {
                     )
                 }
                 Spacer(Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun CodeCard(c: TalkCode, onSend: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    var showCode by remember { mutableStateOf(false) }
+    Surface(shape = MaterialTheme.shapes.medium, color = cs.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val r = c.result
+                Text(
+                    c.lang.lowercase() + when {
+                        c.running -> " · running…"
+                        r == null -> ""
+                        r.ok -> " · output · ${r.ms} ms"
+                        else -> " · error"
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (r != null && !r.ok) cs.error else cs.primary,
+                    modifier = Modifier.weight(1f),
+                )
+                if (c.running) CircularProgressIndicator(Modifier.size(16.dp).padding(end = 8.dp), strokeWidth = 2.dp)
+                TextButton(onClick = { showCode = !showCode }) { Text(if (showCode) "hide code" else "code") }
+            }
+            if (showCode) Text(
+                c.code, style = app.krala.ui.theme.MonoStyle.copy(color = cs.onSurfaceVariant),
+                modifier = Modifier.padding(vertical = 4.dp),
+            )
+            c.result?.let { r ->
+                val shown = listOfNotNull(r.output.ifBlank { null }, r.error).joinToString("\n").ifBlank { "(no output)" }
+                Text(
+                    shown.take(2_000), style = app.krala.ui.theme.MonoStyle.copy(color = if (r.ok) cs.onSurface else cs.error),
+                    modifier = Modifier.padding(top = 2.dp, end = 10.dp),
+                )
+                TextButton(onClick = onSend) { Text("send to krala") }
             }
         }
     }

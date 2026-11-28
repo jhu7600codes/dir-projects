@@ -407,7 +407,9 @@ class ChatEngine @Inject constructor(
         /** sent with talk mode turns only; the app performs these cues with the tts voice */
         const val VOICE_RULES =
             "this turn is talk mode: your reply is spoken out loud by a voice, like a phone call. " +
-                "keep it short and natural, one to four sentences, no markdown, lists, links, code or emojis. " +
+                "keep it short and natural, one to four sentences, no markdown, lists, links or emojis. " +
+                "if they ask for code or a calculation, you may add one short ```python or ```js block at the end: " +
+                "it is not read aloud, the app runs it and shows the output on screen, so just say what it does. " +
                 "you can act it out and the app performs it: [laughs] [giggles] [chuckles] [sighs] [pause], " +
                 "tone tags [excited] [soft] [whisper] [sad] [teasing] [calm] that last until the next tone tag, " +
                 "stretched words to hold them (sooo, nooo, hmmm, нууу), ... for a beat, and ALL CAPS for hype words. " +

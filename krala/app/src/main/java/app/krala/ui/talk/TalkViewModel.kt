@@ -31,12 +31,16 @@ import javax.inject.Inject
 
 enum class TalkPhase { IDLE, LISTENING, THINKING, SPEAKING, ERROR }
 
+data class TalkCode(val lang: String, val code: String, val running: Boolean = true, val result: app.krala.code.RunResult? = null)
+
 data class TalkState(
     val phase: TalkPhase = TalkPhase.IDLE,
     val heard: String = "",
     val reply: String = "",
     val error: String? = null,
     val handsFree: Boolean = true,
+    /** code from the last reply, run on the phone and shown on screen */
+    val code: List<TalkCode> = emptyList(),
 )
 
 /**
@@ -53,6 +57,7 @@ class TalkViewModel @Inject constructor(
     private val settings: SettingsRepository,
     private val scheduler: MemoryScheduler,
     private val activeChat: ActiveChat,
+    private val codeRunner: app.krala.code.CodeRunner,
     handle: SavedStateHandle,
 ) : ViewModel() {
     private val listener = Listener(context)
@@ -150,9 +155,30 @@ class TalkViewModel @Inject constructor(
         }
     }
 
+    /** hands a code result back to krala as the next turn */
+    fun sendCode(c: TalkCode) {
+        val r = c.result ?: return
+        speaker.stop()
+        val body = listOfNotNull(r.output.ifBlank { null }, r.error?.let { "error: $it" }).joinToString("\n").ifBlank { "(no output)" }
+        send("ran the ${c.lang} code" + (if (r.ok) "" else ", it failed") + ":\n```text\n" + body.take(6_000) + "\n```")
+    }
+
+    private fun runCode(reply: String) {
+        val blocks = app.krala.core.Markdown.parse(reply).filterIsInstance<app.krala.core.Markdown.Block.Code>()
+            .filter { it.closed && codeRunner.language(it.language) != null }.takeLast(2)
+        if (blocks.isEmpty()) return
+        set { it.copy(code = blocks.map { b -> TalkCode(b.language.ifBlank { "code" }, b.code) }) }
+        blocks.forEachIndexed { i, b ->
+            viewModelScope.launch {
+                val r = codeRunner.run(b.language, b.code)
+                set { st -> st.copy(code = st.code.mapIndexed { j, c -> if (j == i && c.code == b.code) c.copy(running = false, result = r) else c }) }
+            }
+        }
+    }
+
     private fun send(text: String) {
         listener.stop()
-        set { it.copy(phase = TalkPhase.THINKING, heard = text, reply = "") }
+        set { it.copy(phase = TalkPhase.THINKING, heard = text, reply = "", code = emptyList()) }
         turn?.cancel()
         turn = viewModelScope.launch {
             val s = settings.current()
@@ -191,6 +217,7 @@ class TalkViewModel @Inject constructor(
             if (last != null && last.status != MessageStatus.ERROR) {
                 set { it.copy(reply = last.content) }
                 feed(last.content, final = true)
+                runCode(last.content)
             }
             if (_state.value.phase == TalkPhase.ERROR) return@launch
             // let her finish talking, then listen again
