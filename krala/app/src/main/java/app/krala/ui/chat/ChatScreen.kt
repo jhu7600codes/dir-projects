@@ -88,6 +88,11 @@ fun ChatScreen(
     val pickImages = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(6)) { uris ->
         uris.forEach { vm.addImage(it) }
     }
+    val pickFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        uris.take(8).forEach { vm.addDocument(it) }
+    }
+    val unreadable = stringResource(R.string.file_unreadable)
+    LaunchedEffect(Unit) { vm.notice.collect { snackbar.showSnackbar(unreadable.format(it)) } }
     val saveMd = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
         val text = pendingExport
         if (uri != null && text != null) vm.writeExport(uri, text)
@@ -282,6 +287,9 @@ fun ChatScreen(
                     onRemoveRecall = vm::removeRecall,
                     onCancelEdit = vm::cancelEdit,
                     onTalk = if (incognito) null else ({ onTalk(currentId) }),
+                    onPickFile = { pickFiles.launch(arrayOf("*/*")) },
+                    onRemoveDoc = vm::removeDocument,
+                    onToggleWeb = vm::toggleWeb,
                 )
             }
         }

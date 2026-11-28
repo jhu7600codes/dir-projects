@@ -18,6 +18,8 @@
     <string name="app_name">krala</string>
     <string name="appearance">appearance</string>
     <string name="archived_entries">%1$d archived entries (merged into the archive)</string>
+    <string name="attach">attach</string>
+    <string name="attach_file">file</string>
     <string name="attach_image">attach image</string>
     <string name="auto_recall">recall from past chats</string>
     <string name="auto_recall_hint">before each message, search old chats and hand krala the matching bits</string>
@@ -32,6 +34,7 @@
     <string name="biometric_unavailable">no fingerprint, face or screen lock set up on this phone</string>
     <string name="cancel">cancel</string>
     <string name="change_password">change password</string>
+    <string name="chars_count">%1$d characters</string>
     <string name="chat_name">chat name</string>
     <string name="chat_prompt">system prompt for this chat</string>
     <string name="chat_prompt_hint">only this chat uses it</string>
@@ -96,6 +99,7 @@
     <string name="export_share">share</string>
     <string name="fell_back">%1$s failed, switched to %2$s</string>
     <string name="fetch_models">fetch from /models</string>
+    <string name="file_unreadable">couldn’t read %1$s</string>
     <string name="forget">forget</string>
     <string name="forget_everything">forget everything</string>
     <string name="forget_everything_body">every memory entry and the archive will be removed. chats stay.</string>
@@ -196,6 +200,7 @@
     <string name="save">save</string>
     <string name="scroll_down">scroll to the newest</string>
     <string name="search_chats">search chats</string>
+    <string name="searching_web">searching the web…</string>
     <string name="send">send</string>
     <string name="send_on_enter">enter sends</string>
     <string name="settings">settings</string>
@@ -262,6 +267,12 @@
     <string name="vision_hint">can read images</string>
     <string name="voice_error">couldn’t hear you (error %1$d)</string>
     <string name="voice_unavailable">no speech recognition on this phone</string>
+    <string name="web_key_hint">needs an api key</string>
+    <string name="web_pages">pages to read: %1$d</string>
+    <string name="web_search">web search</string>
+    <string name="web_search_body">turn it on from the + menu in the composer. krala searches, reads the top pages and answers with them, the sites show under the reply.</string>
+    <string name="web_search_off">turn off web search</string>
+    <string name="web_searx_hint">your own instance url</string>
     <string name="widget_description">ask krala anything from your home screen</string>
     <string name="widget_hint">ask krala…</string>
     <string-array name="greetings">

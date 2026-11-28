@@ -38,7 +38,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class UiMessage(val entity: MessageEntity, val images: List<String>, val text: String, val streaming: Boolean, val started: Boolean)
+data class UiMessage(
+    val entity: MessageEntity,
+    val images: List<String>,
+    val text: String,
+    val streaming: Boolean,
+    val started: Boolean,
+    val docs: List<app.krala.data.chat.AttachedDoc> = emptyList(),
+    val searching: Boolean = false,
+    val sources: List<Pair<String, String>> = emptyList(),
+)
 
 /** settings for a chat that doesn't exist yet (created on the first send) */
 data class Draft(
@@ -54,6 +63,8 @@ data class Composer(
     val recall: List<KralaTags.RecallLine> = emptyList(),
     val editingId: String? = null,
     val importing: Boolean = false,
+    val docs: List<app.krala.data.chat.AttachedDoc> = emptyList(),
+    val webSearch: Boolean = false,
 )
 
 sealed interface RecallPanel {
@@ -73,6 +84,7 @@ class ChatViewModel @Inject constructor(
     private val scheduler: MemoryScheduler,
     private val recall: RecallService,
     private val attachments: AttachmentStore,
+    private val documents: app.krala.data.chat.Documents,
     private val export: ExportService,
     private val activeChat: ActiveChat,
 ) : ViewModel() {
@@ -104,10 +116,13 @@ class ChatViewModel @Inject constructor(
                 val isLive = lr != null && lr.messageId == m.id
                 UiMessage(
                     entity = m,
-                    images = attachments.decode(m.attachments),
+                    images = attachments.images(m.attachments),
                     text = if (isLive) lr!!.text else m.content,
                     streaming = isLive,
                     started = if (isLive) lr!!.started else true,
+                    docs = attachments.docs(m.attachments),
+                    searching = isLive && lr!!.status == "searching",
+                    sources = m.sources?.lines()?.mapNotNull { l -> l.split('\t').takeIf { it.size == 2 }?.let { it[0] to it[1] } }.orEmpty(),
                 )
             }
         }
@@ -210,6 +225,33 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    private val _notice = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
+    /** short messages for a snackbar (a file that couldn't be read, ...) */
+    val notice: kotlinx.coroutines.flow.SharedFlow<String> = _notice
+
+    fun addDocument(uri: Uri) {
+        viewModelScope.launch {
+            _composer.update { it.copy(importing = true) }
+            try {
+                val d = documents.import(uri)
+                _composer.update { c -> c.copy(importing = false, docs = (c.docs + d).take(8)) }
+            } catch (e: app.krala.data.chat.Documents.Unsupported) {
+                _composer.update { it.copy(importing = false) }
+                _notice.emit(e.name)
+            } catch (e: Exception) {
+                _composer.update { it.copy(importing = false) }
+                _notice.emit(e.message ?: "file")
+            }
+        }
+    }
+
+    fun removeDocument(d: app.krala.data.chat.AttachedDoc) {
+        _composer.update { it.copy(docs = it.docs - d) }
+        documents.delete(d.stored)
+    }
+
+    fun toggleWeb() = _composer.update { it.copy(webSearch = !it.webSearch) }
+
     fun removeImage(name: String) {
         _composer.update { it.copy(images = it.images - name) }
         attachments.delete(name)
@@ -227,14 +269,15 @@ class ChatViewModel @Inject constructor(
         val c = _composer.value
         val text = c.text.trim()
         if (text.startsWith("/recall", ignoreCase = true)) return
-        if (text.isEmpty() && c.images.isEmpty()) return
+        if (text.isEmpty() && c.images.isEmpty() && c.docs.isEmpty()) return
         val id = _current.value
         if (c.editingId != null && id != null) {
             engine.editAndResend(id, c.editingId, text)
             _composer.value = Composer()
             return
         }
-        _composer.value = Composer()
+        // web search stays switched on for the next message until turned off
+        _composer.value = Composer(webSearch = c.webSearch)
         recallQuery.value = null
         viewModelScope.launch {
             val convId = id ?: run {
@@ -244,7 +287,7 @@ class ChatViewModel @Inject constructor(
                     activeChat.id = it
                 }
             }
-            engine.send(convId, text, c.images, c.recall)
+            engine.send(convId, text, c.images + c.docs.map { app.krala.data.chat.Documents.encode(it) }, c.recall, webSearch = c.webSearch)
         }
     }
 

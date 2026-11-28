@@ -25,8 +25,8 @@ android {
         applicationId = "app.krala"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
 
@@ -101,6 +101,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.exifinterface:exifinterface:1.4.1")
+    // text out of attached pdfs
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")

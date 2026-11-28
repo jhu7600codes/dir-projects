@@ -32,6 +32,10 @@ class AttachmentStore @Inject constructor(@ApplicationContext private val contex
     fun decode(json: String): List<String> = runCatching { Json.decodeFromString(ser, json) }.getOrDefault(emptyList())
     fun encode(names: List<String>): String = Json.encodeToString(ser, names)
 
+    /** image file names in an attachments json (documents are stored as "doc:" entries) */
+    fun images(json: String): List<String> = decode(json).filterNot { it.startsWith(Documents.DOC_PREFIX) }
+    fun docs(json: String): List<AttachedDoc> = decode(json).mapNotNull { Documents.decode(it) }
+
     suspend fun import(uri: Uri): String? = withContext(Dispatchers.IO) {
         try {
             val bmp = load(uri) ?: return@withContext null

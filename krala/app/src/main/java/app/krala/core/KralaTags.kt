@@ -23,8 +23,10 @@ object KralaTags {
     const val USER_INSTRUCTIONS = "--user instructions--"
     const val RECALL = "--recall--"
     const val VOICE = "--voice--"
+    const val WEB = "--web--"
+    const val FILES = "--files--"
 
-    private val sectionNames = listOf(MEMORY, SYSTEM_PROMPT, USER_INSTRUCTIONS, RECALL, VOICE)
+    private val sectionNames = listOf(MEMORY, SYSTEM_PROMPT, USER_INSTRUCTIONS, RECALL, VOICE, WEB, FILES)
 
     data class MemoryLine(val chatName: String, val notes: String)
     data class RecallLine(val label: String, val excerpt: String)
@@ -85,6 +87,20 @@ object KralaTags {
         val range = findBlock(text) ?: return buildRecallOnly(recall) + "\n\n" + text
         val parsed = parse(text.substring(range)) ?: return text
         val rebuilt = build(parsed.copy(recall = recall))
+        return text.replaceRange(range, rebuilt)
+    }
+
+    /**
+     * Adds an extra section (web results, attached files) to the message's block, right before
+     * the end tag, or prepends a small block holding only that section.
+     */
+    fun withSection(text: String, header: String, body: String): String {
+        if (body.isBlank()) return text
+        val range = findBlock(text)
+            ?: return OPEN + "\n" + header + "\n" + body.trim() + "\n" + CLOSE + "\n\n" + text
+        val inner = text.substring(range)
+        val endIdx = inner.lastIndexOf(CLOSE, ignoreCase = true)
+        val rebuilt = inner.substring(0, endIdx).trimEnd() + "\n" + header + "\n" + body.trim() + "\n" + CLOSE
         return text.replaceRange(range, rebuilt)
     }
 

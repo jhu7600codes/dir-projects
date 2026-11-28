@@ -11,6 +11,8 @@ an ai chat app for android. kotlin, jetpack compose, material 3. dark red on bla
 - regenerate, edit a message (everything after it is replaced), retry failed replies
 - per chat model picker and per chat system prompt, "use for new chats" default
 - image attachments for vision models (downscaled jpegs, sent as data urls)
+- file attachments: pdf, docx, pptx and any text or code file. the text is pulled out on the phone and sent as a `--files--` section, cut to fit the model's context
+- web search (+ menu → web search): the app searches (duckduckgo with no key, or brave / tavily / your own searxng), reads the top pages and gives krala the text as a `--web--` section for that message. the sites show as chips under the reply
 - share sheet: send text or an image to krala from any app, plus "ask krala" in the text selection menu
 - incognito chats: no memory read or write, never synced, never in recall
 - quick ask home screen widget with a floating answer sheet
@@ -18,7 +20,7 @@ an ai chat app for android. kotlin, jetpack compose, material 3. dark red on bla
 **talk mode**
 - hands-free voice chat: tap the wave button in an empty composer. you talk, krala answers out loud sentence by sentence while the reply streams, then listens again. tap the star to cut in
 - expressive voice: talk turns ask the model for cues the app performs with the system tts: [laughs] [giggles] [sighs] [pause], tone tags ([excited] [soft] [whisper] [sad] [teasing] [calm]) that change pitch, speed and volume, held words (sooo, нууу), beats on "...", hype on ALL CAPS
-- the star lives: it spins up with a fading afterimage and a trail of tiny orbiting stars while thinking, sways side to side with a bob and motion ghosts while talking (livelier on excited tones), swells with your voice while listening. the top bar star does the same in text chats
+- the star lives: thinking spins in place, then circles a point spinning in waves with fading afterimages; listening is a calm spin around a point; talking is a barely there nod with small twinkles; idle breathes so little you hardly see it. the top bar star does the same in text chats
 
 **providers**
 - add any openai compatible source: name, base url, api key, models (fetched from `/models`), default model, custom headers, context size, vision flag

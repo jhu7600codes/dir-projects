@@ -56,6 +56,8 @@ data class MessageEntity(
     val updatedAt: Long,
     val deleted: Boolean = false,
     val syncedAt: Long = 0,
+    /** web sources used for this reply, one "title\turl" per line */
+    val sources: String? = null,
 )
 
 object MemoryKind {

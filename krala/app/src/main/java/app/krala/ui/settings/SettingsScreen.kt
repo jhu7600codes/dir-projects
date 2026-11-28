@@ -61,6 +61,7 @@ fun SettingsScreen(
     var pickEmbeddings by remember { mutableStateOf(false) }
     var pickLanguage by remember { mutableStateOf(false) }
     var confirmDeleteAll by remember { mutableStateOf(false) }
+    var webDialog by remember { mutableStateOf(false) }
 
     val backup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { it?.let(vm::backupTo) }
     val restore = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let(vm::restoreFrom) }
@@ -144,6 +145,7 @@ fun SettingsScreen(
                     )
                     SettingRow(stringResource(R.string.providers), stringResource(R.string.providers_count, providers.size), Icons.Rounded.Hub, onClick = onProviders)
                     SettingRow(stringResource(R.string.usage), stringResource(R.string.usage_hint), Icons.Rounded.BarChart, onClick = onUsage)
+                    SettingRow(stringResource(R.string.web_search), webLabel(s.webProvider), Icons.Rounded.TravelExplore, onClick = { webDialog = true })
                 }
             }
 
@@ -243,6 +245,9 @@ fun SettingsScreen(
             onSave = { e, p, m -> vm.setEmbeddings(e, p, m) },
             onDismiss = { pickEmbeddings = false },
         )
+    }
+    if (webDialog) {
+        WebSearchDialog(s.webProvider, vm.webKey(), s.webSearxUrl, s.webPages, onSave = vm::setWebSearch, onDismiss = { webDialog = false })
     }
     if (confirmDeleteAll) {
         AlertDialog(
@@ -390,4 +395,50 @@ fun PersonalityScreen(vm: SettingsViewModel, onBack: () -> Unit) {
             Spacer(Modifier.height(48.dp))
         }
     }
+}
+
+
+fun webLabel(p: String) = when (p) { "brave" -> "brave search"; "tavily" -> "tavily"; "searxng" -> "searxng"; else -> "duckduckgo" }
+
+@Composable
+private fun WebSearchDialog(
+    provider: String,
+    key: String,
+    searx: String,
+    pages: Int,
+    onSave: (String, String, String, Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var p by remember { mutableStateOf(provider) }
+    var k by remember { mutableStateOf(key) }
+    var u by remember { mutableStateOf(searx) }
+    var n by remember { mutableStateOf(pages.toFloat()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.web_search)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(stringResource(R.string.web_search_body), style = MaterialTheme.typography.bodyMedium)
+                listOf("duckduckgo", "brave", "tavily", "searxng").forEach { id ->
+                    ListItem(
+                        headlineContent = { Text(webLabel(id)) },
+                        supportingContent = { Text(stringResource(if (id == "duckduckgo") R.string.no_key_needed else if (id == "searxng") R.string.web_searx_hint else R.string.web_key_hint)) },
+                        leadingContent = { RadioButton(p == id, onClick = null) },
+                        modifier = Modifier.clickableWithHaptic { p = id },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                    )
+                }
+                if (p == "brave" || p == "tavily") OutlinedTextField(
+                    k, { k = it }, singleLine = true, label = { Text(stringResource(R.string.api_key)) },
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (p == "searxng") OutlinedTextField(u, { u = it }, singleLine = true, label = { Text(stringResource(R.string.base_url)) }, modifier = Modifier.fillMaxWidth())
+                Text(stringResource(R.string.web_pages, n.toInt()), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp))
+                Slider(n, { n = it }, valueRange = 0f..5f, steps = 4)
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSave(p, k, u, n.toInt()); onDismiss() }) { Text(stringResource(R.string.save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }

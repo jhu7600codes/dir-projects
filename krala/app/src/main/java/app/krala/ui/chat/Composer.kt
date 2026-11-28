@@ -64,13 +64,17 @@ fun ChatComposer(
     onRemoveRecall: (KralaTags.RecallLine) -> Unit,
     onCancelEdit: () -> Unit,
     onTalk: (() -> Unit)? = null,
+    onPickFile: () -> Unit = {},
+    onRemoveDoc: (app.krala.data.chat.AttachedDoc) -> Unit = {},
+    onToggleWeb: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val cs = MaterialTheme.colorScheme
     val h = LocalHaptics.current
     val text = state.text
     val isCommand = text.trimStart().startsWith("/recall", ignoreCase = true)
-    val canSend = !isCommand && (text.isNotBlank() || state.images.isNotEmpty()) && !state.importing
+    val canSend = !isCommand && (text.isNotBlank() || state.images.isNotEmpty() || state.docs.isNotEmpty()) && !state.importing
+    var attachMenu by remember { mutableStateOf(false) }
     Surface(
         modifier = modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
         shape = RoundedCornerShape(28.dp),
@@ -93,6 +97,19 @@ fun ChatComposer(
                             onClick = { onRemoveRecall(line) },
                             label = { Text(line.label.substringBefore(" · "), maxLines = 1) },
                             leadingIcon = { Icon(Icons.Rounded.History, null, Modifier.size(16.dp)) },
+                            trailingIcon = { Icon(Icons.Rounded.Close, stringResource(R.string.remove), Modifier.size(16.dp)) },
+                        )
+                    }
+                }
+            }
+            if (state.docs.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(horizontal = 6.dp), modifier = Modifier.padding(bottom = 2.dp)) {
+                    items(state.docs) { d ->
+                        InputChip(
+                            selected = false,
+                            onClick = { onRemoveDoc(d) },
+                            label = { Text(d.name, maxLines = 1) },
+                            leadingIcon = { Icon(Icons.Rounded.Description, null, Modifier.size(16.dp)) },
                             trailingIcon = { Icon(Icons.Rounded.Close, stringResource(R.string.remove), Modifier.size(16.dp)) },
                         )
                     }
@@ -125,8 +142,32 @@ fun ChatComposer(
                 )
             }
             Row(verticalAlignment = Alignment.Bottom) {
-                IconButton(onClick = { h.click(); onPickImage() }, enabled = state.editingId == null) {
-                    Icon(Icons.Rounded.AddPhotoAlternate, stringResource(R.string.attach_image), tint = cs.onSurfaceVariant)
+                Box {
+                    IconButton(onClick = { h.click(); attachMenu = true }, enabled = state.editingId == null) {
+                        Icon(Icons.Rounded.AddCircleOutline, stringResource(R.string.attach), tint = cs.onSurfaceVariant)
+                    }
+                    DropdownMenu(attachMenu, onDismissRequest = { attachMenu = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.attach_image)) },
+                            leadingIcon = { Icon(Icons.Rounded.AddPhotoAlternate, null) },
+                            onClick = { attachMenu = false; onPickImage() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.attach_file)) },
+                            leadingIcon = { Icon(Icons.Rounded.AttachFile, null) },
+                            onClick = { attachMenu = false; onPickFile() },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(if (state.webSearch) R.string.web_search_off else R.string.web_search)) },
+                            leadingIcon = { Icon(Icons.Rounded.TravelExplore, null) },
+                            onClick = { attachMenu = false; h.tick(); onToggleWeb() },
+                        )
+                    }
+                }
+                AnimatedVisibility(state.webSearch) {
+                    IconButton(onClick = { h.tick(); onToggleWeb() }) {
+                        Icon(Icons.Rounded.TravelExplore, stringResource(R.string.web_search_off), tint = cs.primary)
+                    }
                 }
                 Box(Modifier.weight(1f).padding(vertical = 12.dp, horizontal = 2.dp), contentAlignment = Alignment.CenterStart) {
                     if (text.isEmpty()) {
@@ -159,7 +200,7 @@ fun ChatComposer(
                 ) { isBusy ->
                     if (isBusy) {
                         FilledTonalIconButton(onClick = { h.click(); onStop() }) { Icon(Icons.Rounded.Stop, stringResource(R.string.stop)) }
-                    } else if (onTalk != null && text.isBlank() && state.images.isEmpty() && state.editingId == null) {
+                    } else if (onTalk != null && text.isBlank() && state.images.isEmpty() && state.docs.isEmpty() && state.editingId == null) {
                         FilledTonalIconButton(onClick = { h.click(); onTalk() }) { Icon(Icons.Rounded.GraphicEq, stringResource(R.string.talk_mode)) }
                     } else {
                         FilledIconButton(

@@ -18,6 +18,8 @@
     <string name="app_name">krala</string>
     <string name="appearance">внешний вид</string>
     <string name="archived_entries">%1$d в архиве (слиты в общий архив)</string>
+    <string name="attach">прикрепить</string>
+    <string name="attach_file">файл</string>
     <string name="attach_image">прикрепить картинку</string>
     <string name="auto_recall">вспоминать старые чаты</string>
     <string name="auto_recall_hint">перед каждым сообщением искать в старых чатах и подсовывать крале совпадения</string>
@@ -32,6 +34,7 @@
     <string name="biometric_unavailable">на телефоне не настроены отпечаток, лицо или блокировка экрана</string>
     <string name="cancel">отмена</string>
     <string name="change_password">сменить пароль</string>
+    <string name="chars_count">символов: %1$d</string>
     <string name="chat_name">название чата</string>
     <string name="chat_prompt">системный промпт для этого чата</string>
     <string name="chat_prompt_hint">работает только в этом чате</string>
@@ -96,6 +99,7 @@
     <string name="export_share">поделиться</string>
     <string name="fell_back">%1$s не ответил, переключилась на %2$s</string>
     <string name="fetch_models">загрузить из /models</string>
+    <string name="file_unreadable">не получилось прочитать %1$s</string>
     <string name="forget">забыть</string>
     <string name="forget_everything">забыть всё</string>
     <string name="forget_everything_body">удалятся все записи памяти и архив. чаты останутся.</string>
@@ -196,6 +200,7 @@
     <string name="save">сохранить</string>
     <string name="scroll_down">к новым сообщениям</string>
     <string name="search_chats">поиск по чатам</string>
+    <string name="searching_web">ищу в интернете…</string>
     <string name="send">отправить</string>
     <string name="send_on_enter">enter отправляет</string>
     <string name="settings">настройки</string>
@@ -262,6 +267,12 @@
     <string name="vision_hint">понимает картинки</string>
     <string name="voice_error">не расслышала (ошибка %1$d)</string>
     <string name="voice_unavailable">на телефоне нет распознавания речи</string>
+    <string name="web_key_hint">нужен api ключ</string>
+    <string name="web_pages">сколько страниц читать: %1$d</string>
+    <string name="web_search">поиск в интернете</string>
+    <string name="web_search_body">включается в меню + в поле ввода. крала ищет, читает первые страницы и отвечает по ним, сайты видны под ответом.</string>
+    <string name="web_search_off">выключить поиск</string>
+    <string name="web_searx_hint">адрес своего сервера</string>
     <string name="widget_description">спроси кралу что угодно прямо с рабочего стола</string>
     <string name="widget_hint">спроси кралу…</string>
     <string-array name="greetings">

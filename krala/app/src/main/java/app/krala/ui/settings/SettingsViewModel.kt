@@ -35,6 +35,7 @@ class SettingsViewModel @Inject constructor(
     private val backup: BackupService,
     private val chats: ChatRepository,
     private val embeddings: EmbeddingIndex,
+    private val vault: app.krala.security.KeyVault,
     providers: ProviderRepository,
 ) : ViewModel() {
     val settings: StateFlow<AppSettings> = repo.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
@@ -77,6 +78,12 @@ class SettingsViewModel @Inject constructor(
         runCatching { backup.restore(uri) }
             .onSuccess { _messages.emit(SettingsMessage.RestoreDone(it)) }
             .onFailure { _messages.emit(SettingsMessage.Failed(it.message ?: "restore failed")) }
+    }
+
+    fun webKey(): String = vault.decrypt(settings.value.webKeyCipher).orEmpty()
+
+    fun setWebSearch(provider: String, key: String, searxUrl: String, pages: Int) = viewModelScope.launch {
+        repo.setWebSearch(provider, key.trim().takeIf { it.isNotEmpty() }?.let { vault.encrypt(it) }, searxUrl, pages)
     }
 
     fun deleteAllChats() = viewModelScope.launch {

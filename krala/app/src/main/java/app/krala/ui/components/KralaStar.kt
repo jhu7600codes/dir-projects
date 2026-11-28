@@ -2,7 +2,6 @@ package app.krala.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,35 +49,40 @@ private val ghostBrush = Brush.linearGradient(
 )
 
 /**
- * The living logo. Every parameter eases toward its target each frame, so switching between
- * modes never jumps:
- * - idle: slow breathing
- * - listening: swells with the mic level, glow pulses
- * - thinking: spins up smoothly, leaves fading afterimages and a trail of tiny orbiting stars
- * - talking: slow side to side tilt with a little bob, squash and motion ghosts; [energy]
- *   (0..1) makes it livelier for excited tones
+ * The living logo. Every value eases toward its target each frame, so modes blend, never jump.
+ * - idle: a barely visible breath
+ * - listening: a calm spin while circling a point, like it's hanging on to something
+ * - thinking: spins in place first, then drifts onto that circle, spinning in waves (fast,
+ *   slower, fast again) and leaving fading afterimages along its path
+ * - talking: a tiny nod with soft twinkles near the tips; [energy] (0..1) livens it a little
+ * No glow or background, just the star.
  */
 @Composable
 fun KralaStar(mode: StarMode, size: Dp, modifier: Modifier = Modifier, level: Float = 0f, energy: Float = 0.5f) {
     val m by rememberUpdatedState(mode)
     val lvl by rememberUpdatedState(level)
     val en by rememberUpdatedState(energy)
-    val glowColor = MaterialTheme.colorScheme.primary
 
-    var angle by remember { mutableFloatStateOf(0f) }      // spin, degrees
-    var tilt by remember { mutableFloatStateOf(0f) }       // talking sway, degrees
+    var angle by remember { mutableFloatStateOf(0f) }   // self spin, degrees
+    var tilt by remember { mutableFloatStateOf(0f) }    // talking nod, degrees
     var scale by remember { mutableFloatStateOf(1f) }
-    var bob by remember { mutableFloatStateOf(0f) }        // vertical offset, star units
-    var glow by remember { mutableFloatStateOf(0f) }
-    var spin by remember { mutableFloatStateOf(0f) }       // 0..1 how much it's spinning
-    var trail by remember { mutableStateOf(listOf<Pair<Float, Float>>()) } // (angle, tilt) history
+    var ox by remember { mutableFloatStateOf(0f) }      // orbit offset, star units
+    var oy by remember { mutableFloatStateOf(0f) }
+    var ghosts by remember { mutableFloatStateOf(0f) }  // 0..1 afterimage strength
+    var twinkle by remember { mutableFloatStateOf(0f) }
+    var twinklePhase by remember { mutableFloatStateOf(0f) }
+    var trail by remember { mutableStateOf(listOf<FloatArray>()) } // angle, tilt, ox, oy
 
     LaunchedEffect(Unit) {
         var last = 0L
-        var speed = 0f       // deg / s
-        var t = 0.0          // seconds
-        var swayPhase = 0.0
-        var sinceSample = 0f
+        var speed = 0f          // self spin, deg/s
+        var orbitAngle = 0.0    // radians
+        var orbitSpeed = 0f     // rad/s
+        var radius = 0f         // star units
+        var t = 0.0
+        var thinkingFor = 0.0
+        var nodPhase = 0.0
+        var since = 0f
         while (true) {
             withFrameNanos { now ->
                 val dt = if (last == 0L) 0.016f else ((now - last) / 1e9f).coerceIn(0f, 0.05f)
@@ -89,77 +93,85 @@ fun KralaStar(mode: StarMode, size: Dp, modifier: Modifier = Modifier, level: Fl
                 val thinking = m == StarMode.THINKING
                 val talking = m == StarMode.TALKING
                 val listening = m == StarMode.LISTENING
+                thinkingFor = if (thinking) thinkingFor + dt else 0.0
 
-                // spin: ease the speed, not the angle, so it winds up and down like a real object
-                speed = ease(speed, if (thinking) 300f else 0f, if (thinking) 2.2f else 3.0f)
+                // thinking spins in waves: fast, eases off, picks up again
+                val wave = (0.5 + 0.5 * sin(t * 2 * PI / 2.2)).toFloat()
+                val spinTarget = when {
+                    thinking -> 70f + 330f * wave * wave
+                    listening -> 55f
+                    else -> 0f
+                }
+                speed = ease(speed, spinTarget, 2.4f)
                 angle += speed * dt
-                if (!thinking && speed < 40f) {
+                if (!thinking && !listening && speed < 30f) {
                     // settle on the nearest resting pose (the star looks the same every 90°)
-                    val rest = (angle / 90f).roundToInt() * 90f
-                    angle = ease(angle, rest, 4f)
+                    angle = ease(angle, (angle / 90f).roundToInt() * 90f, 3f)
                 }
                 angle %= 360f
-                spin = (speed / 300f).coerceIn(0f, 1f)
 
-                // talking sway: slow tilt both ways, faster and wider with energy
-                val swaySpeed = 2 * PI / (2.6 - 1.1 * en)
-                swayPhase += dt * swaySpeed * (if (talking) 1.0 else 0.4)
-                val swayTarget = if (talking) (10f + 8f * en) * sin(swayPhase).toFloat() else 0f
-                tilt = ease(tilt, swayTarget, 5f)
-                val bobTarget = if (talking) (6f + 6f * en) * sin(swayPhase * 2).toFloat() else 0f
-                bob = ease(bob, bobTarget, 6f)
+                // circling a point: listening right away, thinking after a moment in place
+                val radiusTarget = when {
+                    listening -> 16f
+                    thinking && thinkingFor > 0.9 -> 22f
+                    else -> 0f
+                }
+                radius = ease(radius, radiusTarget, 1.8f)
+                orbitSpeed = ease(orbitSpeed, when { thinking -> 1.2f + 2.4f * wave; listening -> 1.1f; else -> 0f }, 2f)
+                orbitAngle += orbitSpeed * dt
+                ox = radius * cos(orbitAngle).toFloat()
+                oy = radius * sin(orbitAngle).toFloat()
 
-                val breathe = 1f + 0.035f * sin(t * 2 * PI / 3.2).toFloat()
+                // talking: a nod you barely notice
+                nodPhase += dt * 2 * PI / (2.8 - 0.8 * en)
+                tilt = ease(tilt, if (talking) (2f + 1.5f * en) * sin(nodPhase).toFloat() else 0f, 4f)
+                twinkle = ease(twinkle, if (talking) 0.35f + 0.4f * en else 0f, 3f)
+
                 val scaleTarget = when {
-                    listening -> 1f + 0.18f * lvl
-                    talking -> 1.02f + 0.03f * abs(sin(swayPhase * 2)).toFloat() * (0.5f + en)
-                    thinking -> 0.92f
-                    else -> breathe
+                    listening -> 1f + 0.05f * lvl
+                    thinking -> 0.94f
+                    talking -> 1f + 0.012f * sin(nodPhase * 2).toFloat()
+                    else -> 1f + 0.008f * sin(t * 2 * PI / 4.0).toFloat()
                 }
-                scale = ease(scale, scaleTarget, if (listening) 14f else 6f)
-                glow = ease(glow, when { listening -> 0.35f + 0.65f * lvl; thinking -> 0.55f; talking -> 0.45f; else -> 0.12f }, 5f)
+                scale = ease(scale, scaleTarget, if (listening) 10f else 4f)
+                ghosts = ease(ghosts, when { thinking -> 0.25f + 0.75f * (speed / 400f).coerceIn(0f, 1f); listening -> 0.35f; talking -> 0.12f; else -> 0f }, 3f)
 
-                sinceSample += dt
-                if (sinceSample > 0.028f) {
-                    sinceSample = 0f
-                    trail = (listOf(angle to tilt) + trail).take(9)
+                since += dt
+                if (since > 0.03f) {
+                    since = 0f
+                    trail = (listOf(floatArrayOf(angle, tilt, ox, oy)) + trail).take(10)
                 }
+                twinklePhase = t.toFloat()
             }
         }
     }
 
     Canvas(modifier.size(size)) {
         val unit = this.size.minDimension / 380f
+        // the star stays inside the canvas while it circles
+        val fit = 0.86f
         val c = center
-        // glow
-        drawCircle(
-            Brush.radialGradient(
-                listOf(glowColor.copy(alpha = 0.32f * glow), Color.Transparent),
-                center = c, radius = this.size.minDimension * 0.5f,
-            ),
-            radius = this.size.minDimension * 0.5f,
-            center = c,
-        )
-        // afterimages: spin ghosts while thinking, motion ghosts while swaying
-        val motion = (abs(tilt) / 18f).coerceIn(0f, 1f) * 0.6f
-        val ghostAmount = maxOf(spin, motion)
-        if (ghostAmount > 0.02f) {
-            trail.drop(1).forEachIndexed { i, (a, tl) ->
+        if (ghosts > 0.02f) {
+            trail.drop(1).forEachIndexed { i, g ->
                 val k = 1f - (i + 1) / trail.size.toFloat()
-                drawStar(c, unit * scale * (1f - 0.04f * (i + 1)), a + tl, bob, ghostBrush, alpha = 0.22f * k * ghostAmount)
+                drawStar(
+                    Offset(c.x + g[2] * unit, c.y + g[3] * unit), unit * fit * scale * (1f - 0.035f * (i + 1)),
+                    g[0] + g[1], 0f, ghostBrush, alpha = 0.2f * k * ghosts,
+                )
             }
         }
-        // the little star trail orbiting behind the spin
-        if (spin > 0.02f) {
-            val r = this.size.minDimension * 0.42f
-            for (i in 0 until 7) {
-                val a = Math.toRadians((angle - 90f - i * 16f).toDouble())
-                val p = Offset(c.x + (r * cos(a)).toFloat(), c.y + (r * sin(a)).toFloat())
-                val s = unit * (0.11f - i * 0.011f)
-                drawStar(p, s, angle * 2 + i * 30f, 0f, ghostBrush, alpha = spin * (1f - i / 7f) * 0.9f)
+        val pos = Offset(c.x + ox * unit, c.y + oy * unit)
+        if (twinkle > 0.02f) {
+            // three tiny sparkles near the tips, fading in and out out of step
+            for (i in 0 until 3) {
+                val a = Math.toRadians((tilt + 35.0 + i * 120.0))
+                val r = 118f * unit * fit
+                val p = Offset(pos.x + (r * cos(a)).toFloat(), pos.y + (r * sin(a)).toFloat())
+                val pulse = (0.5f + 0.5f * sin(twinklePhase * 3.1f + i * 2.1f))
+                drawStar(p, unit * 0.07f * (0.7f + 0.3f * pulse), 45f * i + twinklePhase * 40f, 0f, ghostBrush, alpha = twinkle * pulse * 0.8f)
             }
         }
-        drawStar(c, unit * scale, angle + tilt, bob, starBrush, alpha = 1f)
+        drawStar(pos, unit * fit * scale, angle + tilt, 0f, starBrush, alpha = 1f)
     }
 }
 

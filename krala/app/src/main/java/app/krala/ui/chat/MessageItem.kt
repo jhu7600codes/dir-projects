@@ -64,6 +64,21 @@ private fun UserMessage(m: UiMessage, file: (String) -> File, busy: Boolean, onE
                 }
             }
         }
+        if (m.docs.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End), verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(bottom = 6.dp)) {
+                m.docs.forEach { d ->
+                    Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                        Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.Description, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            Column(Modifier.padding(start = 8.dp)) {
+                                Text(d.name, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                                Text(stringResource(R.string.chars_count, d.chars), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         if (m.text.isNotBlank()) Box {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -102,6 +117,11 @@ private fun AssistantMessage(m: UiMessage, isLast: Boolean, busy: Boolean, onReg
     val cs = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 2.dp).animateContentSize()) {
         when {
+            m.searching -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.TravelExplore, null, Modifier.size(18.dp), tint = cs.primary)
+                Text(stringResource(R.string.searching_web), style = MaterialTheme.typography.labelLarge, color = cs.primary, modifier = Modifier.padding(start = 8.dp, end = 10.dp))
+                TypingIndicator()
+            }
             m.streaming && !m.started -> TypingIndicator()
             m.text.isNotBlank() -> SelectionContainer { MarkdownText(m.text) }
         }
@@ -115,6 +135,18 @@ private fun AssistantMessage(m: UiMessage, isLast: Boolean, busy: Boolean, onReg
                         modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
                     )
                     if (isLast) TextButton(onClick = { h.click(); onRegenerate() }, enabled = !busy) { Text(stringResource(R.string.retry)) }
+                }
+            }
+        }
+        if (m.sources.isNotEmpty() && !m.streaming) {
+            val uri = androidx.compose.ui.platform.LocalUriHandler.current
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
+                m.sources.forEachIndexed { i, (title, url) ->
+                    AssistChip(
+                        onClick = { runCatching { uri.openUri(url) } },
+                        label = { Text("${i + 1} · " + app.krala.core.Web.domain(url), maxLines = 1) },
+                        leadingIcon = { Icon(Icons.Rounded.Public, title, Modifier.size(16.dp)) },
+                    )
                 }
             }
         }

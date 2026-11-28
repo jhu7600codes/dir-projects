@@ -48,6 +48,8 @@ data class LiveReply(
     val started: Boolean = false,
     val providerName: String? = null,
     val model: String? = null,
+    /** "searching" while the web search runs */
+    val status: String? = null,
 )
 
 sealed interface ChatEvent {
@@ -71,6 +73,8 @@ class ChatEngine @Inject constructor(
     private val memory: MemoryRepository,
     private val recall: RecallService,
     private val attachments: AttachmentStore,
+    private val documents: Documents,
+    private val web: app.krala.data.web.WebSearch,
     @AppScope private val scope: CoroutineScope,
 ) {
     private val _live = MutableStateFlow<Map<String, LiveReply>>(emptyMap())
@@ -108,7 +112,14 @@ class ChatEngine @Inject constructor(
         )
     }
 
-    fun send(conversationId: String, text: String, images: List<String>, extraRecall: List<KralaTags.RecallLine>, voice: Boolean = false) {
+    fun send(
+        conversationId: String,
+        text: String,
+        images: List<String>,
+        extraRecall: List<KralaTags.RecallLine>,
+        voice: Boolean = false,
+        webSearch: Boolean = false,
+    ) {
         if (isBusy(conversationId)) return
         scope.launch {
             val conv = conversations.get(conversationId) ?: return@launch
@@ -125,7 +136,7 @@ class ChatEngine @Inject constructor(
                 conversations.setTitle(conversationId, heuristicTitle(text, images.isNotEmpty()), auto = true, now = now)
             }
             conversations.touch(conversationId, now)
-            generate(conversationId, text, extraRecall, voice)
+            generate(conversationId, text, extraRecall, voice, webSearch)
         }
     }
 
@@ -134,8 +145,10 @@ class ChatEngine @Inject constructor(
         scope.launch {
             val list = messages.listFor(conversationId)
             val lastUser = list.lastOrNull { it.role == Role.USER } ?: return@launch
+            // a reply that used the web searches again
+            val usedWeb = list.lastOrNull { it.role == Role.ASSISTANT }?.sources != null
             messages.softDeleteAfter(conversationId, lastUser.createdAt, lastUser.id, System.currentTimeMillis())
-            generate(conversationId, lastUser.content, emptyList())
+            generate(conversationId, lastUser.content, emptyList(), webSearch = usedWeb)
         }
     }
 
@@ -155,7 +168,13 @@ class ChatEngine @Inject constructor(
         jobs[conversationId]?.cancel()
     }
 
-    private fun generate(conversationId: String, queryText: String, extraRecall: List<KralaTags.RecallLine>, voice: Boolean = false) {
+    private fun generate(
+        conversationId: String,
+        queryText: String,
+        extraRecall: List<KralaTags.RecallLine>,
+        voice: Boolean = false,
+        webSearch: Boolean = false,
+    ) {
         val job = scope.launch {
             val conv = conversations.get(conversationId) ?: return@launch
             val s = settings.current()
@@ -171,6 +190,7 @@ class ChatEngine @Inject constructor(
             var used: Attempt? = null
             var finalStatus = MessageStatus.ERROR
             var finalError: String? = null
+            var sources: String? = null
             try {
                 refreshPrompts(conv)
                 val history = messages.listFor(conversationId).filter {
@@ -180,15 +200,25 @@ class ChatEngine @Inject constructor(
                     addAll(extraRecall)
                     if (!conv.incognito) addAll(runCatching { recall.auto(conversationId, queryText) }.getOrDefault(emptyList()))
                 }.distinctBy { it.excerpt }
-                val needsVision = history.any { attachments.decode(it.attachments).isNotEmpty() }
+                val needsVision = history.any { attachments.images(it.attachments).isNotEmpty() }
+                val findings = if (webSearch && queryText.isNotBlank()) {
+                    _live.update { it + (conversationId to LiveReply(reply.id, status = "searching")) }
+                    runCatching { web.run(queryText) }.onFailure { android.util.Log.w("krala", "web search failed", it) }.getOrNull()
+                } else null
+                sources = findings?.sources?.joinToString("\n") { it.title.replace('\t', ' ').replace('\n', ' ') + "\t" + it.url }
                 val attempts = router.attempts(conv.providerId ?: s.defaultProviderId, conv.model ?: s.defaultModel, needsVision)
                 if (attempts.isEmpty()) {
                     finalError = "no provider with a model is set up. add one in settings → providers."
                     return@launch
                 }
-                val api = toApi(history, recallLines).let { list ->
-                    if (!voice || list.isEmpty() || list.last().role != Role.USER) list
-                    else list.dropLast(1) + list.last().copy(text = KralaTags.withVoice(list.last().text, VOICE_RULES))
+                val docBudget = (attempts.minOf { it.config.contextSize } * 2).coerceIn(8_000, 400_000)
+                val api = toApi(history, recallLines, docBudget).let { list ->
+                    if (list.isEmpty() || list.last().role != Role.USER) return@let list
+                    var last = list.last().text
+                    if (findings != null) last = KralaTags.withSection(last, KralaTags.WEB, findings.section)
+                    else if (webSearch) last = KralaTags.withSection(last, KralaTags.WEB, "the web search found nothing or failed. say you couldn't look it up.")
+                    if (voice) last = KralaTags.withVoice(last, VOICE_RULES)
+                    list.dropLast(1) + list.last().copy(text = last)
                 }
                 var lastError: ProviderException? = null
                 for ((index, attempt) in attempts.withIndex()) {
@@ -266,6 +296,7 @@ class ChatEngine @Inject constructor(
                         messages.softDelete(reply.id, now)
                     } else {
                         messages.finish(reply.id, content, finalStatus, finalError, used?.config?.name, used?.model, now)
+                        if (sources != null) messages.setSources(reply.id, sources)
                     }
                     conversations.touch(conversationId, now)
                     _live.update { it - conversationId }
@@ -294,15 +325,34 @@ class ChatEngine @Inject constructor(
         }
     }
 
-    private suspend fun toApi(history: List<MessageEntity>, recallLines: List<KralaTags.RecallLine>): List<ApiMessage> {
+    private suspend fun toApi(history: List<MessageEntity>, recallLines: List<KralaTags.RecallLine>, docBudget: Int): List<ApiMessage> {
         // images only travel with the last few messages that have them, older ones become a note
-        val withImages = history.filter { attachments.decode(it.attachments).isNotEmpty() }.takeLast(4).map { it.id }.toSet()
+        val withImages = history.filter { attachments.images(it.attachments).isNotEmpty() }.takeLast(4).map { it.id }.toSet()
+        // same for files: the last three messages with files carry their text, newest first in the budget
+        val withDocs = history.filter { attachments.docs(it.attachments).isNotEmpty() }.takeLast(3).map { it.id }
+        var budget = docBudget
+        val docText = mutableMapOf<String, String>()
+        for (id in withDocs.reversed()) {
+            val m = history.first { it.id == id }
+            val parts = attachments.docs(m.attachments).map { d ->
+                val text = documents.read(d.stored) ?: "[file missing on this device]"
+                val cut = app.krala.core.DocText.truncate(text, budget.coerceAtLeast(500))
+                budget -= cut.length
+                "[${d.name}]\n$cut"
+            }
+            docText[id] = parts.joinToString("\n\n")
+        }
         val refreshed = history.map { m -> if (m.role == Role.USER && m.hiddenPrefix != null) messages.get(m.id) ?: m else m }
         return refreshed.mapIndexed { i, m ->
-            val names = attachments.decode(m.attachments)
+            val names = attachments.images(m.attachments)
             val images = if (m.id in withImages) names.mapNotNull { attachments.dataUrl(it) } else emptyList()
             var content = KralaTags.compose(m.hiddenPrefix, m.content)
             if (names.isNotEmpty() && images.isEmpty()) content += "\n[${names.size} image(s) attached earlier]"
+            val docs = attachments.docs(m.attachments)
+            if (docs.isNotEmpty()) {
+                content = docText[m.id]?.let { KralaTags.withSection(content, KralaTags.FILES, it) }
+                    ?: (content + "\n[files attached earlier: ${docs.joinToString { it.name }}]")
+            }
             if (i == refreshed.lastIndex && m.role == Role.USER && recallLines.isNotEmpty()) {
                 content = KralaTags.withRecall(content, KralaTags.formatRecall(recallLines))
             }

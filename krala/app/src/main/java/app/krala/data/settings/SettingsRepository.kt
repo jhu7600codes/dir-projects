@@ -44,6 +44,11 @@ data class AppSettings(
     val sendOnEnter: Boolean = false,
     val settingsUpdatedAt: Long = 0,
     val presetsSeeded: Boolean = false,
+    /** duckduckgo (free, no key), brave, tavily or searxng */
+    val webProvider: String = "duckduckgo",
+    val webKeyCipher: String? = null,
+    val webSearxUrl: String = "",
+    val webPages: Int = 3,
 ) {
     val effectiveSystemPrompt: String get() = systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT
 }
@@ -94,6 +99,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val sendOnEnter = booleanPreferencesKey("send_on_enter")
         val settingsUpdated = longPreferencesKey("settings_updated")
         val seeded = booleanPreferencesKey("presets_seeded")
+        val webProvider = stringPreferencesKey("web_provider")
+        val webKey = stringPreferencesKey("web_key")
+        val webSearx = stringPreferencesKey("web_searx")
+        val webPages = androidx.datastore.preferences.core.intPreferencesKey("web_pages")
     }
 
     val settings: Flow<AppSettings> = context.store.data
@@ -123,6 +132,10 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
                 sendOnEnter = p[K.sendOnEnter] ?: false,
                 settingsUpdatedAt = p[K.settingsUpdated] ?: 0,
                 presetsSeeded = p[K.seeded] ?: false,
+                webProvider = p[K.webProvider] ?: "duckduckgo",
+                webKeyCipher = p[K.webKey],
+                webSearxUrl = p[K.webSearx] ?: "",
+                webPages = p[K.webPages] ?: 3,
             )
         }
 
@@ -170,6 +183,13 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         if (error == null) it[K.lastSync] = at
         it.setOrRemove(K.lastSyncError, error)
     }
+    suspend fun setWebSearch(provider: String, keyCipher: String?, searxUrl: String, pages: Int) = context.store.edit {
+        it[K.webProvider] = provider
+        it.setOrRemove(K.webKey, keyCipher)
+        it[K.webSearx] = searxUrl.trim()
+        it[K.webPages] = pages.coerceIn(0, 5)
+    }
+
     suspend fun setPresetsSeeded() = context.store.edit { it[K.seeded] = true }
 
     // ---- sync bookkeeping ----

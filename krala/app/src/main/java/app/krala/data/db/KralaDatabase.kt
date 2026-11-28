@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         UsageEntity::class,
         EmbeddingEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class KralaDatabase : RoomDatabase() {
@@ -31,6 +31,12 @@ abstract class KralaDatabase : RoomDatabase() {
  * virtual tables are created here. The requery sqlite build always has fts5; if it ever fails,
  * [ftsAvailable] stays false and search falls back to LIKE.
  */
+val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE messages ADD COLUMN sources TEXT")
+    }
+}
+
 object Fts {
     @Volatile
     var ftsAvailable = false
