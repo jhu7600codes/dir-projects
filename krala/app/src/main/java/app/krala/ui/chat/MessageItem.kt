@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -116,13 +117,14 @@ private fun AssistantMessage(m: UiMessage, isLast: Boolean, busy: Boolean, onReg
     val h = LocalHaptics.current
     val cs = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 2.dp).animateContentSize()) {
+        if (m.thinking.isNotBlank()) ThinkingBlock(m.thinking, live = m.streaming && !m.started)
         when {
             m.searching -> Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.TravelExplore, null, Modifier.size(18.dp), tint = cs.primary)
                 Text(stringResource(R.string.searching_web), style = MaterialTheme.typography.labelLarge, color = cs.primary, modifier = Modifier.padding(start = 8.dp, end = 10.dp))
                 TypingIndicator()
             }
-            m.streaming && !m.started -> TypingIndicator()
+            m.streaming && !m.started && m.thinking.isBlank() -> TypingIndicator()
             m.text.isNotBlank() -> SelectionContainer { MarkdownText(m.text) }
         }
         if (m.entity.status == MessageStatus.ERROR && !m.streaming) {
@@ -172,5 +174,43 @@ private fun AssistantMessage(m: UiMessage, isLast: Boolean, busy: Boolean, onReg
 private fun SmallAction(icon: androidx.compose.ui.graphics.vector.ImageVector, desc: String, enabled: Boolean = true, onClick: () -> Unit) {
     IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(36.dp)) {
         Icon(icon, desc, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+
+/** the model's thinking: open and live while it thinks, folds away once the answer starts */
+@Composable
+private fun ThinkingBlock(text: String, live: Boolean) {
+    val cs = MaterialTheme.colorScheme
+    var open by remember { mutableStateOf(false) }
+    val expanded = live || open
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = cs.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp).animateContentSize(),
+        onClick = { if (!live) open = !open },
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                app.krala.ui.components.KralaStar(
+                    mode = if (live) app.krala.ui.components.StarMode.THINKING else app.krala.ui.components.StarMode.IDLE,
+                    size = 22.dp,
+                )
+                Text(
+                    stringResource(if (live) R.string.thinking else R.string.thoughts),
+                    style = MaterialTheme.typography.labelLarge, color = cs.primary,
+                    modifier = Modifier.padding(start = 8.dp).weight(1f),
+                )
+                if (!live) Icon(if (open) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, Modifier.size(18.dp), tint = cs.onSurfaceVariant)
+            }
+            if (expanded) {
+                val scroll = androidx.compose.foundation.rememberScrollState()
+                LaunchedEffect(text.length, live) { if (live) scroll.scrollTo(scroll.maxValue) }
+                Text(
+                    text, style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp).heightIn(max = if (live) 140.dp else 420.dp).verticalScroll(scroll),
+                )
+            }
+        }
     }
 }

@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         UsageEntity::class,
         EmbeddingEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class KralaDatabase : RoomDatabase() {
@@ -34,6 +34,12 @@ abstract class KralaDatabase : RoomDatabase() {
 val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE messages ADD COLUMN sources TEXT")
+    }
+}
+
+val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE messages ADD COLUMN reasoning TEXT")
     }
 }
 

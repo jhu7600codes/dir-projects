@@ -91,6 +91,9 @@ interface MessageDao {
     @Query("UPDATE messages SET content = :content, status = :status, error = :error, providerName = :provider, model = :model, updatedAt = :now WHERE id = :id")
     suspend fun finish(id: String, content: String, status: String, error: String?, provider: String?, model: String?, now: Long)
 
+    @Query("UPDATE messages SET reasoning = :reasoning WHERE id = :id")
+    suspend fun setReasoning(id: String, reasoning: String?)
+
     @Query("UPDATE messages SET sources = :sources WHERE id = :id")
     suspend fun setSources(id: String, sources: String?)
 

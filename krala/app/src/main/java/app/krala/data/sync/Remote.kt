@@ -36,6 +36,7 @@ data class RemoteMessage(
     @SerialName("updated_at") val updatedAt: Long,
     val deleted: Boolean,
     val sources: String? = null,
+    val reasoning: String? = null,
 )
 
 @Serializable

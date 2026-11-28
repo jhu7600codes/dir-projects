@@ -29,6 +29,13 @@ object ChoiceContent {
             ?: str((first["message"] as? JsonObject)?.get("content"))
     }.getOrNull()
 
+    /** reasoning text of a streamed chunk (choices[0].delta.reasoning_content or .reasoning), shown only */
+    fun reasoningFromChunk(data: String): String? = runCatching {
+        val root = json.parseToJsonElement(data) as? JsonObject ?: return null
+        val delta = firstChoice(root)?.get("delta") as? JsonObject ?: return null
+        str(delta["reasoning_content"]) ?: str(delta["reasoning"])
+    }.getOrNull()
+
     /** the error message in a json error body, if any */
     fun errorMessage(body: String): String? = runCatching {
         val root = json.parseToJsonElement(body)

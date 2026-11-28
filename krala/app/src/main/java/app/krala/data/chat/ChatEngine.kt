@@ -50,6 +50,8 @@ data class LiveReply(
     val model: String? = null,
     /** "searching" while the web search runs */
     val status: String? = null,
+    /** the model's thinking so far */
+    val thinking: String = "",
 )
 
 sealed interface ChatEvent {
@@ -187,6 +189,7 @@ class ChatEngine @Inject constructor(
             _live.update { it + (conversationId to LiveReply(reply.id)) }
 
             var text = StringBuilder()
+            var reasoning = StringBuilder()
             var used: Attempt? = null
             var finalStatus = MessageStatus.ERROR
             var finalError: String? = null
@@ -231,18 +234,28 @@ class ChatEngine @Inject constructor(
                     var firstTokenAt = 0L
                     var headers: Map<String, String> = emptyMap()
                     text = StringBuilder()
+                    reasoning = StringBuilder()
                     var lastSave = 0L
                     _live.update { it + (conversationId to LiveReply(reply.id, providerName = attempt.config.name, model = attempt.model)) }
                     try {
                         client.stream(attempt.config, attempt.model, fitted).collect { ev ->
                             when (ev) {
                                 is StreamEvent.Opened -> headers = ev.headers
+                                is StreamEvent.Reasoning -> {
+                                    if (firstTokenAt == 0L) firstTokenAt = System.currentTimeMillis()
+                                    reasoning.append(ev.text)
+                                    val sp = app.krala.core.Think.split(text.toString())
+                                    _live.update {
+                                        it + (conversationId to LiveReply(reply.id, KralaTags.strip(sp.answer), started = sp.answer.isNotBlank(), attempt.config.name, attempt.model, thinking = (reasoning.toString() + sp.thinking).trim()))
+                                    }
+                                }
                                 is StreamEvent.Delta -> {
                                     if (firstTokenAt == 0L) firstTokenAt = System.currentTimeMillis()
                                     text.append(ev.text)
-                                    val shown = KralaTags.strip(text.toString())
+                                    val sp = app.krala.core.Think.split(text.toString())
+                                    val shown = KralaTags.strip(sp.answer)
                                     _live.update {
-                                        it + (conversationId to LiveReply(reply.id, shown, started = shown.isNotEmpty(), attempt.config.name, attempt.model))
+                                        it + (conversationId to LiveReply(reply.id, shown, started = shown.isNotEmpty(), attempt.config.name, attempt.model, thinking = (reasoning.toString() + sp.thinking).trim()))
                                     }
                                     val t = System.currentTimeMillis()
                                     if (t - lastSave > 1_500) {
@@ -252,7 +265,7 @@ class ChatEngine @Inject constructor(
                                 }
                             }
                         }
-                        if (KralaTags.strip(text.toString()).isBlank()) throw ProviderException(ErrorKind.EMPTY, null, "the reply was empty")
+                        if (KralaTags.strip(app.krala.core.Think.answer(text.toString())).isBlank()) throw ProviderException(ErrorKind.EMPTY, null, "the reply was empty")
                         val end = System.currentTimeMillis()
                         providers.markSuccess(attempt.config.id, RateLimits.remainingRequests(headers), end - start)
                         providers.recordUsage(
@@ -267,7 +280,7 @@ class ChatEngine @Inject constructor(
                         lastError = e
                         router.onError(attempt, e)
                         providers.recordUsage(attempt.config, false, e.isRateLimit, promptTokens, 0, 0, 0)
-                        val streamed = KralaTags.strip(text.toString()).isNotBlank()
+                        val streamed = KralaTags.strip(app.krala.core.Think.answer(text.toString())).isNotBlank()
                         if (!FallbackPlanner.shouldFallback(e.kind, streamed)) {
                             used = attempt
                             finalStatus = if (streamed) MessageStatus.STOPPED else MessageStatus.ERROR
@@ -289,7 +302,9 @@ class ChatEngine @Inject constructor(
                 finalError = e.message ?: e.javaClass.simpleName
             } finally {
                 withContext(NonCancellable) {
-                    val content = KralaTags.strip(text.toString())
+                    val split = app.krala.core.Think.split(text.toString())
+                    val content = KralaTags.strip(split.answer)
+                    val thoughts = (reasoning.toString() + split.thinking).trim().takeIf { it.isNotEmpty() }
                     val now = System.currentTimeMillis()
                     if (finalStatus == MessageStatus.STOPPED && content.isBlank()) {
                         // stopped before anything arrived: drop the empty bubble
@@ -297,6 +312,7 @@ class ChatEngine @Inject constructor(
                     } else {
                         messages.finish(reply.id, content, finalStatus, finalError, used?.config?.name, used?.model, now)
                         if (sources != null) messages.setSources(reply.id, sources)
+                        if (thoughts != null) messages.setReasoning(reply.id, thoughts)
                     }
                     conversations.touch(conversationId, now)
                     _live.update { it - conversationId }

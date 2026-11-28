@@ -50,6 +50,7 @@ import javax.inject.Singleton
 sealed interface StreamEvent {
     data class Opened(val headers: Map<String, String>) : StreamEvent
     data class Delta(val text: String) : StreamEvent
+    data class Reasoning(val text: String) : StreamEvent
 }
 
 /**
@@ -121,6 +122,7 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
                     val d = data.trim()
                     if (d == "[DONE]") return false
                     if (d.isEmpty()) return true
+                    ChoiceContent.reasoningFromChunk(d)?.takeIf { it.isNotEmpty() }?.let { emit(StreamEvent.Reasoning(it)) }
                     val delta = ChoiceContent.fromChunk(d)
                     if (delta != null) {
                         if (delta.isNotEmpty()) emit(StreamEvent.Delta(delta))
@@ -156,7 +158,7 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
             }
             val body = resp.bodyAsText()
             if (!resp.status.isSuccess()) throw httpError(resp.status.value, body, headerMap(resp))
-            return ChoiceContent.fromResponse(body)
+            return ChoiceContent.fromResponse(body)?.let { app.krala.core.Think.answer(it) }
                 ?: throw ProviderException(ErrorKind.EMPTY, resp.status.value, ChoiceContent.errorMessage(body) ?: "no choices[0].message.content in the response")
         } catch (e: CancellationException) {
             throw e

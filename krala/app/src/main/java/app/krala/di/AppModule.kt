@@ -48,7 +48,7 @@ object AppModule {
             // requery's sqlite ships fts5 on every android version
             .openHelperFactory(RequerySQLiteOpenHelperFactory())
             .addCallback(Fts.callback)
-            .addMigrations(app.krala.data.db.MIGRATION_1_2)
+            .addMigrations(app.krala.data.db.MIGRATION_1_2, app.krala.data.db.MIGRATION_2_3)
             .build()
 
     @Provides fun conversations(db: KralaDatabase): ConversationDao = db.conversations()

@@ -58,6 +58,8 @@ data class MessageEntity(
     val syncedAt: Long = 0,
     /** web sources used for this reply, one "title\turl" per line */
     val sources: String? = null,
+    /** the model's visible thinking, shown folded above the reply, never sent back */
+    val reasoning: String? = null,
 )
 
 object MemoryKind {

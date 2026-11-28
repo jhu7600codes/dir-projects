@@ -287,14 +287,14 @@ class SyncService @Inject constructor(
     )
 
     private fun MessageEntity.toRemote(uid: String) = RemoteMessage(
-        id, uid, conversationId, role, content, hiddenPrefix, attachments, status, error, providerName, model, createdAt, updatedAt, deleted, sources,
+        id, uid, conversationId, role, content, hiddenPrefix, attachments, status, error, providerName, model, createdAt, updatedAt, deleted, sources, reasoning,
     )
 
     private fun RemoteMessage.toLocal() = MessageEntity(
         id = id, conversationId = conversationId, role = role, content = content, hiddenPrefix = hiddenPrefix,
         attachments = attachments, status = if (status == "streaming") "stopped" else status, error = error,
         providerName = providerName, model = model, createdAt = createdAt, updatedAt = updatedAt, deleted = deleted, syncedAt = updatedAt,
-        sources = sources,
+        sources = sources, reasoning = reasoning,
     )
 
     private fun MemoryEntryEntity.toRemote(uid: String) = RemoteMemory(

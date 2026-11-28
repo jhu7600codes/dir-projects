@@ -47,6 +47,7 @@ data class UiMessage(
     val docs: List<app.krala.data.chat.AttachedDoc> = emptyList(),
     val searching: Boolean = false,
     val sources: List<Pair<String, String>> = emptyList(),
+    val thinking: String = "",
 )
 
 /** settings for a chat that doesn't exist yet (created on the first send) */
@@ -122,6 +123,7 @@ class ChatViewModel @Inject constructor(
                     started = if (isLive) lr!!.started else true,
                     docs = attachments.docs(m.attachments),
                     searching = isLive && lr!!.status == "searching",
+                    thinking = if (isLive) lr!!.thinking else m.reasoning.orEmpty(),
                     sources = m.sources?.lines()?.mapNotNull { l -> l.split('\t').takeIf { it.size == 2 }?.let { it[0] to it[1] } }.orEmpty(),
                 )
             }
