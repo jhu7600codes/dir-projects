@@ -62,6 +62,12 @@ class MainActivity : AppCompatActivity() {
             ready = true
         }
         if (savedInstanceState == null) handleIntent(intent)
+        // android 13+: ask once so finished replies and krala's texts can show up
+        if (Build.VERSION.SDK_INT >= 33) lifecycleScope.launch {
+            if (!settings.askedNotifyOnce() &&
+                ContextCompat.checkSelfPermission(this@MainActivity, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 7)
+        }
 
         setContent {
             val s by settings.settings.collectAsState(initial = AppSettings())

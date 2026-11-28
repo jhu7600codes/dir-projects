@@ -149,6 +149,20 @@ fun SettingsScreen(
                     SettingRow(stringResource(R.string.usage), stringResource(R.string.usage_hint), Icons.Rounded.BarChart, onClick = onUsage)
                     SettingRow(stringResource(R.string.web_search), webLabel(s.webProvider), Icons.Rounded.TravelExplore, onClick = { webDialog = true })
                     SettingRow(stringResource(R.string.voice), stringResource(R.string.voice_hint), Icons.Rounded.RecordVoiceOver, onClick = onVoice)
+                    SwitchRow(stringResource(R.string.notify_replies), stringResource(R.string.notify_replies_hint), Icons.Rounded.Notifications, s.notifyReplies) { vm.setNotifyReplies(it) }
+                    var randomMenu by remember { mutableStateOf(false) }
+                    Box {
+                        SettingRow(
+                            stringResource(R.string.random_messages),
+                            stringResource(when (s.randomMessages) { "sometimes" -> R.string.random_sometimes; "off" -> R.string.random_off; else -> R.string.random_rare }),
+                            Icons.Rounded.MarkChatUnread, onClick = { randomMenu = true },
+                        )
+                        DropdownMenu(randomMenu, onDismissRequest = { randomMenu = false }) {
+                            listOf("rare" to R.string.random_rare, "sometimes" to R.string.random_sometimes, "off" to R.string.random_off).forEach { (id, label) ->
+                                DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { randomMenu = false; vm.setRandomMessages(id, context) })
+                            }
+                        }
+                    }
                     SettingRow(
                         stringResource(R.string.gemini_proxy),
                         stringResource(when (s.geminiProxy) { "always" -> R.string.gemini_proxy_always; "off" -> R.string.gemini_proxy_off; else -> R.string.gemini_proxy_auto }),

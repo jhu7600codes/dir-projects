@@ -32,6 +32,7 @@ class KralaApp : Application(), Configuration.Provider {
     @Inject lateinit var sync: SyncService
     @Inject lateinit var activeChat: ActiveChat
     @Inject @AppScope lateinit var scope: CoroutineScope
+    @Inject lateinit var notifier: app.krala.notify.Notifier
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
@@ -45,6 +46,13 @@ class KralaApp : Application(), Configuration.Provider {
             memoryScheduler.sweep(exceptChatId = null)
         }
         scope.launch { auth.ensureGuest() }
+        notifier.createChannels()
+        notifier.watchReplies()
+        scope.launch {
+            settings.settings.map { it.randomMessages }.distinctUntilChanged().collect { mode ->
+                app.krala.notify.RandomMessages.schedule(this@KralaApp, mode, replace = false)
+            }
+        }
         scope.launch {
             settings.settings.map { it.syncEnabled }.distinctUntilChanged().collect { on ->
                 if (on) {

@@ -168,6 +168,10 @@
     <string name="no_matches">ничего не нашлось</string>
     <string name="no_model">нет модели</string>
     <string name="notes">заметки</string>
+    <string name="notif_channel_replies">готовые ответы</string>
+    <string name="notif_channel_texts">крала пишет первой</string>
+    <string name="notify_replies">уведомлять о готовом ответе</string>
+    <string name="notify_replies_hint">когда ты вне приложения или в другом чате</string>
     <string name="open">открыть</string>
     <string name="open_chat">открыть чат</string>
     <string name="open_in_krala">открыть</string>
@@ -185,6 +189,10 @@
     <string name="providers_count">настроено: %1$d</string>
     <string name="providers_hint">перетаскивай, чтобы задать порядок. крала пробует верхнего, а при ошибках и лимитах идёт вниз по списку.</string>
     <string name="quick_ask">спроси кралу</string>
+    <string name="random_messages">крала пишет первой</string>
+    <string name="random_off">никогда</string>
+    <string name="random_rare">редко, примерно раз в день (не с 00:00 до 07:00)</string>
+    <string name="random_sometimes">иногда, пару раз в день (не с 00:00 до 07:00)</string>
     <string name="rate_limited_for">лимит, осталось %1$d с</string>
     <string name="recall_hint">поиск по старым чатам и памяти</string>
     <string name="recall_latest">свежая память</string>

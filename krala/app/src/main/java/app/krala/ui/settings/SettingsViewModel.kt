@@ -89,6 +89,11 @@ class SettingsViewModel @Inject constructor(
 
     val routeStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
+    fun setNotifyReplies(v: Boolean) = viewModelScope.launch { repo.setNotifyReplies(v) }
+    fun setRandomMessages(v: String, context: android.content.Context) = viewModelScope.launch {
+        repo.setRandomMessages(v)
+        app.krala.notify.RandomMessages.schedule(context, v, replace = true)
+    }
     fun setGeminiThinking(v: String) = viewModelScope.launch { repo.setGeminiThinking(v) }
     fun setGeminiProxy(mode: String) = viewModelScope.launch { repo.setGeminiProxy(mode); checkRoute() }
 

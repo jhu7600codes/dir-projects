@@ -168,6 +168,10 @@
     <string name="no_matches">nothing found</string>
     <string name="no_model">no model</string>
     <string name="notes">notes</string>
+    <string name="notif_channel_replies">finished replies</string>
+    <string name="notif_channel_texts">krala texting first</string>
+    <string name="notify_replies">notify when a reply is done</string>
+    <string name="notify_replies_hint">when you’re out of the app or in another chat</string>
     <string name="open">open</string>
     <string name="open_chat">open chat</string>
     <string name="open_in_krala">open</string>
@@ -185,6 +189,10 @@
     <string name="providers_count">%1$d set up</string>
     <string name="providers_hint">drag to set the order. krala tries the top one first and falls back down the list on errors and rate limits.</string>
     <string name="quick_ask">ask krala</string>
+    <string name="random_messages">krala texts first</string>
+    <string name="random_off">never</string>
+    <string name="random_rare">rarely, about once a day (never 00:00–07:00)</string>
+    <string name="random_sometimes">sometimes, a few times a day (never 00:00–07:00)</string>
     <string name="rate_limited_for">rate limited, %1$d s left</string>
     <string name="recall_hint">search past chats and memory</string>
     <string name="recall_latest">latest memory</string>

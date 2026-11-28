@@ -63,6 +63,9 @@ data class AppSettings(
     val geminiProxy: String = "auto",
     /** gemini thinking depth: fast, balanced, deep */
     val geminiThinking: String = "fast",
+    val notifyReplies: Boolean = true,
+    /** krala texting first: off, rare, sometimes */
+    val randomMessages: String = "rare",
 ) {
     val effectiveSystemPrompt: String get() = systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT
 }
@@ -126,6 +129,9 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val sttMode = stringPreferencesKey("stt_mode")
         val geminiProxy = stringPreferencesKey("gemini_proxy")
         val geminiThinking = stringPreferencesKey("gemini_thinking")
+        val notifyReplies = booleanPreferencesKey("notify_replies")
+        val randomMessages = stringPreferencesKey("random_messages")
+        val askedNotify = booleanPreferencesKey("asked_notify")
     }
 
     val settings: Flow<AppSettings> = context.store.data
@@ -168,6 +174,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
                 sttMode = p[K.sttMode] ?: "auto",
                 geminiProxy = p[K.geminiProxy] ?: "auto",
                 geminiThinking = p[K.geminiThinking] ?: "fast",
+                notifyReplies = p[K.notifyReplies] ?: true,
+                randomMessages = p[K.randomMessages] ?: "rare",
             )
         }
 
@@ -225,6 +233,13 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun setTtsEngine(v: String?) = context.store.edit { it.setOrRemove(K.ttsEngine, v); it.remove(K.ttsVoiceEn); it.remove(K.ttsVoiceRu) }
     suspend fun setTtsVoice(russian: Boolean, name: String?) = context.store.edit { it.setOrRemove(if (russian) K.ttsVoiceRu else K.ttsVoiceEn, name) }
     suspend fun setVoiceTuning(rate: Float, pitch: Float) = context.store.edit { it[K.voiceRate] = rate; it[K.voicePitch] = pitch }
+    suspend fun setNotifyReplies(v: Boolean) = context.store.edit { it[K.notifyReplies] = v }
+    suspend fun setRandomMessages(v: String) = context.store.edit { it[K.randomMessages] = v }
+    suspend fun askedNotifyOnce(): Boolean {
+        val asked = context.store.data.first()[K.askedNotify] ?: false
+        if (!asked) context.store.edit { it[K.askedNotify] = true }
+        return asked
+    }
     suspend fun setGeminiThinking(v: String) = context.store.edit { it[K.geminiThinking] = v }
     suspend fun setGeminiProxy(v: String) = context.store.edit { it[K.geminiProxy] = v }
     suspend fun setSttMode(v: String) = context.store.edit { it[K.sttMode] = v }

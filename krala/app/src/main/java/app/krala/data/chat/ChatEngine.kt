@@ -126,7 +126,8 @@ class ChatEngine @Inject constructor(
         scope.launch {
             val conv = conversations.get(conversationId) ?: return@launch
             val now = System.currentTimeMillis()
-            val first = messages.count(conversationId) == 0
+            // the memory block goes on the first message *you* send, even when krala texted first
+            val first = messages.listFor(conversationId).none { it.role == Role.USER }
             val prefix = if (first) buildPrefix(conv) else null
             messages.upsert(
                 MessageEntity(
@@ -378,7 +379,7 @@ class ChatEngine @Inject constructor(
             docText[id] = parts.joinToString("\n\n")
         }
         val refreshed = history.map { m -> if (m.role == Role.USER && m.hiddenPrefix != null) messages.get(m.id) ?: m else m }
-        return refreshed.mapIndexed { i, m ->
+        val out = refreshed.mapIndexed { i, m ->
             val names = attachments.images(m.attachments)
             val images = if (m.id in withImages) names.mapNotNull { attachments.dataUrl(it) } else emptyList()
             var content = KralaTags.compose(m.hiddenPrefix, m.content)
@@ -393,6 +394,8 @@ class ChatEngine @Inject constructor(
             }
             ApiMessage(m.role, content, images)
         }
+        // a chat krala started herself: most apis want a user turn first
+        return if (out.firstOrNull()?.role == Role.ASSISTANT) listOf(ApiMessage(Role.USER, "(krala texted first)")) + out else out
     }
 
     private fun fit(api: List<ApiMessage>, contextSize: Int): List<ApiMessage> {
