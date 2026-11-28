@@ -32,7 +32,6 @@ class MainActivity : ComponentActivity() {
                         Screen.APPLY -> ApplyScreen(s, vm)
                         Screen.MANAGE -> ManageScreen(s, vm)
                         Screen.MICROG -> MicrogScreen(s, vm)
-                        Screen.STATUSBAR -> StatusBarScreen(s, vm)
                         Screen.CONTROL -> ControlScreen(s, vm)
                     }
                 }

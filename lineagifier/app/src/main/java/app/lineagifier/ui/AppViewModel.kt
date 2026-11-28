@@ -28,11 +28,10 @@ import android.content.Intent
 import app.lineagifier.microg.Microg
 import app.lineagifier.statusbar.BarConfig
 import app.lineagifier.statusbar.OverlayService
-import app.lineagifier.statusbar.Sizing
 import app.lineagifier.undo.Kind
 import java.io.File
 
-enum class Screen { HOME, PICK, TWEAKS, APPLY, MANAGE, MICROG, STATUSBAR, CONTROL }
+enum class Screen { HOME, PICK, TWEAKS, APPLY, MANAGE, MICROG, CONTROL }
 
 enum class StepState { WAITING, RUNNING, OK, FAILED, SKIPPED }
 
@@ -62,7 +61,6 @@ data class UiState(
     val bar: BarConfig = BarConfig(),
     val barBusy: Boolean = false,
     val barMessage: String? = null,
-    val screenPx: Pair<Int, Int> = 0 to 0,
     val microg: Microg.State? = null,
     val microgBusy: Boolean = false,
     val microgProgress: String? = null,
@@ -86,7 +84,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         } catch (t: Throwable) {
             _s.update { it.copy(catalogError = "catalog.json didn't load: ${t.message}") }
         }
-        _s.update { it.copy(bar = BarConfig.load(app), screenPx = Sizing.realScreen(app)) }
+        _s.update { it.copy(bar = BarConfig.load(app)) }
         refreshRoot()
     }
 
@@ -233,13 +231,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val msgs = mutableListOf<String>()
         withContext(Dispatchers.IO) {
             if (new.needsService && !old.needsService) grantOverlay()?.let { msgs += it }
-            if (new.sizingEnabled != old.sizingEnabled || (new.sizingEnabled && (new.safeTopPt != old.safeTopPt || new.padPt != old.padPt))) {
-                val r = if (new.sizingEnabled) {
-                    val (w, h) = _s.value.screenPx
-                    Sizing.apply(Root, log, Sizing.iphone13(w, h, new.safeTopPt, new.padPt))
-                } else Sizing.disable(Root)
-                msgs += r.fold({ it }, { "sizing failed: ${it.message}" })
-            }
         }
         BarConfig.save(app, new)
         if (new.needsService) app.startForegroundService(Intent(app, OverlayService::class.java))

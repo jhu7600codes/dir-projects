@@ -4,7 +4,6 @@ import app.lineagifier.microg.Microg
 import app.lineagifier.qs.Backend
 import app.lineagifier.qs.Backends
 import app.lineagifier.qs.Tiles
-import app.lineagifier.statusbar.Sizing
 import app.lineagifier.undo.Kind
 import app.lineagifier.undo.Restore
 import app.lineagifier.undo.UndoLog
@@ -14,29 +13,6 @@ import java.io.File
 import java.nio.file.Files
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-
-class SizingTest {
-    @Test fun pxEncodingMatchesTheValueTestedOnAosp13() {
-        // `fabricate ... 0x05 38400` read back as 150.0px on the aosp 13 emulator
-        assertEquals(150L shl 8, Sizing.pxComplex(150))
-        assertEquals(38400L, Sizing.pxComplex(150))
-    }
-
-    @Test fun iphone13Scaling() {
-        // native iphone 13 pixels: 1170 x 2532 (3x of 390 x 844 pt)
-        val s = Sizing.iphone13(1170, 2532)
-        assertEquals(141, s.heightPx)   // 47 pt * 3
-        assertEquals(90, s.padStartPx)  // 30 pt * 3
-        // orientation doesn't matter, it scales off the long side
-        assertEquals(s, Sizing.iphone13(2532, 1170))
-    }
-
-    @Test fun commandsAreRootFabricateThenEnable() {
-        val c = Sizing.commands(Sizing.HEIGHT, 141)
-        assertEquals("cmd overlay fabricate --target android --name lgf_sb_height android:dimen/status_bar_height_default 0x05 36096", c[0])
-        assertEquals("cmd overlay enable --user 0 com.android.shell:lgf_sb_height", c[1])
-    }
-}
 
 class MicrogTest {
     @Test fun privappXml() {

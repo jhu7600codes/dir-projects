@@ -4,15 +4,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import app.lineagifier.qs.Tiles
 
-/** settings for the quick settings panel and the status bar sizing. stored in prefs "overlay". */
+/** settings for the quick settings panel. stored in prefs "overlay". */
 data class BarConfig(
     val ccEnabled: Boolean = false,
     /** tile specs in panel order */
     val ccTiles: List<String> = Tiles.DEFAULT,
     val ccHandleHeightDp: Int = 140,
-    val sizingEnabled: Boolean = false,
-    val safeTopPt: Float = Sizing.SAFE_TOP_PT,
-    val padPt: Float = Sizing.CORNER_PAD_PT,
 ) {
     companion object {
         const val PREFS = "overlay"
@@ -24,9 +21,6 @@ data class BarConfig(
                 ccEnabled = p.getBoolean("ccEnabled", d.ccEnabled),
                 ccTiles = p.getString("ccTileOrder", null)?.split(',')?.filter { Tiles.bySpec(it) != null } ?: d.ccTiles,
                 ccHandleHeightDp = p.getInt("ccHandleHeightDp", d.ccHandleHeightDp),
-                sizingEnabled = p.getBoolean("sizingEnabled", d.sizingEnabled),
-                safeTopPt = p.getFloat("safeTopPt", d.safeTopPt),
-                padPt = p.getFloat("padPt", d.padPt),
             )
         }
 
@@ -34,7 +28,6 @@ data class BarConfig(
             prefs(ctx).edit()
                 .putBoolean("ccEnabled", c.ccEnabled).putString("ccTileOrder", c.ccTiles.joinToString(","))
                 .putInt("ccHandleHeightDp", c.ccHandleHeightDp)
-                .putBoolean("sizingEnabled", c.sizingEnabled).putFloat("safeTopPt", c.safeTopPt).putFloat("padPt", c.padPt)
                 .apply()
         }
     }

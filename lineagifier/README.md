@@ -10,7 +10,6 @@ the home screen has a card per feature, each with its own switch or page:
 - **stock apps**: disable or remove stock apps once a replacement is in, plus "restore everything"
 - **microG**: gmscore + signature spoofing
 - **tweaks**: dark mode, animations, navigation mode, accent, icon shape
-- **iphone 13 status bar size**: fits android's own status bar to the notch screen
 - **quick settings**: lineage 20's quick settings panel
 
 ## the catalog (`app/src/main/assets/catalog.json`)
@@ -54,7 +53,7 @@ every change is written to `files/undo-log.json` **before** its command runs, wi
 - removed: `cmd package install-existing --user 0 <pkg>`
 - disabled: `pm enable --user 0 <pkg>`
 - settings: `settings put` the old value, or `settings delete` if there wasn't one
-- overlays and fabricated overlays: back to their old state (aosp 13 has no command to delete a fabricated overlay, so they're disabled)
+- overlays: back to their old state
 - roles: the old holder gets the role back
 - kernelsu modules lineagifier installed: `ksud module uninstall <id>` (gone after the next reboot)
 - extra apps lineagifier installed (fakegapps): `pm uninstall`
@@ -95,10 +94,6 @@ android's own pull-down belongs to systemui and can't be replaced without framew
 
 not included: reading mode, livedisplay, profiles and powershare (they need lineage's hardware/sdk services). controls, wallet, cast, screen record, hotspot and usb tethering don't apply to a twoyi container.
 
-## iphone 13 status bar size
-
-twoyi's status bar doesn't fit the iphone's notch screen. on android 13 the bar height is `max(cutout inset, android:dimen/status_bar_height_default)` and systemui keeps icons off the edges with `status_bar_padding_start/end`. root can override single resources with `cmd overlay fabricate`, so lineagifier sets those three, scaled from the iphone 13's published numbers (47pt top safe area, on a 390×844pt screen) to your real screen size. the numbers are sliders in case twoyi's screen doesn't match.
-
 ## what's approximated, what's missing
 
 **approximated**
@@ -120,6 +115,7 @@ twoyi's status bar doesn't fit the iphone's notch screen. on android 13 the bar 
 
 - the target is the ios build of twoyi: android 13 (sdk 33, `twoyi13_native` userdebug), kernel 5.10, kernelsu (lkm mode), selinux disabled
 - give lineagifier root once in kernelsu's superuser tab. the home screen shows "running as root" when it works
+- twoyi handles the iphone notch itself, so lineagifier leaves the status bar size alone
 - twoyi's developer options crash, so there's no wireless debugging and no shizuku. that's why lineagifier uses su
 
 ## what's been tested
@@ -128,7 +124,7 @@ on the aosp 13 emulator image (`system-images;android-33;default;x86_64`, sdk 33
 
 **0.1 (through shizuku as uid 2000)**: shizuku grant, package detection, etar sha256 + install, dark mode / animations / gestural nav / teal accent, removing gallery3d and disabling calendar once replaced (launcher and camera stayed locked), the dialer role gate, and "restore everything" putting all 14 changes back. two real findings: aosp 13 has no `cmd role get-role-holders` (holders come from `dumpsys role`), and `cmd role add-role-holder` times out on a slow device but applies a few seconds later (lineagifier polls the real holders).
 
-**0.2 (root)**: the emulator's own su only serves adb, so a small test relay stood in for kernelsu's su (apps run `su -c`, a root loop runs the command). tested: root detection, the config home, the iphone 13 sizing (fabricated overlays registered, enabled and read back with `cmd overlay lookup`; first try used the screen size minus the nav bar, fixed to the real display size), the quick settings panel (quick row, expanded page, systemui icons/labels/states, toggles for airplane/dark/etc. changing the real system, battery saver dimmed while charging like aosp, lineage's tiles with caffeine counting down), and a crash fix: a timed-out `su` call used to kill the app.
+**0.2 (root)**: the emulator's own su only serves adb, so a small test relay stood in for kernelsu's su (apps run `su -c`, a root loop runs the command). tested: root detection, the config home, the quick settings panel (quick row, expanded page, systemui icons/labels/states, toggles for airplane/dark/etc. changing the real system, battery saver dimmed while charging like aosp, lineage's tiles with caffeine counting down), and a crash fix: a timed-out `su` call used to kill the app.
 
 **not tested**: anything inside twoyi itself, real kernelsu, the microg install (the emulator has no kernelsu and this sandbox can't reach github's api, so neozygisk/vector/fakegapps downloads and the module install are untested), night light (not available on the emulator), the in-app download over the network (the downloader is tested on the jvm against f-droid instead: `LINEAGIFIER_NET_TEST=1 ./gradlew testDebugUnitTest`), the launcher swap end to end.
 

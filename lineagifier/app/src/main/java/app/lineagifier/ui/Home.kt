@@ -19,7 +19,6 @@ import app.lineagifier.microg.Microg
 import app.lineagifier.shell.RootStatus
 import app.lineagifier.statusbar.BarConfig
 import app.lineagifier.qs.Tiles
-import app.lineagifier.statusbar.Sizing
 import kotlin.math.roundToInt
 
 @Composable
@@ -62,8 +61,6 @@ fun HomeScreen(s: UiState, vm: AppViewModel) {
             item { FeatureRow("microG", microgLine(s.microg), enabled = ready, onOpen = { vm.go(Screen.MICROG) }) }
             item { Section("look") }
             item { FeatureRow("tweaks", "dark mode, animations, navigation, accent, icon shape", enabled = ready, onOpen = { vm.go(Screen.TWEAKS) }) }
-            item { FeatureRow("iphone 13 status bar size", "bar height + padding fitted around the notch", checked = s.bar.sizingEnabled, enabled = ready && !s.barBusy,
-                onCheck = { on -> vm.updateBar { it.copy(sizingEnabled = on) } }, onOpen = { vm.go(Screen.STATUSBAR) }) }
             item { FeatureRow("quick settings", "lineage 20's quick settings, from a handle on the right edge", checked = s.bar.ccEnabled, enabled = ready && !s.barBusy,
                 onCheck = { on -> vm.updateBar { it.copy(ccEnabled = on) } }, onOpen = { vm.go(Screen.CONTROL) }) }
             s.barMessage?.let { m -> item { Text(m, color = if ("fail" in m || "couldn't" in m) Bad else Good, fontSize = 13.sp) } }
@@ -167,33 +164,6 @@ private fun Toggle(title: String, value: Boolean, enabled: Boolean, onChange: (B
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Text(title, fontSize = 14.sp, modifier = Modifier.weight(1f)); Switch(value, onChange, enabled = enabled)
     }
-
-@Composable
-fun StatusBarScreen(s: UiState, vm: AppViewModel) {
-    val c = s.bar
-    val en = !s.barBusy
-    fun up(f: (BarConfig) -> BarConfig) = vm.updateBar(f)
-    Page("status bar size", "fits android's own status bar to the iphone 13 screen", bottom = { OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") } }) {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            item {
-                Card {
-                    Toggle("iphone 13 size", c.sizingEnabled, en) { on -> up { it.copy(sizingEnabled = on) } }
-                    val (w, h) = s.screenPx
-                    val spec = Sizing.iphone13(w, h, c.safeTopPt, c.padPt)
-                    Text("screen ${w}x$h px → bar ${spec.heightPx}px, side padding ${spec.padStartPx}px", color = Dim, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
-                    Text("these are ios' published iphone 13 numbers scaled to your screen. nudge them if it looks off.", color = Dim, fontSize = 12.sp)
-                    var top by remember(c.safeTopPt) { mutableFloatStateOf(c.safeTopPt) }
-                    Text("bar height: ${top.roundToInt()} pt", fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
-                    Slider(top, { top = it }, valueRange = 20f..60f, enabled = en && c.sizingEnabled, onValueChangeFinished = { up { it.copy(safeTopPt = top) } })
-                    var pad by remember(c.padPt) { mutableFloatStateOf(c.padPt) }
-                    Text("side padding: ${pad.roundToInt()} pt", fontSize = 13.sp)
-                    Slider(pad, { pad = it }, valueRange = 4f..60f, enabled = en && c.sizingEnabled, onValueChangeFinished = { up { it.copy(padPt = pad) } })
-                }
-            }
-            s.barMessage?.let { m -> item { Text(m, color = if ("fail" in m) Bad else Good, fontSize = 13.sp) } }
-        }
-    }
-}
 
 @Composable
 fun ControlScreen(s: UiState, vm: AppViewModel) {
