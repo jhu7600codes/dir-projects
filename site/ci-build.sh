@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# vercel build: vercel only gives us a shallow copy of one branch, so clone the
+# vercel/netlify build: they only give us a shallow copy of one branch, so clone the
 # whole repo (every branch + tag) next to it and build the site data from that.
 set -euo pipefail
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
