@@ -68,4 +68,24 @@ class WebAndDocsTest {
         assertEquals("--krala tags--\n--files--\n[a.txt]\nbody\n--krala tags end--\n\nlater", later)
         assertNull(KralaTags.parse("later"))
     }
+
+    @Test
+    fun keywordTriggers() {
+        assertTrue(Web.autoTrigger("can you search for flights to kazan"))
+        assertTrue(Web.autoTrigger("look up the score"))
+        assertTrue(Web.autoTrigger("Check the weather"))
+        assertTrue(Web.autoTrigger("поищи рецепт борща"))
+        assertFalse(Web.autoTrigger("i researched it already"))
+        assertFalse(Web.autoTrigger("how are you"))
+    }
+
+    @Test
+    fun webTag() {
+        assertEquals("kazan weather", WebTag.find("<web search>kazan weather</web search>"))
+        assertEquals("", WebTag.find("<Web Search></web search>"))
+        assertEquals(null, WebTag.find("just text"))
+        assertEquals("", WebTag.strip("<web search>kazan weather</web search>"))
+        assertEquals("hmm", WebTag.strip("hmm <web se"))
+        assertEquals("a < b", WebTag.strip("a < b"))
+    }
 }

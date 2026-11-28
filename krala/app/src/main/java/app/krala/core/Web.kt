@@ -74,4 +74,30 @@ object Web {
             append(body.ifBlank { r.snippet }.trim()).append("\n\n")
         }
     }.trim()
+
+    private val trigger = Regex(
+        """(?i)(^|[^\p{L}])(search|look ?up|google|check|browse|найди|найти|поищи|поиск|загугли|погугли|проверь|глянь в интернете)([^\p{L}]|$)"""
+    )
+
+    /** the message asks to look something up, so search even if the globe is off */
+    fun autoTrigger(message: String): Boolean = trigger.containsMatchIn(message)
+}
+
+/** krala can ask for a search herself by answering with <web search>query</web search> */
+object WebTag {
+    private val full = Regex("""<\s*web[ _-]?search\s*>(.*?)(<\s*/\s*web[ _-]?search\s*>|$)""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+    private const val OPEN = "<web search>"
+
+    /** the query inside the tag ("" when she gave none), or null when there's no tag */
+    fun find(text: String): String? = full.find(text)?.groupValues?.get(1)?.trim()
+
+    /** removes the tag, and a half streamed "<web se" at the end, so it never flashes on screen */
+    fun strip(text: String): String {
+        var t = full.replace(text, "")
+        val tail = t.takeLast(OPEN.length).lowercase()
+        for (n in OPEN.length downTo 1) {
+            if (tail.endsWith(OPEN.take(n)) && (n > 1 || t.endsWith("<"))) { t = t.dropLast(n); break }
+        }
+        return t.trim()
+    }
 }
