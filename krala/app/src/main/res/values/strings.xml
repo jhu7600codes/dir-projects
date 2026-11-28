@@ -104,6 +104,11 @@
     <string name="forget_everything">forget everything</string>
     <string name="forget_everything_body">every memory entry and the archive will be removed. chats stay.</string>
     <string name="forget_everything_q">forget everything?</string>
+    <string name="gemini_proxy">gemini in russia</string>
+    <string name="gemini_proxy_always">always use the proxy</string>
+    <string name="gemini_proxy_auto">auto: proxy only without a vpn on a russian ip</string>
+    <string name="gemini_proxy_body">google blocks gemini in russia. without a vpn, krala sends gemini through its own proxy in frankfurt. with a vpn on it always goes direct. your key passes through it to google and is never stored.</string>
+    <string name="gemini_proxy_off">off, always direct</string>
     <string name="give_to_krala">give to krala</string>
     <string name="group_month">last 30 days</string>
     <string name="group_older">older</string>

@@ -36,6 +36,7 @@ class SettingsViewModel @Inject constructor(
     private val chats: ChatRepository,
     private val embeddings: EmbeddingIndex,
     private val vault: app.krala.security.KeyVault,
+    private val geminiRoute: app.krala.data.provider.GeminiRoute,
     providers: ProviderRepository,
 ) : ViewModel() {
     val settings: StateFlow<AppSettings> = repo.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
@@ -84,6 +85,21 @@ class SettingsViewModel @Inject constructor(
 
     fun setWebSearch(provider: String, key: String, searxUrl: String, pages: Int) = viewModelScope.launch {
         repo.setWebSearch(provider, key.trim().takeIf { it.isNotEmpty() }?.let { vault.encrypt(it) }, searxUrl, pages)
+    }
+
+    val routeStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+
+    fun setGeminiProxy(mode: String) = viewModelScope.launch { repo.setGeminiProxy(mode); checkRoute() }
+
+    fun checkRoute() = viewModelScope.launch {
+        routeStatus.value = "…"
+        val vpn = geminiRoute.vpnOn()
+        val country = if (vpn) null else geminiRoute.country(force = true)
+        val proxy = geminiRoute.shouldProxy()
+        routeStatus.value = when {
+            vpn -> "vpn on → gemini goes direct"
+            else -> "ip country: ${country ?: "unknown"} → " + if (proxy) "gemini goes through the proxy" else "gemini goes direct"
+        }
     }
 
     fun deleteAllChats() = viewModelScope.launch {

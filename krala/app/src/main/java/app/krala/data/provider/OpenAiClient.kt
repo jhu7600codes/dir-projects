@@ -29,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -58,7 +59,7 @@ sealed interface StreamEvent {
  * choices[0].delta.content while streaming) is read; every other field is ignored.
  */
 @Singleton
-class OpenAiClient @Inject constructor(private val http: HttpClient) {
+class OpenAiClient @Inject constructor(private val http: HttpClient, private val gemini: GeminiRoute) {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     private fun url(cfg: ProviderConfig, path: String) = cfg.baseUrl.trim().trimEnd('/') + "/" + path
@@ -102,6 +103,19 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
         }.toString()
 
     fun stream(cfg: ProviderConfig, model: String, messages: List<ApiMessage>): Flow<StreamEvent> = flow {
+        val routed = gemini.route(cfg)
+        try {
+            emitAll(streamOnce(routed, model, messages))
+        } catch (e: ProviderException) {
+            // google refused this location: go again through the proxy
+            if (routed === cfg && gemini.isGemini(cfg) && gemini.isGeoBlock(e) && !gemini.vpnOn()) {
+                gemini.markBlocked()
+                emitAll(streamOnce(gemini.route(cfg, force = true), model, messages))
+            } else throw e
+        }
+    }
+
+    private fun streamOnce(cfg: ProviderConfig, model: String, messages: List<ApiMessage>): Flow<StreamEvent> = flow {
         try {
             http.preparePost(url(cfg, "chat/completions")) {
                 auth(cfg)
@@ -154,10 +168,25 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
     }.flowOn(Dispatchers.IO)
 
     private fun isGemini(cfg: ProviderConfig, model: String) =
-        "generativelanguage.googleapis.com" in cfg.baseUrl && model.contains("2.5")
+        ("generativelanguage.googleapis.com" in cfg.baseUrl || "/gemini-proxy" in cfg.baseUrl) && model.contains("2.5")
 
     /** non streaming completion; returns choices[0].message.content */
-    suspend fun complete(cfg: ProviderConfig, model: String, messages: List<ApiMessage>, maxTokens: Int? = null): String {
+    suspend fun complete(cfg: ProviderConfig, model: String, messages: List<ApiMessage>, maxTokens: Int? = null): String =
+        geoRetry(cfg) { completeOnce(it, model, messages, maxTokens) }
+
+    private suspend fun <T> geoRetry(cfg: ProviderConfig, call: suspend (ProviderConfig) -> T): T {
+        val routed = gemini.route(cfg)
+        return try {
+            call(routed)
+        } catch (e: ProviderException) {
+            if (routed === cfg && gemini.isGemini(cfg) && gemini.isGeoBlock(e) && !gemini.vpnOn()) {
+                gemini.markBlocked()
+                call(gemini.route(cfg, force = true))
+            } else throw e
+        }
+    }
+
+    private suspend fun completeOnce(cfg: ProviderConfig, model: String, messages: List<ApiMessage>, maxTokens: Int?): String {
         try {
             val resp = http.post(url(cfg, "chat/completions")) {
                 auth(cfg)
@@ -176,7 +205,9 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
         }
     }
 
-    suspend fun listModels(cfg: ProviderConfig): List<String> {
+    suspend fun listModels(cfg: ProviderConfig): List<String> = geoRetry(cfg) { listModelsOnce(it) }
+
+    private suspend fun listModelsOnce(cfg: ProviderConfig): List<String> {
         try {
             val resp = http.get(url(cfg, "models")) { auth(cfg) }
             val body = resp.bodyAsText()
@@ -207,7 +238,9 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
         }.map { it.removePrefix("models/") }.distinct().sorted()
     }
 
-    suspend fun embed(cfg: ProviderConfig, model: String, inputs: List<String>): List<FloatArray> {
+    suspend fun embed(cfg: ProviderConfig, model: String, inputs: List<String>): List<FloatArray> = geoRetry(cfg) { embedOnce(it, model, inputs) }
+
+    private suspend fun embedOnce(cfg: ProviderConfig, model: String, inputs: List<String>): List<FloatArray> {
         try {
             val body = buildJsonObject {
                 put("model", model)

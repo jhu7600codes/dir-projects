@@ -63,6 +63,7 @@ fun SettingsScreen(
     var pickLanguage by remember { mutableStateOf(false) }
     var confirmDeleteAll by remember { mutableStateOf(false) }
     var webDialog by remember { mutableStateOf(false) }
+    var proxyDialog by remember { mutableStateOf(false) }
 
     val backup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { it?.let(vm::backupTo) }
     val restore = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let(vm::restoreFrom) }
@@ -148,6 +149,11 @@ fun SettingsScreen(
                     SettingRow(stringResource(R.string.usage), stringResource(R.string.usage_hint), Icons.Rounded.BarChart, onClick = onUsage)
                     SettingRow(stringResource(R.string.web_search), webLabel(s.webProvider), Icons.Rounded.TravelExplore, onClick = { webDialog = true })
                     SettingRow(stringResource(R.string.voice), stringResource(R.string.voice_hint), Icons.Rounded.RecordVoiceOver, onClick = onVoice)
+                    SettingRow(
+                        stringResource(R.string.gemini_proxy),
+                        stringResource(when (s.geminiProxy) { "always" -> R.string.gemini_proxy_always; "off" -> R.string.gemini_proxy_off; else -> R.string.gemini_proxy_auto }),
+                        Icons.Rounded.VpnLock, onClick = { proxyDialog = true; vm.checkRoute() },
+                    )
                 }
             }
 
@@ -246,6 +252,29 @@ fun SettingsScreen(
             model = s.embeddingModel,
             onSave = { e, p, m -> vm.setEmbeddings(e, p, m) },
             onDismiss = { pickEmbeddings = false },
+        )
+    }
+    if (proxyDialog) {
+        val status by vm.routeStatus.collectAsStateWithLifecycle()
+        AlertDialog(
+            onDismissRequest = { proxyDialog = false },
+            title = { Text(stringResource(R.string.gemini_proxy)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.gemini_proxy_body), style = MaterialTheme.typography.bodyMedium)
+                    listOf("auto" to R.string.gemini_proxy_auto, "always" to R.string.gemini_proxy_always, "off" to R.string.gemini_proxy_off).forEach { (id, label) ->
+                        ListItem(
+                            headlineContent = { Text(stringResource(label)) },
+                            leadingContent = { RadioButton(s.geminiProxy == id, onClick = null) },
+                            modifier = Modifier.clickableWithHaptic { vm.setGeminiProxy(id) },
+                            colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        )
+                    }
+                    status?.let { Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp)) }
+                }
+            },
+            confirmButton = { TextButton(onClick = { proxyDialog = false }) { Text(stringResource(R.string.close)) } },
+            dismissButton = { TextButton(onClick = { vm.checkRoute() }) { Text(stringResource(R.string.refresh)) } },
         )
     }
     if (webDialog) {
