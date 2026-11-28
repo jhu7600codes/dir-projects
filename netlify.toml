@@ -1,0 +1,10 @@
+# netlify only checks out one branch, so the build script clones the full repo
+# (every branch + tag) and builds the site data from that.
+[build]
+  command = "bash site/ci-build.sh"
+  publish = "_site"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"

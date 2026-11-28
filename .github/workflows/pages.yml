@@ -1,0 +1,54 @@
+name: site (github pages)
+
+# builds the dir-projects site from every branch and deploys it to github pages.
+# the workflow has to be on the default branch for schedule/dispatch to work;
+# pushes to any branch that has this file also rebuild it.
+on:
+  push:
+    branches: ["**"]
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: fetch every branch and tag
+        run: |
+          git fetch --prune --tags origin '+refs/heads/*:refs/remotes/origin/*'
+          git remote set-head origin --auto || true
+
+      - name: build site
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: python3 site/build.py --out _site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
