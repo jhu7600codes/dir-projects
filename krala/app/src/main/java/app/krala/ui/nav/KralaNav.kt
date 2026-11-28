@@ -37,6 +37,7 @@ import java.io.File
 @Serializable object UsageRoute
 @Serializable data class TalkRoute(val chatId: String? = null)
 @Serializable object VoiceRoute
+@Serializable object PluginsRoute
 
 private const val DURATION = 320
 
@@ -70,6 +71,7 @@ fun KralaNav(router: IntentRouter, attachmentFile: (String) -> File) {
                 onAccount = { nav.navigate(AccountRoute) },
                 onProviders = { nav.navigate(ProvidersRoute) },
                 onTalk = { nav.navigate(TalkRoute(it)) },
+                onPlugins = { nav.navigate(PluginsRoute) },
             )
         }
         composable<SettingsRoute> {
@@ -82,8 +84,10 @@ fun KralaNav(router: IntentRouter, attachmentFile: (String) -> File) {
                 onMemory = { nav.navigate(MemoryRoute) },
                 onAccount = { nav.navigate(AccountRoute) },
                 onVoice = { nav.navigate(VoiceRoute) },
+                onPlugins = { nav.navigate(PluginsRoute) },
             )
         }
+        composable<PluginsRoute> { app.krala.ui.plugins.PluginsScreen(hiltViewModel(), ::back) }
         composable<VoiceRoute> { app.krala.ui.voice.VoiceScreen(hiltViewModel(), ::back, onProviders = { nav.navigate(ProvidersRoute) }) }
         composable<PersonalityRoute> { PersonalityScreen(hiltViewModel(), ::back) }
         composable<ProvidersRoute> {

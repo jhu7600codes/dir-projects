@@ -132,15 +132,6 @@ fun ChatComposer(
                     }
                 }
             }
-            // slash command suggestion
-            AnimatedVisibility(text.startsWith("/") && !isCommand && "/recall".startsWith(text.trim().lowercase())) {
-                SuggestionChip(
-                    onClick = { h.tick(); onInput("/recall ") },
-                    label = { Text("/recall · " + stringResource(R.string.recall_hint)) },
-                    icon = { Icon(Icons.Rounded.History, null, Modifier.size(16.dp)) },
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
             Row(verticalAlignment = Alignment.Bottom) {
                 Box {
                     IconButton(onClick = { h.click(); attachMenu = true }, enabled = state.editingId == null) {

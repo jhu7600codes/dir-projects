@@ -138,3 +138,16 @@ data class EmbeddingEntity(
     override fun equals(other: Any?) = other is EmbeddingEntity && other.messageId == messageId && other.model == model
     override fun hashCode() = messageId.hashCode()
 }
+
+/** a user made command: krala follows [instructions] when it's called */
+@Entity(tableName = "plugins")
+data class PluginEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val description: String,
+    val instructions: String,
+    val web: Boolean = false,
+    val enabled: Boolean = true,
+    val createdAt: Long,
+    val updatedAt: Long,
+)

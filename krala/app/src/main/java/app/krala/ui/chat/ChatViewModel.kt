@@ -87,6 +87,7 @@ class ChatViewModel @Inject constructor(
     private val attachments: AttachmentStore,
     private val documents: app.krala.data.chat.Documents,
     private val codeRunner: app.krala.code.CodeRunner,
+    private val pluginRepo: app.krala.data.plugins.PluginRepository,
     private val export: ExportService,
     private val activeChat: ActiveChat,
 ) : ViewModel() {
@@ -240,7 +241,7 @@ class ChatViewModel @Inject constructor(
                 _composer.update { c -> c.copy(importing = false, docs = (c.docs + d).take(8)) }
             } catch (e: app.krala.data.chat.Documents.Unsupported) {
                 _composer.update { it.copy(importing = false) }
-                _notice.emit(e.name)
+                _notice.emit("can’t read " + e.name)
             } catch (e: Exception) {
                 _composer.update { it.copy(importing = false) }
                 _notice.emit(e.message ?: "file")
@@ -264,6 +265,70 @@ class ChatViewModel @Inject constructor(
         },
     )
 
+    val plugins: StateFlow<List<app.krala.data.db.PluginEntity>> = pluginRepo.all.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    sealed interface UiCommand {
+        data object Help : UiCommand
+        data object Model : UiCommand
+        data object Prompt : UiCommand
+        data object Export : UiCommand
+        data object Talk : UiCommand
+        data object Plugins : UiCommand
+        data class PluginDraft(val spec: app.krala.core.PluginSpec) : UiCommand
+    }
+
+    private val _ui = kotlinx.coroutines.flow.MutableSharedFlow<UiCommand>(extraBufferCapacity = 4)
+    val ui: kotlinx.coroutines.flow.SharedFlow<UiCommand> = _ui
+
+    private val _making = MutableStateFlow(false)
+    /** true while krala writes a plugin from /plugin */
+    val making: StateFlow<Boolean> = _making
+
+    fun savePlugin(spec: app.krala.core.PluginSpec) = viewModelScope.launch {
+        val name = pluginRepo.save(spec)
+        _notice.emit("/$name ✓")
+    }
+
+    /** built-in slash commands; false when the text is a normal message (or a plugin call) */
+    private fun runCommand(text: String): Boolean {
+        val (cmd, rest) = app.krala.core.Commands.parse(text) ?: return false
+        fun done() { _composer.value = Composer(webSearch = _composer.value.webSearch); recallQuery.value = null }
+        when (cmd) {
+            "help" -> { done(); _ui.tryEmit(UiCommand.Help) }
+            "web", "search" -> {
+                if (rest.isBlank()) { _composer.update { it.copy(webSearch = true, text = "") }; return true }
+                _composer.update { it.copy(text = rest, webSearch = true) }
+                return false
+            }
+            "new" -> { done(); newChat() }
+            "incognito" -> { done(); newChat(incognito = true) }
+            "talk" -> { done(); _ui.tryEmit(UiCommand.Talk) }
+            "model" -> { done(); _ui.tryEmit(UiCommand.Model) }
+            "prompt" -> { done(); _ui.tryEmit(UiCommand.Prompt) }
+            "export" -> { done(); if (_current.value != null) _ui.tryEmit(UiCommand.Export) }
+            "rename" -> { done(); _current.value?.let { id -> if (rest.isNotBlank()) rename(id, rest) } }
+            "plugins" -> { done(); _ui.tryEmit(UiCommand.Plugins) }
+            "plugin" -> {
+                done()
+                if (rest.isBlank()) { _ui.tryEmit(UiCommand.Plugins); return true }
+                viewModelScope.launch {
+                    _making.value = true
+                    runCatching { pluginRepo.make(rest) }
+                        .onSuccess { _ui.emit(UiCommand.PluginDraft(it)) }
+                        .onFailure { _notice.emit(it.message ?: "plugin") }
+                    _making.value = false
+                }
+            }
+            else -> {
+                // a plugin: sent as a normal message, the engine adds its instructions
+                if (plugins.value.any { it.enabled && it.name == cmd }) return false
+                viewModelScope.launch { _notice.emit("/$cmd ?  /help") }
+                return true
+            }
+        }
+        return true
+    }
+
     fun toggleWeb() = _composer.update { it.copy(webSearch = !it.webSearch) }
 
     fun removeImage(name: String) {
@@ -280,6 +345,7 @@ class ChatViewModel @Inject constructor(
     }
 
     fun send() {
+        if (_composer.value.editingId == null && runCommand(_composer.value.text.trim())) return
         val c = _composer.value
         val text = c.text.trim()
         if (text.startsWith("/recall", ignoreCase = true)) return

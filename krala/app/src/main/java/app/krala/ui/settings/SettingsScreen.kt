@@ -51,6 +51,7 @@ fun SettingsScreen(
     onMemory: () -> Unit,
     onAccount: () -> Unit,
     onVoice: () -> Unit = {},
+    onPlugins: () -> Unit = {},
 ) {
     val s by vm.settings.collectAsStateWithLifecycle()
     val providers by vm.providers.collectAsStateWithLifecycle()
@@ -149,6 +150,7 @@ fun SettingsScreen(
                     SettingRow(stringResource(R.string.usage), stringResource(R.string.usage_hint), Icons.Rounded.BarChart, onClick = onUsage)
                     SettingRow(stringResource(R.string.web_search), webLabel(s.webProvider), Icons.Rounded.TravelExplore, onClick = { webDialog = true })
                     SettingRow(stringResource(R.string.voice), stringResource(R.string.voice_hint), Icons.Rounded.RecordVoiceOver, onClick = onVoice)
+                    SettingRow(stringResource(R.string.plugins), stringResource(R.string.cmd_plugins), Icons.Rounded.Extension, onClick = onPlugins)
                     SwitchRow(stringResource(R.string.notify_replies), stringResource(R.string.notify_replies_hint), Icons.Rounded.Notifications, s.notifyReplies) { vm.setNotifyReplies(it) }
                     var randomMenu by remember { mutableStateOf(false) }
                     Box {

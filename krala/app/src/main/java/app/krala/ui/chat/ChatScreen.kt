@@ -51,6 +51,7 @@ fun ChatScreen(
     onAccount: () -> Unit,
     onProviders: () -> Unit,
     onTalk: (String?) -> Unit,
+    onPlugins: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val h = LocalHaptics.current
@@ -91,8 +92,28 @@ fun ChatScreen(
     val pickFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         uris.take(8).forEach { vm.addDocument(it) }
     }
-    val unreadable = stringResource(R.string.file_unreadable)
-    LaunchedEffect(Unit) { vm.notice.collect { snackbar.showSnackbar(unreadable.format(it)) } }
+    LaunchedEffect(Unit) { vm.notice.collect { snackbar.showSnackbar(it) } }
+    val plugins by vm.plugins.collectAsStateWithLifecycle()
+    val making by vm.making.collectAsStateWithLifecycle()
+    var helpOpen by remember { mutableStateOf(false) }
+    var pluginDraft by remember { mutableStateOf<app.krala.core.PluginSpec?>(null) }
+    val builtIns = builtInHints()
+    val hints = remember(plugins, builtIns) {
+        builtIns + plugins.filter { it.enabled }.map { CommandHint(it.name, it.description, plugin = true) }
+    }
+    LaunchedEffect(Unit) {
+        vm.ui.collect { c ->
+            when (c) {
+                ChatViewModel.UiCommand.Help -> helpOpen = true
+                ChatViewModel.UiCommand.Model -> showModels = true
+                ChatViewModel.UiCommand.Prompt -> showPrompt = true
+                ChatViewModel.UiCommand.Export -> exportTarget = vm.conversation.value
+                ChatViewModel.UiCommand.Talk -> onTalk(vm.current.value)
+                ChatViewModel.UiCommand.Plugins -> onPlugins()
+                is ChatViewModel.UiCommand.PluginDraft -> pluginDraft = c.spec
+            }
+        }
+    }
     val saveMd = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
         val text = pendingExport
         if (uri != null && text != null) vm.writeExport(uri, text)
@@ -266,6 +287,8 @@ fun ChatScreen(
                         }
                     }
                 }
+                if (making) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+                CommandSuggestions(composer.text, hints, onPick = vm::onInput)
                 RecallPanelView(
                     panel = recallPanel,
                     label = vm::recallLabel,
@@ -297,6 +320,8 @@ fun ChatScreen(
     }
 
     }
+    if (helpOpen) HelpSheet(hints, onPick = vm::onInput, onDismiss = { helpOpen = false })
+    pluginDraft?.let { d -> PluginEditDialog(d, isNew = true, onSave = vm::savePlugin, onDelete = null, onDismiss = { pluginDraft = null }) }
     if (showModels) {
         ModelPickerSheet(
             providers = providers,

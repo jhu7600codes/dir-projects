@@ -12,8 +12,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ProviderEntity::class,
         UsageEntity::class,
         EmbeddingEntity::class,
+        PluginEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class KralaDatabase : RoomDatabase() {
@@ -24,6 +25,7 @@ abstract class KralaDatabase : RoomDatabase() {
     abstract fun usage(): UsageDao
     abstract fun embeddings(): EmbeddingDao
     abstract fun search(): SearchDao
+    abstract fun plugins(): PluginDao
 }
 
 /**
@@ -40,6 +42,12 @@ val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
 val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE messages ADD COLUMN reasoning TEXT")
+    }
+}
+
+val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `plugins` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `instructions` TEXT NOT NULL, `web` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))")
     }
 }
 

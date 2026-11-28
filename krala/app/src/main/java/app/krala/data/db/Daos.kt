@@ -319,3 +319,21 @@ interface SearchDao {
     @RawQuery
     suspend fun ids(q: SupportSQLiteQuery): List<String>
 }
+
+@Dao
+interface PluginDao {
+    @Query("SELECT * FROM plugins ORDER BY name")
+    fun observeAll(): Flow<List<PluginEntity>>
+
+    @Query("SELECT * FROM plugins ORDER BY name")
+    suspend fun all(): List<PluginEntity>
+
+    @Query("SELECT * FROM plugins WHERE name = :name LIMIT 1")
+    suspend fun byName(name: String): PluginEntity?
+
+    @Upsert
+    suspend fun upsert(p: PluginEntity)
+
+    @Query("DELETE FROM plugins WHERE id = :id")
+    suspend fun delete(id: String)
+}

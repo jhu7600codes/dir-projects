@@ -77,6 +77,7 @@ class ChatEngine @Inject constructor(
     private val attachments: AttachmentStore,
     private val documents: Documents,
     private val web: app.krala.data.web.WebSearch,
+    private val plugins: app.krala.data.plugins.PluginRepository,
     @AppScope private val scope: CoroutineScope,
 ) {
     private val _live = MutableStateFlow<Map<String, LiveReply>>(emptyMap())
@@ -205,9 +206,15 @@ class ChatEngine @Inject constructor(
                     if (!conv.incognito) addAll(runCatching { recall.auto(conversationId, queryText) }.getOrDefault(emptyList()))
                 }.distinctBy { it.excerpt }
                 val needsVision = history.any { attachments.images(it.attachments).isNotEmpty() }
-                var findings = if (webSearch && queryText.isNotBlank()) {
+                // plugins: the list goes with every request, a typed /name runs one right away
+                val pluginList = plugins.enabled().map { plugins.spec(it) }
+                var pluginCall: Pair<app.krala.core.PluginSpec, String>? = app.krala.core.Commands.parse(queryText)?.let { (name, rest) ->
+                    pluginList.firstOrNull { it.name == name }?.let { it to rest }
+                }
+                val searchFor = pluginCall?.second?.ifBlank { null } ?: queryText
+                var findings = if ((webSearch || pluginCall?.first?.web == true) && searchFor.isNotBlank()) {
                     _live.update { it + (conversationId to LiveReply(reply.id, status = "searching")) }
-                    runCatching { web.run(queryText) }.onFailure { android.util.Log.w("krala", "web search failed", it) }.getOrNull()
+                    runCatching { web.run(searchFor) }.onFailure { android.util.Log.w("krala", "web search failed", it) }.getOrNull()
                 } else null
                 sources = findings?.sources?.joinToString("\n") { it.title.replace('\t', ' ').replace('\n', ' ') + "\t" + it.url }
                 val attempts = router.attempts(conv.providerId ?: s.defaultProviderId, conv.model ?: s.defaultModel, needsVision)
@@ -223,6 +230,8 @@ class ChatEngine @Inject constructor(
                     val f = findings
                     if (f != null) last = KralaTags.withSection(last, KralaTags.WEB, f.section)
                     else if (searched) last = KralaTags.withSection(last, KralaTags.WEB, "the web search found nothing or failed. say you couldn't look it up, don't ask to search again.")
+                    if (pluginList.isNotEmpty()) last = KralaTags.withSection(last, KralaTags.PLUGINS, app.krala.core.PluginText.listSection(pluginList))
+                    pluginCall?.let { (p, input) -> last = KralaTags.withSection(last, KralaTags.PLUGIN, app.krala.core.PluginText.runSection(p, input)) }
                     if (voice) last = KralaTags.withVoice(last, VOICE_RULES)
                     list.dropLast(1) + list.last().copy(text = last)
                 }
@@ -231,6 +240,7 @@ class ChatEngine @Inject constructor(
                 // round 2 only happens when krala answered with <web search>: search, then ask again
                 for (round in 0..1) {
                 var wantsSearch: String? = null
+                var wantsPlugin: Pair<String, String>? = null
                 for ((index, attempt) in attempts.withIndex()) {
                     if (index > 0) {
                         _events.tryEmit(ChatEvent.FellBack(conversationId, attempts[index - 1].config.name, attempt.config.name))
@@ -260,7 +270,7 @@ class ChatEngine @Inject constructor(
                                     if (firstTokenAt == 0L) firstTokenAt = System.currentTimeMillis()
                                     text.append(ev.text)
                                     val sp = app.krala.core.Think.split(text.toString())
-                                    val shown = app.krala.core.WebTag.strip(KralaTags.strip(sp.answer))
+                                    val shown = app.krala.core.PluginText.stripCall(app.krala.core.WebTag.strip(KralaTags.strip(sp.answer)))
                                     _live.update {
                                         it + (conversationId to LiveReply(reply.id, shown, started = shown.isNotEmpty(), attempt.config.name, attempt.model, thinking = (reasoning.toString() + sp.thinking).trim()))
                                     }
@@ -274,7 +284,8 @@ class ChatEngine @Inject constructor(
                         }
                         val answerNow = KralaTags.strip(app.krala.core.Think.answer(text.toString()))
                         if (round == 0 && findings == null) wantsSearch = app.krala.core.WebTag.find(answerNow)
-                        if (wantsSearch == null && app.krala.core.WebTag.strip(answerNow).isBlank()) throw ProviderException(ErrorKind.EMPTY, null, "the reply was empty")
+                        if (round == 0 && pluginCall == null) wantsPlugin = app.krala.core.PluginText.findCall(answerNow)?.takeIf { (n, _) -> pluginList.any { it.name == n } }
+                        if (wantsSearch == null && wantsPlugin == null && app.krala.core.PluginText.stripCall(app.krala.core.WebTag.strip(answerNow)).isBlank()) throw ProviderException(ErrorKind.EMPTY, null, "the reply was empty")
                         val end = System.currentTimeMillis()
                         providers.markSuccess(attempt.config.id, RateLimits.remainingRequests(headers), end - start)
                         providers.recordUsage(
@@ -299,12 +310,19 @@ class ChatEngine @Inject constructor(
                     }
                 }
                 val q = wantsSearch
-                if (q == null || used == null || finalStatus != MessageStatus.DONE) break
-                // she asked for a search: run it and let her answer with the results
-                _live.update { it + (conversationId to LiveReply(reply.id, status = "searching")) }
-                findings = runCatching { web.run(q.ifBlank { queryText }) }.onFailure { android.util.Log.w("krala", "web search failed", it) }.getOrNull()
-                sources = findings?.sources?.joinToString("\n") { it.title.replace('\t', ' ').replace('\n', ' ') + "\t" + it.url }
-                api = withExtras(true)
+                val pc = wantsPlugin
+                if ((q == null && pc == null) || used == null || finalStatus != MessageStatus.DONE) break
+                // she asked for a plugin and/or a search: do it, then let her answer again
+                var searched = webSearch
+                if (pc != null) pluginCall = pluginList.first { it.name == pc.first } to pc.second
+                val searchQuery = q ?: pc?.second?.takeIf { pluginCall?.first?.web == true }
+                if (searchQuery != null && findings == null) {
+                    _live.update { it + (conversationId to LiveReply(reply.id, status = "searching")) }
+                    findings = runCatching { web.run(searchQuery.ifBlank { queryText }) }.onFailure { android.util.Log.w("krala", "web search failed", it) }.getOrNull()
+                    sources = findings?.sources?.joinToString("\n") { it.title.replace('\t', ' ').replace('\n', ' ') + "\t" + it.url }
+                    searched = true
+                }
+                api = withExtras(searched)
                 text = StringBuilder()
                 used = null
                 finalStatus = MessageStatus.ERROR
@@ -323,7 +341,7 @@ class ChatEngine @Inject constructor(
             } finally {
                 withContext(NonCancellable) {
                     val split = app.krala.core.Think.split(text.toString())
-                    val content = app.krala.core.WebTag.strip(KralaTags.strip(split.answer))
+                    val content = app.krala.core.PluginText.stripCall(app.krala.core.WebTag.strip(KralaTags.strip(split.answer)))
                     val thoughts = (reasoning.toString() + split.thinking).trim().takeIf { it.isNotEmpty() }
                     val now = System.currentTimeMillis()
                     if (finalStatus == MessageStatus.STOPPED && content.isBlank()) {

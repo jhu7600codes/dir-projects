@@ -25,8 +25,10 @@ object KralaTags {
     const val VOICE = "--voice--"
     const val WEB = "--web--"
     const val FILES = "--files--"
+    const val PLUGINS = "--plugins--"
+    const val PLUGIN = "--plugin--"
 
-    private val sectionNames = listOf(MEMORY, SYSTEM_PROMPT, USER_INSTRUCTIONS, RECALL, VOICE, WEB, FILES)
+    private val sectionNames = listOf(MEMORY, SYSTEM_PROMPT, USER_INSTRUCTIONS, RECALL, VOICE, WEB, FILES, PLUGINS, PLUGIN)
 
     data class MemoryLine(val chatName: String, val notes: String)
     data class RecallLine(val label: String, val excerpt: String)
