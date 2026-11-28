@@ -17,6 +17,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        intent?.getStringExtra("screen")?.let { n -> Screen.entries.firstOrNull { it.name == n }?.let { vm.go(it) } }
         setContent {
             LineageTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -37,6 +38,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        intent.getStringExtra("screen")?.let { n -> Screen.entries.firstOrNull { it.name == n }?.let { vm.go(it) } }
     }
 
     override fun onResume() {

@@ -80,17 +80,6 @@ object Sizing {
         "status bar ${spec.heightPx}px tall, padding ${spec.padStartPx}/${spec.padEndPx}px"
     }
 
-    /** used by the overlay bar: pads the stock icons aside so lineagifier's own clock/battery have room */
-    suspend fun setPaddings(shell: ShellRunner, log: UndoLog, startPx: Int, endPx: Int): Result<Unit> = runCatching {
-        val before = Overlays.list(shell).associateBy { it.pkg }
-        for ((r, px) in listOf(PAD_START to startPx, PAD_END to endPx)) {
-            val id = "$SHELL:${r.overlay}"
-            if (log.pending().none { it.kind == Kind.fabricated && it.target == id })
-                log.add(Kind.fabricated, id, previous = if (before[id]?.enabled == true) "enabled" else "disabled")
-            for (c in commands(r, px)) shell.run(c)
-        }
-    }
-
     suspend fun disable(shell: ShellRunner): Result<String> = runCatching {
         for (r in ALL) shell.run("cmd overlay disable --user 0 ${safeToken("$SHELL:${r.overlay}")}")
         "stock status bar size"

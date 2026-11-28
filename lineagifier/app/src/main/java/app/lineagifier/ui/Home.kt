@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import app.lineagifier.microg.Microg
 import app.lineagifier.shell.RootStatus
 import app.lineagifier.statusbar.BarConfig
-import app.lineagifier.statusbar.ControlCenter
+import app.lineagifier.qs.Tiles
 import app.lineagifier.statusbar.Sizing
 import kotlin.math.roundToInt
 
@@ -64,9 +64,7 @@ fun HomeScreen(s: UiState, vm: AppViewModel) {
             item { FeatureRow("tweaks", "dark mode, animations, navigation, accent, icon shape", enabled = ready, onOpen = { vm.go(Screen.TWEAKS) }) }
             item { FeatureRow("iphone 13 status bar size", "bar height + padding fitted around the notch", checked = s.bar.sizingEnabled, enabled = ready && !s.barBusy,
                 onCheck = { on -> vm.updateBar { it.copy(sizingEnabled = on) } }, onOpen = { vm.go(Screen.STATUSBAR) }) }
-            item { FeatureRow("lineage status bar", "clock position, battery style, network traffic", checked = s.bar.barEnabled, enabled = ready && !s.barBusy,
-                onCheck = { on -> vm.updateBar { it.copy(barEnabled = on) } }, onOpen = { vm.go(Screen.STATUSBAR) }) }
-            item { FeatureRow("control center", "swipe down on the right edge handle", checked = s.bar.ccEnabled, enabled = ready && !s.barBusy,
+            item { FeatureRow("quick settings", "lineage 20's quick settings, from a handle on the right edge", checked = s.bar.ccEnabled, enabled = ready && !s.barBusy,
                 onCheck = { on -> vm.updateBar { it.copy(ccEnabled = on) } }, onOpen = { vm.go(Screen.CONTROL) }) }
             s.barMessage?.let { m -> item { Text(m, color = if ("fail" in m || "couldn't" in m) Bad else Good, fontSize = 13.sp) } }
             item { Section("undo") }
@@ -175,7 +173,7 @@ fun StatusBarScreen(s: UiState, vm: AppViewModel) {
     val c = s.bar
     val en = !s.barBusy
     fun up(f: (BarConfig) -> BarConfig) = vm.updateBar(f)
-    Page("status bar", "sized for the iphone 13, lineage-style items", bottom = { OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") } }) {
+    Page("status bar size", "fits android's own status bar to the iphone 13 screen", bottom = { OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") } }) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 Card {
@@ -192,22 +190,6 @@ fun StatusBarScreen(s: UiState, vm: AppViewModel) {
                     Slider(pad, { pad = it }, valueRange = 4f..60f, enabled = en && c.sizingEnabled, onValueChangeFinished = { up { it.copy(padPt = pad) } })
                 }
             }
-            item {
-                Card {
-                    Toggle("lineage status bar", c.barEnabled, en) { on -> up { it.copy(barEnabled = on) } }
-                    Text("hides the stock clock + battery and draws these instead. wifi/signal/notification icons stay stock.", color = Dim, fontSize = 12.sp)
-                    val be = en && c.barEnabled
-                    Choice("clock", listOf("left" to "left", "right" to "right"), c.clockPos, be) { v -> up { it.copy(clockPos = v) } }
-                    Toggle("seconds", c.clockSeconds, be) { v -> up { it.copy(clockSeconds = v) } }
-                    Toggle("24-hour", c.clock24h, be) { v -> up { it.copy(clock24h = v) } }
-                    Toggle("date next to the clock", c.showDate, be) { v -> up { it.copy(showDate = v) } }
-                    Choice("battery", listOf("icon" to "icon", "%" to "percent", "both" to "both", "hidden" to "hidden"), c.batteryStyle, be) { v -> up { it.copy(batteryStyle = v) } }
-                    Choice("network traffic", listOf("off" to "off", "down" to "down", "up + down" to "both"), c.traffic, be) { v -> up { it.copy(traffic = v) } }
-                    Choice("traffic side", listOf("left" to "left", "right" to "right"), c.trafficSide, be && c.traffic != "off") { v -> up { it.copy(trafficSide = v) } }
-                    Choice("text color", listOf("auto" to "auto", "white" to "white", "black" to "black"), c.textColor, be) { v -> up { it.copy(textColor = v) } }
-                    Text("auto follows dark mode. lineagifier can't see the color an app paints behind the bar, so pick one if it's hard to read.", color = Dim, fontSize = 12.sp)
-                }
-            }
             s.barMessage?.let { m -> item { Text(m, color = if ("fail" in m) Bad else Good, fontSize = 13.sp) } }
         }
     }
@@ -217,12 +199,12 @@ fun StatusBarScreen(s: UiState, vm: AppViewModel) {
 fun ControlScreen(s: UiState, vm: AppViewModel) {
     val c = s.bar
     val en = !s.barBusy
-    Page("control center", "a panel that slides down from the right edge handle", bottom = { OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") } }) {
+    Page("quick settings", "lineage 20's quick settings panel", bottom = { OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") } }) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 Card {
-                    Toggle("control center", c.ccEnabled, en) { on -> vm.updateBar { it.copy(ccEnabled = on) } }
-                    Text("the top right corner belongs to android's own notification shade, so the control center opens from a small handle on the right edge just under the status bar: swipe down on it or tap it.", color = Dim, fontSize = 12.sp)
+                    Toggle("quick settings", c.ccEnabled, en) { on -> vm.updateBar { it.copy(ccEnabled = on) } }
+                    Text("android's own pull-down belongs to systemui and can't be swapped without framework changes, so this panel opens from a small handle on the right edge, just under the status bar: swipe down on it or tap it. swipe down again in the panel to expand it, like lineage.", color = Dim, fontSize = 12.sp)
                     var hh by remember(c.ccHandleHeightDp) { mutableFloatStateOf(c.ccHandleHeightDp.toFloat()) }
                     Text("handle length: ${hh.roundToInt()} dp", fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
                     Slider(hh, { hh = it }, valueRange = 60f..300f, enabled = en && c.ccEnabled, onValueChangeFinished = { vm.updateBar { it.copy(ccHandleHeightDp = hh.roundToInt()) } })
@@ -231,14 +213,31 @@ fun ControlScreen(s: UiState, vm: AppViewModel) {
             item {
                 Card {
                     Text("tiles", fontWeight = FontWeight.Medium)
-                    Text("tiles whose service doesn't exist on this image are skipped automatically (twoyi may have no bluetooth or flashlight).", color = Dim, fontSize = 12.sp)
-                    ControlCenter.TILES.forEach { t ->
-                        Toggle(t.label, t.id in c.ccTiles, en && c.ccEnabled) { on ->
-                            vm.updateBar { it.copy(ccTiles = if (on) it.ccTiles + t.id else it.ccTiles - t.id) }
+                    Text("in panel order. the first 4 are the quick row. tiles your image can't do show up dimmed as unavailable, like on lineage.", color = Dim, fontSize = 12.sp)
+                    c.ccTiles.forEachIndexed { i, spec ->
+                        val t = Tiles.bySpec(spec) ?: return@forEachIndexed
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(t.fallbackLabel + if (t.lineage) "  ·  lineage" else "", fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { vm.updateBar { b -> b.copy(ccTiles = b.ccTiles.toMutableList().also { l -> if (i > 0) { l.removeAt(i); l.add(i - 1, spec) } }) } }, enabled = en && i > 0) { Text("↑") }
+                            TextButton(onClick = { vm.updateBar { b -> b.copy(ccTiles = b.ccTiles - spec) } }, enabled = en) { Text("remove") }
                         }
                     }
-                    Text("plus brightness and volume sliders", color = Dim, fontSize = 12.sp)
                 }
+            }
+            val missing = Tiles.ALL.filter { it.spec !in c.ccTiles }
+            if (missing.isNotEmpty()) item {
+                Card {
+                    Text("add tiles", fontWeight = FontWeight.Medium)
+                    missing.forEach { t ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(t.fallbackLabel + if (t.lineage) "  ·  lineage" else "", fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { vm.updateBar { b -> b.copy(ccTiles = b.ccTiles + t.spec) } }, enabled = en) { Text("add") }
+                        }
+                    }
+                }
+            }
+            item {
+                Text("not included: reading mode, livedisplay, profiles and powershare need lineage's hardware/sdk services; controls, wallet, cast, screen record, hotspot and usb tethering don't apply to a twoyi container.", color = Dim, fontSize = 12.sp)
             }
         }
     }

@@ -1,16 +1,17 @@
 # lineagifier
 
-an android app (kotlin, compose, shizuku) that gets a stock aosp android 13 image as close to lineageos as an unprivileged app with shell access can. it's meant for the twoyi container: no root, no framework patching, no system partition changes.
+an android app (kotlin, compose) that gets the stock aosp android 13 image in the ios build of twoyi as close to lineageos as root allows. twoyi's image comes rooted with kernelsu, so lineagifier runs everything through `su`. it never edits /system or the framework files: system apps go in as kernelsu modules, everything else is settings, overlays and roles, and all of it is logged for undo.
 
-everything it does goes through shizuku as the `shell` user (uid 2000), the same rights `adb shell` has.
+## the config app
 
-## flow
+the home screen has a card per feature, each with its own switch or page:
 
-1. **shizuku check**: running? permission granted? shell or root?
-2. **pick apps**: the catalog, with what's really on your image next to every entry (`pm list packages -s -u`)
-3. **tweaks**: only the ones whose commands exist on this image
-4. **apply**: download, sha256 check, `pm install`, set default, apply tweaks, with progress and errors per step
-5. **stock apps**: disable or remove a stock app, only once it's safe. "restore everything" lives here too
+- **lineage apps**: install etar and the closest prebuilts, make them the default
+- **stock apps**: disable or remove stock apps once a replacement is in, plus "restore everything"
+- **microG**: gmscore + signature spoofing
+- **tweaks**: dark mode, animations, navigation mode, accent, icon shape
+- **iphone 13 status bar size**: fits android's own status bar to the notch screen
+- **quick settings**: lineage 20's quick settings panel
 
 ## the catalog (`app/src/main/assets/catalog.json`)
 
@@ -48,15 +49,18 @@ f-droid moves old versions to `/archive`, so each download has that as a fallbac
 
 ## undo
 
-every disable, removal, role change, setting and overlay change is written to `files/undo-log.json` **before** the command runs, with the old value. "restore everything" undoes them newest first:
+every change is written to `files/undo-log.json` **before** its command runs, with the old value. "restore everything" undoes them newest first:
 
 - removed: `cmd package install-existing --user 0 <pkg>`
 - disabled: `pm enable --user 0 <pkg>`
 - settings: `settings put` the old value, or `settings delete` if there wasn't one
-- overlays: back to their old enabled/disabled state
+- overlays and fabricated overlays: back to their old state (aosp 13 has no command to delete a fabricated overlay, so they're disabled)
 - roles: the old holder gets the role back
+- kernelsu modules lineagifier installed: `ksud module uninstall <id>` (gone after the next reboot)
+- extra apps lineagifier installed (fakegapps): `pm uninstall`
+- appops (the overlay permission): back to the old mode
 
-newest first means a stock launcher is re-enabled before home goes back to it. restore never removes anything. apps you installed stay installed.
+newest first means a stock launcher is re-enabled before home goes back to it. replacement apps you picked yourself stay installed.
 
 ## tweaks
 
@@ -70,51 +74,63 @@ each one is probed first (`cmd -l`, `cmd overlay list`, `settings get`), then ap
 | accent color | android 12+: merges `system_palette`/`accent_color` into `secure theme_customization_overlay_packages` (monet). older: `com.android.theme.color.*` overlays | the setting, or the overlays |
 | icon shape | android 12+: `adaptive_icon_shape` in the same json. older: `com.android.theme.icon.*` overlays | shape overlays on the image |
 
+## microG
+
+1. gmscore 0.3.18 + companion (and optionally gsfproxy) come from microg's own repo, `microg.org/fdroid/repo`. the sha256s are pinned from microg's signed `index-v1.jar`, checked on 2026-11-28: signed by microg's repo key `9bd06727…14165`, signature valid, digests chain from the .SF to the json
+2. they go into `/system/priv-app` through a kernelsu module lineagifier builds on the device. the privapp permission list is generated from what each apk asks for and what this exact image marks privileged, so a missing entry can't cause a bootloop. native libs are unpacked next to the apk, since system apps don't get them extracted
+3. signature spoofing comes from **neozygisk** + **vector** (JingMatrix's maintained lsposed fork) + **fakegapps**, the usual root setup. these only exist as github releases, so lineagifier gets the latest one from the github api on the device and refuses anything github hasn't published a sha256 for. if you already have a zygisk or lsposed module it's left alone
+4. then: reboot, open vector from its notification, enable fakegapps for "system framework", reboot again. lineagifier checks spoofing by comparing gmscore's reported signature with the google certificate gmscore itself carries (sha1 `38918a45…5788`)
+
+it refuses to run if real google services or another microg is installed. framework hooks can stop an image from booting: if twoyi won't boot afterwards, remove the modules from kernelsu's safe mode if twoyi gives you one, otherwise the container may need a reset.
+
+## quick settings
+
+a copy of lineage 20's quick settings panel, built from lineage-20.0's systemui source: 80dp tiles with 28dp corners, 2 columns × 4 rows per page, a 4-tile quick row, the 48dp rounded brightness slider with lineage's auto-brightness button, the footer (build number, page dots, edit) and the settings + power buttons. it uses the same brightness gamma curve as aosp (settingslib `BrightnessUtils`).
+
+it doesn't copy colors or icons by hand. it reads them from your device's systemui at runtime: the accent and `offStateColor` from `Theme.SystemUI.QuickSettings`, the animated tile icons (`qs_*_icon_on/off`), the labels and the "On/Off/Unavailable" text (`tile_states_*`). so it follows your accent, dark/light mode and language like the real one. lineage's own tiles use lineage's vector icons (copied into `res/drawable/los_*.xml` with their apache 2.0 headers).
+
+tiles: internet, bluetooth, flashlight, do not disturb, alarm, airplane mode, auto-rotate, battery saver, location, dark theme, night light, plus lineage's caffeine (same 5/10/30 min/∞ cycling and long press as lineage's CaffeineTile), heads up, sync, ambient display, aod and vpn. tap toggles, long press opens the matching settings page. tiles the image can't do show up dimmed as "unavailable", like on lineage.
+
+android's own pull-down belongs to systemui and can't be replaced without framework changes. so the panel opens from a thin handle on the right edge, just under the status bar (tap it or swipe down). swipe down inside the panel to expand it, swipe up or tap outside to close.
+
+not included: reading mode, livedisplay, profiles and powershare (they need lineage's hardware/sdk services). controls, wallet, cast, screen record, hotspot and usb tethering don't apply to a twoyi container.
+
+## iphone 13 status bar size
+
+twoyi's status bar doesn't fit the iphone's notch screen. on android 13 the bar height is `max(cutout inset, android:dimen/status_bar_height_default)` and systemui keeps icons off the edges with `status_bar_padding_start/end`. root can override single resources with `cmd overlay fabricate`, so lineagifier sets those three, scaled from the iphone 13's published numbers (47pt top safe area, on a 390×844pt screen) to your real screen size. the numbers are sliders in case twoyi's screen doesn't match.
+
 ## what's approximated, what's missing
 
 **approximated**
 - lineage's apps: only etar is the real thing (upstream, not lineage's fork). gallery, recorder, clock, calculator, files, contacts, dialer and messaging can only get fossify stand-ins
-- clock, calculator, contacts, dialer, messaging, files: lineage's versions are forks of the aosp apps you already have, with the same package ids, so they can't be installed over the system ones without lineage's platform key. your stock ones are the closest you'll get
+- clock, calculator, contacts, dialer, messaging, files: lineage's versions are forks of the aosp apps you already have, with the same package ids, so they can't be installed over the system ones without lineage's platform key
 - launcher: aosp launcher3 is what trebuchet is forked from, but trebuchet's extras (icon packs, hidden apps, protected apps, grid options) aren't there
+- quick settings: a lookalike panel opened from a handle, not systemui's own shade
+- microg: spoofing comes from xposed hooks (fakegapps), not lineage-for-microg's built-in framework patch
 - accent color / icon shape: done through the same theme setting the aosp wallpaper picker uses, so systemui may change it again if you change wallpaper
 
-**missing, can't be done without root or framework changes**
-- signature spoofing, so no microg
+**missing**
 - the whole lineage sdk: privacy guard, trust interface, lineageparts, livedisplay, profiles, styles beyond what aosp has
-- status bar options (clock position, battery style, network traffic, brightness slider), lockscreen options, power menu options, button/gesture customisation, long-press actions
-- seedvault (needs to be a privileged system backup transport)
-- lineage's updater, recovery, `adb root`, and anything that edits /system or the framework
+- lineage's status bar options (clock position, battery style, network traffic), lockscreen options, power menu options, button/gesture customisation, long-press actions: all lineage systemui/framework code
+- seedvault: possible in principle as a priv-app module, but it also needs the backup transport set up in the framework config, which isn't done yet
+- lineage's updater and recovery
 - default camera / gallery / calendar: android has no role for these, so pick them once from the "open with" chooser
 
 ## twoyi notes
 
-- the target is the ios build of twoyi, which runs android 13 (sdk 33). that's the same sdk as the emulator lineagifier was tested on, so roles (read via `dumpsys role`), monet accent and the navbar overlays should all apply. the android-host twoyi (android 8.1) is a different thing; lineagifier still reads the sdk at runtime and turns off what an image doesn't have
-- shizuku starts over wireless debugging (android 11+), which the ios twoyi has in developer options:
-  1. install shizuku (13.x) and lineagifier in twoyi
-  2. settings > about > tap build number 7 times, then developer options > turn on wireless debugging
-  3. open shizuku > "start via wireless debugging" > "pairing", then in wireless debugging tap "pair device with pairing code" and type the code into shizuku's notification
-  4. back in shizuku tap "start". it should say it's running as adb (shell)
-  5. open lineagifier, tap grant
-  
-  wireless debugging needs a wi-fi connection inside the container, and shizuku has to be started again after twoyi restarts. this exact flow hasn't been tried inside twoyi yet
+- the target is the ios build of twoyi: android 13 (sdk 33, `twoyi13_native` userdebug), kernel 5.10, kernelsu (lkm mode), selinux disabled
+- give lineagifier root once in kernelsu's superuser tab. the home screen shows "running as root" when it works
+- twoyi's developer options crash, so there's no wireless debugging and no shizuku. that's why lineagifier uses su
 
 ## what's been tested
 
-on the aosp 13 emulator image (`system-images;android-33;default;x86_64`, sdk 33, userdebug), with shizuku 13.6 started over adb, so lineagifier ran as uid 2000 like it would in a container:
+on the aosp 13 emulator image (`system-images;android-33;default;x86_64`, sdk 33, userdebug):
 
-- shizuku permission grant, the shell user service, `pm list packages -s -u` detection
-- etar: sha256 check of the apk, then install by streaming it into `pm install -S` through shizuku
-- dark mode, animation scale, gestural nav (`enable-exclusive --category`), lineage teal accent (systemui generated its monet overlays)
-- icon shape correctly reported as unavailable (that image has no shape overlays)
-- removing gallery3d and disabling calendar once fossify gallery / etar were installed; launcher and camera stayed locked
-- dialer stayed locked until fossify phone held the dialer role, then "make default" set it
-- "restore everything" put all 14 logged changes back, checked one by one afterwards
+**0.1 (through shizuku as uid 2000)**: shizuku grant, package detection, etar sha256 + install, dark mode / animations / gestural nav / teal accent, removing gallery3d and disabling calendar once replaced (launcher and camera stayed locked), the dialer role gate, and "restore everything" putting all 14 changes back. two real findings: aosp 13 has no `cmd role get-role-holders` (holders come from `dumpsys role`), and `cmd role add-role-holder` times out on a slow device but applies a few seconds later (lineagifier polls the real holders).
 
-two real things that came out of that:
-- aosp 13 has no `cmd role get-role-holders` (it's 14+), so holders are read from `dumpsys role`
-- on a slow device `cmd role add-role-holder` fails with `TimeoutException` and then applies the change a few seconds later, so lineagifier polls the real holders instead of trusting the exit code
+**0.2 (root)**: the emulator's own su only serves adb, so a small test relay stood in for kernelsu's su (apps run `su -c`, a root loop runs the command). tested: root detection, the config home, the iphone 13 sizing (fabricated overlays registered, enabled and read back with `cmd overlay lookup`; first try used the screen size minus the nav bar, fixed to the real display size), the quick settings panel (quick row, expanded page, systemui icons/labels/states, toggles for airplane/dark/etc. changing the real system, battery saver dimmed while charging like aosp, lineage's tiles with caffeine counting down), and a crash fix: a timed-out `su` call used to kill the app.
 
-**not tested**: inside twoyi itself, a real (non-emulator) device, the in-app download over the network (the test emulator had no internet; the downloader is tested on the jvm against f-droid instead: `LINEAGIFIER_NET_TEST=1 ./gradlew testDebugUnitTest`), the launcher path end to end (there's no prebuilt launcher in the catalog, only the safety rules are unit tested), android 8.1-11 images.
+**not tested**: anything inside twoyi itself, real kernelsu, the microg install (the emulator has no kernelsu and this sandbox can't reach github's api, so neozygisk/vector/fakegapps downloads and the module install are untested), night light (not available on the emulator), the in-app download over the network (the downloader is tested on the jvm against f-droid instead: `LINEAGIFIER_NET_TEST=1 ./gradlew testDebugUnitTest`), the launcher swap end to end.
 
 ## build
 

@@ -26,7 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.Intent
 import app.lineagifier.microg.Microg
-import app.lineagifier.shell.shQuote
 import app.lineagifier.statusbar.BarConfig
 import app.lineagifier.statusbar.OverlayService
 import app.lineagifier.statusbar.Sizing
@@ -241,12 +240,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 } else Sizing.disable(Root)
                 msgs += r.fold({ it }, { "sizing failed: ${it.message}" })
             }
-            if (new.barEnabled != old.barEnabled) msgs += hideStockClock(new.barEnabled)
-            if (!new.barEnabled && old.barEnabled && !new.sizingEnabled) Sizing.disable(Root)
-            if (!new.barEnabled && old.barEnabled && new.sizingEnabled) {
-                val (w, h) = _s.value.screenPx
-                Sizing.apply(Root, log, Sizing.iphone13(w, h, new.safeTopPt, new.padPt))
-            }
         }
         BarConfig.save(app, new)
         if (new.needsService) app.startForegroundService(Intent(app, OverlayService::class.java))
@@ -263,18 +256,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         Root.run("pm grant $pkg android.permission.POST_NOTIFICATIONS")
         return if (android.provider.Settings.canDrawOverlays(app)) null else "couldn't get the overlay permission"
-    }
-
-    /** lineage-style bar on: the stock clock + battery hide through systemui's own icon_blacklist tunable */
-    private suspend fun hideStockClock(hide: Boolean): String {
-        val cur = Root.run("settings get secure icon_blacklist").out.trim().let { if (it == "null") "" else it }
-        val items = cur.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toMutableSet()
-        val want = if (hide) items + setOf("clock", "battery") else items - setOf("clock", "battery")
-        if (want == items) return if (hide) "stock clock already hidden" else "stock clock already shown"
-        log.add(Kind.setting, "secure/icon_blacklist", previous = cur.ifEmpty { null })
-        val v = want.joinToString(",")
-        Root.run(if (v.isEmpty()) "settings delete secure icon_blacklist" else "settings put secure icon_blacklist ${shQuote(v)}")
-        return if (hide) "stock clock + battery hidden" else "stock clock + battery back"
     }
 
     // ---------- microg ----------

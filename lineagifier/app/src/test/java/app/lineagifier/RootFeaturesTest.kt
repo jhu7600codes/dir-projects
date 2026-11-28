@@ -1,7 +1,9 @@
 package app.lineagifier
 
 import app.lineagifier.microg.Microg
-import app.lineagifier.statusbar.ControlCenter
+import app.lineagifier.qs.Backend
+import app.lineagifier.qs.Backends
+import app.lineagifier.qs.Tiles
 import app.lineagifier.statusbar.Sizing
 import app.lineagifier.undo.Kind
 import app.lineagifier.undo.Restore
@@ -77,24 +79,43 @@ class NewUndoKindsTest {
     }
 }
 
-class ControlCenterTest {
+class QsTest {
     @Test fun toggleCommandsFlipTheState() {
-        assertEquals("cmd wifi set-wifi-enabled disabled", ControlCenter.toggleCommand("wifi", true))
-        assertEquals("cmd wifi set-wifi-enabled enabled", ControlCenter.toggleCommand("wifi", false))
-        assertEquals("cmd notification set_dnd on", ControlCenter.toggleCommand("dnd", false))
-        assertEquals("cmd location set-location-enabled false", ControlCenter.toggleCommand("location", true))
-        assertEquals("settings put system accelerometer_rotation 1", ControlCenter.toggleCommand("rotation", false))
-        assertNull(ControlCenter.toggleCommand("torch", false))
+        assertEquals("cmd wifi set-wifi-enabled disabled", Backends.toggleCommand(Backend.WIFI, true))
+        assertEquals("cmd wifi set-wifi-enabled enabled", Backends.toggleCommand(Backend.WIFI, false))
+        assertEquals("cmd notification set_dnd on", Backends.toggleCommand(Backend.DND, false))
+        assertEquals("cmd location set-location-enabled false", Backends.toggleCommand(Backend.LOCATION, true))
+        assertEquals("settings put system accelerometer_rotation 1", Backends.toggleCommand(Backend.ROTATION, false))
+        assertEquals("settings put global heads_up_notifications_enabled 0", Backends.toggleCommand(Backend.HEADS_UP, true))
+        assertNull(Backends.toggleCommand(Backend.TORCH, false))
     }
-}
 
-class BarLogicTest {
-    @Test fun readsSystemuiIconColorFromRealAosp13Dumps() {
-        // both captured from the aosp 13 emulator: lineagifier (dark) then settings (light) in front
-        val dark = "    mLastStatusBarAppearanceRegions=\n      AppearanceRegion{ bounds=[0,0][1080,2340]}\n"
-        val light = "    mLastStatusBarAppearanceRegions=\n      AppearanceRegion{LIGHT_STATUS_BARS bounds=[0,0][1080,2340]}\n"
-        assertEquals(false, app.lineagifier.statusbar.BarLogic.lightStatusBar(dark))
-        assertEquals(true, app.lineagifier.statusbar.BarLogic.lightStatusBar(light))
-        assertNull(app.lineagifier.statusbar.BarLogic.lightStatusBar(""))
+    @Test fun caffeineCyclesLikeLineage() {
+        // off -> tap -> 5 min
+        assertEquals(0, Tiles.caffeineClick(false, -1, -1, 100_000))
+        // tapping again within 5s steps through 10, 30, infinity, then off
+        assertEquals(1, Tiles.caffeineClick(true, 0, 100_000, 102_000))
+        assertEquals(2, Tiles.caffeineClick(true, 1, 102_000, 103_000))
+        assertEquals(3, Tiles.caffeineClick(true, 2, 103_000, 104_000))
+        assertEquals(-1, Tiles.caffeineClick(true, 3, 104_000, 105_000))
+        // a slow tap while on just turns it off
+        assertEquals(-1, Tiles.caffeineClick(true, 1, 100_000, 120_000))
+        assertEquals("05:00", Tiles.caffeineLabel(300))
+        assertEquals("\u221E", Tiles.caffeineLabel(-1))
+    }
+
+    @Test fun brightnessGammaRoundTrips() {
+        for (v in listOf(1, 10, 50, 128, 200, 255)) {
+            val g = Tiles.linearToGamma(v, 1, 255)
+            assertTrue(g in 0..Tiles.GAMMA_SPACE_MAX)
+            assertEquals(v.toDouble(), Tiles.gammaToLinear(g, 1, 255).toDouble(), 1.0)
+        }
+        // the curve gives the low end most of the slider, like aosp
+        assertTrue(Tiles.linearToGamma(26, 1, 255) > Tiles.GAMMA_SPACE_MAX / 3)
+    }
+
+    @Test fun defaultTilesExistAndStartWithLineagesOrder() {
+        assertEquals(listOf("internet", "bt", "flashlight", "dnd"), Tiles.DEFAULT.take(4))
+        assertTrue(Tiles.DEFAULT.all { Tiles.bySpec(it) != null })
     }
 }
