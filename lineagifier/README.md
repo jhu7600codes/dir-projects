@@ -89,7 +89,14 @@ each one is probed first (`cmd -l`, `cmd overlay list`, `settings get`), then ap
 ## twoyi notes
 
 - the target is the ios build of twoyi, which runs android 13 (sdk 33). that's the same sdk as the emulator lineagifier was tested on, so roles (read via `dumpsys role`), monet accent and the navbar overlays should all apply. the android-host twoyi (android 8.1) is a different thing; lineagifier still reads the sdk at runtime and turns off what an image doesn't have
-- shizuku has to be started inside the container. if the container has no adb or wireless debugging, shizuku can't start, and lineagifier can't do anything. none of this has been tested inside twoyi yet
+- shizuku starts over wireless debugging (android 11+), which the ios twoyi has in developer options:
+  1. install shizuku (13.x) and lineagifier in twoyi
+  2. settings > about > tap build number 7 times, then developer options > turn on wireless debugging
+  3. open shizuku > "start via wireless debugging" > "pairing", then in wireless debugging tap "pair device with pairing code" and type the code into shizuku's notification
+  4. back in shizuku tap "start". it should say it's running as adb (shell)
+  5. open lineagifier, tap grant
+  
+  wireless debugging needs a wi-fi connection inside the container, and shizuku has to be started again after twoyi restarts. this exact flow hasn't been tried inside twoyi yet
 
 ## what's been tested
 
