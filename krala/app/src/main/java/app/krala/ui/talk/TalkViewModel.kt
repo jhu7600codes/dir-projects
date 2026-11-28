@@ -64,6 +64,8 @@ class TalkViewModel @Inject constructor(
     private var chatId: String? = handle["chatId"]
     private var turn: Job? = null
     private var misses = 0
+    /** set once the recognizer refused the app's language; from then on use the phone's own */
+    private var systemLanguage = false
     private var closed = false
 
     private val _state = MutableStateFlow(TalkState())
@@ -131,7 +133,7 @@ class TalkViewModel @Inject constructor(
         speaker.stop()
         set { it.copy(phase = TalkPhase.LISTENING, heard = "", error = null) }
         viewModelScope.launch {
-            val lang = when (settings.current().language) { "ru" -> "ru-RU"; "en" -> "en-US"; else -> null }
+            val lang = if (systemLanguage) null else when (settings.current().language) { "ru" -> "ru-RU"; "en" -> "en-US"; else -> null }
             listener.start(lang) { ev ->
                 when (ev) {
                     is Listener.Event.Partial -> set { it.copy(heard = ev.text) }
@@ -151,6 +153,14 @@ class TalkViewModel @Inject constructor(
             }
             SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.mic_permission)) }
             SpeechRecognizer.ERROR_CLIENT -> set { it.copy(phase = TalkPhase.IDLE) }
+            // 12 language not supported, 13 language not downloaded: listen in the phone's language
+            12, 13 -> if (!systemLanguage) { systemLanguage = true; listen() }
+                else set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.voice_language)) }
+            // 11 recognizer service dropped, 8 busy: try once more
+            SpeechRecognizer.ERROR_SERVER_DISCONNECTED, SpeechRecognizer.ERROR_RECOGNIZER_BUSY ->
+                if (misses++ < 2) viewModelScope.launch { kotlinx.coroutines.delay(400); listen() } else set { it.copy(phase = TalkPhase.IDLE) }
+            SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
+                set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.voice_network)) }
             else -> set { it.copy(phase = TalkPhase.ERROR, error = context.getString(app.krala.R.string.voice_error, code)) }
         }
     }
