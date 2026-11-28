@@ -130,6 +130,7 @@
     <string name="last_synced">last synced %1$s</string>
     <string name="latency_ms">%1$d ms</string>
     <string name="listening">listening…</string>
+    <string name="live_transcript">live transcript</string>
     <string name="locked_body">unlock to keep chatting</string>
     <string name="locked_title">krala is locked</string>
     <string name="manage_providers">manage providers</string>

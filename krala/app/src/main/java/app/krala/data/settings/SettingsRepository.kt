@@ -49,6 +49,8 @@ data class AppSettings(
     val webKeyCipher: String? = null,
     val webSearxUrl: String = "",
     val webPages: Int = 3,
+    /** talk mode shows what was said; off by default */
+    val talkTranscript: Boolean = false,
 ) {
     val effectiveSystemPrompt: String get() = systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT
 }
@@ -103,6 +105,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val webKey = stringPreferencesKey("web_key")
         val webSearx = stringPreferencesKey("web_searx")
         val webPages = androidx.datastore.preferences.core.intPreferencesKey("web_pages")
+        val transcript = booleanPreferencesKey("talk_transcript")
     }
 
     val settings: Flow<AppSettings> = context.store.data
@@ -136,6 +139,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
                 webKeyCipher = p[K.webKey],
                 webSearxUrl = p[K.webSearx] ?: "",
                 webPages = p[K.webPages] ?: 3,
+                talkTranscript = p[K.transcript] ?: false,
             )
         }
 
@@ -189,6 +193,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         it[K.webSearx] = searxUrl.trim()
         it[K.webPages] = pages.coerceIn(0, 5)
     }
+
+    suspend fun setTalkTranscript(v: Boolean) = context.store.edit { it[K.transcript] = v }
 
     suspend fun setPresetsSeeded() = context.store.edit { it[K.seeded] = true }
 

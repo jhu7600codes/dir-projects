@@ -71,6 +71,7 @@ fun KralaStar(mode: StarMode, size: Dp, modifier: Modifier = Modifier, level: Fl
     var ghosts by remember { mutableFloatStateOf(0f) }  // 0..1 afterimage strength
     var twinkle by remember { mutableFloatStateOf(0f) }
     var twinklePhase by remember { mutableFloatStateOf(0f) }
+    var sparkle by remember { mutableFloatStateOf(0f) }  // 0..1 orbiting little stars (thinking)
     var trail by remember { mutableStateOf(listOf<FloatArray>()) } // angle, tilt, ox, oy
 
     LaunchedEffect(Unit) {
@@ -126,6 +127,7 @@ fun KralaStar(mode: StarMode, size: Dp, modifier: Modifier = Modifier, level: Fl
                 nodPhase += dt * 2 * PI / (2.8 - 0.8 * en)
                 tilt = ease(tilt, if (talking) (2f + 1.5f * en) * sin(nodPhase).toFloat() else 0f, 4f)
                 twinkle = ease(twinkle, if (talking) 0.35f + 0.4f * en else 0f, 3f)
+                sparkle = ease(sparkle, if (thinking) 0.45f + 0.55f * (speed / 400f).coerceIn(0f, 1f) else 0f, 3f)
 
                 val scaleTarget = when {
                     listening -> 1f + 0.05f * lvl
@@ -161,6 +163,15 @@ fun KralaStar(mode: StarMode, size: Dp, modifier: Modifier = Modifier, level: Fl
             }
         }
         val pos = Offset(c.x + ox * unit, c.y + oy * unit)
+        if (sparkle > 0.02f) {
+            // the little star trail: tiny stars chasing each other around it, whipped by the spin
+            val r = 150f * unit * fit
+            for (i in 0 until 8) {
+                val a = Math.toRadians((angle * 1.4f - 90f - i * 14f).toDouble())
+                val p = Offset(pos.x + (r * cos(a)).toFloat(), pos.y + (r * sin(a)).toFloat())
+                drawStar(p, unit * (0.1f - i * 0.009f), angle * 2 + i * 25f, 0f, ghostBrush, alpha = sparkle * (1f - i / 8f) * 0.9f)
+            }
+        }
         if (twinkle > 0.02f) {
             // three tiny sparkles near the tips, fading in and out out of step
             for (i in 0 until 3) {

@@ -130,6 +130,7 @@
     <string name="last_synced">синхронизировано %1$s</string>
     <string name="latency_ms">%1$d мс</string>
     <string name="listening">слушаю…</string>
+    <string name="live_transcript">субтитры</string>
     <string name="locked_body">разблокируй, чтобы продолжить</string>
     <string name="locked_title">крала заблокирована</string>
     <string name="manage_providers">провайдеры</string>

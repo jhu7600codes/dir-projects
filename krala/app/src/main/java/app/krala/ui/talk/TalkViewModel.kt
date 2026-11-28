@@ -82,6 +82,9 @@ class TalkViewModel @Inject constructor(
 
     val recognitionAvailable get() = listener.available
 
+    val transcript: StateFlow<Boolean> = settings.settings.map { it.talkTranscript }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    fun setTranscript(on: Boolean) = viewModelScope.launch { settings.setTalkTranscript(on) }
+
     init {
         viewModelScope.launch { speaker.init() }
         chatId?.let { activeChat.id = it }
