@@ -154,6 +154,19 @@ fun SettingsScreen(
                         stringResource(when (s.geminiProxy) { "always" -> R.string.gemini_proxy_always; "off" -> R.string.gemini_proxy_off; else -> R.string.gemini_proxy_auto }),
                         Icons.Rounded.VpnLock, onClick = { proxyDialog = true; vm.checkRoute() },
                     )
+                    var thinkMenu by remember { mutableStateOf(false) }
+                    Box {
+                        SettingRow(
+                            stringResource(R.string.gemini_thinking),
+                            stringResource(when (s.geminiThinking) { "deep" -> R.string.thinking_deep; "balanced" -> R.string.thinking_balanced; else -> R.string.thinking_fast }),
+                            Icons.Rounded.Psychology, onClick = { thinkMenu = true },
+                        )
+                        DropdownMenu(thinkMenu, onDismissRequest = { thinkMenu = false }) {
+                            listOf("fast" to R.string.thinking_fast, "balanced" to R.string.thinking_balanced, "deep" to R.string.thinking_deep).forEach { (id, label) ->
+                                DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { thinkMenu = false; vm.setGeminiThinking(id) })
+                            }
+                        }
+                    }
                 }
             }
 

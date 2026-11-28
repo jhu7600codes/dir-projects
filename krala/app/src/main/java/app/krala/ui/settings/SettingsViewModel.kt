@@ -89,6 +89,7 @@ class SettingsViewModel @Inject constructor(
 
     val routeStatus = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
+    fun setGeminiThinking(v: String) = viewModelScope.launch { repo.setGeminiThinking(v) }
     fun setGeminiProxy(mode: String) = viewModelScope.launch { repo.setGeminiProxy(mode); checkRoute() }
 
     fun checkRoute() = viewModelScope.launch {

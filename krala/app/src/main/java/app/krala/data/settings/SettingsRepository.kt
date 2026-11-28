@@ -61,6 +61,8 @@ data class AppSettings(
     val sttMode: String = "auto",
     /** gemini proxy for russia: auto (no vpn + russian ip), always, off */
     val geminiProxy: String = "auto",
+    /** gemini thinking depth: fast, balanced, deep */
+    val geminiThinking: String = "fast",
 ) {
     val effectiveSystemPrompt: String get() = systemPrompt ?: Personality.DEFAULT_SYSTEM_PROMPT
 }
@@ -123,6 +125,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val voicePitch = androidx.datastore.preferences.core.floatPreferencesKey("voice_pitch")
         val sttMode = stringPreferencesKey("stt_mode")
         val geminiProxy = stringPreferencesKey("gemini_proxy")
+        val geminiThinking = stringPreferencesKey("gemini_thinking")
     }
 
     val settings: Flow<AppSettings> = context.store.data
@@ -164,6 +167,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
                 voicePitch = p[K.voicePitch] ?: 1f,
                 sttMode = p[K.sttMode] ?: "auto",
                 geminiProxy = p[K.geminiProxy] ?: "auto",
+                geminiThinking = p[K.geminiThinking] ?: "fast",
             )
         }
 
@@ -221,6 +225,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun setTtsEngine(v: String?) = context.store.edit { it.setOrRemove(K.ttsEngine, v); it.remove(K.ttsVoiceEn); it.remove(K.ttsVoiceRu) }
     suspend fun setTtsVoice(russian: Boolean, name: String?) = context.store.edit { it.setOrRemove(if (russian) K.ttsVoiceRu else K.ttsVoiceEn, name) }
     suspend fun setVoiceTuning(rate: Float, pitch: Float) = context.store.edit { it[K.voiceRate] = rate; it[K.voicePitch] = pitch }
+    suspend fun setGeminiThinking(v: String) = context.store.edit { it[K.geminiThinking] = v }
     suspend fun setGeminiProxy(v: String) = context.store.edit { it[K.geminiProxy] = v }
     suspend fun setSttMode(v: String) = context.store.edit { it[K.sttMode] = v }
 

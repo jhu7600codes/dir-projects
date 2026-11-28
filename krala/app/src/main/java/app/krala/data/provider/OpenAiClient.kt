@@ -59,7 +59,13 @@ sealed interface StreamEvent {
  * choices[0].delta.content while streaming) is read; every other field is ignored.
  */
 @Singleton
-class OpenAiClient @Inject constructor(private val http: HttpClient, private val gemini: GeminiRoute) {
+class OpenAiClient @Inject constructor(
+    private val http: HttpClient,
+    private val gemini: GeminiRoute,
+    private val settings: app.krala.data.settings.SettingsRepository,
+) {
+    /** models that refused the thinking settings once: send them plain from then on */
+    private val noThinkingConfig = java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     private fun url(cfg: ProviderConfig, path: String) = cfg.baseUrl.trim().trimEnd('/') + "/" + path
@@ -69,13 +75,23 @@ class OpenAiClient @Inject constructor(private val http: HttpClient, private val
         cfg.headers.forEach { (k, v) -> if (k.isNotBlank()) header(k.trim(), v) }
     }
 
-    fun chatBody(model: String, messages: List<ApiMessage>, stream: Boolean, maxTokens: Int? = null, googleThoughts: Boolean = false): String =
+    fun chatBody(model: String, messages: List<ApiMessage>, stream: Boolean, maxTokens: Int? = null, thinking: Map<String, Any>? = null): String =
         buildJsonObject {
             put("model", model)
             put("stream", stream)
             // gemini's openai endpoint hides thinking unless asked; the summaries come back in <thought> tags
-            if (googleThoughts) putJsonObject("extra_body") {
-                putJsonObject("google") { putJsonObject("thinking_config") { put("include_thoughts", true) } }
+            if (thinking != null) putJsonObject("extra_body") {
+                putJsonObject("google") {
+                    putJsonObject("thinking_config") {
+                        thinking.forEach { (k, v) ->
+                            when (v) {
+                                is Boolean -> put(k, v)
+                                is Number -> put(k, v)
+                                else -> put(k, v.toString())
+                            }
+                        }
+                    }
+                }
             }
             if (maxTokens != null) put("max_tokens", maxTokens)
             putJsonArray("messages") {
@@ -103,24 +119,39 @@ class OpenAiClient @Inject constructor(private val http: HttpClient, private val
         }.toString()
 
     fun stream(cfg: ProviderConfig, model: String, messages: List<ApiMessage>): Flow<StreamEvent> = flow {
-        val routed = gemini.route(cfg)
+        var routed = gemini.route(cfg)
+        val thinking = if (gemini.isGemini(cfg) && model !in noThinkingConfig) {
+            app.krala.core.GeminiThinking.config(model, settings.current().geminiThinking)
+        } else null
+        var opened = false
+        suspend fun attempt(c: ProviderConfig, t: Map<String, Any>?) =
+            streamOnce(c, model, messages, t).collect { if (it is StreamEvent.Opened) opened = true; emit(it) }
         try {
-            emitAll(streamOnce(routed, model, messages))
+            try {
+                attempt(routed, thinking)
+            } catch (e: ProviderException) {
+                // google refused this location: go again through the proxy
+                if (!opened && routed === cfg && gemini.isGemini(cfg) && gemini.isGeoBlock(e) && !gemini.vpnOn()) {
+                    gemini.markBlocked()
+                    routed = gemini.route(cfg, force = true)
+                    attempt(routed, thinking)
+                } else throw e
+            }
         } catch (e: ProviderException) {
-            // google refused this location: go again through the proxy
-            if (routed === cfg && gemini.isGemini(cfg) && gemini.isGeoBlock(e) && !gemini.vpnOn()) {
-                gemini.markBlocked()
-                emitAll(streamOnce(gemini.route(cfg, force = true), model, messages))
+            // a model that doesn't take the thinking settings: once more without them
+            if (!opened && thinking != null && e.kind == ErrorKind.BAD_REQUEST) {
+                noThinkingConfig += model
+                attempt(routed, null)
             } else throw e
         }
     }
 
-    private fun streamOnce(cfg: ProviderConfig, model: String, messages: List<ApiMessage>): Flow<StreamEvent> = flow {
+    private fun streamOnce(cfg: ProviderConfig, model: String, messages: List<ApiMessage>, thinking: Map<String, Any>?): Flow<StreamEvent> = flow {
         try {
             http.preparePost(url(cfg, "chat/completions")) {
                 auth(cfg)
                 header(HttpHeaders.Accept, "text/event-stream, application/json")
-                setBody(TextContent(chatBody(model, messages, stream = true, googleThoughts = isGemini(cfg, model)), ContentType.Application.Json))
+                setBody(TextContent(chatBody(model, messages, stream = true, thinking = thinking), ContentType.Application.Json))
             }.execute { resp ->
                 val headers = headerMap(resp)
                 if (!resp.status.isSuccess()) throw httpError(resp.status.value, resp.bodyAsText(), headers)
@@ -166,9 +197,6 @@ class OpenAiClient @Inject constructor(private val http: HttpClient, private val
             throw mapException(e)
         }
     }.flowOn(Dispatchers.IO)
-
-    private fun isGemini(cfg: ProviderConfig, model: String) =
-        ("generativelanguage.googleapis.com" in cfg.baseUrl || "/gemini-proxy" in cfg.baseUrl) && model.contains("2.5")
 
     /** non streaming completion; returns choices[0].message.content */
     suspend fun complete(cfg: ProviderConfig, model: String, messages: List<ApiMessage>, maxTokens: Int? = null): String =

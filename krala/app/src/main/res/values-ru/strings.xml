@@ -109,6 +109,7 @@
     <string name="gemini_proxy_auto">авто: прокси только без vpn на российском ip</string>
     <string name="gemini_proxy_body">google блокирует gemini в россии. без vpn крала отправляет gemini через свой прокси во франкфурте. с vpn всегда напрямую. ключ проходит через прокси к google и нигде не сохраняется.</string>
     <string name="gemini_proxy_off">выкл, всегда напрямую</string>
+    <string name="gemini_thinking">мышление gemini</string>
     <string name="give_to_krala">отдать крале</string>
     <string name="group_month">последние 30 дней</string>
     <string name="group_older">раньше</string>
@@ -265,6 +266,9 @@
     <string name="theme_light">светлая</string>
     <string name="theme_system">система</string>
     <string name="thinking">думаю…</string>
+    <string name="thinking_balanced">средне</string>
+    <string name="thinking_deep">глубоко: думает сколько хочет (медленно)</string>
+    <string name="thinking_fast">быстро: думает чуть-чуть, отвечает сразу</string>
     <string name="thoughts">мысли</string>
     <string name="type_delete">напиши удалить</string>
     <string name="unlock">разблокировать</string>

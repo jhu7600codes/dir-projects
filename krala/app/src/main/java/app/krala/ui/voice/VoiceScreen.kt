@@ -75,7 +75,24 @@ class VoiceViewModel @Inject constructor(
 
     fun setEngine(pkg: String?) = viewModelScope.launch { settings.setTtsEngine(pkg); speaker.shutdown(); refresh() }
     fun setVoice(russian: Boolean, name: String?) = viewModelScope.launch { settings.setTtsVoice(russian, name) }
-    fun preview(name: String?, russian: Boolean) = viewModelScope.launch { speaker.init(); speaker.preview(name, russian) }
+    val diag = MutableStateFlow<String?>(null)
+
+    /** plays a line and reports what the engine actually did */
+    fun preview(name: String?, russian: Boolean) = viewModelScope.launch {
+        diag.value = "…"
+        speaker.init()
+        val before = speaker.started.value
+        speaker.preview(name, russian)
+        kotlinx.coroutines.delay(4_000)
+        val started = speaker.started.value > before
+        diag.value = listOf(
+            "engine: " + (speaker.currentEngine() ?: "none"),
+            "init: " + when (speaker.initOk) { true -> "ok"; false -> "failed"; null -> "pending" },
+            "voices: " + voices.value.count { it.installed } + " installed / " + voices.value.size,
+            "sound started: " + if (started) "yes" else "no",
+            speaker.lastError?.let { "error code: $it" },
+        ).filterNotNull().joinToString(" · ")
+    }
     fun stopPreview() = speaker.stop()
     fun setTuning(rate: Float, pitch: Float) = viewModelScope.launch { settings.setVoiceTuning(rate, pitch); speaker.init() }
     fun setStt(mode: String) = viewModelScope.launch { settings.setSttMode(mode) }
@@ -103,6 +120,7 @@ fun VoiceScreen(vm: VoiceViewModel, onBack: () -> Unit, onProviders: () -> Unit)
     val whisperName by vm.whisperName.collectAsStateWithLifecycle()
     val loading by vm.loading.collectAsStateWithLifecycle()
     val problem by vm.problem.collectAsStateWithLifecycle()
+    val diag by vm.diag.collectAsStateWithLifecycle()
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var rate by remember(s.voiceRate) { mutableFloatStateOf(s.voiceRate) }
     var pitch by remember(s.voicePitch) { mutableFloatStateOf(s.voicePitch) }
@@ -126,6 +144,7 @@ fun VoiceScreen(vm: VoiceViewModel, onBack: () -> Unit, onProviders: () -> Unit)
     ) { pad ->
         LazyColumn(contentPadding = PaddingValues(top = pad.calculateTopPadding(), bottom = pad.calculateBottomPadding() + 32.dp)) {
             if (loading) item { LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) }
+            diag?.let { d -> item { Text(d, color = cs.primary, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) } }
             problem?.let { p -> item { Text(p, color = cs.error, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) } }
 
             // ---------------- speaking ----------------

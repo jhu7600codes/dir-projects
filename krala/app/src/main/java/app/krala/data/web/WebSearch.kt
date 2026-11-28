@@ -63,7 +63,7 @@ class WebSearch @Inject constructor(
         }.getOrElse { emptyList() }.ifEmpty { runCatching { wikipedia(q) }.getOrDefault(emptyList()) }
         if (results.isEmpty()) return null
 
-        val top = results.take(6)
+        val top = results.take(5)
         val pages = coroutineScope {
             top.mapIndexed { i, r ->
                 async {
@@ -136,7 +136,7 @@ class WebSearch @Inject constructor(
         val type = resp.headers["Content-Type"].orEmpty()
         if (type.isNotBlank() && !type.contains("html") && !type.contains("text")) return null
         val bytes = resp.bodyAsChannel().readRemaining(400_000).readByteArray()
-        return Web.readable(String(bytes, Charsets.UTF_8), 3_000).takeIf { it.length > 80 }
+        return Web.readable(String(bytes, Charsets.UTF_8), 2_000).takeIf { it.length > 80 }
     }
 
     private fun result(o: JsonObject, t: String, u: String, d: String): Web.Result? {

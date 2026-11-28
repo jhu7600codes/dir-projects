@@ -56,6 +56,11 @@ class Speaker @Inject constructor(
     private val _problem = MutableStateFlow<String?>(null)
     val problem: StateFlow<String?> = _problem
 
+    @Volatile var lastError: Int? = null
+        private set
+    @Volatile var initOk: Boolean? = null
+        private set
+
     /** counts utterances that actually started making sound */
     private val _started = MutableStateFlow(0)
     val started: StateFlow<Int> = _started
@@ -68,6 +73,7 @@ class Speaker @Inject constructor(
         engine = s.ttsEngine
         ready = CompletableDeferred()
         val listener = TextToSpeech.OnInitListener { status ->
+            initOk = status == TextToSpeech.SUCCESS
             if (status != TextToSpeech.SUCCESS) _problem.value = "no text to speech engine works on this phone"
             ready.complete(status == TextToSpeech.SUCCESS)
         }
@@ -83,6 +89,7 @@ class Speaker @Inject constructor(
                 @Deprecated("old api")
                 override fun onError(id: String) = finished(id)
                 override fun onError(id: String, errorCode: Int) {
+                    lastError = errorCode
                     _problem.value = when (errorCode) {
                         TextToSpeech.ERROR_NOT_INSTALLED_YET -> "the voice is still downloading, try again in a minute"
                         TextToSpeech.ERROR_NETWORK, TextToSpeech.ERROR_NETWORK_TIMEOUT -> "the voice needs internet"
@@ -123,12 +130,8 @@ class Speaker @Inject constructor(
         if (wanted != null) {
             t.voices?.firstOrNull { it.name == wanted && installed(it) }?.let { t.voice = it; return }
         }
-        runCatching {
-            // only voices that are really on the phone: listed but not downloaded ones play nothing
-            val voices = t.voices?.filter { it.locale.language == locale.language && installed(it) }.orEmpty()
-            val local = voices.filter { !it.isNetworkConnectionRequired }
-            pickVoice(local.ifEmpty { voices })?.let { t.voice = it }
-        }
+        // automatic: the engine's own default voice for the language (setLanguage above). picking a
+        // voice by name here is what went silent on some phones, so only an explicit choice does that
     }
 
     private fun installed(v: Voice?): Boolean =
@@ -192,6 +195,7 @@ class Speaker @Inject constructor(
         init()
         val t = tts ?: return
         stop()
+        lastError = null
         val v = voiceName?.let { n -> t.voices?.firstOrNull { it.name == n } }
         if (v != null) t.voice = v else t.language = if (russian) Locale("ru", "RU") else Locale.US
         t.setPitch(pitch); t.setSpeechRate(rate)

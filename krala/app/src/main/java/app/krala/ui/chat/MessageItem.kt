@@ -125,7 +125,10 @@ private fun AssistantMessage(m: UiMessage, isLast: Boolean, busy: Boolean, onReg
                 TypingIndicator()
             }
             m.streaming && !m.started && m.thinking.isBlank() -> TypingIndicator()
-            m.text.isNotBlank() -> SelectionContainer { MarkdownText(m.text) }
+            m.text.isNotBlank() -> {
+                val smooth = app.krala.ui.components.rememberSmoothText(m.entity.id, m.text, m.streaming)
+                SelectionContainer { MarkdownText(smooth) }
+            }
         }
         if (m.entity.status == MessageStatus.ERROR && !m.streaming) {
             Surface(color = cs.errorContainer, contentColor = cs.onErrorContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.padding(top = 6.dp)) {
