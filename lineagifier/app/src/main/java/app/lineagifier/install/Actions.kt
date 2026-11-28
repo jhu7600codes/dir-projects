@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import app.lineagifier.catalog.Entry
 import app.lineagifier.catalog.Installable
-import app.lineagifier.shell.Shell
 import app.lineagifier.shell.ShellRunner
 import app.lineagifier.shell.safeToken
 import app.lineagifier.system.Pm
@@ -60,7 +59,7 @@ class Actions(private val ctx: Context, private val shell: ShellRunner, private 
         if (info.packageName != item.packageId) error("apk is ${info.packageName}, expected ${item.packageId}")
 
         progress("installing", 1f)
-        val r = if (shell === Shell) Shell.installApk(apk) else error("install needs the shizuku shell")
+        val r = shell.installApk(apk)
         if (!r.out.contains("Success")) error("pm install failed: ${r.message}")
 
         val check = Pm.read(shell).getOrThrow()

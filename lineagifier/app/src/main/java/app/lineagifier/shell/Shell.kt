@@ -1,21 +1,11 @@
 package app.lineagifier.shell
 
-import android.content.ComponentName
-import android.content.ServiceConnection
-import android.content.pm.PackageManager
-import android.os.IBinder
-import android.os.ParcelFileDescriptor
-import app.lineagifier.BuildConfig
-import app.lineagifier.IShellService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import rikka.shizuku.Shizuku
 import java.io.File
-import kotlin.coroutines.resume
+import java.io.InputStream
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 data class ShellResult(val code: Int, val out: String, val err: String) {
     val ok get() = code == 0
@@ -24,79 +14,75 @@ data class ShellResult(val code: Int, val out: String, val err: String) {
     val message get() = (err.trim().ifEmpty { out.trim() }).ifEmpty { "exit $code" }
 }
 
-/** anything that can run a shell command. the real one is shizuku, tests use a fake. */
+/** anything that can run a shell command. the real one is root (su), tests use a fake. */
 interface ShellRunner {
     suspend fun run(cmd: String): ShellResult
+    /** streams [file] into `pm install -r -S size` */
+    suspend fun installApk(file: File): ShellResult = ShellResult(-1, "", "this shell can't install apks")
 }
 
-enum class ShizukuStatus { NOT_RUNNING, TOO_OLD, NO_PERMISSION, READY }
+enum class RootStatus { NO_SU, DENIED, READY }
 
-object Shell : ShellRunner {
-    private var service: IShellService? = null
-    private val lock = Mutex()
+/**
+ * root through `su -c`. on twoyi that's kernelsu's su; the first call makes kernelsu ask
+ * the user to allow lineagifier (superuser tab).
+ */
+object Root : ShellRunner {
+    @Volatile private var cached: RootStatus? = null
 
-    private val args = Shizuku.UserServiceArgs(
-        ComponentName(BuildConfig.APPLICATION_ID, ShellService::class.java.name)
-    )
-        .daemon(false)
-        .processNameSuffix("shell")
-        .debuggable(BuildConfig.DEBUG)
-        .version(BuildConfig.VERSION_CODE)
-
-    fun status(): ShizukuStatus = try {
-        when {
-            !Shizuku.pingBinder() -> ShizukuStatus.NOT_RUNNING
-            Shizuku.isPreV11() -> ShizukuStatus.TOO_OLD
-            Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED -> ShizukuStatus.NO_PERMISSION
-            else -> ShizukuStatus.READY
+    /** looks for su and checks it really gives uid 0. blocking, call off the main thread. */
+    fun check(): RootStatus {
+        val r = exec(listOf("su", "-c", "id -u"), null, 30)
+        val st = when {
+            r.code == -2 -> RootStatus.NO_SU
+            r.ok && r.out.trim() == "0" -> RootStatus.READY
+            else -> RootStatus.DENIED
         }
-    } catch (t: Throwable) {
-        ShizukuStatus.NOT_RUNNING
+        cached = st
+        return st
     }
 
-    /** 0 = root, 2000 = shell (adb). -1 if unknown. */
-    fun uid(): Int = try { Shizuku.getUid() } catch (t: Throwable) { -1 }
-
-    private suspend fun connect(): IShellService = lock.withLock {
-        service?.takeIf { it.asBinder().pingBinder() }?.let { return it }
-        if (status() != ShizukuStatus.READY) error("shizuku isn't running or permission isn't granted")
-        val s = withTimeout(15_000) {
-            suspendCancellableCoroutine { cont ->
-                val conn = object : ServiceConnection {
-                    override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-                        val svc = binder?.takeIf { it.pingBinder() }?.let { IShellService.Stub.asInterface(it) }
-                        if (cont.isActive) {
-                            if (svc != null) cont.resume(svc) else cont.cancel(IllegalStateException("shell service binder is dead"))
-                        }
-                    }
-                    override fun onServiceDisconnected(name: ComponentName?) {
-                        service = null
-                    }
-                }
-                Shizuku.bindUserService(args, conn)
-            }
-        }
-        service = s
-        s
-    }
+    fun lastStatus() = cached
 
     override suspend fun run(cmd: String): ShellResult = withContext(Dispatchers.IO) {
-        try {
-            val r = connect().exec(cmd)
-            ShellResult(r[0].toIntOrNull() ?: -1, r[1], r[2])
-        } catch (t: Throwable) {
-            ShellResult(-1, "", t.message ?: t.toString())
-        }
+        exec(listOf("su", "-c", cmd), null, 180)
     }
 
-    suspend fun installApk(file: File): ShellResult = withContext(Dispatchers.IO) {
-        try {
-            val pfd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-            val r = connect().installApk(pfd, file.length())
-            ShellResult(r[0].toIntOrNull() ?: -1, r[1], r[2])
+    override suspend fun installApk(file: File): ShellResult = withContext(Dispatchers.IO) {
+        exec(listOf("su", "-c", "pm install -r -S ${file.length()}"), file, 600)
+    }
+
+    /** code -2 = su doesn't exist, -1 = other failure / timeout */
+    private fun exec(argv: List<String>, stdin: File?, timeoutSec: Long): ShellResult {
+        val p = try {
+            ProcessBuilder(argv).start()
         } catch (t: Throwable) {
-            ShellResult(-1, "", t.message ?: t.toString())
+            return ShellResult(-2, "", "no su binary: ${t.message}")
         }
+        var out = ""
+        var err = ""
+        val t1 = thread { out = p.inputStream.readAll() }
+        val t2 = thread { err = p.errorStream.readAll() }
+        try {
+            p.outputStream.use { os -> stdin?.inputStream()?.use { it.copyTo(os) } }
+        } catch (t: Throwable) {
+            err += "stdin: ${t.message}\n"
+        }
+        if (!p.waitFor(timeoutSec, TimeUnit.SECONDS)) {
+            p.destroyForcibly()
+            t1.join(1000); t2.join(1000)
+            return ShellResult(-1, out, "timed out after ${timeoutSec}s")
+        }
+        t1.join(); t2.join()
+        return ShellResult(p.exitValue(), out, err)
+    }
+
+    /** never throws: a killed process (timeout) closes the pipe under the reader, which must not crash the app */
+    private fun InputStream.readAll(): String {
+        val sb = StringBuilder()
+        try { bufferedReader().use { r -> val buf = CharArray(8192); while (true) { val n = r.read(buf); if (n < 0) break; sb.append(buf, 0, n) } } }
+        catch (t: Throwable) { }
+        return sb.toString()
     }
 }
 

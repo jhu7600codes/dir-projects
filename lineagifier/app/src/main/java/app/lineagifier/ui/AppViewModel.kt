@@ -10,8 +10,8 @@ import app.lineagifier.catalog.Installable
 import app.lineagifier.install.Actions
 import app.lineagifier.install.Decision
 import app.lineagifier.install.Safety
-import app.lineagifier.shell.Shell
-import app.lineagifier.shell.ShizukuStatus
+import app.lineagifier.shell.Root
+import app.lineagifier.shell.RootStatus
 import app.lineagifier.system.PackageState
 import app.lineagifier.system.Pm
 import app.lineagifier.tweaks.Tweak
@@ -22,9 +22,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.content.Intent
+import app.lineagifier.microg.Microg
+import app.lineagifier.shell.shQuote
+import app.lineagifier.statusbar.BarConfig
+import app.lineagifier.statusbar.OverlayService
+import app.lineagifier.statusbar.Sizing
+import app.lineagifier.undo.Kind
 import java.io.File
 
-enum class Screen { START, PICK, TWEAKS, APPLY, MANAGE }
+enum class Screen { HOME, PICK, TWEAKS, APPLY, MANAGE, MICROG, STATUSBAR, CONTROL }
 
 enum class StepState { WAITING, RUNNING, OK, FAILED, SKIPPED }
 
@@ -33,9 +42,8 @@ data class Step(val title: String, val state: StepState = StepState.WAITING, val
 data class StockRow(val entry: Entry, val stock: String, val decision: Decision)
 
 data class UiState(
-    val screen: Screen = Screen.START,
-    val shizuku: ShizukuStatus = ShizukuStatus.NOT_RUNNING,
-    val uid: Int = -1,
+    val screen: Screen = Screen.HOME,
+    val root: RootStatus? = null,
     val catalog: Catalog? = null,
     val catalogError: String? = null,
     val pkgs: PackageState? = null,
@@ -52,6 +60,16 @@ data class UiState(
     val manageBusy: Boolean = false,
     val manageMessage: String? = null,
     val pendingUndo: Int = 0,
+    val bar: BarConfig = BarConfig(),
+    val barBusy: Boolean = false,
+    val barMessage: String? = null,
+    val screenPx: Pair<Int, Int> = 0 to 0,
+    val microg: Microg.State? = null,
+    val microgBusy: Boolean = false,
+    val microgProgress: String? = null,
+    val microgFraction: Float? = null,
+    val microgSteps: List<Microg.Step> = emptyList(),
+    val withGsf: Boolean = false,
 )
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
@@ -59,8 +77,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val state = _s.asStateFlow()
 
     private val log = UndoLog(File(app.filesDir, "undo-log.json"))
-    private val actions = Actions(app, Shell, log)
-    private val tweaks = Tweaks(Shell, log, Build.VERSION.SDK_INT)
+    private val actions = Actions(app, Root, log)
+    private val tweaks = Tweaks(Root, log, Build.VERSION.SDK_INT)
 
     init {
         try {
@@ -69,13 +87,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         } catch (t: Throwable) {
             _s.update { it.copy(catalogError = "catalog.json didn't load: ${t.message}") }
         }
-        refreshShizuku()
+        _s.update { it.copy(bar = BarConfig.load(app), screenPx = Sizing.realScreen(app)) }
+        refreshRoot()
     }
 
-    fun refreshShizuku() {
-        val st = Shell.status()
-        _s.update { it.copy(shizuku = st, uid = if (st == ShizukuStatus.READY) Shell.uid() else -1, pendingUndo = log.pending().size) }
-        if (st == ShizukuStatus.READY) refreshPackages()
+    fun refreshRoot() = viewModelScope.launch {
+        val st = withContext(Dispatchers.IO) { Root.check() }
+        _s.update { it.copy(root = st, pendingUndo = log.pending().size) }
+        if (st == RootStatus.READY) {
+            refreshPackages()
+            // bring the overlay back after an app update or a force stop
+            if (_s.value.bar.needsService) app.startForegroundService(Intent(app, OverlayService::class.java))
+        }
     }
 
     fun go(screen: Screen) {
@@ -84,12 +107,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             Screen.PICK -> refreshPackages()
             Screen.TWEAKS -> if (_s.value.tweaks.isEmpty()) loadTweaks()
             Screen.MANAGE -> refreshManage()
+            Screen.MICROG -> refreshMicrog()
             else -> {}
         }
     }
 
     fun refreshPackages() = viewModelScope.launch {
-        val r = Pm.read(Shell)
+        val r = Pm.read(Root)
         _s.update { it.copy(pkgs = r.getOrNull(), pkgError = r.exceptionOrNull()?.message) }
     }
 
@@ -163,7 +187,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun refreshManage() = viewModelScope.launch {
         val cat = _s.value.catalog ?: return@launch
-        val pkgs = Pm.read(Shell).getOrElse { e -> _s.update { it.copy(manageMessage = e.message) }; return@launch }
+        val pkgs = Pm.read(Root).getOrElse { e -> _s.update { it.copy(manageMessage = e.message) }; return@launch }
         val defaults = actions.defaults(cat.entries.mapNotNull { it.role })
         // only stock apps that really exist on this image get a row
         val rows = cat.entries.flatMap { e -> e.replaces.filter { pkgs.isOnImage(it) }.map { StockRow(e, it, Safety.canRemove(it, e, pkgs, defaults)) } }
@@ -187,7 +211,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun restoreEverything() = viewModelScope.launch {
         _s.update { it.copy(manageBusy = true, manageMessage = null) }
-        val lines = Restore.everything(log, Shell)
+        val lines = Restore.everything(log, Root)
         val bad = lines.filter { !it.ok }
         val msg = if (lines.isEmpty()) "nothing to restore"
         else if (bad.isEmpty()) "restored ${lines.size} change(s)"
@@ -195,4 +219,82 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         _s.update { it.copy(manageBusy = false, manageMessage = msg, tweaks = emptyList()) }
         refreshManage()
     }
+
+    // ---------- status bar, sizing, control center ----------
+
+    private val app get() = getApplication<Application>()
+
+    private fun barMsg(m: String?) = _s.update { it.copy(barMessage = m) }
+
+    /** saves the new config, then makes the system match it */
+    fun updateBar(f: (BarConfig) -> BarConfig) = viewModelScope.launch {
+        val old = _s.value.bar
+        val new = f(old)
+        _s.update { it.copy(bar = new, barBusy = true, barMessage = null) }
+        val msgs = mutableListOf<String>()
+        withContext(Dispatchers.IO) {
+            if (new.needsService && !old.needsService) grantOverlay()?.let { msgs += it }
+            if (new.sizingEnabled != old.sizingEnabled || (new.sizingEnabled && (new.safeTopPt != old.safeTopPt || new.padPt != old.padPt))) {
+                val r = if (new.sizingEnabled) {
+                    val (w, h) = _s.value.screenPx
+                    Sizing.apply(Root, log, Sizing.iphone13(w, h, new.safeTopPt, new.padPt))
+                } else Sizing.disable(Root)
+                msgs += r.fold({ it }, { "sizing failed: ${it.message}" })
+            }
+            if (new.barEnabled != old.barEnabled) msgs += hideStockClock(new.barEnabled)
+            if (!new.barEnabled && old.barEnabled && !new.sizingEnabled) Sizing.disable(Root)
+            if (!new.barEnabled && old.barEnabled && new.sizingEnabled) {
+                val (w, h) = _s.value.screenPx
+                Sizing.apply(Root, log, Sizing.iphone13(w, h, new.safeTopPt, new.padPt))
+            }
+        }
+        BarConfig.save(app, new)
+        if (new.needsService) app.startForegroundService(Intent(app, OverlayService::class.java))
+        _s.update { it.copy(barBusy = false, barMessage = msgs.joinToString("\n").ifBlank { null }, pendingUndo = log.pending().size) }
+    }
+
+    /** overlay windows + the service notification, granted with root so nothing has to be clicked */
+    private suspend fun grantOverlay(): String? {
+        val pkg = app.packageName
+        val before = Root.run("appops get $pkg SYSTEM_ALERT_WINDOW").out.substringAfter(": ").substringBefore(";").trim().ifEmpty { "default" }
+        if (before != "allow") {
+            log.add(Kind.appop, "$pkg/SYSTEM_ALERT_WINDOW", previous = if (before in setOf("allow", "ignore", "deny", "default", "foreground")) before else "default")
+            Root.run("appops set $pkg SYSTEM_ALERT_WINDOW allow")
+        }
+        Root.run("pm grant $pkg android.permission.POST_NOTIFICATIONS")
+        return if (android.provider.Settings.canDrawOverlays(app)) null else "couldn't get the overlay permission"
+    }
+
+    /** lineage-style bar on: the stock clock + battery hide through systemui's own icon_blacklist tunable */
+    private suspend fun hideStockClock(hide: Boolean): String {
+        val cur = Root.run("settings get secure icon_blacklist").out.trim().let { if (it == "null") "" else it }
+        val items = cur.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toMutableSet()
+        val want = if (hide) items + setOf("clock", "battery") else items - setOf("clock", "battery")
+        if (want == items) return if (hide) "stock clock already hidden" else "stock clock already shown"
+        log.add(Kind.setting, "secure/icon_blacklist", previous = cur.ifEmpty { null })
+        val v = want.joinToString(",")
+        Root.run(if (v.isEmpty()) "settings delete secure icon_blacklist" else "settings put secure icon_blacklist ${shQuote(v)}")
+        return if (hide) "stock clock + battery hidden" else "stock clock + battery back"
+    }
+
+    // ---------- microg ----------
+
+    fun refreshMicrog() = viewModelScope.launch {
+        val st = withContext(Dispatchers.IO) { Microg.state(app, Root) }
+        _s.update { it.copy(microg = st) }
+    }
+
+    fun setGsf(v: Boolean) = _s.update { it.copy(withGsf = v) }
+
+    fun installMicrog() = viewModelScope.launch {
+        if (_s.value.microgBusy) return@launch
+        _s.update { it.copy(microgBusy = true, microgSteps = emptyList(), microgProgress = "checking") }
+        val steps = withContext(Dispatchers.IO) {
+            Microg.install(app, Root, log, _s.value.withGsf) { what, f -> _s.update { it.copy(microgProgress = what, microgFraction = f) } }
+        }
+        _s.update { it.copy(microgBusy = false, microgSteps = steps, microgProgress = null, microgFraction = null, pendingUndo = log.pending().size) }
+        refreshMicrog()
+    }
+
+    fun reboot() = viewModelScope.launch(Dispatchers.IO) { Root.run("svc power reboot || reboot") }
 }

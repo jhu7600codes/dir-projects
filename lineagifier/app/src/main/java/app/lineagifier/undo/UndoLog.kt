@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 @Serializable
-enum class Kind { disable, uninstall, setting, uimode, overlay, role }
+enum class Kind { disable, uninstall, setting, uimode, overlay, role, module, app, fabricated, appop }
 
 /**
  * one reversible change. `target` is a package, an overlay, a role, or "namespace/key" for settings.
@@ -67,6 +67,8 @@ class UndoLog(private val file: File) {
 
 data class RestoreLine(val entry: UndoEntry, val ok: Boolean, val message: String)
 
+const val KSUD = "/data/adb/ksud"
+
 object Restore {
     /** the commands that undo one entry. pure so it can be unit tested. */
     fun commands(e: UndoEntry): List<String> = when (e.kind) {
@@ -83,6 +85,14 @@ object Restore {
             if (e.previous == "enabled") "cmd overlay enable --user 0 ${safeToken(e.target)}"
             else "cmd overlay disable --user 0 ${safeToken(e.target)}"
         )
+        // a kernelsu module lineagifier installed: uninstall it (takes effect after a reboot)
+        Kind.module -> listOf("${KSUD} module uninstall ${safeToken(e.target)}")
+        // an app lineagifier installed as an extra (not a replacement): remove it
+        Kind.app -> listOf("pm uninstall ${safeToken(e.target)}")
+        // a fabricated overlay (status bar sizing): unregister it
+        Kind.fabricated -> listOf("cmd overlay disable --user 0 ${safeToken(e.target)}")
+        // an appop lineagifier set: put the old mode back (target = "pkg/OP")
+        Kind.appop -> listOf("appops set ${safeToken(e.target.substringBefore('/'))} ${safeToken(e.target.substringAfter('/'))} ${safeToken(e.previous ?: "default")}")
         Kind.role -> {
             val prev = e.previous?.split(';')?.filter { it.isNotBlank() }.orEmpty()
             if (prev.isNotEmpty()) prev.map { "cmd role add-role-holder --user 0 ${safeToken(e.target)} ${safeToken(it)}" }

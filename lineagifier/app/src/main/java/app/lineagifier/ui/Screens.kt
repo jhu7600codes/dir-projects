@@ -20,10 +20,9 @@ import androidx.compose.ui.unit.sp
 import app.lineagifier.catalog.Entry
 import app.lineagifier.catalog.Status
 import app.lineagifier.install.Actions
-import app.lineagifier.shell.ShizukuStatus
 
 @Composable
-private fun Page(title: String, subtitle: String? = null, bottom: @Composable RowScope.() -> Unit = {}, content: @Composable ColumnScope.() -> Unit) {
+fun Page(title: String, subtitle: String? = null, bottom: @Composable RowScope.() -> Unit = {}, content: @Composable ColumnScope.() -> Unit) {
     Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 16.dp)) {
         Spacer(Modifier.height(20.dp))
         Text(title, fontSize = 28.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.onBackground)
@@ -35,54 +34,18 @@ private fun Page(title: String, subtitle: String? = null, bottom: @Composable Ro
 }
 
 @Composable
-private fun Card(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) =
+fun Card(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) =
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Surface1).padding(16.dp), content = content)
 
 @Composable
-private fun Chip(text: String, color: Color) =
+fun Chip(text: String, color: Color) =
     Text(text, fontSize = 11.sp, color = color, modifier = Modifier.clip(RoundedCornerShape(50)).background(color.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 2.dp))
-
-@Composable
-fun StartScreen(s: UiState, vm: AppViewModel, onRequestPermission: () -> Unit) {
-    Page("lineagifier", "make stock aosp feel like lineageos, no root", bottom = {
-        OutlinedButton(onClick = { vm.go(Screen.MANAGE) }, enabled = s.shizuku == ShizukuStatus.READY) { Text("manage / restore") }
-        Button(onClick = { vm.go(Screen.PICK) }, enabled = s.shizuku == ShizukuStatus.READY && s.catalog != null) { Text("start") }
-    }) {
-        Card {
-            Text("shizuku", fontWeight = FontWeight.Medium)
-            Spacer(Modifier.height(6.dp))
-            val (msg, color) = when (s.shizuku) {
-                ShizukuStatus.NOT_RUNNING -> "not running. start shizuku first (adb or wireless debugging)." to Bad
-                ShizukuStatus.TOO_OLD -> "shizuku is too old (pre v11), update it" to Bad
-                ShizukuStatus.NO_PERMISSION -> "running, but lineagifier isn't allowed yet" to Color(0xFFFFB74D)
-                ShizukuStatus.READY -> "ready, running as ${when (s.uid) { 0 -> "root"; 2000 -> "shell"; else -> "uid ${s.uid}" }}" to Good
-            }
-            Text(msg, color = color, fontSize = 14.sp)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (s.shizuku == ShizukuStatus.NO_PERMISSION) Button(onClick = onRequestPermission) { Text("grant") }
-                OutlinedButton(onClick = { vm.refreshShizuku() }) { Text("check again") }
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Card {
-            Text("this image", fontWeight = FontWeight.Medium)
-            Spacer(Modifier.height(6.dp))
-            Text("android ${Build.VERSION.RELEASE} (sdk ${Build.VERSION.SDK_INT})", color = Dim, fontSize = 14.sp)
-            Text(Build.FINGERPRINT, color = Dim, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-            s.pkgs?.let { Text("${it.systemAll.size} system packages, ${it.installed.size} installed for you", color = Dim, fontSize = 14.sp) }
-            s.pkgError?.let { Text(it, color = Bad, fontSize = 13.sp) }
-            if (s.pendingUndo > 0) Text("${s.pendingUndo} change(s) can be restored", color = TealLight, fontSize = 14.sp)
-        }
-        s.catalogError?.let { Spacer(Modifier.height(12.dp)); Text(it, color = Bad) }
-    }
-}
 
 @Composable
 fun PickScreen(s: UiState, vm: AppViewModel) {
     val cat = s.catalog ?: return
     Page("pick apps", "only verified apks can be installed. the rest is listed honestly.", bottom = {
-        OutlinedButton(onClick = { vm.go(Screen.START) }) { Text("back") }
+        OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") }
         Button(onClick = { vm.go(Screen.TWEAKS) }) { Text("next: tweaks") }
     }) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -146,7 +109,7 @@ private fun EntryCard(e: Entry, s: UiState, vm: AppViewModel) {
 @Composable
 fun TweaksScreen(s: UiState, vm: AppViewModel) {
     Page("tweaks", "each command was tested on this image before it's offered", bottom = {
-        OutlinedButton(onClick = { vm.go(Screen.PICK) }) { Text("back") }
+        OutlinedButton(onClick = { vm.go(if (s.picks.isEmpty()) Screen.HOME else Screen.PICK) }) { Text("back") }
         Button(onClick = { vm.apply() }, enabled = !s.tweaksLoading && (s.picks.isNotEmpty() || s.tweakPicks.isNotEmpty())) {
             Text("apply ${s.picks.size} app(s), ${s.tweakPicks.size} tweak(s)")
         }
@@ -183,7 +146,7 @@ fun ApplyScreen(s: UiState, vm: AppViewModel) {
     Page(if (s.running) "applying" else "results",
         if (s.running) "don't close the app" else if (failed == 0) "all done" else "$failed step(s) failed, see below",
         bottom = {
-            OutlinedButton(onClick = { vm.go(Screen.START) }, enabled = !s.running) { Text("home") }
+            OutlinedButton(onClick = { vm.go(Screen.HOME) }, enabled = !s.running) { Text("home") }
             Button(onClick = { vm.go(Screen.MANAGE) }, enabled = !s.running) { Text("next: remove stock apps") }
         }) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -211,7 +174,7 @@ fun ApplyScreen(s: UiState, vm: AppViewModel) {
 fun ManageScreen(s: UiState, vm: AppViewModel) {
     var confirmRestore by remember { mutableStateOf(false) }
     Page("stock apps", "a stock app can only go once its replacement is installed and default", bottom = {
-        OutlinedButton(onClick = { vm.go(Screen.START) }, enabled = !s.manageBusy) { Text("home") }
+        OutlinedButton(onClick = { vm.go(Screen.HOME) }, enabled = !s.manageBusy) { Text("home") }
         Button(onClick = { confirmRestore = true }, enabled = !s.manageBusy && s.pendingUndo > 0,
             colors = ButtonDefaults.buttonColors(containerColor = Teal, contentColor = Color.White)) { Text("restore everything (${s.pendingUndo})") }
     }) {
