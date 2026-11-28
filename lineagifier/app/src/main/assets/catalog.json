@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "verifiedOn": "2026-11-27",
-  "verificationNotes": "lineage package ids read from each repo's build.gradle.kts / AndroidManifest.xml on raw.githubusercontent.com (default branch). aosp stock ids read from android.googlesource.com android13-release manifests. f-droid sha256 computed from the downloaded apk and matched against f-droid.org/repo/index-v2.json. f-droid moves old versions to /archive, so every prebuilt has an archive fallback url.",
+  "verifiedOn": "2026-11-28",
+  "verificationNotes": "lineage package ids read from each repo's build.gradle.kts / AndroidManifest.xml on raw.githubusercontent.com (default branch). aosp stock ids read from android.googlesource.com android13-release manifests. f-droid sha256 computed from the downloaded apk and matched against f-droid.org/repo/index-v2.json. f-droid moves old versions to /archive, so every prebuilt has an archive fallback url. apkmirror pages (lineageos developer section) were found through apkmirror's search on 2026-11-28; apkmirror blocks automated downloads, so those apks are downloaded by hand and lineagifier checks the package id against lineageIds.",
   "entries": [
     {
       "id": "launcher",
@@ -12,8 +12,14 @@
       "source": "https://github.com/LineageOS/android_packages_apps_Trebuchet",
       "notes": "soong (Android.bp) build inside a lineage tree only. it uses the same package id as aosp launcher3, so even a self-built apk can't replace the system one without the platform key. aosp launcher3 on your image is the code trebuchet is forked from.",
       "role": "android.app.role.HOME",
-      "replaces": ["com.android.launcher3"],
-      "alternatives": []
+      "replaces": [
+        "com.android.launcher3"
+      ],
+      "alternatives": [],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/trebuchet-4/",
+      "lineageIds": [
+        "com.android.launcher3"
+      ]
     },
     {
       "id": "camera",
@@ -24,8 +30,14 @@
       "source": "https://github.com/LineageOS/android_packages_apps_Aperture",
       "notes": "has a gradle build (app/build.gradle.kts). lineage publishes no apk. debug builds install as org.lineageos.aperture.dev.",
       "role": null,
-      "replaces": ["com.android.camera2"],
-      "alternatives": []
+      "replaces": [
+        "com.android.camera2"
+      ],
+      "alternatives": [],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/lineageos-camera-4/",
+      "lineageIds": [
+        "org.lineageos.aperture"
+      ]
     },
     {
       "id": "gallery",
@@ -36,7 +48,9 @@
       "source": "https://github.com/LineageOS/android_packages_apps_Glimpse",
       "notes": "has a gradle build. lineage publishes no apk. debug builds install as org.lineageos.glimpse.dev.",
       "role": null,
-      "replaces": ["com.android.gallery3d"],
+      "replaces": [
+        "com.android.gallery3d"
+      ],
       "alternatives": [
         {
           "name": "Fossify Gallery",
@@ -49,6 +63,10 @@
           "sha256": "2d330eda61579d2ae499bc2accab6e4d6bb77de96d2877ff90e481fac96e1b76",
           "size": 38543199
         }
+      ],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/lineageos-gallery/",
+      "lineageIds": [
+        "org.lineageos.glimpse"
       ]
     },
     {
@@ -60,8 +78,14 @@
       "source": "https://github.com/LineageOS/android_packages_apps_Jelly",
       "notes": "has a gradle build. lineage publishes no apk. debug builds install as org.lineageos.jelly.dev. needs a working system webview.",
       "role": "android.app.role.BROWSER",
-      "replaces": ["org.chromium.webview_shell"],
-      "alternatives": []
+      "replaces": [
+        "org.chromium.webview_shell"
+      ],
+      "alternatives": [],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/lineageos-jelly-browser/",
+      "lineageIds": [
+        "org.lineageos.jelly"
+      ]
     },
     {
       "id": "calendar",
@@ -72,7 +96,9 @@
       "source": "https://f-droid.org/packages/ws.xsoh.etar/",
       "notes": "lineage ships its own fork of etar (github.com/LineageOS/android_packages_apps_Etar, same ws.xsoh.etar id in its gradle file). this is upstream etar from f-droid, the closest prebuilt.",
       "role": null,
-      "replaces": ["com.android.calendar"],
+      "replaces": [
+        "com.android.calendar"
+      ],
       "download": {
         "versionName": "1.0.58",
         "versionCode": 58,
@@ -82,7 +108,13 @@
         "sha256": "b5f3bb907fd8d6a1aa2689e34f2cf16bce0be8ae681cf78d02d10a3f82aeb77a",
         "size": 8786698
       },
-      "alternatives": []
+      "alternatives": [],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/lineageos-calendar/",
+      "lineageIds": [
+        "org.lineageos.etar",
+        "ws.xsoh.etar",
+        "com.android.calendar"
+      ]
     },
     {
       "id": "recorder",
@@ -106,6 +138,10 @@
           "sha256": "4327681aa24a272d85b900344009ea9f4c04f2414e18eb2686c7ebf332a22d78",
           "size": 7309028
         }
+      ],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/recorder/",
+      "lineageIds": [
+        "org.lineageos.recorder"
       ]
     },
     {
@@ -117,7 +153,9 @@
       "source": "https://github.com/LineageOS/android_packages_apps_DeskClock",
       "notes": "lineage's clock is a fork of aosp deskclock with the same package id. your stock clock is already the base app; a lineage build can't install over it without the platform key.",
       "role": null,
-      "replaces": ["com.android.deskclock"],
+      "replaces": [
+        "com.android.deskclock"
+      ],
       "alternatives": [
         {
           "name": "Fossify Clock",
@@ -130,6 +168,10 @@
           "sha256": "43cf9f0ec45f1f1ff2df47286622e5b8f3acedaeb07b7f7641b5243dbedca079",
           "size": 9110265
         }
+      ],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/clock-2/",
+      "lineageIds": [
+        "com.android.deskclock"
       ]
     },
     {
@@ -141,7 +183,9 @@
       "source": "https://github.com/LineageOS/android_packages_apps_ExactCalculator",
       "notes": "lineage's calculator is a fork of aosp exactcalculator with the same package id. stock is already the base app.",
       "role": null,
-      "replaces": ["com.android.calculator2"],
+      "replaces": [
+        "com.android.calculator2"
+      ],
       "alternatives": [
         {
           "name": "Fossify Calculator",
@@ -154,6 +198,10 @@
           "sha256": "7c5443c22d6d62c67dfe80df33ea9161ff0fa440f92590bcb45d7008b57613ed",
           "size": 7047681
         }
+      ],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/lineageos-calculator/",
+      "lineageIds": [
+        "com.android.calculator2"
       ]
     },
     {
@@ -189,7 +237,9 @@
       "source": "https://github.com/LineageOS/android_packages_apps_Contacts",
       "notes": "lineage fork of aosp contacts, same package id. only the ui app is ever touched, never the contacts provider.",
       "role": null,
-      "replaces": ["com.android.contacts"],
+      "replaces": [
+        "com.android.contacts"
+      ],
       "alternatives": [
         {
           "name": "Fossify Contacts",
@@ -213,7 +263,9 @@
       "source": "https://github.com/LineageOS/android_packages_apps_Dialer",
       "notes": "lineage fork of aosp dialer, same package id. a container usually has no telephony, so this mostly matters for looks.",
       "role": "android.app.role.DIALER",
-      "replaces": ["com.android.dialer"],
+      "replaces": [
+        "com.android.dialer"
+      ],
       "alternatives": [
         {
           "name": "Fossify Phone",
@@ -237,7 +289,9 @@
       "source": "https://github.com/LineageOS/android_packages_apps_Messaging",
       "notes": "lineage fork of aosp messaging, same package id.",
       "role": "android.app.role.SMS",
-      "replaces": ["com.android.messaging"],
+      "replaces": [
+        "com.android.messaging"
+      ],
       "alternatives": [
         {
           "name": "Fossify Messages",
@@ -250,6 +304,10 @@
           "sha256": "76cb0756d22fae9b8b24683d550d7391963b9b856d331dd536f74de8bf628674",
           "size": 6791323
         }
+      ],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/lineageos-messaging/",
+      "lineageIds": [
+        "com.android.messaging"
       ]
     },
     {
@@ -269,12 +327,16 @@
       "category": "backup",
       "name": "Seedvault",
       "packageId": "com.stevesoltys.seedvault",
-      "status": "unsupported",
+      "status": "system_only",
       "source": "https://github.com/seedvault-app/seedvault",
-      "notes": "seedvault is a system backup transport. it needs android.permission.BACKUP (signature|privileged) and a priv-app install, which an unprivileged app with shell access can't grant. not possible here.",
+      "notes": "seedvault is a system backup transport: it needs android.permission.BACKUP (signature|privileged). with root, lineagifier can add the apk from apkmirror as a privileged system app through a kernelsu module and allow its backup transport. experimental.",
       "role": null,
       "replaces": [],
-      "alternatives": []
+      "alternatives": [],
+      "apkmirror": "https://www.apkmirror.com/apk/lineageos/seedvault-2/",
+      "lineageIds": [
+        "com.stevesoltys.seedvault"
+      ]
     }
   ]
 }

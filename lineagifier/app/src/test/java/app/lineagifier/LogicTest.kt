@@ -52,7 +52,7 @@ class CatalogTest {
 
     @Test fun nonPrebuiltEntriesHaveNoDownload() {
         for (e in cat.entries) if (e.status != Status.prebuilt) assertNull(e.id, e.download)
-        assertEquals(Status.unsupported, cat.entries.first { it.id == "backup" }.status)
+        assertEquals(Status.system_only, cat.entries.first { it.id == "backup" }.status)
     }
 
     @Test fun catalogNeverTargetsProtectedPackages() {

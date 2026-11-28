@@ -30,7 +30,7 @@ data class Alternative(
 }
 
 @Serializable
-enum class Status { prebuilt, build_from_source, same_as_stock, unsupported }
+enum class Status { prebuilt, build_from_source, same_as_stock, unsupported, system_only }
 
 @Serializable
 data class Entry(
@@ -45,6 +45,10 @@ data class Entry(
     val replaces: List<String> = emptyList(),
     val download: Download? = null,
     val alternatives: List<Alternative> = emptyList(),
+    /** apkmirror's page for the lineage app (apks pulled from official lineage builds, downloaded by hand) */
+    val apkmirror: String? = null,
+    /** package ids a downloaded apk may have to count as this lineage app */
+    val lineageIds: List<String> = emptyList(),
 ) {
     /** every apk lineagifier can install for this slot: the lineage app itself if it's prebuilt, then alternatives */
     fun installables(): List<Installable> = buildList {

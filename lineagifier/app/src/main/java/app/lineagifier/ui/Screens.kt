@@ -48,9 +48,32 @@ fun PickScreen(s: UiState, vm: AppViewModel) {
         OutlinedButton(onClick = { vm.go(Screen.HOME) }) { Text("back") }
         Button(onClick = { vm.go(Screen.TWEAKS) }) { Text("next: tweaks") }
     }) {
+        if (s.apkBusy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(bottom = 8.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(cat.entries, key = { it.id }) { e -> EntryCard(e, s, vm) }
         }
+    }
+    s.apkMessage?.let { m ->
+        AlertDialog(onDismissRequest = { vm.dismissApk() }, title = { Text(if (m.startsWith("refused") || m.startsWith("failed")) "didn't install" else "done") },
+            text = { Text(m) }, confirmButton = {
+                if ("reboot" in m) TextButton(onClick = { vm.dismissApk(); vm.reboot() }) { Text("reboot now") }
+                TextButton(onClick = { vm.dismissApk() }) { Text("ok") }
+            })
+    }
+    s.pendingSwap?.let { p ->
+        AlertDialog(onDismissRequest = { vm.dismissApk() }, title = { Text("replace the stock ${p.entry.category}?") },
+            text = {
+                Text(buildString {
+                    appendLine("${p.apk.packageId} ${p.apk.versionName} (min sdk ${p.apk.minSdk})")
+                    appendLine("signed by sha256 ${p.apk.certSha256.firstOrNull()?.take(16)}… compare it with what apkmirror shows.")
+                    appendLine()
+                    appendLine(p.plan.reason + ".")
+                    if (p.backupLauncher != null) appendLine("${p.backupLauncher} becomes home first, so you keep a launcher if trebuchet doesn't start.")
+                    appendLine("the stock app's data is kept. restore removes the module and brings the stock app back after a reboot.")
+                })
+            },
+            confirmButton = { TextButton(onClick = { vm.confirmSwap() }) { Text("replace") } },
+            dismissButton = { TextButton(onClick = { vm.dismissApk() }) { Text("cancel") } })
     }
 }
 
@@ -67,6 +90,7 @@ private fun EntryCard(e: Entry, s: UiState, vm: AppViewModel) {
                 Status.build_from_source -> Chip("build from source", Color(0xFFFFB74D))
                 Status.same_as_stock -> Chip("same as stock", TealLight)
                 Status.unsupported -> Chip("not possible", Bad)
+                Status.system_only -> Chip("root: system app", Color(0xFFFFB74D))
             }
         }
         Spacer(Modifier.height(6.dp))
@@ -80,6 +104,7 @@ private fun EntryCard(e: Entry, s: UiState, vm: AppViewModel) {
                 Text("stock: $p ($st)", color = Dim, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
             }
         }
+        if (e.apkmirror != null) LineageApkRow(e, s, vm)
         val opts = e.installables()
         if (opts.isNotEmpty()) {
             Spacer(Modifier.height(6.dp))
@@ -102,6 +127,23 @@ private fun EntryCard(e: Entry, s: UiState, vm: AppViewModel) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun LineageApkRow(e: Entry, s: UiState, vm: AppViewModel) {
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { u ->
+        if (u != null) vm.pickedApk(e, u)
+    }
+    Spacer(Modifier.height(6.dp))
+    Text("the real lineage build is on apkmirror (pulled from lineage roms). download the android 13 / lineage 20 release in the browser, then pick the file here.",
+        color = Dim, fontSize = 12.sp)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+        OutlinedButton(onClick = { uri.openUri(e.apkmirror!!) }) { Text("apkmirror", fontSize = 13.sp) }
+        Button(onClick = { pick.launch(arrayOf("application/vnd.android.package-archive", "application/octet-stream", "*/*")) }, enabled = !s.apkBusy) {
+            Text("install downloaded apk", fontSize = 13.sp)
         }
     }
 }

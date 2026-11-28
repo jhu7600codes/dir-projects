@@ -95,3 +95,40 @@ class QsTest {
         assertTrue(Tiles.DEFAULT.all { Tiles.bySpec(it) != null })
     }
 }
+
+class SystemSwapTest {
+    private val cat = app.lineagifier.catalog.Catalog.parse(File("src/main/assets/catalog.json").readText())
+    private fun apk(pkg: String, minSdk: Int = 33, shared: String? = null, certs: List<String> = listOf("ab")) =
+        app.lineagifier.install.ApkInfo(File("x.apk"), pkg, "1", 1, minSdk, certs, shared)
+
+    @Test fun modulePathsFollowKernelsuLayout() {
+        assertEquals("system/product/app/DeskClock/DeskClock.apk", app.lineagifier.install.SystemSwap.modulePath("/product/app/DeskClock/DeskClock.apk"))
+        assertEquals("system/system_ext/priv-app/Launcher3QuickStep/Launcher3QuickStep.apk", app.lineagifier.install.SystemSwap.modulePath("/system_ext/priv-app/Launcher3QuickStep/Launcher3QuickStep.apk"))
+        assertEquals("system/app/Calculator/Calculator.apk", app.lineagifier.install.SystemSwap.modulePath("/system/app/Calculator/Calculator.apk"))
+    }
+
+    @Test(expected = java.io.IOException::class)
+    fun refusesPathsAModuleCantOverlay() { app.lineagifier.install.SystemSwap.modulePath("/data/app/x/base.apk") }
+
+    @Test fun refusals() {
+        val clock = cat.entries.first { it.id == "clock" }
+        assertNull(app.lineagifier.install.SystemSwap.refuse(clock, sdk = 33, a = apk("com.android.deskclock")))
+        assertNotNull(app.lineagifier.install.SystemSwap.refuse(clock, sdk = 33, a = apk("com.evil.clock")))
+        assertNotNull(app.lineagifier.install.SystemSwap.refuse(clock, sdk = 33, a = apk("com.android.deskclock", minSdk = 99)))
+        // shared uid + new signature = system_server IllegalStateException at boot on 13
+        assertNotNull(app.lineagifier.install.SystemSwap.refuse(clock, sdk = 33, a = apk("com.android.deskclock", shared = "android.uid.system")))
+        assertNotNull(app.lineagifier.install.SystemSwap.refuse(clock, sdk = 33, a = apk("com.android.deskclock", certs = emptyList())))
+    }
+
+    @Test fun launcherNeedsABackup() {
+        assertNull(app.lineagifier.install.SystemSwap.backupLauncher(setOf("com.android.launcher3"), "com.android.launcher3"))
+        assertEquals("app.lawnchair", app.lineagifier.install.SystemSwap.backupLauncher(setOf("com.android.launcher3", "app.lawnchair"), "com.android.launcher3"))
+    }
+
+    @Test fun everyApkmirrorEntryHasLineageIds() {
+        for (e in cat.entries) if (e.apkmirror != null) {
+            assertTrue(e.apkmirror!!.startsWith("https://www.apkmirror.com/apk/lineageos/"))
+            assertTrue(e.id, e.lineageIds.isNotEmpty())
+        }
+    }
+}

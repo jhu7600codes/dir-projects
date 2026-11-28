@@ -10,6 +10,8 @@ import app.lineagifier.catalog.Installable
 import app.lineagifier.install.Actions
 import app.lineagifier.install.Decision
 import app.lineagifier.install.Safety
+import app.lineagifier.install.ApkInfo
+import app.lineagifier.install.SystemSwap
 import app.lineagifier.shell.Root
 import app.lineagifier.shell.RootStatus
 import app.lineagifier.system.PackageState
@@ -67,7 +69,12 @@ data class UiState(
     val microgFraction: Float? = null,
     val microgSteps: List<Microg.Step> = emptyList(),
     val withGsf: Boolean = false,
+    val apkBusy: Boolean = false,
+    val apkMessage: String? = null,
+    val pendingSwap: PendingSwap? = null,
 )
+
+data class PendingSwap(val entry: Entry, val apk: ApkInfo, val plan: SystemSwap.Plan, val backupLauncher: String?)
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     private val _s = MutableStateFlow(UiState())
@@ -269,4 +276,54 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun reboot() = viewModelScope.launch(Dispatchers.IO) { Root.run("svc power reboot || reboot") }
+
+    // ---------- lineage apks downloaded from apkmirror ----------
+
+    fun dismissApk() = _s.update { it.copy(apkMessage = null, pendingSwap = null) }
+
+    /** copies the picked file, checks it's really the lineage app, then installs it or asks before a system swap */
+    fun pickedApk(entry: Entry, uri: android.net.Uri) = viewModelScope.launch {
+        _s.update { it.copy(apkBusy = true, apkMessage = null, pendingSwap = null) }
+        val msg = try {
+            val f = File(app.cacheDir, "picked-${entry.id}.apk")
+            withContext(Dispatchers.IO) {
+                app.contentResolver.openInputStream(uri)?.use { i -> f.outputStream().use { i.copyTo(it) } } ?: error("can't read that file")
+            }
+            val a = SystemSwap.inspect(app, f)
+            SystemSwap.refuse(entry, a)?.let { error(it) }
+            val plan = withContext(Dispatchers.IO) { SystemSwap.plan(Root, entry, a) }
+            if (plan.swap) {
+                val backup = if (a.packageId == "com.android.launcher3") SystemSwap.backupLauncher(actions.homePackages(), a.packageId) else null
+                if (a.packageId == "com.android.launcher3" && backup == null)
+                    error("no backup launcher installed. trebuchet replaces the stock launcher, so lineagifier wants another one (like lawnchair) first")
+                _s.update { it.copy(pendingSwap = PendingSwap(entry, a, plan, backup)) }
+                null
+            } else {
+                val r = withContext(Dispatchers.IO) { Root.installApk(f) }
+                f.delete()
+                if (!r.out.contains("Success")) error("pm install: ${r.message}")
+                var m = "installed ${a.packageId} ${a.versionName}"
+                if (entry.role != null) m += "\n" + actions.setDefault(entry, a.packageId).fold({ it }, { "default not set: ${it.message}" })
+                m
+            }
+        } catch (t: Throwable) { "refused: ${t.message}" }
+        _s.update { it.copy(apkBusy = false, apkMessage = msg, pendingSwap = it.pendingSwap) }
+        refreshPackages()
+    }
+
+    fun confirmSwap() = viewModelScope.launch {
+        val p = _s.value.pendingSwap ?: return@launch
+        _s.update { it.copy(apkBusy = true, pendingSwap = null) }
+        val msg = try {
+            val pre = mutableListOf<String>()
+            // the launcher: make the backup launcher home before the swap, so a broken trebuchet can't leave you without one
+            if (p.backupLauncher != null) {
+                pre += actions.setDefault(p.entry, p.backupLauncher).getOrElse { error("couldn't make ${p.backupLauncher} home first: ${it.message}") }
+            }
+            val r = withContext(Dispatchers.IO) { SystemSwap.installSwap(app, Root, log, p.entry, p.apk, p.plan) }
+            (pre + r).joinToString("\n")
+        } catch (t: Throwable) { "failed: ${t.message}" }
+        p.apk.file.delete()
+        _s.update { it.copy(apkBusy = false, apkMessage = msg, pendingSwap = null, pendingUndo = log.pending().size) }
+    }
 }
