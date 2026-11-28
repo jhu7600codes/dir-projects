@@ -27,8 +27,6 @@ function ago(ts) {
 const dateStr = ts => new Date(ts * 1000).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 const raw = (sha, path) => `https://raw.githubusercontent.com/${D.meta.repo}/${sha}/${encPath(path)}`;
 const gh = p => `https://github.com/${D.meta.repo}${p}`;
-function hue(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
-const avatar = n => `<span class="av" style="background:hsl(${hue(n)} 55% 48%)">${esc(n[0].toUpperCase())}</span>`;
 const set = (html) => { $app.innerHTML = html; window.scrollTo(0, 0); };
 async function json(url) { const r = await fetch(url); if (!r.ok) throw new Error(url + ": " + r.status); return r.json(); }
 function bar(a, d) {
@@ -38,7 +36,6 @@ function bar(a, d) {
   for (let i = 0; i < n; i++) s += `<i class="${i < ga ? "a" : i < ga + gd ? "d" : ""}"></i>`;
   return s + "</span>";
 }
-const kindIcon = { android: "▣", ios: "", linux: "🐧", vita: "◈", python: "py", web: "◎", "gd level": "◆", code: "{}" };
 const extOf = n => (n.match(/\.(tar\.gz|[a-z0-9]+)$/i) || [, ""])[1].toLowerCase();
 const branchOpts = (cur) => D.branches.map(b => `<option value="${esc(b.name)}"${b.name === cur ? " selected" : ""}>${esc(b.name)}${b.name === D.meta.default ? " (default)" : ""}</option>`).join("");
 
@@ -109,7 +106,7 @@ function refBadges(h) {
   return `<span class="refs">${r.map(x => x.type === "tag" ? `<a class="ref tg" href="#/tags">${esc(x.name)}</a>` : `<a class="ref" href="#/log/${enc(x.name)}">${esc(x.name)}</a>`).join("")}</span>`;
 }
 function commitRow(c, g) {
-  return `<li style="${g ? "padding-left:0;flex-wrap:nowrap;height:" + RH + "px;min-height:0;padding-top:0;padding-bottom:0" : ""}">${g || avatar(c.an)}
+  return `<li style="${g ? "padding-left:0;flex-wrap:nowrap;height:" + RH + "px;min-height:0;padding-top:0;padding-bottom:0" : ""}">${g}
     <div class="msg" style="min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><a href="#/c/${c.h}">${esc(c.s)}</a>${refBadges(c.h)}</div>
     <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.an)} · ${ago(c.ct)}</div></div>
     <a class="sha" href="#/c/${c.h}">${short(c.h)}</a></li>`;
@@ -143,21 +140,22 @@ V.projects = () => {
   let ps = D.projects.filter(p => kindFilter === "all" || p.kinds.includes(kindFilter));
   if (sortBy === "name") ps = [...ps].sort((a, b) => a.name.localeCompare(b.name));
   if (sortBy === "dl") ps = [...ps].sort((a, b) => (b.downloads.length + b.releases.length) - (a.downloads.length + a.releases.length));
-  set(`<div class="hero"><div><h1>projects</h1><p class="sub">every project from every branch, merged into one list. newest version wins.</p></div>
-    <div class="stats"><div class="stat"><b>${D.projects.length}</b><span>projects</span></div><div class="stat"><b>${D.branches.length}</b><span>branches</span></div>
-    <div class="stat"><b>${C.length}</b><span>commits</span></div><div class="stat"><b>${nDl}</b><span>downloads</span></div></div></div>
+  set(`<h1>projects</h1>
+    <p class="sub">${D.projects.length} projects from ${D.branches.length} branches, ${nDl} downloads. if a project is on several branches, the newest one is shown.</p>
     <div class="filters">${kinds.map(k => `<button class="chip${k === kindFilter ? " on" : ""}" data-k="${esc(k)}">${esc(k)}</button>`).join("")}
-    <span class="sp"></span><select class="chip" id="sort"><option value="date">recently updated</option><option value="name">name</option><option value="dl">most downloads</option></select></div>
-    <div class="grid">${ps.map(card).join("")}</div>`);
+    <span class="sp"></span><label class="small muted">sort <select class="chip" id="sort"><option value="date">updated</option><option value="name">name</option><option value="dl">downloads</option></select></label></div>
+    <div class="panel"><ul class="list plist">${ps.map(card).join("")}</ul></div>`);
   $app.querySelectorAll("[data-k]").forEach(b => b.onclick = () => { kindFilter = b.dataset.k; V.projects(); });
   const s = $app.querySelector("#sort"); s.value = sortBy; s.onchange = () => { sortBy = s.value; V.projects(); };
 };
 function card(p) {
   const n = p.downloads.length + p.releases.reduce((m, r) => m + r.assets.length, 0);
-  return `<a class="card" href="#/p/${enc(p.name)}"><h3>${avatar(p.name)}${esc(p.title)}</h3>
-    <p>${esc(p.desc || "no readme yet")}</p>
-    <div class="row">${p.kinds.map(k => `<span class="tag acc">${esc(k)}</span>`).join("")}${p.version ? `<span class="tag">v${esc(p.version)}</span>` : ""}${n ? `<span class="tag ok">↓ ${n}</span>` : ""}</div>
-    <div class="meta"><span>${ago(p.date)}</span><span>·</span><span>${p.versions.length} branch${p.versions.length > 1 ? "es" : ""}</span></div></a>`;
+  const first = p.downloads.find(d => d.branch === p.branch) || p.releases[0]?.assets[0];
+  return `<li><div class="t"><a href="#/p/${enc(p.name)}">${esc(p.title)}</a>${p.version ? ` <span class="muted small mono">${esc(p.version)}</span>` : ""}
+    <div class="small muted desc">${esc(p.desc || "no readme")}</div></div>
+    <span class="small muted kinds">${p.kinds.map(esc).join(", ")}</span>
+    <span class="small muted upd">${ago(p.date)}</span>
+    <span class="dl">${first ? `<a class="small" href="${esc(first.url)}" download>${esc(first.name)}</a>${n > 1 ? ` <span class="small muted">+${n - 1}</span>` : ""}` : ""}</span></li>`;
 }
 function dlButton(d, pri) {
   return `<a class="btn${pri ? " pri" : ""}" href="${esc(d.url)}" download>↓ ${esc(d.name)} <small>${fmtSize(d.size)}</small></a>`;
@@ -168,8 +166,7 @@ V.project = async (name, tab) => {
   const main = p.downloads.filter(d => d.branch === p.branch);
   const other = p.downloads.filter(d => d.branch !== p.branch);
   const vers = p.versions.filter(v => !v.same);
-  set(`<div class="hero"><div class="row" style="gap:14px">${avatar(p.name).replace('class="av"', 'class="av" style="width:48px;height:48px;font-size:22px;border-radius:13px;background:hsl(' + hue(p.name) + ' 55% 48%)"')}
-      <div><h1>${esc(p.title)}</h1><div class="row">${p.kinds.map(k => `<span class="tag acc">${esc(k)}</span>`).join("")}${p.version ? `<span class="tag">v${esc(p.version)}</span>` : ""}
+  set(`<div class="hero"><div class="row" style="gap:14px"><div><h1>${esc(p.title)}</h1><div class="row">${p.kinds.map(k => `<span class="tag acc">${esc(k)}</span>`).join("")}${p.version ? `<span class="tag">v${esc(p.version)}</span>` : ""}
       <span class="muted small">updated ${ago(p.date)} on <a href="#/log/${enc(p.branch)}">${esc(p.branch)}</a></span></div></div></div>
       <div class="row"><a class="btn" href="#/tree/${enc(p.branch)}/${enc(p.name)}">browse files</a><a class="btn" href="${gh(`/tree/${p.sha}/${encPath(p.name)}`)}" target="_blank" rel="noopener">github ↗</a></div></div>
     ${p.desc ? `<p class="sub">${esc(p.desc)}</p>` : ""}
@@ -213,7 +210,7 @@ V.downloads = () => {
   const list = all.filter(d => dlFilter === "all" || extOf(d.name) === dlFilter).sort((a, b) => b.date - a.date);
   set(`<h1>downloads</h1><p class="sub">everything built: dist/ folders, loose apk/deb/vpk files and release assets, from every branch.</p>
     <div class="filters">${exts.map(e => `<button class="chip${e === dlFilter ? " on" : ""}" data-e="${esc(e)}">${e === "all" ? "all" : "." + esc(e)}</button>`).join("")}</div>
-    <div class="panel"><ul class="list">${list.map(d => `<li>${avatar(d.project)}<div class="t"><a href="${esc(d.url)}" download>${esc(d.name)}</a>
+    <div class="panel"><ul class="list">${list.map(d => `<li><div class="t"><a href="${esc(d.url)}" download>${esc(d.name)}</a>
       <div class="small muted"><a href="#/p/${enc(d.project)}">${esc(d.project)}</a> · ${esc(d.branch)} · ${ago(d.date)}${d.latest ? "" : " · older build"}</div></div>
       <span class="tag">.${esc(extOf(d.name))}</span><span class="small muted mono">${fmtSize(d.size)}</span>
       <a class="btn" href="${esc(d.url)}" download>↓</a></li>`).join("")}</ul></div>`);
@@ -255,7 +252,7 @@ V.commit = async (h) => {
   set(`<div class="panel" style="margin-bottom:18px"><div class="md" style="padding:18px 20px">
       <h1 style="font-size:21px;border:0;padding:0;margin:0 0 6px">${esc(c.s)}${refBadges(c.h)}</h1>
       ${c.b ? `<pre style="white-space:pre-wrap;background:none;padding:0;margin:8px 0;color:var(--mut)">${esc(c.b)}</pre>` : ""}
-      <div class="row small muted" style="margin-top:10px">${avatar(c.an)}<b style="color:var(--fg)">${esc(c.an)}</b> committed ${ago(c.ct)} · ${dateStr(c.ct)}
+      <div class="row small muted" style="margin-top:10px"><b style="color:var(--fg)">${esc(c.an)}</b> committed ${ago(c.ct)} · ${dateStr(c.ct)}
       <span class="sp"></span>${c.p.map(p => `parent <a class="sha" href="#/c/${p}">${short(p)}</a>`).join(" ")} <span class="sha">${c.h}</span></div>
       <div class="row small muted" style="margin-top:8px">on ${onBranches.length} branch${onBranches.length === 1 ? "" : "es"}: ${onBranches.slice(0, 8).map(n => `<a class="ref" href="#/log/${enc(n)}">${esc(n)}</a>`).join(" ")}${onBranches.length > 8 ? ` +${onBranches.length - 8}` : ""}
       ${kids.length ? ` · ${kids.length} child${kids.length > 1 ? "ren" : ""} ${kids.slice(0, 4).map(k => `<a class="sha" href="#/c/${k.h}">${short(k.h)}</a>`).join(" ")}${kids.length > 4 ? " …" : ""}` : ""}
@@ -319,7 +316,7 @@ V.tree = async (branch, path) => {
     const readme = ents.find(e => /^readme(\.md)?$/i.test(e.n) && e.t === "b");
     const last = byH.get(b.sha);
     set(`${head}${proj && parts.length === 1 ? `<p class="small muted">project page: <a href="#/p/${enc(proj.name)}">${esc(proj.title)}</a></p>` : ""}
-      <div class="panel"><div class="hd">${avatar(last.an)}<a href="#/c/${last.h}" style="color:var(--fg)">${esc(last.s)}</a><span class="sp"></span><a class="sha" href="#/c/${last.h}">${short(last.h)}</a><span class="muted small">${ago(last.ct)}</span></div>
+      <div class="panel"><div class="hd"><a href="#/c/${last.h}" style="color:var(--fg)">${esc(last.s)}</a><span class="sp"></span><a class="sha" href="#/c/${last.h}">${short(last.h)}</a><span class="muted small">${ago(last.ct)}</span></div>
       <ul class="list ft">${parts.length ? `<li class="dir"><span class="ic">↰</span><div class="t"><a href="#/tree/${enc(branch)}/${encPath(parts.slice(0, -1).join("/"))}">..</a></div></li>` : ""}
       ${ents.map(e => `<li class="${e.t === "t" ? "dir" : ""}"><span class="ic">${e.t === "t" ? "▸" : e.t === "c" ? "⎘" : "·"}</span><div class="t">
         ${e.t === "c" ? esc(e.n) + ' <span class="tag">submodule</span>' : `<a href="#/tree/${enc(branch)}/${encPath([...parts, e.n].join("/"))}">${esc(e.n)}</a>`}</div>
@@ -398,7 +395,7 @@ V.search = (q) => {
   const cs = C.filter(c => (c.s + " " + c.b + " " + c.h).toLowerCase().includes(q)).slice(0, 100);
   const ds = D.projects.flatMap(p => p.downloads.map(d => ({ ...d, project: p.name }))).filter(d => d.name.toLowerCase().includes(q));
   set(`<h1>search</h1><p class="sub">“${esc(q)}”</p>
-    ${ps.length ? `<h2>projects · ${ps.length}</h2><div class="grid hit">${ps.map(card).join("")}</div>` : ""}
+    ${ps.length ? `<h2>projects · ${ps.length}</h2><div class="panel hit"><ul class="list plist">${ps.map(card).join("")}</ul></div>` : ""}
     ${ds.length ? `<h2>downloads · ${ds.length}</h2><div class="panel hit"><ul class="list">${ds.map(d => `<li><div class="t"><a href="${esc(d.url)}" download>${hi(d.name)}</a><div class="small muted">${esc(d.project)} · ${fmtSize(d.size)}</div></div></li>`).join("")}</ul></div>` : ""}
     ${bs.length ? `<h2>branches · ${bs.length}</h2><div class="panel hit"><ul class="list">${bs.map(b => `<li><div class="t"><a href="#/log/${enc(b.name)}">${hi(b.name)}</a><div class="small muted">${esc(b.subject)}</div></div></li>`).join("")}</ul></div>` : ""}
     ${cs.length ? `<h2>commits · ${cs.length}${cs.length === 100 ? "+" : ""}</h2><div class="panel hit"><ul class="list clist">${cs.map(c => commitRow(c, "")).join("")}</ul></div>` : ""}
