@@ -12,6 +12,8 @@ an ai chat app for android. kotlin, jetpack compose, material 3. dark red on bla
 - per chat model picker and per chat system prompt, "use for new chats" default
 - image attachments for vision models (downscaled jpegs, sent as data urls)
 - file attachments: pdf, docx, pptx and any text or code file. the text is pulled out on the phone and sent as a `--files--` section, cut to fit the model's context
+- code blocks in javascript or python get a run button: the code runs on the phone in a sealed webview (python via pyodide, downloaded once), the output shows under the block and "send to krala" hands it back
+- visible thinking for reasoning models, gemini 2.5 included (the app asks google for thought summaries)
 - web search (+ menu → web search): the app searches (duckduckgo with no key, or brave / tavily / your own searxng), reads the top pages and gives krala the text as a `--web--` section for that message. the sites show as chips under the reply
 - share sheet: send text or an image to krala from any app, plus "ask krala" in the text selection menu
 - incognito chats: no memory read or write, never synced, never in recall

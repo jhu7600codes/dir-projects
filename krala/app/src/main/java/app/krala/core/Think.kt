@@ -5,7 +5,7 @@ package app.krala.core
  * separate reasoning field or put <think>...</think> at the start of the content.
  */
 object Think {
-    private val open = Regex("""^\s*<(think|thinking|reasoning)>""", RegexOption.IGNORE_CASE)
+    private val open = Regex("""^\s*<(think|thinking|thought|reasoning)>""", RegexOption.IGNORE_CASE)
 
     data class Split(val thinking: String, val answer: String, val thinkingDone: Boolean)
 

@@ -33,4 +33,11 @@ class ThinkTest {
         assertEquals("r", ChoiceContent.reasoningFromChunk("""{"choices":[{"delta":{"reasoning":"r","content":"x"}}]}"""))
         assertEquals(null, ChoiceContent.fromChunk("""{"choices":[{"delta":{"reasoning_content":"let me think"}}]}"""))
     }
+
+    @Test
+    fun geminiThoughtTags() {
+        val s = Think.split("<thought>**planning** the answer</thought>here you go")
+        assertEquals("**planning** the answer", s.thinking)
+        assertEquals("here you go", s.answer)
+    }
 }

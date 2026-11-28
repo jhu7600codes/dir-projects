@@ -68,10 +68,14 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
         cfg.headers.forEach { (k, v) -> if (k.isNotBlank()) header(k.trim(), v) }
     }
 
-    fun chatBody(model: String, messages: List<ApiMessage>, stream: Boolean, maxTokens: Int? = null): String =
+    fun chatBody(model: String, messages: List<ApiMessage>, stream: Boolean, maxTokens: Int? = null, googleThoughts: Boolean = false): String =
         buildJsonObject {
             put("model", model)
             put("stream", stream)
+            // gemini's openai endpoint hides thinking unless asked; the summaries come back in <thought> tags
+            if (googleThoughts) putJsonObject("extra_body") {
+                putJsonObject("google") { putJsonObject("thinking_config") { put("include_thoughts", true) } }
+            }
             if (maxTokens != null) put("max_tokens", maxTokens)
             putJsonArray("messages") {
                 messages.forEach { m ->
@@ -102,7 +106,7 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
             http.preparePost(url(cfg, "chat/completions")) {
                 auth(cfg)
                 header(HttpHeaders.Accept, "text/event-stream, application/json")
-                setBody(TextContent(chatBody(model, messages, stream = true), ContentType.Application.Json))
+                setBody(TextContent(chatBody(model, messages, stream = true, googleThoughts = isGemini(cfg, model)), ContentType.Application.Json))
             }.execute { resp ->
                 val headers = headerMap(resp)
                 if (!resp.status.isSuccess()) throw httpError(resp.status.value, resp.bodyAsText(), headers)
@@ -148,6 +152,9 @@ class OpenAiClient @Inject constructor(private val http: HttpClient) {
             throw mapException(e)
         }
     }.flowOn(Dispatchers.IO)
+
+    private fun isGemini(cfg: ProviderConfig, model: String) =
+        "generativelanguage.googleapis.com" in cfg.baseUrl && model.contains("2.5")
 
     /** non streaming completion; returns choices[0].message.content */
     suspend fun complete(cfg: ProviderConfig, model: String, messages: List<ApiMessage>, maxTokens: Int? = null): String {

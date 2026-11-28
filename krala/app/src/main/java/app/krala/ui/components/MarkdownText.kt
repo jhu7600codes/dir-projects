@@ -60,6 +60,8 @@ import app.krala.core.Markdown.Span
 import app.krala.ui.theme.LocalHaptics
 import app.krala.ui.theme.MonoStyle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.rounded.PlayArrow
 
 @Composable
 fun MarkdownText(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurface) {
@@ -142,8 +144,21 @@ fun inline(text: String): AnnotatedString {
     }
 }
 
+/** lets code blocks run their code and hand the output back; null where running makes no sense */
+class CodeActions(
+    val canRun: (String) -> Boolean,
+    val run: suspend (String, String) -> app.krala.code.RunResult,
+    val send: (String, app.krala.code.RunResult) -> Unit,
+)
+
+val LocalCodeActions = androidx.compose.runtime.staticCompositionLocalOf<CodeActions?> { null }
+
 @Composable
 fun CodeBlock(language: String, code: String) {
+    val actions = LocalCodeActions.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var running by remember { mutableStateOf(false) }
+    var result by remember(code) { mutableStateOf<app.krala.code.RunResult?>(null) }
     val cs = MaterialTheme.colorScheme
     val clipboard = LocalClipboardManager.current
     val haptics = LocalHaptics.current
@@ -165,6 +180,21 @@ fun CodeBlock(language: String, code: String) {
                     color = cs.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
+                if (actions != null && actions.canRun(language)) {
+                    IconButton(onClick = {
+                        if (running) return@IconButton
+                        haptics.click()
+                        running = true
+                        scope.launch {
+                            result = actions.run(language, code)
+                            running = false
+                            if (result?.ok == true) haptics.confirm() else haptics.reject()
+                        }
+                    }) {
+                        if (running) androidx.compose.material3.CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                        else Icon(androidx.compose.material.icons.Icons.Rounded.PlayArrow, "run", Modifier.size(20.dp), tint = cs.primary)
+                    }
+                }
                 IconButton(onClick = {
                     clipboard.setText(AnnotatedString(code))
                     haptics.confirm()
@@ -182,6 +212,22 @@ fun CodeBlock(language: String, code: String) {
             }
             Box(Modifier.horizontalScroll(rememberScrollState()).padding(14.dp)) {
                 Text(code, style = MonoStyle.copy(color = cs.onSurface), softWrap = false)
+            }
+            result?.let { r ->
+                HorizontalDivider(color = cs.outlineVariant.copy(alpha = 0.6f))
+                Column(Modifier.fillMaxWidth().background(cs.surfaceContainerLowest).padding(start = 14.dp, end = 6.dp, top = 8.dp, bottom = 4.dp)) {
+                    Text(
+                        (if (r.ok) "output" else "error") + " · ${r.ms} ms",
+                        style = MaterialTheme.typography.labelSmall, color = if (r.ok) cs.primary else cs.error,
+                    )
+                    val shown = listOfNotNull(r.output.ifBlank { null }, r.error).joinToString("\n").ifBlank { "(no output)" }
+                    Box(Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
+                        Text(shown.take(4_000), style = MonoStyle.copy(color = if (r.ok) cs.onSurface else cs.error), softWrap = false)
+                    }
+                    androidx.compose.material3.TextButton(onClick = { haptics.confirm(); actions?.send(language, r) }) {
+                        Text("send to krala")
+                    }
+                }
             }
         }
     }

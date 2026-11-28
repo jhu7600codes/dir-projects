@@ -86,6 +86,7 @@ class ChatViewModel @Inject constructor(
     private val recall: RecallService,
     private val attachments: AttachmentStore,
     private val documents: app.krala.data.chat.Documents,
+    private val codeRunner: app.krala.code.CodeRunner,
     private val export: ExportService,
     private val activeChat: ActiveChat,
 ) : ViewModel() {
@@ -251,6 +252,17 @@ class ChatViewModel @Inject constructor(
         _composer.update { it.copy(docs = it.docs - d) }
         documents.delete(d.stored)
     }
+
+    val codeActions = app.krala.ui.components.CodeActions(
+        canRun = { codeRunner.language(it) != null },
+        run = { lang, code -> codeRunner.run(lang, code) },
+        send = { lang, r ->
+            _current.value?.let { id ->
+                val body = listOfNotNull(r.output.ifBlank { null }, r.error?.let { "error: $it" }).joinToString("\n").ifBlank { "(no output)" }
+                engine.send(id, "ran the ${lang.lowercase()} code" + (if (r.ok) "" else ", it failed") + ":\n```text\n" + body.take(6_000) + "\n```", emptyList(), emptyList())
+            }
+        },
+    )
 
     fun toggleWeb() = _composer.update { it.copy(webSearch = !it.webSearch) }
 

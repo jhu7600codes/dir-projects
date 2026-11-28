@@ -142,6 +142,7 @@ fun ChatScreen(
         context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, null))
     }
 
+    androidx.compose.runtime.CompositionLocalProvider(app.krala.ui.components.LocalCodeActions provides vm.codeActions) {
     ModalNavigationDrawer(
         drawerState = drawer,
         drawerContent = {
@@ -295,6 +296,7 @@ fun ChatScreen(
         }
     }
 
+    }
     if (showModels) {
         ModelPickerSheet(
             providers = providers,
