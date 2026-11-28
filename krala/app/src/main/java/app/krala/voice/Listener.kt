@@ -24,8 +24,21 @@ class Listener(private val context: Context) {
      * usable language (error 12), so the caller walks this list until one works.
      */
     fun services(): List<android.content.ComponentName?> {
-        val found = context.packageManager.queryIntentServices(Intent(android.speech.RecognitionService.SERVICE_INTERFACE), 0)
+        val pm = context.packageManager
+        val listed = pm.queryIntentServices(Intent(android.speech.RecognitionService.SERVICE_INTERFACE), 0)
             .map { android.content.ComponentName(it.serviceInfo.packageName, it.serviceInfo.name) }
+        // android's own "default voice input" setting, even if the lookup above missed it
+        val system = runCatching {
+            android.provider.Settings.Secure.getString(context.contentResolver, "voice_recognition_service")
+                ?.let { android.content.ComponentName.unflattenFromString(it) }
+        }.getOrNull()
+        // google's services by name, in case package visibility hides them
+        val known = listOf(
+            "com.google.android.tts" to "com.google.android.apps.speech.tts.googletts.service.GoogleTTSRecognitionService",
+            "com.google.android.googlequicksearchbox" to "com.google.android.voicesearch.serviceapi.GoogleRecognitionService",
+        ).map { (pkg, cls) -> android.content.ComponentName(pkg, cls) }
+            .filter { c -> runCatching { pm.getServiceInfo(c, 0) }.isSuccess }
+        val found = (listOfNotNull(system) + listed + known).distinctBy { it.flattenToString() }
             .sortedBy {
                 when (it.packageName) {
                     "com.google.android.googlequicksearchbox" -> 0

@@ -70,7 +70,8 @@ class Speaker @Inject constructor(
         prefEn = s.ttsVoiceEn; prefRu = s.ttsVoiceRu; rate = s.voiceRate; pitch = s.voicePitch
         if (tts != null && engine != s.ttsEngine) shutdown()
         if (tts != null) return ready.await()
-        engine = s.ttsEngine
+        // no choice made: google's engine if it's on the phone, else the system default
+        engine = s.ttsEngine ?: runCatching { context.packageManager.getPackageInfo("com.google.android.tts", 0); "com.google.android.tts" }.getOrNull()
         ready = CompletableDeferred()
         val listener = TextToSpeech.OnInitListener { status ->
             initOk = status == TextToSpeech.SUCCESS
@@ -177,7 +178,12 @@ class Speaker @Inject constructor(
 
     suspend fun engines(): List<EngineInfo> {
         init()
-        return tts?.engines?.map { EngineInfo(it.name, it.label) }.orEmpty()
+        val listed = tts?.engines?.map { EngineInfo(it.name, it.label) }.orEmpty()
+        val google = runCatching {
+            val ai = context.packageManager.getApplicationInfo("com.google.android.tts", 0)
+            EngineInfo("com.google.android.tts", context.packageManager.getApplicationLabel(ai).toString())
+        }.getOrNull()
+        return (listed + listOfNotNull(google)).distinctBy { it.packageName }
     }
 
     fun currentEngine(): String? = runCatching { tts?.defaultEngine }.getOrNull()?.let { engine ?: it }

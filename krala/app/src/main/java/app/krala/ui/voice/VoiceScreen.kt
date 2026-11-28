@@ -174,7 +174,7 @@ fun VoiceScreen(vm: VoiceViewModel, onBack: () -> Unit, onProviders: () -> Unit)
                     )
                 }
             }
-            if (engines.size > 1) {
+            if (engines.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.voice_engine)) }
                 item {
                     SettingsCard {
