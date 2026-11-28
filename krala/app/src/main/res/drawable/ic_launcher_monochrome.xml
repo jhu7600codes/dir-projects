@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- themed icon (android 13+): the star as a flat shape, tinted by the system -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.2"
+        android:scaleY="0.2"
+        android:translateX="16"
+        android:translateY="16">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M190,40 Q225,155 340,190 Q225,225 190,340 Q155,225 40,190 Q155,155 190,40 Z" />
+    </group>
+</vector>
